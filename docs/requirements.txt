@@ -1,6 +1,7 @@
 
 mkdocs-with-pdf
-mkdocs-material>=9.5.32
+mkdocs-material-extensions == 1.0.3
+mkdocs-material >= 9.5.32
 mdx_gh_links
 mkdocs-pdf-export-plugin
 mkdocstrings-python
