@@ -9,6 +9,7 @@ mkdocs-video
 mkdocs-redirects
 mkdocs-enumerate-headings-plugin
 mkdocs-git-revision-date-localized-plugin
+pymdown-extensions
 # needed for the create-uuid.py helper script
 shortuuid
 # Needed for mkdocstrings python documentation generator
