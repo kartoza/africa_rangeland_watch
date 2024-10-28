@@ -1,4 +1,5 @@
 
+markdown == 3.3.6
 mkdocs-with-pdf
 mkdocs-material-extensions == 1.0.3
 mkdocs-material >= 9.5.32
@@ -12,5 +13,6 @@ mkdocs-git-revision-date-localized-plugin
 pymdown-extensions
 # needed for the create-uuid.py helper script
 shortuuid
+cffi
 # Needed for mkdocstrings python documentation generator
 black
