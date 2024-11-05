@@ -27,4 +27,4 @@ services:
       - ./volumes/media:/home/web/media
       - ./volumes/layer_tiles:/opt/layer_tiles
       - ./volumes/plumber_data:/home/web/plumber_data
-    image: kartoza/sanbi:test
+    image: kartoza/africa_rangeland_watch:test
