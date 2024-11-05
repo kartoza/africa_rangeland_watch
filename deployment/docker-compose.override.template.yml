@@ -1,0 +1,55 @@
+version: '3.9'
+services:
+  db:
+    volumes:
+      - ./volumes/database:/opt/postgres/data
+      - ./volumes/backups:/backups
+    ports:
+      - "${DATABASE_PORT:-6432}:5432"
+
+  dbbackups:
+    volumes:
+      - ./volumes/backups:/backups
+
+  django:
+    build:
+      context: ../
+      dockerfile: deployment/docker/Dockerfile
+      target: prod
+    volumes:
+      - ../django_project:/home/web/django_project
+      - ./volumes/static:/home/web/static
+      - ./volumes/media:/home/web/media
+
+  worker:
+    image: kartoza/${COMPOSE_PROJECT_NAME:-django_project}_dev
+    build:
+      context: ../
+      dockerfile: deployment/docker/Dockerfile
+      target: dev
+    volumes:
+      - ../django_project:/home/web/django_project
+      - ./volumes/static:/home/web/static
+      - ./volumes/media:/home/web/media
+
+  dev:
+    build:
+      context: ../
+      dockerfile: deployment/docker/Dockerfile
+      target: dev
+    image: kartoza/${COMPOSE_PROJECT_NAME:-django_project}_dev
+    command: python -m debugpy --listen 0.0.0.0:5678 --wait manage.py runserver 0.0.0.0:8000
+    volumes:
+      - ../django_project:/home/web/django_project
+      - ./volumes/static:/home/web/static
+      - ./volumes/media:/home/web/media
+
+  nginx:
+    volumes:
+      - ./nginx/sites-enabled:/etc/nginx/conf.d:ro
+      - ./volumes/static:/home/web/static
+      - ./volumes/media:/home/web/media
+    ports:
+      - "${HTTP_PORT:-8888}:80"
+    links:
+      - django
