@@ -1,5 +1,6 @@
 import { Helmet } from "react-helmet";
 import Header from "../../components/Header";
+import  Footer  from "../../components/Footer";
 import { IconButton, Image, Button, Flex, Text, Heading, Box } from "@chakra-ui/react";
 import React from "react";
 
@@ -13,7 +14,7 @@ export default function HomePage() {
       
       {/* Main container with background image */}
       <Box
-        h={{ base: "90vh", md: "90vh" }} // Changed to 90vh
+        h={{ md: "60vh", base: "70vh" }}
         bgImage="url('/images/dashboard/dashboard_image1.svg')"
         bgSize="cover"
         bgPosition="center"
@@ -106,8 +107,22 @@ export default function HomePage() {
             position="absolute"
             bottom="-27px" // Positions the icon halfway outside the box
           />
+
+         
         </Flex>
       </Box>
+      <Box 
+          bg="white" 
+          padding="20px" 
+          textAlign="center" 
+          display="flex" 
+          alignItems="center" 
+          justifyContent="center"
+          h={{ md: "35vh", base: "50vh" }}
+        >
+          <Text fontSize="20px" fontWeight="bold" color="gray.800">Information here.</Text>
+        </Box>
+      <Footer />
     </>
   );
 }
