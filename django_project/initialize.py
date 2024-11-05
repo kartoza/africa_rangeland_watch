@@ -1,20 +1,11 @@
-"""
-This script initializes
-"""
-
-#########################################################
-# Setting up the  context
-#########################################################
-
-#########################################################
-# Imports
-#########################################################
+"""This script initializes."""
 from django.db import connection
 from django.db.utils import OperationalError
 from django.contrib.auth import get_user_model
 from django.core.management import call_command
 import os
 import time
+import ast
 
 import django
 
@@ -80,7 +71,6 @@ print("4. Loading fixtures")
 
 # Disable fixtures loading in prod by including environment variable:
 #  INITIAL_FIXTURES=False
-import ast
 
 _load_initial_fixtures = ast.literal_eval(
     os.getenv('INITIAL_FIXTURES', 'True'))

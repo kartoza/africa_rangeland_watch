@@ -1,3 +1,4 @@
+"""Frontend views."""
 from django.views.generic import TemplateView, View
 from django.http import HttpResponse
 from django.utils.decorators import method_decorator
@@ -9,20 +10,25 @@ from urllib.parse import urlparse
 
 
 class HomeView(TemplateView):
+    """Renders the home page view."""
+
     template_name = 'home.html'
 
     def get_context_data(self, **kwargs):
+        """Retrieve context data for the home page."""
         context = super().get_context_data(**kwargs)
-
         return context
 
 
 @method_decorator(csrf_exempt, name="dispatch")
 class SentryProxyView(View):
+    """Proxy view for forwarding events to Sentry."""
+
     sentry_key = settings.SENTRY_DSN
+
     def post(self, request):
+        """Handle POST requests for the Sentry proxy."""
         host = "sentry.io"
-        known_project_ids = [36]  # Add your Sentry project IDs here
 
         envelope = request.body.decode("utf-8")
         pieces = envelope.split("\n", 1)
