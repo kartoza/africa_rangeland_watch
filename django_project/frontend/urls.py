@@ -1,4 +1,4 @@
-"""frontend URL Configuration
+"""frontend URL Configuration.
 
 The `urlpatterns` list routes URLs to views. For more information please see:
     https://docs.djangoproject.com/en/4.1/topics/http/urls/
@@ -18,6 +18,6 @@ from .views import HomeView, SentryProxyView
 
 urlpatterns = [
     path('', HomeView.as_view(), name='home'),
-    path('sentry-proxy/', 
+    path('sentry-proxy/',
          SentryProxyView.as_view(), name='sentry-proxy'),
 ]

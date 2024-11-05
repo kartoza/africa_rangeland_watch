@@ -28,7 +28,7 @@ WORKDIR /home/web/django_project
 ENTRYPOINT ["/home/web/django_project/entrypoint.sh"]
 CMD ["uwsgi", "--ini", "/uwsgi.conf"]
 
-FROM prod as vscode
+FROM prod AS vscode
 
 ADD deployment/docker/requirements-dev.txt /requirements-dev.txt
 RUN pip install -r /requirements-dev.txt
@@ -54,7 +54,7 @@ RUN groupadd --gid $USER_GID $USERNAME \
 # [Optional] Set the default user. Omit if you want to keep the default as root.
 USER $USERNAME
 
-FROM prod as dev
+FROM prod AS dev
 
 # This section taken on 2 July 2015 from
 # https://docs.docker.com/examples/running_ssh_service/
@@ -85,3 +85,14 @@ EXPOSE 8080
 EXPOSE 22
 
 CMD ["/usr/sbin/sshd", "-D"]
+
+FROM prod AS test
+
+COPY deployment/docker/requirements-dev.txt /requirements-dev.txt
+RUN pip install -r /requirements-dev.txt
+
+ADD django_project /home/web/django_project
+
+WORKDIR /home/web/django_project
+
+EXPOSE 8080
