@@ -1,5 +1,3 @@
-version: '3.9'
-
 volumes:
   static-data:
   media-data:
@@ -31,6 +29,9 @@ x-common-django:
     - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
     - ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin}
     - ADMIN_EMAIL=${ADMIN_EMAIL:-admin@example.com}
+  depends_on:
+    db:
+      condition: service_healthy
   volumes:
     - static-data:/home/web/static
     - media-data:/home/web/media
@@ -43,15 +44,23 @@ services:
       - REDIS_PASSWORD=${REDIS_PASSWORD:-redis_password}
 
   db:
-    image: kartoza/postgis:14-3.3
+    image: kartoza/postgis:16-3.4
     volumes:
       - data-volume:/opt/postgres/data
     environment:
       - DATADIR=/opt/postgres/data
       - ALLOW_IP_RANGE=0.0.0.0/0
+      - RUN_AS_ROOT=true
       - POSTGRES_DBNAME=${DATABASE_NAME:-django}
+      - POSTGRES_DB=${DATABASE_NAME:-django}
       - POSTGRES_USER=${DATABASE_USERNAME:-docker}
       - POSTGRES_PASS=${DATABASE_PASSWORD:-docker}
+      - POSTGRES_MULTIPLE_EXTENSIONS=postgis
+    healthcheck:
+      test: "PGPASSWORD=${DATABASE_PASSWORD:-docker} pg_isready -h 127.0.0.1 -U ${DATABASE_USERNAME:-docker} -d ${DATABASE_NAME:-django}"
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
   dbbackups:
     image: kartoza/pg-backup:14-3.3

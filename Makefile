@@ -20,8 +20,14 @@ dev:
 	@echo "------------------------------------------------------------------"
 	@echo "Running in dev mode"
 	@echo "------------------------------------------------------------------"
-	@docker compose ${ARGS} up -d dev worker
-	@docker compose ${ARGS} up --no-recreate --no-deps -d
+	@docker compose ${ARGS} up --no-recreate -d dev redis worker
+
+test:
+	@echo
+	@echo "------------------------------------------------------------------"
+	@echo "Running in test mode"
+	@echo "------------------------------------------------------------------"
+	@docker compose ${ARGS} up --no-recreate -d dev
 
 serve:
 	@echo
@@ -35,7 +41,7 @@ down:
 	@echo "------------------------------------------------------------------"
 	@echo "Removing production instance!!! "
 	@echo "------------------------------------------------------------------"
-	@docker compose down
+	@docker compose ${ARGS} down
 
 wait-db:
 	@docker compose ${ARGS} exec -T db su - postgres -c "until pg_isready; do sleep 5; done"
