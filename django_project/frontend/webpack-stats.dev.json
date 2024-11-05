@@ -1,0 +1,27 @@
+{
+  "status": "done",
+  "assets": {
+    "App.js": {
+      "name": "App.js",
+      "path": "/home/web/project/django_project/frontend/bundles/frontend/App.js",
+      "publicPath": "http://localhost:9000/static/App.js"
+    },
+    "node_modules_web-vitals_dist_web-vitals_js.js": {
+      "name": "node_modules_web-vitals_dist_web-vitals_js.js",
+      "path": "/home/web/project/django_project/frontend/bundles/frontend/node_modules_web-vitals_dist_web-vitals_js.js",
+      "publicPath": "http://localhost:9000/static/node_modules_web-vitals_dist_web-vitals_js.js"
+    },
+    "styles.css": {
+      "name": "styles.css",
+      "path": "/home/web/project/django_project/frontend/bundles/frontend/styles.css",
+      "publicPath": "http://localhost:9000/static/styles.css"
+    }
+  },
+  "chunks": {
+    "App": [
+      "styles.css",
+      "App.js"
+    ]
+  },
+  "publicPath": "http://localhost:9000/static/"
+}
