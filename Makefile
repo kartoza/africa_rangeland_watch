@@ -1,4 +1,4 @@
-export COMPOSE_FILE=deployment/docker compose.yml:deployment/docker compose.override.yml
+export COMPOSE_FILE=deployment/docker-compose.yml:deployment/docker-compose.override.yml
 SHELL := /bin/bash
 
 build:
