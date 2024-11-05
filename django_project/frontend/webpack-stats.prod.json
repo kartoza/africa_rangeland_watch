@@ -1,0 +1,27 @@
+{
+  "status": "done",
+  "assets": {
+    "364.a002fc637d62d82dcaba.js": {
+      "name": "364.a002fc637d62d82dcaba.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/364.a002fc637d62d82dcaba.js"
+    },
+    "App.a002fc637d62d82dcaba.js": {
+      "name": "App.a002fc637d62d82dcaba.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.a002fc637d62d82dcaba.js"
+    },
+    "App.a002fc637d62d82dcaba.js.LICENSE.txt": {
+      "name": "App.a002fc637d62d82dcaba.js.LICENSE.txt",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.a002fc637d62d82dcaba.js.LICENSE.txt"
+    },
+    "styles.a002fc637d62d82dcaba.css": {
+      "name": "styles.a002fc637d62d82dcaba.css",
+      "path": "/home/web/django_project/frontend/bundles/frontend/styles.a002fc637d62d82dcaba.css"
+    }
+  },
+  "chunks": {
+    "App": [
+      "styles.a002fc637d62d82dcaba.css",
+      "App.a002fc637d62d82dcaba.js"
+    ]
+  }
+}
