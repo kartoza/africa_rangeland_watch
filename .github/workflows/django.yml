@@ -7,7 +7,7 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
+  lint:
 
     runs-on: ubuntu-latest
     strategy:
@@ -29,3 +29,48 @@ jobs:
     - name: Run Flake8 test
       run: flake8 .
         
+  django_test:
+    needs: lint
+    name: 'Django Test'
+    runs-on: ubuntu-22.04
+    strategy:
+      matrix:
+        python-version:
+          - 3.12
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v1
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+      - name: Build test image
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          file: deployment/docker/Dockerfile
+          push: false
+          load: true
+          target: test
+          tags: kartoza/africa_rangeland_watch:test
+          cache-from: |
+            type=gha,scope=test
+            type=gha,scope=dev
+          cache-to: type=gha,scope=test
+      - name: Run docker-compose services
+        working-directory: deployment
+        run: |
+          echo "Override docker-compose for testing purposes"
+          cp docker-compose.override.test.yml docker-compose.override.yml
+          cp .template.test.env .env
+          cd ../
+          make dev
+          make wait-db
+          make sleep
+          make migrate
+          make npm-install
+          make build-react
+          make dev-runserver
+          make sleep
