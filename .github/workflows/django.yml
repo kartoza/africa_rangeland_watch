@@ -74,3 +74,13 @@ jobs:
           make build-react
           make dev-runserver
           make sleep
+      - name: Run Coverage test
+        working-directory: deployment
+        run: |
+          cat << EOF | docker-compose exec -T dev bash
+          python manage.py makemigrations
+          python manage.py migrate
+          python manage.py collectstatic --noinput --verbosity 0
+          export DJANGO_SETTINGS_MODULE=core.settings.dev && coverage run manage.py test && coverage xml
+          EOF
+          docker cp africa_rangeland_watch-dev-1:/home/web/django_project/coverage.xml ../coverage.xml

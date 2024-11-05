@@ -4,6 +4,8 @@
 node_modules/
 bundles/
 deployment/volumes
+coverage.xml
+.coverage
 /.pnp
 .pnp.js
 
