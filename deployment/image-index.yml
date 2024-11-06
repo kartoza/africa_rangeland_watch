@@ -1,0 +1,4 @@
+images:
+  - name: arw
+    dockerfile: deployment/docker/Dockerfile
+    buildPath: .
