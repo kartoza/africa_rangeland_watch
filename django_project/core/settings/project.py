@@ -34,7 +34,8 @@ INSTALLED_APPS = INSTALLED_APPS + (
     'frontend',
     'alerts',
     'dashboard',
-    'analysis'
+    'analysis',
+    'layers'
 )
 
 TEMPLATES[0]['DIRS'] += [
