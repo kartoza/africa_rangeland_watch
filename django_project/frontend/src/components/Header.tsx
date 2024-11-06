@@ -1,12 +1,14 @@
-import React from 'react';
-import { Flex, Text, Image, UnorderedList, ListItem, Link, IconButton } from '@chakra-ui/react';
+import React, { useState } from 'react';
+import { Flex, Text, Image, UnorderedList, ListItem, Link, IconButton, useDisclosure } from '@chakra-ui/react';
 import { HamburgerIcon, CloseIcon } from '@chakra-ui/icons';
 import MegaMenu from './MegaMenu';
+import SignIn from './SignIn';
 
 export default function Header(props: any) {
     const [menuOpen, setMenuOpen] = React.useState(false);
     const [menuOpenAlt, setMenuOpenAlt] = React.useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = React.useState(false);
+    const [isSignInOpen, setIsSignInOpen] = useState(false);
 
     return (
         <Flex
@@ -33,6 +35,7 @@ export default function Header(props: any) {
                 flexDirection={{ base: "column", sm: "row" }}
                 alignItems={{ base: "center", sm: "flex-start" }}
             >
+                {/* Other menu items */}
                 <ListItem>
                     <Link href="#">
                         <Text>MAP</Text>
@@ -48,7 +51,6 @@ export default function Header(props: any) {
                         <Text>HELP</Text>
                     </Link>
                 </ListItem>
-
                 <ListItem
                     onMouseLeave={() => setMenuOpen(false)}
                     onMouseEnter={() => setMenuOpen(true)}
@@ -59,7 +61,6 @@ export default function Header(props: any) {
                     </Flex>
                     {menuOpen ? <MegaMenu /> : null}
                 </ListItem>
-
                 <ListItem
                     onMouseLeave={() => setMenuOpenAlt(false)}
                     onMouseEnter={() => setMenuOpenAlt(true)}
@@ -96,11 +97,14 @@ export default function Header(props: any) {
                     <Link href="#">
                         <Image src="images/notifications_icon.svg" alt="Notif" h="24px" w="24px" />
                     </Link>
-                    <Link href="#">
+                    <Link onClick={() => setIsSignInOpen(true)}> {/* Trigger modal on avatar click */}
                         <Image src="images/user_avatar_header_icon.svg" alt="user" h="24px" />
                     </Link>
                 </Flex>
             </Flex>
+
+            {/* Sign-In Modal */}
+            <SignIn isOpen={isSignInOpen} onClose={() => setIsSignInOpen(false)} />
         </Flex>
     );
 }
