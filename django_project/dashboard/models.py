@@ -3,23 +3,7 @@ import uuid
 from django.contrib.auth.models import Group, User
 from django.db import models
 
-
-class Organisation(models.Model):
-    """Model to represent an organization that a dashboard can belong to."""
-
-    name = models.CharField(
-        max_length=255,
-        unique=True,
-        help_text="The name of the organization."
-    )
-
-    class Meta:
-        verbose_name = "Organisation"
-        verbose_name_plural = "Organisations"
-        ordering = ['name']
-
-    def __str__(self):
-        return self.name
+from base.models import Organisation
 
 
 class Dashboard(models.Model):

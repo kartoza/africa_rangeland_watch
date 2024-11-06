@@ -1,12 +1,5 @@
 from django.contrib import admin
-from .models import Dashboard, Organisation
-
-
-@admin.register(Organisation)
-class OrganisationAdmin(admin.ModelAdmin):
-    list_display = ('name',)
-    search_fields = ('name',)
-    ordering = ('name',)
+from .models import Dashboard
 
 
 @admin.register(Dashboard)
