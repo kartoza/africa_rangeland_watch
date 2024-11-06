@@ -1,10 +1,13 @@
 import { Helmet } from "react-helmet";
 import Header from "../../components/Header";
 import  Footer  from "../../components/Footer";
+import SignIn from "../../components/SignIn";
 import { IconButton, Image, Button, Flex, Text, Heading, Box } from "@chakra-ui/react";
-import React from "react";
+import React, { useState } from "react";
 
 export default function HomePage() {
+  const [isSignInOpen, setIsSignInOpen] = useState(false);
+  
   return (
     <>
       <Helmet>
@@ -85,12 +88,13 @@ export default function HomePage() {
               View Map
             </Button>
             <Button
-            backgroundColor="dark_orange.800"
-            _hover={{ backgroundColor: "light_orange.400" }}
-              fontWeight={700}
-              w="100%"
-              color="white.a700"
-              borderRadius="28px"
+              backgroundColor="dark_orange.800"
+              _hover={{ backgroundColor: "light_orange.400" }}
+                fontWeight={700}
+                w="100%"
+                color="white.a700"
+                borderRadius="28px"
+                onClick={() => setIsSignInOpen(true)}
             >
               Sign In
             </Button>
@@ -122,6 +126,10 @@ export default function HomePage() {
         >
           <Text fontSize="20px" fontWeight="bold" color="gray.800">Information here.</Text>
         </Box>
+      {/* Sign-In Modal */}
+      <SignIn isOpen={isSignInOpen} onClose={() => setIsSignInOpen(false)} />
+
+      {/* Footer */}
       <Footer />
     </>
   );
