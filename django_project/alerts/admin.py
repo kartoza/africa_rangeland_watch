@@ -4,8 +4,10 @@ from .models import AlertSetting, IndicatorAlertHistory, Indicator
 
 @admin.register(AlertSetting)
 class AlertSettingAdmin(admin.ModelAdmin):
-    list_display = ('name', 'enable_alert', 'email_alert', 'in_app_alert', 'last_alert')
-    list_filter = ('enable_alert', 'email_alert', 'in_app_alert', 'anomaly_detection_alert')
+    list_display = ('name', 'enable_alert',
+                    'email_alert', 'in_app_alert', 'last_alert')
+    list_filter = ('enable_alert', 'email_alert',
+                   'in_app_alert', 'anomaly_detection_alert')
     search_fields = ('name',)
     readonly_fields = ('created_at', 'updated_at')
     fieldsets = (
@@ -13,7 +15,8 @@ class AlertSettingAdmin(admin.ModelAdmin):
             'fields': ('name', 'enable_alert', 'last_alert')
         }),
         ('Threshold Settings', {
-            'fields': ('threshold_comparison', 'threshold_value', 'anomaly_detection_alert')
+            'fields': ('threshold_comparison',
+                       'threshold_value', 'anomaly_detection_alert')
         }),
         ('Notification Settings', {
             'fields': ('email_alert', 'in_app_alert')

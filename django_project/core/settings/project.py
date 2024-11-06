@@ -33,6 +33,7 @@ INSTALLED_APPS = INSTALLED_APPS + (
     'core',
     'frontend',
     'alerts',
+    'dashboard'
 )
 
 TEMPLATES[0]['DIRS'] += [

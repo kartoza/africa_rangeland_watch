@@ -3,9 +3,7 @@ from django.contrib.auth.models import User
 
 
 class Indicator(models.Model):
-    """
-    Model to represent an indicator used in alert settings.
-    """
+    """Model to represent an indicator used in alert settings."""
 
     name = models.CharField(
         max_length=200,
@@ -14,18 +12,19 @@ class Indicator(models.Model):
     )
 
     class Meta:
+        """Meta class for the Indicator model."""
+
         verbose_name = "Indicator"
         verbose_name_plural = "Indicators"
         ordering = ['name']
 
     def __str__(self):
+        """String representation of the Indicator model."""
         return self.name
 
 
 class AlertSetting(models.Model):
-    """
-    Model to define settings for alerts
-    """
+    """Model to define settings for alerts."""
 
     name = models.CharField(
         max_length=100,
@@ -91,18 +90,19 @@ class AlertSetting(models.Model):
     )
 
     class Meta:
+        """Meta class for the AlertSetting model."""
+
         verbose_name = "Alert Setting"
         verbose_name_plural = "Alert Settings"
         ordering = ['name']
 
     def __str__(self):
+        """String representation of the AlertSetting model."""
         return self.name
 
 
 class IndicatorAlertHistory(models.Model):
-    """
-    Model to store the history of alerts for a specific indicator.
-    """
+    """Model to store the history of alerts for a specific indicator."""
 
     text = models.TextField(
         blank=True,
@@ -118,10 +118,15 @@ class IndicatorAlertHistory(models.Model):
 
     created_at = models.DateTimeField(
         auto_now_add=True,
-        help_text='The date and time when this alert history entry was created.'
+        help_text=(
+            'The date and time when this alert '
+            'history entry was created.'
+        )
     )
 
     class Meta:
+        """Meta class for the IndicatorAlertHistory model."""
+
         verbose_name = "Indicator Alert History"
         verbose_name_plural = "Indicator Alert Histories"
         ordering = ['-created_at']
