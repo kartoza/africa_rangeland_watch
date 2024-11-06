@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 
 
 class Indicator(models.Model):
-    """Model to represent an indicator used in alert settings."""
+    """Model to represent an indicator used in analyses and alerts."""
 
     name = models.CharField(
         max_length=200,
