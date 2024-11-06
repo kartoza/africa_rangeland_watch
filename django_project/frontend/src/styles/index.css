@@ -1,0 +1,11 @@
+body {
+    margin: unset;
+    padding: unset;
+    font-family: "Inter", sans-serif;
+    box-sizing: border-box;
+    line-height: normal;
+  }
+  
+  ul {
+    margin-inline: unset !important;
+  }
