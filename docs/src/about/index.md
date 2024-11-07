@@ -24,6 +24,8 @@ Published under AGPL-3. See the [full license](license.md) text.
 | ----------- | ------------- |-|
 | Hugh Mann| [NotARobot]() | <img src="https://github.com/[username].png" alt= “” width="64" height="64"> |
 | Tim Sutton | [timlinux](https://github.com/timlinux) | <img src="https://github.com/timlinux.png" alt= “” width="64" height="64"> |
+| Ketan Bamniya | [ketankartoza](https://github.com/ketankartoza) | <img src="https://github.com/ketankartoza.png" alt="" width="64" height="64"> |
+
 
 ## Project funders/backers
 
