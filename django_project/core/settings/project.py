@@ -32,6 +32,11 @@ DEBUG = TEMPLATE_DEBUG = False
 INSTALLED_APPS = INSTALLED_APPS + (
     'core',
     'frontend',
+    'base',
+    'alerts',
+    'dashboard',
+    'analysis',
+    'layers'
 )
 
 TEMPLATES[0]['DIRS'] += [
