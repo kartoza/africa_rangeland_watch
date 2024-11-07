@@ -11,7 +11,17 @@ INSTALLED_APPS = INSTALLED_APPS + (
     'django_cleanup.apps.CleanupConfig',
     'django_celery_beat',
     'django_celery_results',
+
+    'allauth',
+    'allauth.account',
+
+    'invitations',
 )
+
+MIDDLEWARE += (
+    "allauth.account.middleware.AccountMiddleware",
+)
+
 WEBPACK_LOADER = {
     'DEFAULT': {
         'BUNDLE_DIR_NAME': 'frontend/',  # must end with slash
@@ -49,3 +59,10 @@ TEMPLATES[0]['OPTIONS']['context_processors'] += [
 ]
 
 SENTRY_DSN = os.environ.get('SENTRY_DSN', '')
+
+INVITATIONS_INVITATION_EXPIRY = 7
+INVITATIONS_INVITATION_MODEL = 'base.OrganisationInvitation'
+
+ACCOUNT_ADAPTER = "invitations.models.InvitationsAdapter"
+INVITATIONS_ADAPTER = ACCOUNT_ADAPTER
+INVITATIONS_ACCEPT_INVITE_AFTER_SIGNUP = True
