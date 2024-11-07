@@ -20,7 +20,7 @@ dev:
 	@echo "------------------------------------------------------------------"
 	@echo "Running in dev mode"
 	@echo "------------------------------------------------------------------"
-	@docker compose ${ARGS} up --no-recreate -d dev redis worker
+	@docker compose ${ARGS} up -d dev redis worker
 
 test:
 	@echo
