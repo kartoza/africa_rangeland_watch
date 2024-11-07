@@ -4,7 +4,7 @@ import App from "./App";
 import "./styles/index.css";
 import "./styles/font.css";
 
-const container = document.getElementById("root") as HTMLElement;
+const container = document.getElementById("app") as HTMLElement;
 const root = createRoot(container);
 
 root.render(<App />);

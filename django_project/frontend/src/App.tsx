@@ -3,7 +3,7 @@ import React from 'react';
 import reportWebVitals from './reportWebVitals';
 import ErrorBoundary from "./components/ErrorBoundary";
 import Routes from "./Routes";
-import { BrowserRouter as Router } from "react-router-dom";
+import { HashRouter as Router } from "react-router-dom";
 import { ChakraProvider } from "@chakra-ui/react";
 import theme from "./theme";
 
