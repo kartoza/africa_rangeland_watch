@@ -13,7 +13,7 @@ export default function Header(props: any) {
     return (
         <Flex
             {...props}
-            bg="dark_green.800"
+            bg="dark_green.700"
             justifyContent="space-between"
             alignItems="center"
             px="16px"
@@ -24,7 +24,7 @@ export default function Header(props: any) {
         >
             {/* Logo Section */}
             <Flex alignItems="center" flex="1">
-                <Image src="images/main_logo.svg" alt="Header Logo" h="52px" w="190px" fit="contain" />
+                <Image src="static/images/main_logo.svg" alt="Header Logo" h="52px" w="190px" fit="contain" />
             </Flex>
 
             {/* Menu Items */}
@@ -57,7 +57,7 @@ export default function Header(props: any) {
                 >
                     <Flex gap="4px" alignItems="center" cursor="pointer">
                         <Text>ABOUT</Text>
-                        <Image src="images/arrow_down.svg" alt="Dropdown Arrow" h="8px" w="16px" />
+                        <Image src="static/images/arrow_down.svg" alt="Dropdown Arrow" h="8px" w="16px" />
                     </Flex>
                     {menuOpen ? <MegaMenu /> : null}
                 </ListItem>
@@ -67,7 +67,7 @@ export default function Header(props: any) {
                 >
                     <Flex gap="4px" alignItems="center" cursor="pointer">
                         <Text>RESOURCES</Text>
-                        <Image src="images/arrow_down.svg" alt="Dropdown Arrow" h="8px" w="16px" />
+                        <Image src="static/images/arrow_down.svg" alt="Dropdown Arrow" h="8px" w="16px" />
                     </Flex>
                     {menuOpenAlt ? <MegaMenu /> : null}
                 </ListItem>
@@ -92,13 +92,13 @@ export default function Header(props: any) {
                     gap="20px"
                 >
                     <Link href="#">
-                        <Image src="images/search_icon.svg" alt="search" h="24px" />
+                        <Image src="static/images/search_icon.svg" alt="search" h="24px" />
                     </Link>
                     <Link href="#">
-                        <Image src="images/notifications_icon.svg" alt="Notif" h="24px" w="24px" />
+                        <Image src="static/images/notifications_icon.svg" alt="Notif" h="24px" w="24px" />
                     </Link>
                     <Link onClick={() => setIsSignInOpen(true)}> {/* Trigger modal on avatar click */}
-                        <Image src="images/user_avatar_header_icon.svg" alt="user" h="24px" />
+                        <Image src="static/images/user_avatar_header_icon.svg" alt="user" h="24px" />
                     </Link>
                 </Flex>
             </Flex>
