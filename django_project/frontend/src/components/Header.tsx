@@ -13,7 +13,7 @@ export default function Header(props: any) {
     return (
         <Flex
             {...props}
-            bg="dark_green.700"
+            bg="dark_green.800"
             justifyContent="space-between"
             alignItems="center"
             px="16px"
