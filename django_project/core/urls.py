@@ -19,8 +19,11 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
-    path('', include('frontend.urls')),
     path('admin/', admin.site.urls),
+    path('accounts/', include('allauth.urls')),
+    path('invitations/', include('invitations.urls', namespace='invitations')),
+    path('', include('base.urls')),
+    path('', include('frontend.urls')),
 ]
 
 if settings.DEBUG:

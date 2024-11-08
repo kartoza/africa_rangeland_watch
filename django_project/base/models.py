@@ -2,6 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
+from invitations.models import Invitation
 
 
 class Organisation(models.Model):
@@ -25,6 +26,18 @@ class Organisation(models.Model):
 
     def __str__(self):
         return self.name
+
+
+class OrganisationInvitation(Invitation):
+    organisation = models.ForeignKey(
+        Organisation,
+        on_delete=models.CASCADE,
+        related_name="invitations")
+
+    def __str__(self):
+        return (
+            f"Invitation for {self.email} to join {self.organisation.name}"
+        )
 
 
 class UserProfile(models.Model):
@@ -99,7 +112,15 @@ def create_user_profile(sender, instance, created, **kwargs):
     Signal to create a UserProfile whenever a new User is created.
     """
     if created:
-        UserProfile.objects.create(user=instance)
+        user_profile = UserProfile.objects.create(user=instance)
+
+        invitation = OrganisationInvitation.objects.filter(
+            email=instance.email).last()
+
+        if invitation:
+            organisation = invitation.organisation
+            user_profile.organisation = organisation
+            user_profile.save()
 
 
 @receiver(post_save, sender=User)
