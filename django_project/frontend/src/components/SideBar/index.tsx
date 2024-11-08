@@ -1,7 +1,17 @@
-import { ChakraProps, Box, useDisclosure, IconButton, Drawer, DrawerOverlay, DrawerContent, DrawerCloseButton } from "@chakra-ui/react";
+import {
+  ChakraProps,
+  Box,
+  useDisclosure,
+  IconButton,
+  Drawer,
+  DrawerOverlay,
+  DrawerContent,
+  DrawerCloseButton,
+} from "@chakra-ui/react";
 import React from "react";
 import { MenuItem, Menu } from "react-pro-sidebar";
 import { HamburgerIcon } from "@chakra-ui/icons";
+import { useLocation } from "react-router-dom";
 
 interface Props extends ChakraProps {
   className?: string;
@@ -9,6 +19,8 @@ interface Props extends ChakraProps {
 
 export default function Sidebar1(props: Props) {
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const location = useLocation();
+  const isActive = (path: string) => location.pathname === path;
 
   return (
     <>
@@ -19,7 +31,7 @@ export default function Sidebar1(props: Props) {
         pt={{ md: "58px", base: "16px", sm: "20px" }}
         flexDirection="column"
         display={{ md: "flex", base: "none" }}
-        bg="dark_green.800"  // Set solid dark green color
+        bg="dark_green.800"
         h="100vh"
         top="0px"
         overflow="auto"
@@ -42,9 +54,11 @@ export default function Sidebar1(props: Props) {
           display="flex"
           flexDirection="column"
           w="100%"
-          justifyContent="space-between"  // Evenly spaces items within sidebar
+          justifyContent="space-between"
         >
-          <MenuItem>Profile</MenuItem>
+          <MenuItem style={{ backgroundColor: isActive('/profile') ? '#a8d159' : 'transparent' }}>
+            Profile
+          </MenuItem>
           <MenuItem>Organisation Information</MenuItem>
           <MenuItem>My Dashboard</MenuItem>
           <MenuItem>Analysis Results</MenuItem>
@@ -55,17 +69,30 @@ export default function Sidebar1(props: Props) {
         </Box>
       </Box>
 
-      {/* Drawer for mobile */}
-      <IconButton
-        icon={<HamburgerIcon />}
-        aria-label="Open Sidebar"
+      {/* Sidebar strip for mobile */}
+      <Box
         display={{ base: "flex", md: "none" }}
+        width="10%"
+        bg="dark_green.800"
+        h="100vh"
         position="fixed"
-        top="1.5rem"  // Position below the header
-        left="0.5rem"  
-        onClick={onOpen}
-      />
+        left="0"
+        top="0"
+        alignItems="center"
+        justifyContent="center"
+        zIndex="1"
+      >
+        <IconButton
+          icon={<HamburgerIcon />}
+          aria-label="Open Sidebar"
+          onClick={onOpen}
+          color="white"
+          bg="transparent"
+          _hover={{ bg: "transparent" }}
+        />
+      </Box>
 
+      {/* Drawer for full mobile sidebar */}
       <Drawer isOpen={isOpen} placement="left" onClose={onClose}>
         <DrawerOverlay>
           <DrawerContent bg="green.900">
@@ -96,7 +123,12 @@ export default function Sidebar1(props: Props) {
                 flexDirection="column"
                 w="100%"
               >
-                <MenuItem onClick={onClose}>Profile</MenuItem>
+                <MenuItem
+                  style={{ backgroundColor: isActive('/profile') ? '#a8d159' : 'transparent' }}
+                  onClick={onClose}
+                >
+                  Profile
+                </MenuItem>
                 <MenuItem onClick={onClose}>Organisation Information</MenuItem>
                 <MenuItem onClick={onClose}>My Dashboard</MenuItem>
                 <MenuItem onClick={onClose}>Analysis Results</MenuItem>
