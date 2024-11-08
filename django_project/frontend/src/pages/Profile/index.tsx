@@ -8,15 +8,12 @@ import {
   Input,
   Box,
   useBreakpointValue,
-  IconButton,
   Image
 } from "@chakra-ui/react";
-import { HamburgerIcon } from "@chakra-ui/icons";
 import React, { useState } from "react";
 
 export default function ProfileInformationPage() {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
-  const toggleSidebar = () => setSidebarOpen(!isSidebarOpen);
   const isMobile = useBreakpointValue({ base: true, md: false });
 
   return (
@@ -28,23 +25,15 @@ export default function ProfileInformationPage() {
           content="Update your basic information, manage your account settings, and set your preferences for using the platform. Ideal for researchers."
         />
       </Helmet>
-      <Box bg="white" w="100%">
-        <Header />
-        {isMobile && (
-          <IconButton
-            icon={<HamburgerIcon />}
-            aria-label="Toggle Sidebar"
-            position="fixed"
-            top="1.5rem"
-            left="1rem"
-            onClick={toggleSidebar}
-            zIndex="1000"
-          />
-        )}
-        <Flex mr={{ md: "62px", base: "0px" }} gap="30px" alignItems="start">
-          <Sidebar1 display={isSidebarOpen || !isMobile ? "flex" : "none"} />
+      <Header />
+      
+      <Box bg="white" w="100%" p={{ base: "50px", md: "0px" }} >
+        
+
+        <Flex mr={{ md: "62px", base: "0px" }} gap="30px" alignItems="start" mt={{base: "-20%" ,md: "0%"}}>
+        <Sidebar1 display={isSidebarOpen || !isMobile ? "flex" : "none"} />
           <Flex mt="24px" gap="14px" flex={1} flexDirection="column" alignItems="start">
-            <Heading size="lg" as="h1" mb={6}>Basic Information</Heading>
+            <Heading size="lg" as="h1" mb={6} color={{base: "black"}}>Basic Information</Heading>
             <Flex
               gap="30px"
               alignSelf="stretch"
@@ -191,7 +180,7 @@ export default function ProfileInformationPage() {
                 </Flex>
 
                 {/* Row 5: Country */}
-                <Flex flexDirection="column"  w="50%">
+                <Flex flexDirection="column"  w= {{ base: "100%", md: "50%" }}>
                   <Heading as="h6" size="xs" color="black" mb="2">
                     Country
                   </Heading>
