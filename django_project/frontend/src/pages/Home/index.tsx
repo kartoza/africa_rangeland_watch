@@ -18,7 +18,7 @@ export default function HomePage() {
       {/* Main container with background image */}
       <Box
         h={{ md: "60vh", base: "70vh" }}
-        bgImage="url('/images/dashboard/dashboard_image1.svg')"
+        bgImage="url('/static/dashboard/dashboard_image1.svg')"
         bgSize="cover"
         bgPosition="center"
         bgRepeat="no-repeat"
@@ -103,7 +103,7 @@ export default function HomePage() {
           {/* Scroll Down Icon */}
           <IconButton
             size="sm"
-            icon={<Image src="images/down_arrow.svg" />}
+            icon={<Image src="/static/images/down_arrow.svg" />}
             aria-label="Scroll Down Icon"
             w="54px"
             borderRadius="6px"

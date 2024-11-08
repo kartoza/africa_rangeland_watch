@@ -1,11 +1,11 @@
-site_name: Project Name
+site_name: Africa Rangeland Watch
 site_description: "Project technical and user documentation."
 site_author: "Kartoza"
 docs_dir: ./src
 site_dir: ./site
-repo_name: "Project Name"
-repo_url: "https://github.com/kartoza/<project name>"
-edit_uri: "https://github.com/kartoza/<project name>/blob/main/docs/"
+repo_name: "Africa Rangeland Watch"
+repo_url: "https://github.com/kartoza/africa_rangeland_watch.git"
+edit_uri: "https://github.com/kartoza/africa_rangeland_watch/tree/main/docs/"
 
 copyright: Kartoza and Contributors
 

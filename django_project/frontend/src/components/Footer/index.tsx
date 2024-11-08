@@ -75,7 +75,7 @@ export default function Footer(props: Props) {
         flexDirection={{ base: "column", md: "row" }}
         mt="20px"
       >
-        <Image src="images/main_logo.svg" alt="Footer Logo" h="58px" />
+        <Image src="/static/images/main_logo.svg" alt="Footer Logo" h="58px" />
 
         <UnorderedList styleType="none" display="flex" justifyContent="center" flexWrap="wrap" gap="20px">
           <ListItem>

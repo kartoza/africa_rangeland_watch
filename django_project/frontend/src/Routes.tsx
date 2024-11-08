@@ -7,7 +7,7 @@ import ProfileInformationPage from "./pages/Profile";
 
 const ProjectRoutes = () => {
   const element = useRoutes([
-    { path: "", element: <NotFound /> },
+    { path: "", element: <HomePage /> },
     { path: "/routes", element: <Home /> },
     { path: "/home", element: <HomePage />},
     { path: "/profile", element: <ProfileInformationPage />}
