@@ -44,7 +44,7 @@ services:
       - REDIS_PASSWORD=${REDIS_PASSWORD:-redis_password}
 
   db:
-    image: kartoza/postgis:16-3.4
+    image: kartoza/postgis:17.3.5
     volumes:
       - data-volume:/opt/postgres/data
     environment:
