@@ -11,10 +11,21 @@ import {
   Image
 } from "@chakra-ui/react";
 import React, { useState } from "react";
+import RequestOrganisation from "../../components/RequestOrganisation";
+
 
 export default function ProfileInformationPage() {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const isMobile = useBreakpointValue({ base: true, md: false });
+  const [isRequestModalOpen, setRequestModalOpen] = useState(false);
+
+  const openRequestModal = () => {
+    setRequestModalOpen(true);
+  };
+
+  const closeRequestModal = () => {
+    setRequestModalOpen(false);
+  };
 
   return (
     <>
@@ -243,6 +254,7 @@ export default function ProfileInformationPage() {
                   color="darkgreen"
                   borderRadius={0}
                   p={4}
+                  onClick={openRequestModal}
                 >
                   Request Organisation
                 </Button>
@@ -250,6 +262,11 @@ export default function ProfileInformationPage() {
             </Flex>
           </Flex>
         </Flex>
+        {/* Add the RequestOrganisation modal */}
+        <RequestOrganisation 
+          isOpen={isRequestModalOpen} 
+          onClose={closeRequestModal}
+        />
       </Box>
     </>
   );
