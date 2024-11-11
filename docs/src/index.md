@@ -11,7 +11,7 @@ license: This program is free software; you can redistribute it and/or modify it
 #context_id: 1234
 ---
 
-# Template project title
+# Africa Rangeland Watch
 <!-- This is the Home Page, replace all of the titles with relevant titles -->
 
 Strapline <!-- replace with one line product description e.g. "Welcome to PROJECT_NAME, where the aim is to ..." -->
