@@ -90,7 +90,7 @@ export default function Header(props: any) {
                         <Link href="#"><Image src="static/images/search_icon.svg" alt="search" h="24px" /></Link>
                         <Link href="#"><Image src="static/images/notifications_icon.svg" alt="Notif" h="24px" w="24px" /></Link>
                         <Link onClick={() => setIsSignInOpen(true)}>
-                            <Image src="images/user_avatar_header_icon.svg" alt="user" h="24px" />
+                            <Image src="static/images/user_avatar_header_icon.svg" alt="user" h="24px" />
                         </Link>
                     </Flex>
                 </Flex>
