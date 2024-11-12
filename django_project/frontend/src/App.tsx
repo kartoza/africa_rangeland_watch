@@ -2,7 +2,7 @@ import * as Sentry from "@sentry/react";
 import React from 'react';
 import reportWebVitals from './reportWebVitals';
 import ErrorBoundary from "./components/ErrorBoundary";
-import { BrowserRouter as Router } from "react-router-dom";
+import { HashRouter as Router } from "react-router-dom";
 import { ChakraProvider } from "@chakra-ui/react";
 import { Provider } from 'react-redux';
 import theme from "./theme";
