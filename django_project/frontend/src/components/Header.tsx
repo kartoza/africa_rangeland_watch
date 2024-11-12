@@ -217,8 +217,8 @@ export default function Header(props: any) {
                     borderRadius="8px"
                     boxShadow="0 4px 12px rgba(0, 0, 0, 0.2)"
                 >
-                    <Link href="/profile" mb="4px">Profile</Link>
-                    <Link href="/dashboard" mb="4px">Dashboard</Link>
+                    <Link href="#/profile" mb="4px">Profile</Link>
+                    <Link href="#/dashboard" mb="4px">Dashboard</Link>
                     <Link onClick={handleLogout}>Logout</Link>
                 </Flex>
             )}
