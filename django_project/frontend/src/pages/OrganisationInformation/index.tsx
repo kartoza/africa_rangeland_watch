@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Helmet from "react-helmet";
 import {
   Box,
@@ -22,8 +22,8 @@ import {
 } from "@chakra-ui/react";
 import { FaPlus, FaTrash } from "react-icons/fa";
 import Header from "../../components/Header";
-import Sidebar1 from "../../components/SideBar";
-import '../../styles/index.css';
+import Sidebar from "../../components/SideBar";
+import "../../styles/index.css";
 
 // Define types for the data
 interface Member {
@@ -42,44 +42,82 @@ interface Organization {
   invitations: Invitation[];
 }
 
-// Dummy data for demonstration
-const organizations: { [key: string]: Organization } = {
-  default: {
-    members: [],
-    invitations: [],
-  },
-  org2: {
-    members: [],
-    invitations: [],
-  },
-};
-
 export default function OrganisationInformation() {
-  const [isSidebarOpen, setSidebarOpen] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [organizations, setOrganizations] = useState<{ [key: string]: Organization }>({});
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchOrganizations = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        
+        const response = await fetch("/api/organizations"); // Example API endpoint will replace with real one TODO
+        if (!response.ok) {
+          throw new Error("Failed to fetch organizations.");
+        }
+        
+        const data = await response.json();
+        setOrganizations(data);
+      } catch (err: any) {
+        setError("No data available.");
+        setOrganizations({
+            default: {
+              members: [],
+              invitations: [],
+            }
+          })
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchOrganizations();
+  }, []);
 
   return (
     <>
       <Helmet>
         <title>Organisation Information - Manage Organisation Details</title>
-        <meta name="description" content="Manage your organisation's information, members, and invitations." />
+        <meta
+          name="description"
+          content="Manage your organisation's information, members, and invitations."
+        />
       </Helmet>
       <Header />
 
       <Box bg="white" w="100%">
         <Flex direction={{ base: "column", md: "row" }} gap="30px" alignItems="start">
           {/* Sidebar */}
-          <Sidebar1 display={{ base: "none", md: "flex" }} />
+          <Sidebar display={{ base: "none", md: "flex" }} />
 
           {/* Main Content */}
-          <Box flex="1" ml={{ base: "55px", md: "0px" }} mt={{ base: "0px", md: "20px" }} width={{base: "80%", md: "auto"}} overflow={'auto'}>
+          <Box
+            flex="1"
+            ml={{ base: "55px", md: "0px" }}
+            mt={{ base: "0px", md: "20px" }}
+            width={{ base: "80%", md: "auto" }}
+            overflow={"auto"}
+          >
             <Heading size="lg" mb={6} color="black">
               My Organisations
             </Heading>
 
+            {loading && <p>Loading...</p>}
+            {error && <p>{error}</p>}
+
             {/* Organisation Tabs */}
             <Tabs variant="unstyled">
-              <Box width="fit-content" border="1px solid" borderColor="gray.300" borderBottom="none" borderRadius="5px" overflow="hidden">
+              <Box
+                width="fit-content"
+                border="1px solid"
+                borderColor="gray.300"
+                borderBottom="none"
+                borderRadius="5px"
+                overflow="hidden"
+              >
                 <TabList>
                   {Object.keys(organizations).map((orgKey, idx) => (
                     <Tab
@@ -95,7 +133,7 @@ export default function OrganisationInformation() {
                 </TabList>
               </Box>
 
-              <Divider mb={6} borderColor="black" borderWidth="1px" width={{base:"auto", md:"99%"}}/>
+              <Divider mb={6} borderColor="black" borderWidth="1px" width={{ base: "auto", md: "99%" }} />
 
               <TabPanels>
                 {Object.values(organizations).map((organization, index) => (
