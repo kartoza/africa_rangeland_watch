@@ -14,6 +14,8 @@ INSTALLED_APPS = INSTALLED_APPS + (
 
     'allauth',
     'allauth.account',
+    'allauth.socialaccount',
+    'dj_rest_auth',
 
     'invitations',
 )
@@ -66,3 +68,10 @@ INVITATIONS_INVITATION_MODEL = 'base.OrganisationInvitation'
 ACCOUNT_ADAPTER = "invitations.models.InvitationsAdapter"
 INVITATIONS_ADAPTER = ACCOUNT_ADAPTER
 INVITATIONS_ACCEPT_INVITE_AFTER_SIGNUP = True
+
+ACCOUNT_AUTHENTICATION_METHOD = 'email'
+ACCOUNT_AUTHENTICATED_LOGIN_REDIRECTS = False
+ACCOUNT_EMAIL_REQUIRED = True
+ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
+ACCOUNT_AUTHENTICATED_REMEMBER = True
+ACCOUNT_USERNAME_REQUIRED = False
