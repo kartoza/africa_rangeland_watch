@@ -25,7 +25,7 @@ const PrivateRoute = ({ Component }: PrivateRouteProps) => {
     return <Component />;
   }
 
-  return <Navigate to="/login" />;
+  return <Navigate to="/" />;
 };
 
 export default PrivateRoute;
