@@ -17,7 +17,7 @@ interface Props extends ChakraProps {
   className?: string;
 }
 
-export default function Sidebar1(props: Props) {
+export default function Sidebar(props: Props) {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const location = useLocation();
   const navigate = useNavigate();
