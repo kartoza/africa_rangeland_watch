@@ -14,10 +14,12 @@ import {
   Stack,
   Tag,
   TagLabel,
+  useDisclosure,
 } from "@chakra-ui/react";
 import { FaFilter } from "react-icons/fa";
 import Header from "../../components/Header";
 import Sidebar from "../../components/SideBar";
+import AnalysisSideBar from "../../components/SideBar/AnalysisSideBar";
 import "../../styles/index.css";
 
 export default function AnalysisResults() {
@@ -26,11 +28,18 @@ export default function AnalysisResults() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
+  const [selectedAnalysis, setSelectedAnalysis] = useState(null);
+  const { isOpen, onOpen, onClose } = useDisclosure();
 
   // Filtering based on search term
   const filteredData = analysisData.filter((analysis) =>
     analysis.heading.toLowerCase().includes(searchTerm.toLowerCase())
   );
+
+  const handleViewClick = (analysis: any) => {
+    setSelectedAnalysis(analysis);
+    onOpen();
+  };
 
   useEffect(() => {
     const fetchAnalysisData = async () => {
@@ -207,6 +216,7 @@ export default function AnalysisResults() {
                           width="auto"
                           borderRadius="0px"
                           h={10}
+                          onClick={() => handleViewClick(analysis)} 
                         >
                           View
                         </Button>
@@ -235,6 +245,9 @@ export default function AnalysisResults() {
           </Box>
         </Flex>
       </Box>
+
+      {/* Right Sidebar */}
+      <AnalysisSideBar isOpen={isOpen} onClose={onClose} selectedAnalysis={selectedAnalysis} />
     </>
   );
 }
