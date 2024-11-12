@@ -3,6 +3,7 @@ import { useRoutes } from "react-router-dom";
 import HomePage from "./pages/Home/index";
 import NotFound from "./pages/NotFound";
 import ProfileInformationPage from "./pages/Profile";
+import OrganisationInformation from "./pages/OrganisationInformation";
 import PrivateRoute from "./PrivateRoute";
 
 const ProjectRoutes = () => {
@@ -14,7 +15,11 @@ const ProjectRoutes = () => {
     {
       path: "/profile",
       element: <PrivateRoute Component={ProfileInformationPage} />,
-    }
+    },
+    {
+      path: "/organisation",
+      element: <PrivateRoute Component={OrganisationInformation} />,
+    },
   ]);
 
   return routes;

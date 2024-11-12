@@ -11,15 +11,16 @@ import {
 import React from "react";
 import { MenuItem, Menu } from "react-pro-sidebar";
 import { HamburgerIcon } from "@chakra-ui/icons";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 
 interface Props extends ChakraProps {
   className?: string;
 }
 
-export default function Sidebar1(props: Props) {
+export default function Sidebar(props: Props) {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const location = useLocation();
+  const navigate = useNavigate();
   const isActive = (path: string) => location.pathname === path;
 
   return (
@@ -32,7 +33,7 @@ export default function Sidebar1(props: Props) {
         flexDirection="column"
         display={{ md: "flex", base: "none" }}
         bg="dark_green.800"
-        h="100vh"
+        h={{base:"auto" ,md:"100vh"}}
         top="0px"
         overflow="auto"
         sx={{ position: "sticky !important" }}
@@ -56,16 +57,24 @@ export default function Sidebar1(props: Props) {
           w="100%"
           justifyContent="space-between"
         >
-          <MenuItem style={{ backgroundColor: isActive('/profile') ? '#a8d159' : 'transparent' }}>
+          <MenuItem
+            style={{ backgroundColor: isActive('/profile') ? '#a8d159' : 'transparent' }}
+            onClick={() => navigate('/profile')}
+          >
             Profile
           </MenuItem>
-          <MenuItem>Organisation Information</MenuItem>
-          <MenuItem>My Dashboard</MenuItem>
-          <MenuItem>Analysis Results</MenuItem>
-          <MenuItem>Uploaded Resources</MenuItem>
-          <MenuItem>Support</MenuItem>
-          <MenuItem>Notifications</MenuItem>
-          <MenuItem>Sign Out</MenuItem>
+          <MenuItem
+            style={{ backgroundColor: isActive('/organisation') ? '#a8d159' : 'transparent' }}
+            onClick={() => navigate('/organisation')}
+          >
+            Organisation Information
+          </MenuItem>
+          <MenuItem onClick={() => navigate('/dashboard')}>My Dashboard</MenuItem>
+          <MenuItem onClick={() => navigate('/analysis-results')}>Analysis Results</MenuItem>
+          <MenuItem onClick={() => navigate('/uploaded-resources')}>Uploaded Resources</MenuItem>
+          <MenuItem onClick={() => navigate('/support')}>Support</MenuItem>
+          <MenuItem onClick={() => navigate('/notifications')}>Notifications</MenuItem>
+          <MenuItem onClick={() => navigate('/sign-out')}>Sign Out</MenuItem>
         </Box>
       </Box>
 
@@ -125,17 +134,28 @@ export default function Sidebar1(props: Props) {
               >
                 <MenuItem
                   style={{ backgroundColor: isActive('/profile') ? '#a8d159' : 'transparent' }}
-                  onClick={onClose}
+                  onClick={() => {
+                    navigate('/profile');
+                    onClose();
+                  }}
                 >
                   Profile
                 </MenuItem>
-                <MenuItem onClick={onClose}>Organisation Information</MenuItem>
-                <MenuItem onClick={onClose}>My Dashboard</MenuItem>
-                <MenuItem onClick={onClose}>Analysis Results</MenuItem>
-                <MenuItem onClick={onClose}>Uploaded Resources</MenuItem>
-                <MenuItem onClick={onClose}>Support</MenuItem>
-                <MenuItem onClick={onClose}>Notifications</MenuItem>
-                <MenuItem onClick={onClose}>Sign Out</MenuItem>
+                <MenuItem
+                  style={{ backgroundColor: isActive('/organisation') ? '#a8d159' : 'transparent' }}
+                  onClick={() => {
+                    navigate('/organisation');
+                    onClose();
+                  }}
+                >
+                  Organisation Information
+                </MenuItem>
+                <MenuItem onClick={() => { navigate('/dashboard'); onClose(); }}>My Dashboard</MenuItem>
+                <MenuItem onClick={() => { navigate('/analysis-results'); onClose(); }}>Analysis Results</MenuItem>
+                <MenuItem onClick={() => { navigate('/uploaded-resources'); onClose(); }}>Uploaded Resources</MenuItem>
+                <MenuItem onClick={() => { navigate('/support'); onClose(); }}>Support</MenuItem>
+                <MenuItem onClick={() => { navigate('/notifications'); onClose(); }}>Notifications</MenuItem>
+                <MenuItem onClick={() => { navigate('/sign-out'); onClose(); }}>Sign Out</MenuItem>
               </Box>
             </Box>
           </DrawerContent>
