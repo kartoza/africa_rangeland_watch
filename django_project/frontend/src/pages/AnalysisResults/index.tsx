@@ -20,7 +20,7 @@ import Header from "../../components/Header";
 import Sidebar from "../../components/SideBar";
 import "../../styles/index.css";
 
-export default function AnalysesResults() {
+export default function AnalysisResults() {
   const [searchTerm, setSearchTerm] = useState("");
   const [analysisData, setAnalysisData] = useState([]);
   const [loading, setLoading] = useState(true);
