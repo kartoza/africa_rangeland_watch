@@ -21,11 +21,16 @@ from .custom_auth_view import CheckTokenView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('invitations/', include('invitations.urls', namespace='invitations')),
+    path(
+        'invitations/',
+        include('invitations.urls', namespace='invitations')),
     path('', include('base.urls')),
     path('', include('frontend.urls')),
     path('auth/', include('dj_rest_auth.urls')),
-    path('api/auth/check-token/', CheckTokenView.as_view(), name='check-token'),
+    path(
+        'api/auth/check-token/',
+        CheckTokenView.as_view(), name='check-token'
+    ),
 ]
 
 if settings.DEBUG:
