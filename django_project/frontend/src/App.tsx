@@ -2,10 +2,12 @@ import * as Sentry from "@sentry/react";
 import React from 'react';
 import reportWebVitals from './reportWebVitals';
 import ErrorBoundary from "./components/ErrorBoundary";
-import Routes from "./Routes";
 import { HashRouter as Router } from "react-router-dom";
 import { ChakraProvider } from "@chakra-ui/react";
+import { Provider } from 'react-redux';
 import theme from "./theme";
+import store from "./store";
+import ProjectRoutes from "./Routes";
 
 Sentry.init({
     dsn: (window as any).sentryDsn,
@@ -18,9 +20,11 @@ function App() {
   return (
     <ErrorBoundary>
       <ChakraProvider theme={theme}>
-        <Router>
-          <Routes />
-        </Router>
+        <Provider store={store}>
+          <Router>
+            <ProjectRoutes />
+          </Router>
+        </Provider>
       </ChakraProvider>
     </ErrorBoundary>
   );
