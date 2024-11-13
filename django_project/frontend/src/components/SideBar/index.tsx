@@ -71,7 +71,12 @@ export default function Sidebar(props: Props) {
           </MenuItem>
           <MenuItem onClick={() => navigate('/dashboard')}>My Dashboard</MenuItem>
           <MenuItem onClick={() => navigate('/analysis-results')}>Analysis Results</MenuItem>
-          <MenuItem onClick={() => navigate('/uploaded-resources')}>Uploaded Resources</MenuItem>
+          <MenuItem
+            style={{ backgroundColor: isActive('/uploaded-resources') ? '#a8d159' : 'transparent' }}
+            onClick={() => navigate('/uploaded-resources')}
+          >
+            Uploaded Resources
+          </MenuItem>
           <MenuItem onClick={() => navigate('/support')}>Support</MenuItem>
           <MenuItem onClick={() => navigate('/notifications')}>Notifications</MenuItem>
           <MenuItem onClick={() => navigate('/sign-out')}>Sign Out</MenuItem>
@@ -152,7 +157,15 @@ export default function Sidebar(props: Props) {
                 </MenuItem>
                 <MenuItem onClick={() => { navigate('/dashboard'); onClose(); }}>My Dashboard</MenuItem>
                 <MenuItem onClick={() => { navigate('/analysis-results'); onClose(); }}>Analysis Results</MenuItem>
-                <MenuItem onClick={() => { navigate('/uploaded-resources'); onClose(); }}>Uploaded Resources</MenuItem>
+                <MenuItem
+                  style={{ backgroundColor: isActive('/uploaded-resources') ? '#a8d159' : 'transparent' }}
+                  onClick={() => {
+                    navigate('/uploaded-resources');
+                    onClose();
+                  }}
+                >
+                  Uploaded Resources
+                </MenuItem>
                 <MenuItem onClick={() => { navigate('/support'); onClose(); }}>Support</MenuItem>
                 <MenuItem onClick={() => { navigate('/notifications'); onClose(); }}>Notifications</MenuItem>
                 <MenuItem onClick={() => { navigate('/sign-out'); onClose(); }}>Sign Out</MenuItem>
