@@ -17,13 +17,20 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
+from .custom_auth_view import CheckTokenView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('accounts/', include('allauth.urls')),
-    path('invitations/', include('invitations.urls', namespace='invitations')),
+    path(
+        'invitations/',
+        include('invitations.urls', namespace='invitations')),
     path('', include('base.urls')),
     path('', include('frontend.urls')),
+    path('auth/', include('dj_rest_auth.urls')),
+    path(
+        'api/auth/check-token/',
+        CheckTokenView.as_view(), name='check-token'
+    ),
 ]
 
 if settings.DEBUG:
