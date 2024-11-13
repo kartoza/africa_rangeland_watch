@@ -1,10 +1,14 @@
-import React from "react";
+import React, { Suspense } from "react";
 import { useRoutes } from "react-router-dom";
-import HomePage from "./pages/Home/index";
-import NotFound from "./pages/NotFound";
-import ProfileInformationPage from "./pages/Profile";
-import OrganisationInformation from "./pages/OrganisationInformation";
 import PrivateRoute from "./PrivateRoute";
+
+const Center = React.lazy(() => import("@chakra-ui/react").then(module => ({ default: module.Center })));
+const Spinner = React.lazy(() => import("@chakra-ui/react").then(module => ({ default: module.Spinner })));
+
+const HomePage = React.lazy(() => import("./pages/Home/index"));
+const NotFound = React.lazy(() => import("./pages/NotFound"));
+const ProfileInformationPage = React.lazy(() => import("./pages/Profile"));
+const OrganisationInformation = React.lazy(() => import("./pages/OrganisationInformation"));
 
 const ProjectRoutes = () => {
   const routes = useRoutes([
@@ -22,7 +26,19 @@ const ProjectRoutes = () => {
     },
   ]);
 
-  return routes;
+  return (
+    <Suspense
+      fallback={
+        <Suspense fallback={<div></div>}>
+          <Center h="100vh">
+            <Spinner size="xl" />
+          </Center>
+        </Suspense>
+      }
+    >
+      {routes}
+    </Suspense>
+  );
 };
 
 export default ProjectRoutes;
