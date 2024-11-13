@@ -66,7 +66,7 @@ export default function ProfileInformationPage() {
                 alignItems="center"
               >
                 <Image
-                  src="static/images/profile_user_avatar.svg"
+                  src="/static/images/profile_user_avatar.svg"
                   alt="User Profile Avatar"
                   w="80%"
                   h="80%"

@@ -3,263 +3,548 @@
   "assets": {
     "09be6892072ac94c44db.ttf": {
       "name": "09be6892072ac94c44db.ttf",
-      "path": "/home/dimas/Documents/projects/Kartoza/africa_rangeland_watch/django_project/frontend/bundles/frontend/09be6892072ac94c44db.ttf",
-      "publicPath": "http://dev.local:9000/static/09be6892072ac94c44db.ttf"
+      "path": "/home/web/django_project/frontend/bundles/frontend/09be6892072ac94c44db.ttf",
+      "publicPath": "http://localhost:9000/static/09be6892072ac94c44db.ttf"
     },
-    "App.00183b4c36cac63e376d.hot-update.js": {
-      "name": "App.00183b4c36cac63e376d.hot-update.js",
-      "path": "/home/dimas/Documents/projects/Kartoza/africa_rangeland_watch/django_project/frontend/bundles/frontend/App.00183b4c36cac63e376d.hot-update.js",
-      "publicPath": "http://dev.local:9000/static/App.00183b4c36cac63e376d.hot-update.js"
+    "App.0442e9924d2df3abe438.hot-update.js": {
+      "name": "App.0442e9924d2df3abe438.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.0442e9924d2df3abe438.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.0442e9924d2df3abe438.hot-update.js"
     },
-    "App.00183b4c36cac63e376d.hot-update.json": {
-      "name": "App.00183b4c36cac63e376d.hot-update.json",
-      "path": "/home/dimas/Documents/projects/Kartoza/africa_rangeland_watch/django_project/frontend/bundles/frontend/App.00183b4c36cac63e376d.hot-update.json",
-      "publicPath": "http://dev.local:9000/static/App.00183b4c36cac63e376d.hot-update.json"
+    "App.0442e9924d2df3abe438.hot-update.json": {
+      "name": "App.0442e9924d2df3abe438.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.0442e9924d2df3abe438.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.0442e9924d2df3abe438.hot-update.json"
     },
-    "App.0dbcf20d9efceee7a4ff.hot-update.js": {
-      "name": "App.0dbcf20d9efceee7a4ff.hot-update.js",
-      "path": "/home/dimas/Documents/projects/Kartoza/africa_rangeland_watch/django_project/frontend/bundles/frontend/App.0dbcf20d9efceee7a4ff.hot-update.js",
-      "publicPath": "http://dev.local:9000/static/App.0dbcf20d9efceee7a4ff.hot-update.js"
+    "App.0890e65dfe994645969b.hot-update.js": {
+      "name": "App.0890e65dfe994645969b.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.0890e65dfe994645969b.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.0890e65dfe994645969b.hot-update.js"
     },
-    "App.0dbcf20d9efceee7a4ff.hot-update.json": {
-      "name": "App.0dbcf20d9efceee7a4ff.hot-update.json",
-      "path": "/home/dimas/Documents/projects/Kartoza/africa_rangeland_watch/django_project/frontend/bundles/frontend/App.0dbcf20d9efceee7a4ff.hot-update.json",
-      "publicPath": "http://dev.local:9000/static/App.0dbcf20d9efceee7a4ff.hot-update.json"
+    "App.0890e65dfe994645969b.hot-update.json": {
+      "name": "App.0890e65dfe994645969b.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.0890e65dfe994645969b.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.0890e65dfe994645969b.hot-update.json"
     },
-    "App.145cddc435934bbac48d.hot-update.js": {
-      "name": "App.145cddc435934bbac48d.hot-update.js",
-      "path": "/home/dimas/Documents/projects/Kartoza/africa_rangeland_watch/django_project/frontend/bundles/frontend/App.145cddc435934bbac48d.hot-update.js",
-      "publicPath": "http://dev.local:9000/static/App.145cddc435934bbac48d.hot-update.js"
+    "App.14cf6b7138152977f185.hot-update.js": {
+      "name": "App.14cf6b7138152977f185.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.14cf6b7138152977f185.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.14cf6b7138152977f185.hot-update.js"
     },
-    "App.145cddc435934bbac48d.hot-update.json": {
-      "name": "App.145cddc435934bbac48d.hot-update.json",
-      "path": "/home/dimas/Documents/projects/Kartoza/africa_rangeland_watch/django_project/frontend/bundles/frontend/App.145cddc435934bbac48d.hot-update.json",
-      "publicPath": "http://dev.local:9000/static/App.145cddc435934bbac48d.hot-update.json"
+    "App.14cf6b7138152977f185.hot-update.json": {
+      "name": "App.14cf6b7138152977f185.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.14cf6b7138152977f185.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.14cf6b7138152977f185.hot-update.json"
     },
-    "App.190959c53c0824c57268.hot-update.js": {
-      "name": "App.190959c53c0824c57268.hot-update.js",
-      "path": "/home/dimas/Documents/projects/Kartoza/africa_rangeland_watch/django_project/frontend/bundles/frontend/App.190959c53c0824c57268.hot-update.js",
-      "publicPath": "http://dev.local:9000/static/App.190959c53c0824c57268.hot-update.js"
+    "App.216547c284dd46f96bad.hot-update.js": {
+      "name": "App.216547c284dd46f96bad.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.216547c284dd46f96bad.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.216547c284dd46f96bad.hot-update.js"
     },
-    "App.190959c53c0824c57268.hot-update.json": {
-      "name": "App.190959c53c0824c57268.hot-update.json",
-      "path": "/home/dimas/Documents/projects/Kartoza/africa_rangeland_watch/django_project/frontend/bundles/frontend/App.190959c53c0824c57268.hot-update.json",
-      "publicPath": "http://dev.local:9000/static/App.190959c53c0824c57268.hot-update.json"
+    "App.216547c284dd46f96bad.hot-update.json": {
+      "name": "App.216547c284dd46f96bad.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.216547c284dd46f96bad.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.216547c284dd46f96bad.hot-update.json"
     },
-    "App.1c39c2fc966f856a90a1.hot-update.js": {
-      "name": "App.1c39c2fc966f856a90a1.hot-update.js",
-      "path": "/home/dimas/Documents/projects/Kartoza/africa_rangeland_watch/django_project/frontend/bundles/frontend/App.1c39c2fc966f856a90a1.hot-update.js",
-      "publicPath": "http://dev.local:9000/static/App.1c39c2fc966f856a90a1.hot-update.js"
+    "App.26eb6d9e237cfde672a6.hot-update.js": {
+      "name": "App.26eb6d9e237cfde672a6.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.26eb6d9e237cfde672a6.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.26eb6d9e237cfde672a6.hot-update.js"
     },
-    "App.1c39c2fc966f856a90a1.hot-update.json": {
-      "name": "App.1c39c2fc966f856a90a1.hot-update.json",
-      "path": "/home/dimas/Documents/projects/Kartoza/africa_rangeland_watch/django_project/frontend/bundles/frontend/App.1c39c2fc966f856a90a1.hot-update.json",
-      "publicPath": "http://dev.local:9000/static/App.1c39c2fc966f856a90a1.hot-update.json"
+    "App.26eb6d9e237cfde672a6.hot-update.json": {
+      "name": "App.26eb6d9e237cfde672a6.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.26eb6d9e237cfde672a6.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.26eb6d9e237cfde672a6.hot-update.json"
     },
-    "App.29ad108bd9a83a7bf8b5.hot-update.js": {
-      "name": "App.29ad108bd9a83a7bf8b5.hot-update.js",
-      "path": "/home/dimas/Documents/projects/Kartoza/africa_rangeland_watch/django_project/frontend/bundles/frontend/App.29ad108bd9a83a7bf8b5.hot-update.js",
-      "publicPath": "http://dev.local:9000/static/App.29ad108bd9a83a7bf8b5.hot-update.js"
+    "App.2dadb60ed260d40cbf5b.hot-update.js": {
+      "name": "App.2dadb60ed260d40cbf5b.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.2dadb60ed260d40cbf5b.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.2dadb60ed260d40cbf5b.hot-update.js"
     },
-    "App.29ad108bd9a83a7bf8b5.hot-update.json": {
-      "name": "App.29ad108bd9a83a7bf8b5.hot-update.json",
-      "path": "/home/dimas/Documents/projects/Kartoza/africa_rangeland_watch/django_project/frontend/bundles/frontend/App.29ad108bd9a83a7bf8b5.hot-update.json",
-      "publicPath": "http://dev.local:9000/static/App.29ad108bd9a83a7bf8b5.hot-update.json"
+    "App.2dadb60ed260d40cbf5b.hot-update.json": {
+      "name": "App.2dadb60ed260d40cbf5b.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.2dadb60ed260d40cbf5b.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.2dadb60ed260d40cbf5b.hot-update.json"
     },
-    "App.2ed1a58ef1240eff366b.hot-update.js": {
-      "name": "App.2ed1a58ef1240eff366b.hot-update.js",
-      "path": "/home/dimas/Documents/projects/Kartoza/africa_rangeland_watch/django_project/frontend/bundles/frontend/App.2ed1a58ef1240eff366b.hot-update.js",
-      "publicPath": "http://dev.local:9000/static/App.2ed1a58ef1240eff366b.hot-update.js"
+    "App.3a629f93e18fa20179e0.hot-update.js": {
+      "name": "App.3a629f93e18fa20179e0.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.3a629f93e18fa20179e0.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.3a629f93e18fa20179e0.hot-update.js"
     },
-    "App.2ed1a58ef1240eff366b.hot-update.json": {
-      "name": "App.2ed1a58ef1240eff366b.hot-update.json",
-      "path": "/home/dimas/Documents/projects/Kartoza/africa_rangeland_watch/django_project/frontend/bundles/frontend/App.2ed1a58ef1240eff366b.hot-update.json",
-      "publicPath": "http://dev.local:9000/static/App.2ed1a58ef1240eff366b.hot-update.json"
+    "App.3a629f93e18fa20179e0.hot-update.json": {
+      "name": "App.3a629f93e18fa20179e0.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.3a629f93e18fa20179e0.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.3a629f93e18fa20179e0.hot-update.json"
     },
-    "App.36123b8804d0a0e1eff8.hot-update.js": {
-      "name": "App.36123b8804d0a0e1eff8.hot-update.js",
-      "path": "/home/dimas/Documents/projects/Kartoza/africa_rangeland_watch/django_project/frontend/bundles/frontend/App.36123b8804d0a0e1eff8.hot-update.js",
-      "publicPath": "http://dev.local:9000/static/App.36123b8804d0a0e1eff8.hot-update.js"
+    "App.3e944740f250133ff0b2.hot-update.js": {
+      "name": "App.3e944740f250133ff0b2.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.3e944740f250133ff0b2.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.3e944740f250133ff0b2.hot-update.js"
     },
-    "App.36123b8804d0a0e1eff8.hot-update.json": {
-      "name": "App.36123b8804d0a0e1eff8.hot-update.json",
-      "path": "/home/dimas/Documents/projects/Kartoza/africa_rangeland_watch/django_project/frontend/bundles/frontend/App.36123b8804d0a0e1eff8.hot-update.json",
-      "publicPath": "http://dev.local:9000/static/App.36123b8804d0a0e1eff8.hot-update.json"
+    "App.3e944740f250133ff0b2.hot-update.json": {
+      "name": "App.3e944740f250133ff0b2.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.3e944740f250133ff0b2.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.3e944740f250133ff0b2.hot-update.json"
     },
-    "App.366456c8337dc6241925.hot-update.js": {
-      "name": "App.366456c8337dc6241925.hot-update.js",
-      "path": "/home/dimas/Documents/projects/Kartoza/africa_rangeland_watch/django_project/frontend/bundles/frontend/App.366456c8337dc6241925.hot-update.js",
-      "publicPath": "http://dev.local:9000/static/App.366456c8337dc6241925.hot-update.js"
+    "App.43b4b94aa9bd152da2b4.hot-update.js": {
+      "name": "App.43b4b94aa9bd152da2b4.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.43b4b94aa9bd152da2b4.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.43b4b94aa9bd152da2b4.hot-update.js"
     },
-    "App.366456c8337dc6241925.hot-update.json": {
-      "name": "App.366456c8337dc6241925.hot-update.json",
-      "path": "/home/dimas/Documents/projects/Kartoza/africa_rangeland_watch/django_project/frontend/bundles/frontend/App.366456c8337dc6241925.hot-update.json",
-      "publicPath": "http://dev.local:9000/static/App.366456c8337dc6241925.hot-update.json"
+    "App.43b4b94aa9bd152da2b4.hot-update.json": {
+      "name": "App.43b4b94aa9bd152da2b4.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.43b4b94aa9bd152da2b4.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.43b4b94aa9bd152da2b4.hot-update.json"
     },
-    "App.43654199a058e4d20366.hot-update.js": {
-      "name": "App.43654199a058e4d20366.hot-update.js",
-      "path": "/home/dimas/Documents/projects/Kartoza/africa_rangeland_watch/django_project/frontend/bundles/frontend/App.43654199a058e4d20366.hot-update.js",
-      "publicPath": "http://dev.local:9000/static/App.43654199a058e4d20366.hot-update.js"
+    "App.55d7041139f0d980d342.hot-update.js": {
+      "name": "App.55d7041139f0d980d342.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.55d7041139f0d980d342.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.55d7041139f0d980d342.hot-update.js"
     },
-    "App.43654199a058e4d20366.hot-update.json": {
-      "name": "App.43654199a058e4d20366.hot-update.json",
-      "path": "/home/dimas/Documents/projects/Kartoza/africa_rangeland_watch/django_project/frontend/bundles/frontend/App.43654199a058e4d20366.hot-update.json",
-      "publicPath": "http://dev.local:9000/static/App.43654199a058e4d20366.hot-update.json"
+    "App.55d7041139f0d980d342.hot-update.json": {
+      "name": "App.55d7041139f0d980d342.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.55d7041139f0d980d342.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.55d7041139f0d980d342.hot-update.json"
     },
-    "App.4a21b4da54cce2ee2f30.hot-update.js": {
-      "name": "App.4a21b4da54cce2ee2f30.hot-update.js",
-      "path": "/home/dimas/Documents/projects/Kartoza/africa_rangeland_watch/django_project/frontend/bundles/frontend/App.4a21b4da54cce2ee2f30.hot-update.js",
-      "publicPath": "http://dev.local:9000/static/App.4a21b4da54cce2ee2f30.hot-update.js"
+    "App.595d5f9598a3bc1fd188.hot-update.js": {
+      "name": "App.595d5f9598a3bc1fd188.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.595d5f9598a3bc1fd188.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.595d5f9598a3bc1fd188.hot-update.js"
     },
-    "App.4a21b4da54cce2ee2f30.hot-update.json": {
-      "name": "App.4a21b4da54cce2ee2f30.hot-update.json",
-      "path": "/home/dimas/Documents/projects/Kartoza/africa_rangeland_watch/django_project/frontend/bundles/frontend/App.4a21b4da54cce2ee2f30.hot-update.json",
-      "publicPath": "http://dev.local:9000/static/App.4a21b4da54cce2ee2f30.hot-update.json"
+    "App.595d5f9598a3bc1fd188.hot-update.json": {
+      "name": "App.595d5f9598a3bc1fd188.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.595d5f9598a3bc1fd188.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.595d5f9598a3bc1fd188.hot-update.json"
     },
-    "App.579ac8a37818005bdd75.hot-update.js": {
-      "name": "App.579ac8a37818005bdd75.hot-update.js",
-      "path": "/home/dimas/Documents/projects/Kartoza/africa_rangeland_watch/django_project/frontend/bundles/frontend/App.579ac8a37818005bdd75.hot-update.js",
-      "publicPath": "http://dev.local:9000/static/App.579ac8a37818005bdd75.hot-update.js"
+    "App.5e8617ce222d758e708e.hot-update.js": {
+      "name": "App.5e8617ce222d758e708e.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.5e8617ce222d758e708e.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.5e8617ce222d758e708e.hot-update.js"
     },
-    "App.579ac8a37818005bdd75.hot-update.json": {
-      "name": "App.579ac8a37818005bdd75.hot-update.json",
-      "path": "/home/dimas/Documents/projects/Kartoza/africa_rangeland_watch/django_project/frontend/bundles/frontend/App.579ac8a37818005bdd75.hot-update.json",
-      "publicPath": "http://dev.local:9000/static/App.579ac8a37818005bdd75.hot-update.json"
+    "App.5e8617ce222d758e708e.hot-update.json": {
+      "name": "App.5e8617ce222d758e708e.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.5e8617ce222d758e708e.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.5e8617ce222d758e708e.hot-update.json"
     },
-    "App.58700a125fae4bbd7d11.hot-update.js": {
-      "name": "App.58700a125fae4bbd7d11.hot-update.js",
-      "path": "/home/dimas/Documents/projects/Kartoza/africa_rangeland_watch/django_project/frontend/bundles/frontend/App.58700a125fae4bbd7d11.hot-update.js",
-      "publicPath": "http://dev.local:9000/static/App.58700a125fae4bbd7d11.hot-update.js"
+    "App.648f53aed66dc67ab1c8.hot-update.js": {
+      "name": "App.648f53aed66dc67ab1c8.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.648f53aed66dc67ab1c8.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.648f53aed66dc67ab1c8.hot-update.js"
     },
-    "App.58700a125fae4bbd7d11.hot-update.json": {
-      "name": "App.58700a125fae4bbd7d11.hot-update.json",
-      "path": "/home/dimas/Documents/projects/Kartoza/africa_rangeland_watch/django_project/frontend/bundles/frontend/App.58700a125fae4bbd7d11.hot-update.json",
-      "publicPath": "http://dev.local:9000/static/App.58700a125fae4bbd7d11.hot-update.json"
+    "App.648f53aed66dc67ab1c8.hot-update.json": {
+      "name": "App.648f53aed66dc67ab1c8.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.648f53aed66dc67ab1c8.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.648f53aed66dc67ab1c8.hot-update.json"
     },
-    "App.59f8bf7b266bad017d26.hot-update.js": {
-      "name": "App.59f8bf7b266bad017d26.hot-update.js",
-      "path": "/home/dimas/Documents/projects/Kartoza/africa_rangeland_watch/django_project/frontend/bundles/frontend/App.59f8bf7b266bad017d26.hot-update.js",
-      "publicPath": "http://dev.local:9000/static/App.59f8bf7b266bad017d26.hot-update.js"
+    "App.6630b0fd6d3488ad3c49.hot-update.js": {
+      "name": "App.6630b0fd6d3488ad3c49.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.6630b0fd6d3488ad3c49.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.6630b0fd6d3488ad3c49.hot-update.js"
     },
-    "App.59f8bf7b266bad017d26.hot-update.json": {
-      "name": "App.59f8bf7b266bad017d26.hot-update.json",
-      "path": "/home/dimas/Documents/projects/Kartoza/africa_rangeland_watch/django_project/frontend/bundles/frontend/App.59f8bf7b266bad017d26.hot-update.json",
-      "publicPath": "http://dev.local:9000/static/App.59f8bf7b266bad017d26.hot-update.json"
+    "App.6630b0fd6d3488ad3c49.hot-update.json": {
+      "name": "App.6630b0fd6d3488ad3c49.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.6630b0fd6d3488ad3c49.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.6630b0fd6d3488ad3c49.hot-update.json"
     },
-    "App.6313fca732033905161a.hot-update.js": {
-      "name": "App.6313fca732033905161a.hot-update.js",
-      "path": "/home/dimas/Documents/projects/Kartoza/africa_rangeland_watch/django_project/frontend/bundles/frontend/App.6313fca732033905161a.hot-update.js",
-      "publicPath": "http://dev.local:9000/static/App.6313fca732033905161a.hot-update.js"
+    "App.95c13276c77fbb0cafab.hot-update.js": {
+      "name": "App.95c13276c77fbb0cafab.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.95c13276c77fbb0cafab.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.95c13276c77fbb0cafab.hot-update.js"
     },
-    "App.6313fca732033905161a.hot-update.json": {
-      "name": "App.6313fca732033905161a.hot-update.json",
-      "path": "/home/dimas/Documents/projects/Kartoza/africa_rangeland_watch/django_project/frontend/bundles/frontend/App.6313fca732033905161a.hot-update.json",
-      "publicPath": "http://dev.local:9000/static/App.6313fca732033905161a.hot-update.json"
+    "App.95c13276c77fbb0cafab.hot-update.json": {
+      "name": "App.95c13276c77fbb0cafab.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.95c13276c77fbb0cafab.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.95c13276c77fbb0cafab.hot-update.json"
     },
-    "App.6fa6befd1dc499a1ce4c.hot-update.js": {
-      "name": "App.6fa6befd1dc499a1ce4c.hot-update.js",
-      "path": "/home/dimas/Documents/projects/Kartoza/africa_rangeland_watch/django_project/frontend/bundles/frontend/App.6fa6befd1dc499a1ce4c.hot-update.js",
-      "publicPath": "http://dev.local:9000/static/App.6fa6befd1dc499a1ce4c.hot-update.js"
+    "App.b66932e88a05b2a591d0.hot-update.js": {
+      "name": "App.b66932e88a05b2a591d0.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.b66932e88a05b2a591d0.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.b66932e88a05b2a591d0.hot-update.js"
     },
-    "App.6fa6befd1dc499a1ce4c.hot-update.json": {
-      "name": "App.6fa6befd1dc499a1ce4c.hot-update.json",
-      "path": "/home/dimas/Documents/projects/Kartoza/africa_rangeland_watch/django_project/frontend/bundles/frontend/App.6fa6befd1dc499a1ce4c.hot-update.json",
-      "publicPath": "http://dev.local:9000/static/App.6fa6befd1dc499a1ce4c.hot-update.json"
+    "App.b66932e88a05b2a591d0.hot-update.json": {
+      "name": "App.b66932e88a05b2a591d0.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.b66932e88a05b2a591d0.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.b66932e88a05b2a591d0.hot-update.json"
     },
-    "App.758f8b4bd7c774096059.hot-update.js": {
-      "name": "App.758f8b4bd7c774096059.hot-update.js",
-      "path": "/home/dimas/Documents/projects/Kartoza/africa_rangeland_watch/django_project/frontend/bundles/frontend/App.758f8b4bd7c774096059.hot-update.js",
-      "publicPath": "http://dev.local:9000/static/App.758f8b4bd7c774096059.hot-update.js"
+    "App.b6e48cf84e79ef0c584a.hot-update.js": {
+      "name": "App.b6e48cf84e79ef0c584a.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.b6e48cf84e79ef0c584a.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.b6e48cf84e79ef0c584a.hot-update.js"
     },
-    "App.758f8b4bd7c774096059.hot-update.json": {
-      "name": "App.758f8b4bd7c774096059.hot-update.json",
-      "path": "/home/dimas/Documents/projects/Kartoza/africa_rangeland_watch/django_project/frontend/bundles/frontend/App.758f8b4bd7c774096059.hot-update.json",
-      "publicPath": "http://dev.local:9000/static/App.758f8b4bd7c774096059.hot-update.json"
+    "App.b6e48cf84e79ef0c584a.hot-update.json": {
+      "name": "App.b6e48cf84e79ef0c584a.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.b6e48cf84e79ef0c584a.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.b6e48cf84e79ef0c584a.hot-update.json"
     },
-    "App.99334bb37f820ceb2a25.hot-update.js": {
-      "name": "App.99334bb37f820ceb2a25.hot-update.js",
-      "path": "/home/dimas/Documents/projects/Kartoza/africa_rangeland_watch/django_project/frontend/bundles/frontend/App.99334bb37f820ceb2a25.hot-update.js",
-      "publicPath": "http://dev.local:9000/static/App.99334bb37f820ceb2a25.hot-update.js"
+    "App.b95ed9b51f4655d0cb97.hot-update.js": {
+      "name": "App.b95ed9b51f4655d0cb97.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.b95ed9b51f4655d0cb97.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.b95ed9b51f4655d0cb97.hot-update.js"
     },
-    "App.99334bb37f820ceb2a25.hot-update.json": {
-      "name": "App.99334bb37f820ceb2a25.hot-update.json",
-      "path": "/home/dimas/Documents/projects/Kartoza/africa_rangeland_watch/django_project/frontend/bundles/frontend/App.99334bb37f820ceb2a25.hot-update.json",
-      "publicPath": "http://dev.local:9000/static/App.99334bb37f820ceb2a25.hot-update.json"
+    "App.b95ed9b51f4655d0cb97.hot-update.json": {
+      "name": "App.b95ed9b51f4655d0cb97.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.b95ed9b51f4655d0cb97.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.b95ed9b51f4655d0cb97.hot-update.json"
     },
-    "App.aa3bd3c4be15fd349430.hot-update.js": {
-      "name": "App.aa3bd3c4be15fd349430.hot-update.js",
-      "path": "/home/dimas/Documents/projects/Kartoza/africa_rangeland_watch/django_project/frontend/bundles/frontend/App.aa3bd3c4be15fd349430.hot-update.js",
-      "publicPath": "http://dev.local:9000/static/App.aa3bd3c4be15fd349430.hot-update.js"
+    "App.ba49b1fdd29fd2332097.hot-update.js": {
+      "name": "App.ba49b1fdd29fd2332097.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.ba49b1fdd29fd2332097.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.ba49b1fdd29fd2332097.hot-update.js"
     },
-    "App.aa3bd3c4be15fd349430.hot-update.json": {
-      "name": "App.aa3bd3c4be15fd349430.hot-update.json",
-      "path": "/home/dimas/Documents/projects/Kartoza/africa_rangeland_watch/django_project/frontend/bundles/frontend/App.aa3bd3c4be15fd349430.hot-update.json",
-      "publicPath": "http://dev.local:9000/static/App.aa3bd3c4be15fd349430.hot-update.json"
+    "App.ba49b1fdd29fd2332097.hot-update.json": {
+      "name": "App.ba49b1fdd29fd2332097.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.ba49b1fdd29fd2332097.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.ba49b1fdd29fd2332097.hot-update.json"
     },
-    "App.b212b7029e59af161986.hot-update.js": {
-      "name": "App.b212b7029e59af161986.hot-update.js",
-      "path": "/home/dimas/Documents/projects/Kartoza/africa_rangeland_watch/django_project/frontend/bundles/frontend/App.b212b7029e59af161986.hot-update.js",
-      "publicPath": "http://dev.local:9000/static/App.b212b7029e59af161986.hot-update.js"
+    "App.bcef469bd9887fc3cb25.hot-update.js": {
+      "name": "App.bcef469bd9887fc3cb25.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.bcef469bd9887fc3cb25.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.bcef469bd9887fc3cb25.hot-update.js"
     },
-    "App.b212b7029e59af161986.hot-update.json": {
-      "name": "App.b212b7029e59af161986.hot-update.json",
-      "path": "/home/dimas/Documents/projects/Kartoza/africa_rangeland_watch/django_project/frontend/bundles/frontend/App.b212b7029e59af161986.hot-update.json",
-      "publicPath": "http://dev.local:9000/static/App.b212b7029e59af161986.hot-update.json"
+    "App.bcef469bd9887fc3cb25.hot-update.json": {
+      "name": "App.bcef469bd9887fc3cb25.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.bcef469bd9887fc3cb25.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.bcef469bd9887fc3cb25.hot-update.json"
     },
-    "App.b86906bf43b146346bb7.hot-update.js": {
-      "name": "App.b86906bf43b146346bb7.hot-update.js",
-      "path": "/home/dimas/Documents/projects/Kartoza/africa_rangeland_watch/django_project/frontend/bundles/frontend/App.b86906bf43b146346bb7.hot-update.js",
-      "publicPath": "http://dev.local:9000/static/App.b86906bf43b146346bb7.hot-update.js"
+    "App.c3b4b69e1bc2e885a63c.hot-update.js": {
+      "name": "App.c3b4b69e1bc2e885a63c.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.c3b4b69e1bc2e885a63c.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.c3b4b69e1bc2e885a63c.hot-update.js"
     },
-    "App.b86906bf43b146346bb7.hot-update.json": {
-      "name": "App.b86906bf43b146346bb7.hot-update.json",
-      "path": "/home/dimas/Documents/projects/Kartoza/africa_rangeland_watch/django_project/frontend/bundles/frontend/App.b86906bf43b146346bb7.hot-update.json",
-      "publicPath": "http://dev.local:9000/static/App.b86906bf43b146346bb7.hot-update.json"
+    "App.c3b4b69e1bc2e885a63c.hot-update.json": {
+      "name": "App.c3b4b69e1bc2e885a63c.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.c3b4b69e1bc2e885a63c.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.c3b4b69e1bc2e885a63c.hot-update.json"
     },
-    "App.c4149aaa25a93a9e0fd3.hot-update.js": {
-      "name": "App.c4149aaa25a93a9e0fd3.hot-update.js",
-      "path": "/home/dimas/Documents/projects/Kartoza/africa_rangeland_watch/django_project/frontend/bundles/frontend/App.c4149aaa25a93a9e0fd3.hot-update.js",
-      "publicPath": "http://dev.local:9000/static/App.c4149aaa25a93a9e0fd3.hot-update.js"
+    "App.e69dc35cf6c360b2baae.hot-update.js": {
+      "name": "App.e69dc35cf6c360b2baae.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.e69dc35cf6c360b2baae.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.e69dc35cf6c360b2baae.hot-update.js"
     },
-    "App.c4149aaa25a93a9e0fd3.hot-update.json": {
-      "name": "App.c4149aaa25a93a9e0fd3.hot-update.json",
-      "path": "/home/dimas/Documents/projects/Kartoza/africa_rangeland_watch/django_project/frontend/bundles/frontend/App.c4149aaa25a93a9e0fd3.hot-update.json",
-      "publicPath": "http://dev.local:9000/static/App.c4149aaa25a93a9e0fd3.hot-update.json"
+    "App.e69dc35cf6c360b2baae.hot-update.json": {
+      "name": "App.e69dc35cf6c360b2baae.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.e69dc35cf6c360b2baae.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.e69dc35cf6c360b2baae.hot-update.json"
+    },
+    "App.eb9a0a3cfa8267ab5aea.hot-update.js": {
+      "name": "App.eb9a0a3cfa8267ab5aea.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.eb9a0a3cfa8267ab5aea.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.eb9a0a3cfa8267ab5aea.hot-update.js"
+    },
+    "App.eb9a0a3cfa8267ab5aea.hot-update.json": {
+      "name": "App.eb9a0a3cfa8267ab5aea.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.eb9a0a3cfa8267ab5aea.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.eb9a0a3cfa8267ab5aea.hot-update.json"
+    },
+    "App.f567e07475950e832aa9.hot-update.js": {
+      "name": "App.f567e07475950e832aa9.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.f567e07475950e832aa9.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.f567e07475950e832aa9.hot-update.js"
+    },
+    "App.f567e07475950e832aa9.hot-update.json": {
+      "name": "App.f567e07475950e832aa9.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.f567e07475950e832aa9.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.f567e07475950e832aa9.hot-update.json"
+    },
+    "App.f7e15d07fbadaa7913f5.hot-update.js": {
+      "name": "App.f7e15d07fbadaa7913f5.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.f7e15d07fbadaa7913f5.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.f7e15d07fbadaa7913f5.hot-update.js"
+    },
+    "App.f7e15d07fbadaa7913f5.hot-update.json": {
+      "name": "App.f7e15d07fbadaa7913f5.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.f7e15d07fbadaa7913f5.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.f7e15d07fbadaa7913f5.hot-update.json"
     },
     "App.js": {
       "name": "App.js",
-      "path": "/home/dimas/Documents/projects/Kartoza/africa_rangeland_watch/django_project/frontend/bundles/frontend/App.js",
-      "publicPath": "http://dev.local:9000/static/App.js"
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.js",
+      "publicPath": "http://localhost:9000/static/App.js"
     },
     "e9b898342ed8036ee8ea.ttf": {
       "name": "e9b898342ed8036ee8ea.ttf",
-      "path": "/home/dimas/Documents/projects/Kartoza/africa_rangeland_watch/django_project/frontend/bundles/frontend/e9b898342ed8036ee8ea.ttf",
-      "publicPath": "http://dev.local:9000/static/e9b898342ed8036ee8ea.ttf"
+      "path": "/home/web/django_project/frontend/bundles/frontend/e9b898342ed8036ee8ea.ttf",
+      "publicPath": "http://localhost:9000/static/e9b898342ed8036ee8ea.ttf"
+    },
+    "Map.0442e9924d2df3abe438.hot-update.js": {
+      "name": "Map.0442e9924d2df3abe438.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/Map.0442e9924d2df3abe438.hot-update.js",
+      "publicPath": "http://localhost:9000/static/Map.0442e9924d2df3abe438.hot-update.js"
+    },
+    "Map.0442e9924d2df3abe438.hot-update.json": {
+      "name": "Map.0442e9924d2df3abe438.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/Map.0442e9924d2df3abe438.hot-update.json",
+      "publicPath": "http://localhost:9000/static/Map.0442e9924d2df3abe438.hot-update.json"
+    },
+    "Map.0890e65dfe994645969b.hot-update.js": {
+      "name": "Map.0890e65dfe994645969b.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/Map.0890e65dfe994645969b.hot-update.js",
+      "publicPath": "http://localhost:9000/static/Map.0890e65dfe994645969b.hot-update.js"
+    },
+    "Map.0890e65dfe994645969b.hot-update.json": {
+      "name": "Map.0890e65dfe994645969b.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/Map.0890e65dfe994645969b.hot-update.json",
+      "publicPath": "http://localhost:9000/static/Map.0890e65dfe994645969b.hot-update.json"
+    },
+    "Map.14cf6b7138152977f185.hot-update.js": {
+      "name": "Map.14cf6b7138152977f185.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/Map.14cf6b7138152977f185.hot-update.js",
+      "publicPath": "http://localhost:9000/static/Map.14cf6b7138152977f185.hot-update.js"
+    },
+    "Map.14cf6b7138152977f185.hot-update.json": {
+      "name": "Map.14cf6b7138152977f185.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/Map.14cf6b7138152977f185.hot-update.json",
+      "publicPath": "http://localhost:9000/static/Map.14cf6b7138152977f185.hot-update.json"
+    },
+    "Map.216547c284dd46f96bad.hot-update.js": {
+      "name": "Map.216547c284dd46f96bad.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/Map.216547c284dd46f96bad.hot-update.js",
+      "publicPath": "http://localhost:9000/static/Map.216547c284dd46f96bad.hot-update.js"
+    },
+    "Map.216547c284dd46f96bad.hot-update.json": {
+      "name": "Map.216547c284dd46f96bad.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/Map.216547c284dd46f96bad.hot-update.json",
+      "publicPath": "http://localhost:9000/static/Map.216547c284dd46f96bad.hot-update.json"
+    },
+    "Map.26eb6d9e237cfde672a6.hot-update.js": {
+      "name": "Map.26eb6d9e237cfde672a6.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/Map.26eb6d9e237cfde672a6.hot-update.js",
+      "publicPath": "http://localhost:9000/static/Map.26eb6d9e237cfde672a6.hot-update.js"
+    },
+    "Map.26eb6d9e237cfde672a6.hot-update.json": {
+      "name": "Map.26eb6d9e237cfde672a6.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/Map.26eb6d9e237cfde672a6.hot-update.json",
+      "publicPath": "http://localhost:9000/static/Map.26eb6d9e237cfde672a6.hot-update.json"
+    },
+    "Map.2dadb60ed260d40cbf5b.hot-update.js": {
+      "name": "Map.2dadb60ed260d40cbf5b.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/Map.2dadb60ed260d40cbf5b.hot-update.js",
+      "publicPath": "http://localhost:9000/static/Map.2dadb60ed260d40cbf5b.hot-update.js"
+    },
+    "Map.2dadb60ed260d40cbf5b.hot-update.json": {
+      "name": "Map.2dadb60ed260d40cbf5b.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/Map.2dadb60ed260d40cbf5b.hot-update.json",
+      "publicPath": "http://localhost:9000/static/Map.2dadb60ed260d40cbf5b.hot-update.json"
+    },
+    "Map.3a629f93e18fa20179e0.hot-update.js": {
+      "name": "Map.3a629f93e18fa20179e0.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/Map.3a629f93e18fa20179e0.hot-update.js",
+      "publicPath": "http://localhost:9000/static/Map.3a629f93e18fa20179e0.hot-update.js"
+    },
+    "Map.3a629f93e18fa20179e0.hot-update.json": {
+      "name": "Map.3a629f93e18fa20179e0.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/Map.3a629f93e18fa20179e0.hot-update.json",
+      "publicPath": "http://localhost:9000/static/Map.3a629f93e18fa20179e0.hot-update.json"
+    },
+    "Map.3e944740f250133ff0b2.hot-update.js": {
+      "name": "Map.3e944740f250133ff0b2.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/Map.3e944740f250133ff0b2.hot-update.js",
+      "publicPath": "http://localhost:9000/static/Map.3e944740f250133ff0b2.hot-update.js"
+    },
+    "Map.3e944740f250133ff0b2.hot-update.json": {
+      "name": "Map.3e944740f250133ff0b2.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/Map.3e944740f250133ff0b2.hot-update.json",
+      "publicPath": "http://localhost:9000/static/Map.3e944740f250133ff0b2.hot-update.json"
+    },
+    "Map.43b4b94aa9bd152da2b4.hot-update.js": {
+      "name": "Map.43b4b94aa9bd152da2b4.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/Map.43b4b94aa9bd152da2b4.hot-update.js",
+      "publicPath": "http://localhost:9000/static/Map.43b4b94aa9bd152da2b4.hot-update.js"
+    },
+    "Map.43b4b94aa9bd152da2b4.hot-update.json": {
+      "name": "Map.43b4b94aa9bd152da2b4.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/Map.43b4b94aa9bd152da2b4.hot-update.json",
+      "publicPath": "http://localhost:9000/static/Map.43b4b94aa9bd152da2b4.hot-update.json"
+    },
+    "Map.55d7041139f0d980d342.hot-update.js": {
+      "name": "Map.55d7041139f0d980d342.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/Map.55d7041139f0d980d342.hot-update.js",
+      "publicPath": "http://localhost:9000/static/Map.55d7041139f0d980d342.hot-update.js"
+    },
+    "Map.55d7041139f0d980d342.hot-update.json": {
+      "name": "Map.55d7041139f0d980d342.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/Map.55d7041139f0d980d342.hot-update.json",
+      "publicPath": "http://localhost:9000/static/Map.55d7041139f0d980d342.hot-update.json"
+    },
+    "Map.595d5f9598a3bc1fd188.hot-update.js": {
+      "name": "Map.595d5f9598a3bc1fd188.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/Map.595d5f9598a3bc1fd188.hot-update.js",
+      "publicPath": "http://localhost:9000/static/Map.595d5f9598a3bc1fd188.hot-update.js"
+    },
+    "Map.595d5f9598a3bc1fd188.hot-update.json": {
+      "name": "Map.595d5f9598a3bc1fd188.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/Map.595d5f9598a3bc1fd188.hot-update.json",
+      "publicPath": "http://localhost:9000/static/Map.595d5f9598a3bc1fd188.hot-update.json"
+    },
+    "Map.5e8617ce222d758e708e.hot-update.js": {
+      "name": "Map.5e8617ce222d758e708e.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/Map.5e8617ce222d758e708e.hot-update.js",
+      "publicPath": "http://localhost:9000/static/Map.5e8617ce222d758e708e.hot-update.js"
+    },
+    "Map.5e8617ce222d758e708e.hot-update.json": {
+      "name": "Map.5e8617ce222d758e708e.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/Map.5e8617ce222d758e708e.hot-update.json",
+      "publicPath": "http://localhost:9000/static/Map.5e8617ce222d758e708e.hot-update.json"
+    },
+    "Map.648f53aed66dc67ab1c8.hot-update.js": {
+      "name": "Map.648f53aed66dc67ab1c8.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/Map.648f53aed66dc67ab1c8.hot-update.js",
+      "publicPath": "http://localhost:9000/static/Map.648f53aed66dc67ab1c8.hot-update.js"
+    },
+    "Map.648f53aed66dc67ab1c8.hot-update.json": {
+      "name": "Map.648f53aed66dc67ab1c8.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/Map.648f53aed66dc67ab1c8.hot-update.json",
+      "publicPath": "http://localhost:9000/static/Map.648f53aed66dc67ab1c8.hot-update.json"
+    },
+    "Map.6630b0fd6d3488ad3c49.hot-update.js": {
+      "name": "Map.6630b0fd6d3488ad3c49.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/Map.6630b0fd6d3488ad3c49.hot-update.js",
+      "publicPath": "http://localhost:9000/static/Map.6630b0fd6d3488ad3c49.hot-update.js"
+    },
+    "Map.6630b0fd6d3488ad3c49.hot-update.json": {
+      "name": "Map.6630b0fd6d3488ad3c49.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/Map.6630b0fd6d3488ad3c49.hot-update.json",
+      "publicPath": "http://localhost:9000/static/Map.6630b0fd6d3488ad3c49.hot-update.json"
+    },
+    "Map.95c13276c77fbb0cafab.hot-update.js": {
+      "name": "Map.95c13276c77fbb0cafab.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/Map.95c13276c77fbb0cafab.hot-update.js",
+      "publicPath": "http://localhost:9000/static/Map.95c13276c77fbb0cafab.hot-update.js"
+    },
+    "Map.95c13276c77fbb0cafab.hot-update.json": {
+      "name": "Map.95c13276c77fbb0cafab.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/Map.95c13276c77fbb0cafab.hot-update.json",
+      "publicPath": "http://localhost:9000/static/Map.95c13276c77fbb0cafab.hot-update.json"
+    },
+    "Map.b66932e88a05b2a591d0.hot-update.js": {
+      "name": "Map.b66932e88a05b2a591d0.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/Map.b66932e88a05b2a591d0.hot-update.js",
+      "publicPath": "http://localhost:9000/static/Map.b66932e88a05b2a591d0.hot-update.js"
+    },
+    "Map.b66932e88a05b2a591d0.hot-update.json": {
+      "name": "Map.b66932e88a05b2a591d0.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/Map.b66932e88a05b2a591d0.hot-update.json",
+      "publicPath": "http://localhost:9000/static/Map.b66932e88a05b2a591d0.hot-update.json"
+    },
+    "Map.b6e48cf84e79ef0c584a.hot-update.js": {
+      "name": "Map.b6e48cf84e79ef0c584a.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/Map.b6e48cf84e79ef0c584a.hot-update.js",
+      "publicPath": "http://localhost:9000/static/Map.b6e48cf84e79ef0c584a.hot-update.js"
+    },
+    "Map.b6e48cf84e79ef0c584a.hot-update.json": {
+      "name": "Map.b6e48cf84e79ef0c584a.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/Map.b6e48cf84e79ef0c584a.hot-update.json",
+      "publicPath": "http://localhost:9000/static/Map.b6e48cf84e79ef0c584a.hot-update.json"
+    },
+    "Map.b95ed9b51f4655d0cb97.hot-update.js": {
+      "name": "Map.b95ed9b51f4655d0cb97.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/Map.b95ed9b51f4655d0cb97.hot-update.js",
+      "publicPath": "http://localhost:9000/static/Map.b95ed9b51f4655d0cb97.hot-update.js"
+    },
+    "Map.b95ed9b51f4655d0cb97.hot-update.json": {
+      "name": "Map.b95ed9b51f4655d0cb97.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/Map.b95ed9b51f4655d0cb97.hot-update.json",
+      "publicPath": "http://localhost:9000/static/Map.b95ed9b51f4655d0cb97.hot-update.json"
+    },
+    "Map.ba49b1fdd29fd2332097.hot-update.js": {
+      "name": "Map.ba49b1fdd29fd2332097.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/Map.ba49b1fdd29fd2332097.hot-update.js",
+      "publicPath": "http://localhost:9000/static/Map.ba49b1fdd29fd2332097.hot-update.js"
+    },
+    "Map.ba49b1fdd29fd2332097.hot-update.json": {
+      "name": "Map.ba49b1fdd29fd2332097.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/Map.ba49b1fdd29fd2332097.hot-update.json",
+      "publicPath": "http://localhost:9000/static/Map.ba49b1fdd29fd2332097.hot-update.json"
+    },
+    "Map.bcef469bd9887fc3cb25.hot-update.js": {
+      "name": "Map.bcef469bd9887fc3cb25.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/Map.bcef469bd9887fc3cb25.hot-update.js",
+      "publicPath": "http://localhost:9000/static/Map.bcef469bd9887fc3cb25.hot-update.js"
+    },
+    "Map.bcef469bd9887fc3cb25.hot-update.json": {
+      "name": "Map.bcef469bd9887fc3cb25.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/Map.bcef469bd9887fc3cb25.hot-update.json",
+      "publicPath": "http://localhost:9000/static/Map.bcef469bd9887fc3cb25.hot-update.json"
+    },
+    "Map.c3b4b69e1bc2e885a63c.hot-update.js": {
+      "name": "Map.c3b4b69e1bc2e885a63c.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/Map.c3b4b69e1bc2e885a63c.hot-update.js",
+      "publicPath": "http://localhost:9000/static/Map.c3b4b69e1bc2e885a63c.hot-update.js"
+    },
+    "Map.c3b4b69e1bc2e885a63c.hot-update.json": {
+      "name": "Map.c3b4b69e1bc2e885a63c.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/Map.c3b4b69e1bc2e885a63c.hot-update.json",
+      "publicPath": "http://localhost:9000/static/Map.c3b4b69e1bc2e885a63c.hot-update.json"
+    },
+    "Map.e69dc35cf6c360b2baae.hot-update.js": {
+      "name": "Map.e69dc35cf6c360b2baae.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/Map.e69dc35cf6c360b2baae.hot-update.js",
+      "publicPath": "http://localhost:9000/static/Map.e69dc35cf6c360b2baae.hot-update.js"
+    },
+    "Map.e69dc35cf6c360b2baae.hot-update.json": {
+      "name": "Map.e69dc35cf6c360b2baae.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/Map.e69dc35cf6c360b2baae.hot-update.json",
+      "publicPath": "http://localhost:9000/static/Map.e69dc35cf6c360b2baae.hot-update.json"
+    },
+    "Map.eb9a0a3cfa8267ab5aea.hot-update.js": {
+      "name": "Map.eb9a0a3cfa8267ab5aea.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/Map.eb9a0a3cfa8267ab5aea.hot-update.js",
+      "publicPath": "http://localhost:9000/static/Map.eb9a0a3cfa8267ab5aea.hot-update.js"
+    },
+    "Map.eb9a0a3cfa8267ab5aea.hot-update.json": {
+      "name": "Map.eb9a0a3cfa8267ab5aea.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/Map.eb9a0a3cfa8267ab5aea.hot-update.json",
+      "publicPath": "http://localhost:9000/static/Map.eb9a0a3cfa8267ab5aea.hot-update.json"
+    },
+    "Map.f567e07475950e832aa9.hot-update.js": {
+      "name": "Map.f567e07475950e832aa9.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/Map.f567e07475950e832aa9.hot-update.js",
+      "publicPath": "http://localhost:9000/static/Map.f567e07475950e832aa9.hot-update.js"
+    },
+    "Map.f567e07475950e832aa9.hot-update.json": {
+      "name": "Map.f567e07475950e832aa9.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/Map.f567e07475950e832aa9.hot-update.json",
+      "publicPath": "http://localhost:9000/static/Map.f567e07475950e832aa9.hot-update.json"
+    },
+    "Map.f7e15d07fbadaa7913f5.hot-update.js": {
+      "name": "Map.f7e15d07fbadaa7913f5.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/Map.f7e15d07fbadaa7913f5.hot-update.js",
+      "publicPath": "http://localhost:9000/static/Map.f7e15d07fbadaa7913f5.hot-update.js"
+    },
+    "Map.f7e15d07fbadaa7913f5.hot-update.json": {
+      "name": "Map.f7e15d07fbadaa7913f5.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/Map.f7e15d07fbadaa7913f5.hot-update.json",
+      "publicPath": "http://localhost:9000/static/Map.f7e15d07fbadaa7913f5.hot-update.json"
+    },
+    "Map.js": {
+      "name": "Map.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/Map.js",
+      "publicPath": "http://localhost:9000/static/Map.js"
     },
     "node_modules_web-vitals_dist_web-vitals_js.js": {
       "name": "node_modules_web-vitals_dist_web-vitals_js.js",
-      "path": "/home/dimas/Documents/projects/Kartoza/africa_rangeland_watch/django_project/frontend/bundles/frontend/node_modules_web-vitals_dist_web-vitals_js.js",
-      "publicPath": "http://dev.local:9000/static/node_modules_web-vitals_dist_web-vitals_js.js"
-    },
-    "styles.145cddc435934bbac48d.hot-update.js": {
-      "name": "styles.145cddc435934bbac48d.hot-update.js",
-      "path": "/home/dimas/Documents/projects/Kartoza/africa_rangeland_watch/django_project/frontend/bundles/frontend/styles.145cddc435934bbac48d.hot-update.js",
-      "publicPath": "http://dev.local:9000/static/styles.145cddc435934bbac48d.hot-update.js"
+      "path": "/home/web/django_project/frontend/bundles/frontend/node_modules_web-vitals_dist_web-vitals_js.js",
+      "publicPath": "http://localhost:9000/static/node_modules_web-vitals_dist_web-vitals_js.js"
     },
     "styles.css": {
       "name": "styles.css",
-      "path": "/home/dimas/Documents/projects/Kartoza/africa_rangeland_watch/django_project/frontend/bundles/frontend/styles.css",
-      "publicPath": "http://dev.local:9000/static/styles.css"
+      "path": "/home/web/django_project/frontend/bundles/frontend/styles.css",
+      "publicPath": "http://localhost:9000/static/styles.css"
     }
   },
   "chunks": {
     "App": [
       "styles.css",
       "App.js",
-      "App.2ed1a58ef1240eff366b.hot-update.js"
+      "App.2dadb60ed260d40cbf5b.hot-update.js"
+    ],
+    "Map": [
+      "styles.css",
+      "Map.js",
+      "Map.2dadb60ed260d40cbf5b.hot-update.js"
     ]
   },
-  "publicPath": "http://dev.local:9000/static/",
+  "publicPath": "http://localhost:9000/static/",
   "error": "ModuleNotFoundError",
-  "message": "Module not found: Error: Can't resolve '/static/fonts/InterRegular.ttf' in '/home/dimas/Documents/projects/Kartoza/africa_rangeland_watch/django_project/frontend/src/styles'"
+  "message": "Module not found: Error: Can't resolve 'next/link' in '/home/web/django_project/frontend/src/pages/Home'"
 }
