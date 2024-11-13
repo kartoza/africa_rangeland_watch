@@ -9,12 +9,12 @@ const HomePage = React.lazy(() => import("./pages/Home/index"));
 const NotFound = React.lazy(() => import("./pages/NotFound"));
 const ProfileInformationPage = React.lazy(() => import("./pages/Profile"));
 const OrganisationInformation = React.lazy(() => import("./pages/OrganisationInformation"));
+const AnalysisResults = React.lazy(() => import("./pages/AnalysisResults"));
 
 const ProjectRoutes = () => {
   const routes = useRoutes([
     { path: "/", element: <HomePage /> },
     { path: "*", element: <NotFound /> },
-
     // Use PrivateRoute for protected routes
     {
       path: "/profile",
@@ -23,6 +23,10 @@ const ProjectRoutes = () => {
     {
       path: "/organisation",
       element: <PrivateRoute Component={OrganisationInformation} />,
+    },
+    {
+      path: "/analysis-results",
+      element: <PrivateRoute Component={AnalysisResults} />,
     },
   ]);
 
