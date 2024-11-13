@@ -6,6 +6,7 @@ bundles/
 deployment/volumes
 coverage.xml
 .coverage
+.idea
 /.pnp
 .pnp.js
 
