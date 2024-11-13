@@ -177,7 +177,7 @@ export default function Sidebar(props: Props) {
                 </MenuItem>
                 <MenuItem onClick={() => { navigate('/support'); onClose(); }}>Support</MenuItem>
                 <MenuItem onClick={() => { navigate('/notifications'); onClose(); }}>Notifications</MenuItem>
-                <MenuItem onClick={handleLogout}>Sign Out</MenuItem>
+                <MenuItem onClick={() => handleLogout()}>Sign Out</MenuItem>
               </Box>
             </Box>
           </DrawerContent>
