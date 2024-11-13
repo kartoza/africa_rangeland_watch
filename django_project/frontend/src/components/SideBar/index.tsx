@@ -12,6 +12,8 @@ import React from "react";
 import { MenuItem, Menu } from "react-pro-sidebar";
 import { HamburgerIcon } from "@chakra-ui/icons";
 import { useLocation, useNavigate } from "react-router-dom";
+import { AppDispatch, RootState } from '../../store';
+import { logoutUser } from '../../store/authSlice';
 
 interface Props extends ChakraProps {
   className?: string;
@@ -22,6 +24,13 @@ export default function Sidebar(props: Props) {
   const location = useLocation();
   const navigate = useNavigate();
   const isActive = (path: string) => location.pathname === path;
+  const dispatch = useDispatch<AppDispatch>();
+
+  const handleLogout = () => {
+        dispatch(logoutUser());
+        onClose();
+        navigate('/');
+    };
 
   return (
     <>
@@ -168,7 +177,7 @@ export default function Sidebar(props: Props) {
                 </MenuItem>
                 <MenuItem onClick={() => { navigate('/support'); onClose(); }}>Support</MenuItem>
                 <MenuItem onClick={() => { navigate('/notifications'); onClose(); }}>Notifications</MenuItem>
-                <MenuItem onClick={() => { navigate('/sign-out'); onClose(); }}>Sign Out</MenuItem>
+                <MenuItem onClick={handleLogout}>Sign Out</MenuItem>
               </Box>
             </Box>
           </DrawerContent>
