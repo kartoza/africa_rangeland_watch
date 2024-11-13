@@ -4,6 +4,7 @@ import HomePage from "./pages/Home/index";
 import NotFound from "./pages/NotFound";
 import ProfileInformationPage from "./pages/Profile";
 import OrganisationInformation from "./pages/OrganisationInformation";
+import UploadedResourcesPage from "./pages/UploadedResources";
 import PrivateRoute from "./PrivateRoute";
 
 const ProjectRoutes = () => {
@@ -19,6 +20,10 @@ const ProjectRoutes = () => {
     {
       path: "/organisation",
       element: <PrivateRoute Component={OrganisationInformation} />,
+    },
+    {
+      path: "/uploaded-resources",
+      element: <PrivateRoute Component={UploadedResourcesPage} />,
     },
   ]);
 
