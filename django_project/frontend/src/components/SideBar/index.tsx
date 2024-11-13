@@ -14,6 +14,7 @@ import { HamburgerIcon } from "@chakra-ui/icons";
 import { useLocation, useNavigate } from "react-router-dom";
 import { AppDispatch, RootState } from '../../store';
 import { logoutUser } from '../../store/authSlice';
+import { useDispatch } from 'react-redux';
 
 interface Props extends ChakraProps {
   className?: string;
