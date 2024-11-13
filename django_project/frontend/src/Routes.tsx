@@ -1,19 +1,28 @@
 import React from "react";
 import { useRoutes } from "react-router-dom";
-import NotFound from "./pages/NotFound";
 import HomePage from "./pages/Home/index";
-import OrganisationInformation from "./pages/OrganisationInformation";
+import NotFound from "./pages/NotFound";
 import ProfileInformationPage from "./pages/Profile";
+import OrganisationInformation from "./pages/OrganisationInformation";
+import PrivateRoute from "./PrivateRoute";
 
 const ProjectRoutes = () => {
-  const element = useRoutes([
+  const routes = useRoutes([
+    { path: "/", element: <HomePage /> },
     { path: "*", element: <NotFound /> },
-    { path: "/", element: <HomePage />},
-    { path: "/organisation", element: <OrganisationInformation /> },
-    { path: "/profile", element: <ProfileInformationPage />}
+
+    // Use PrivateRoute for protected routes
+    {
+      path: "/profile",
+      element: <PrivateRoute Component={ProfileInformationPage} />,
+    },
+    {
+      path: "/organisation",
+      element: <PrivateRoute Component={OrganisationInformation} />,
+    },
   ]);
 
-  return element;
+  return routes;
 };
 
 export default ProjectRoutes;
