@@ -5,43 +5,43 @@
       "name": "09be6892072ac94c44db.ttf",
       "path": "/home/web/django_project/frontend/bundles/frontend/09be6892072ac94c44db.ttf"
     },
-    "364.fe8deebfb4f28247a782.js": {
-      "name": "364.fe8deebfb4f28247a782.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/364.fe8deebfb4f28247a782.js"
+    "364.29d98cc18f547b7bf28b.js": {
+      "name": "364.29d98cc18f547b7bf28b.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/364.29d98cc18f547b7bf28b.js"
     },
-    "App.fe8deebfb4f28247a782.js": {
-      "name": "App.fe8deebfb4f28247a782.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.fe8deebfb4f28247a782.js"
+    "App.29d98cc18f547b7bf28b.js": {
+      "name": "App.29d98cc18f547b7bf28b.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.29d98cc18f547b7bf28b.js"
     },
-    "App.fe8deebfb4f28247a782.js.LICENSE.txt": {
-      "name": "App.fe8deebfb4f28247a782.js.LICENSE.txt",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.fe8deebfb4f28247a782.js.LICENSE.txt"
+    "App.29d98cc18f547b7bf28b.js.LICENSE.txt": {
+      "name": "App.29d98cc18f547b7bf28b.js.LICENSE.txt",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.29d98cc18f547b7bf28b.js.LICENSE.txt"
     },
     "e9b898342ed8036ee8ea.ttf": {
       "name": "e9b898342ed8036ee8ea.ttf",
       "path": "/home/web/django_project/frontend/bundles/frontend/e9b898342ed8036ee8ea.ttf"
     },
-    "Map.fe8deebfb4f28247a782.js": {
-      "name": "Map.fe8deebfb4f28247a782.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/Map.fe8deebfb4f28247a782.js"
+    "Map.29d98cc18f547b7bf28b.js": {
+      "name": "Map.29d98cc18f547b7bf28b.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/Map.29d98cc18f547b7bf28b.js"
     },
-    "Map.fe8deebfb4f28247a782.js.LICENSE.txt": {
-      "name": "Map.fe8deebfb4f28247a782.js.LICENSE.txt",
-      "path": "/home/web/django_project/frontend/bundles/frontend/Map.fe8deebfb4f28247a782.js.LICENSE.txt"
+    "Map.29d98cc18f547b7bf28b.js.LICENSE.txt": {
+      "name": "Map.29d98cc18f547b7bf28b.js.LICENSE.txt",
+      "path": "/home/web/django_project/frontend/bundles/frontend/Map.29d98cc18f547b7bf28b.js.LICENSE.txt"
     },
-    "styles.fe8deebfb4f28247a782.css": {
-      "name": "styles.fe8deebfb4f28247a782.css",
-      "path": "/home/web/django_project/frontend/bundles/frontend/styles.fe8deebfb4f28247a782.css"
+    "styles.29d98cc18f547b7bf28b.css": {
+      "name": "styles.29d98cc18f547b7bf28b.css",
+      "path": "/home/web/django_project/frontend/bundles/frontend/styles.29d98cc18f547b7bf28b.css"
     }
   },
   "chunks": {
     "App": [
-      "styles.fe8deebfb4f28247a782.css",
-      "App.fe8deebfb4f28247a782.js"
+      "styles.29d98cc18f547b7bf28b.css",
+      "App.29d98cc18f547b7bf28b.js"
     ],
     "Map": [
-      "styles.fe8deebfb4f28247a782.css",
-      "Map.fe8deebfb4f28247a782.js"
+      "styles.29d98cc18f547b7bf28b.css",
+      "Map.29d98cc18f547b7bf28b.js"
     ]
   }
 }
