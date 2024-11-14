@@ -1,10 +1,5 @@
 import React, { Suspense } from "react";
 import { useRoutes } from "react-router-dom";
-import HomePage from "./pages/Home/index";
-import NotFound from "./pages/NotFound";
-import ProfileInformationPage from "./pages/Profile";
-import OrganisationInformation from "./pages/OrganisationInformation";
-import UploadedResourcesPage from "./pages/UploadedResources";
 import PrivateRoute from "./PrivateRoute";
 
 const Center = React.lazy(() => import("@chakra-ui/react").then(module => ({ default: module.Center })));
@@ -15,6 +10,7 @@ const NotFound = React.lazy(() => import("./pages/NotFound"));
 const ProfileInformationPage = React.lazy(() => import("./pages/Profile"));
 const OrganisationInformation = React.lazy(() => import("./pages/OrganisationInformation"));
 const AnalysisResults = React.lazy(() => import("./pages/AnalysisResults"));
+const UploadedResourcesPage  = React.lazy(() => import("./pages/UploadedResources"));
 
 const ProjectRoutes = () => {
   const routes = useRoutes([
