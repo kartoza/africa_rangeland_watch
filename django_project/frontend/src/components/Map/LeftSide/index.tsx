@@ -9,6 +9,12 @@ import {
 } from "@chakra-ui/react";
 import Layers from "./Layers";
 
+const styles = {
+  SelectedTab: {
+    color: "dark_green.800",
+    borderBottomColor: "dark_green.800"
+  }
+}
 /** LeftSide component of map. */
 export default function LeftSide() {
 
@@ -23,10 +29,23 @@ export default function LeftSide() {
         display='flex'
         flexDirection='column'
         height='100%'
+
       >
         <TabList>
-          <Tab padding={4}>Layers</Tab>
-          <Tab padding={4}>Analysis</Tab>
+          <Tab
+            padding={4}
+            fontWeight='bold'
+            _selected={styles.SelectedTab}
+          >
+            Layers
+          </Tab>
+          <Tab
+            padding={4}
+            fontWeight='bold'
+            _selected={styles.SelectedTab}
+          >
+            Analysis
+          </Tab>
         </TabList>
         <Box flexGrow={1} minHeight={0}>
           <TabPanels overflow='auto' height='100%'>

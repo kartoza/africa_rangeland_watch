@@ -1,8 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import maplibregl from 'maplibre-gl';
 import { Box } from "@chakra-ui/react";
+import { BasemapControl } from "./control";
 
 import 'maplibre-gl/dist/maplibre-gl.css';
+import './style.css';
 
 /**
  * MapLibre component.
@@ -17,22 +19,8 @@ export default function MapLibre() {
         container: 'map',
         style: {
           version: 8,
-          sources: {
-            basemap: {
-              type: "raster",
-              tiles: [
-                "https://tile.openstreetmap.org/{z}/{x}/{y}.png"
-              ],
-              tileSize: 256
-            }
-          },
-          layers: [
-            {
-              id: "basemap",
-              source: "basemap",
-              type: "raster"
-            }
-          ],
+          sources: {},
+          layers: [],
           glyphs: "/static/fonts/{fontstack}/{range}.pbf"
         },
         center: [0, 0],
@@ -41,6 +29,7 @@ export default function MapLibre() {
       _map.once("load", () => {
         setMap(_map)
       })
+      _map.addControl(new BasemapControl(), 'bottom-left');
       _map.addControl(new maplibregl.NavigationControl(), 'bottom-left');
     }
   }, []);

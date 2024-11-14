@@ -16,7 +16,7 @@ export default function Layers() {
       <AccordionItem>
         <h2>
           <AccordionButton>
-            <Box flex="1" textAlign="left">
+            <Box flex="1" textAlign="left" fontWeight='bold'>
               Baseline (Average)
             </Box>
             <AccordionIcon/>
@@ -30,7 +30,7 @@ export default function Layers() {
       <AccordionItem>
         <h2>
           <AccordionButton>
-            <Box flex="1" textAlign="left">
+            <Box flex="1" textAlign="left" fontWeight='bold'>
               Near-real time
             </Box>
             <AccordionIcon/>
