@@ -2,7 +2,7 @@ import {
   ChakraProps,
   Box,
   useDisclosure,
-  IconButton,
+  IconButton,<<<<<<< add-uploaded-resources-page
   Drawer,
   DrawerOverlay,
   DrawerContent,
@@ -80,12 +80,16 @@ export default function Sidebar(props: Props) {
             Organisation Information
           </MenuItem>
           <MenuItem onClick={() => navigate('/dashboard')}>My Dashboard</MenuItem>
-          <MenuItem onClick={() => navigate('/analysis-results')}>Analysis Results</MenuItem>
           <MenuItem
             style={{ backgroundColor: isActive('/uploaded-resources') ? '#a8d159' : 'transparent' }}
             onClick={() => navigate('/uploaded-resources')}
           >
             Uploaded Resources
+          </MenuItem>
+          <MenuItem 
+            style={{ backgroundColor: isActive('/analysis-results') ? '#a8d159' : 'transparent' }}
+            onClick={() => navigate('/analysis-results')}>
+              Analysis Results
           </MenuItem>
           <MenuItem onClick={() => navigate('/support')}>Support</MenuItem>
           <MenuItem onClick={() => navigate('/notifications')}>Notifications</MenuItem>
@@ -166,7 +170,6 @@ export default function Sidebar(props: Props) {
                   Organisation Information
                 </MenuItem>
                 <MenuItem onClick={() => { navigate('/dashboard'); onClose(); }}>My Dashboard</MenuItem>
-                <MenuItem onClick={() => { navigate('/analysis-results'); onClose(); }}>Analysis Results</MenuItem>
                 <MenuItem
                   style={{ backgroundColor: isActive('/uploaded-resources') ? '#a8d159' : 'transparent' }}
                   onClick={() => {
@@ -175,6 +178,11 @@ export default function Sidebar(props: Props) {
                   }}
                 >
                   Uploaded Resources
+                </MenuItem>
+                <MenuItem
+                  style={{ backgroundColor: isActive('/analysis-results') ? '#a8d159' : 'transparent' }}
+                  onClick={() => { navigate('/analysis-results'); onClose(); }}>
+                  Analysis Results
                 </MenuItem>
                 <MenuItem onClick={() => { navigate('/support'); onClose(); }}>Support</MenuItem>
                 <MenuItem onClick={() => { navigate('/notifications'); onClose(); }}>Notifications</MenuItem>

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense } from "react";
 import { useRoutes } from "react-router-dom";
 import HomePage from "./pages/Home/index";
 import NotFound from "./pages/NotFound";
@@ -7,11 +7,19 @@ import OrganisationInformation from "./pages/OrganisationInformation";
 import UploadedResourcesPage from "./pages/UploadedResources";
 import PrivateRoute from "./PrivateRoute";
 
+const Center = React.lazy(() => import("@chakra-ui/react").then(module => ({ default: module.Center })));
+const Spinner = React.lazy(() => import("@chakra-ui/react").then(module => ({ default: module.Spinner })));
+
+const HomePage = React.lazy(() => import("./pages/Home/index"));
+const NotFound = React.lazy(() => import("./pages/NotFound"));
+const ProfileInformationPage = React.lazy(() => import("./pages/Profile"));
+const OrganisationInformation = React.lazy(() => import("./pages/OrganisationInformation"));
+const AnalysisResults = React.lazy(() => import("./pages/AnalysisResults"));
+
 const ProjectRoutes = () => {
   const routes = useRoutes([
     { path: "/", element: <HomePage /> },
     { path: "*", element: <NotFound /> },
-
     // Use PrivateRoute for protected routes
     {
       path: "/profile",
@@ -25,9 +33,25 @@ const ProjectRoutes = () => {
       path: "/uploaded-resources",
       element: <PrivateRoute Component={UploadedResourcesPage} />,
     },
+    {
+      path: "/analysis-results",
+      element: <PrivateRoute Component={AnalysisResults} />,
+    },
   ]);
 
-  return routes;
+  return (
+    <Suspense
+      fallback={
+        <Suspense fallback={<div></div>}>
+          <Center h="100vh">
+            <Spinner size="xl" />
+          </Center>
+        </Suspense>
+      }
+    >
+      {routes}
+    </Suspense>
+  );
 };
 
 export default ProjectRoutes;
