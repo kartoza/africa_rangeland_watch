@@ -14,10 +14,9 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.urls import path
-from .views import HomeView, MapView, SentryProxyView
+from .views import HomeView, SentryProxyView
 
 urlpatterns = [
-    path('map/', MapView.as_view(), name='map'),
     path('', HomeView.as_view(), name='home'),
     path('sentry-proxy/',
          SentryProxyView.as_view(), name='sentry-proxy'),

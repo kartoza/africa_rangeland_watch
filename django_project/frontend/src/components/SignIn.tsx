@@ -104,7 +104,7 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
                                             <InputGroup>
                                                 <InputLeftElement>
                                                     <Center w="16px" h="20px">
-                                                        <Image src="/static/images/email_icon.svg" alt="Email Icon" h="18px" w="16px" />
+                                                        <Image src="static/images/email_icon.svg" alt="Email Icon" h="18px" w="16px" />
                                                     </Center>
                                                 </InputLeftElement>
                                                 <Input
@@ -123,7 +123,7 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
                                             <InputGroup>
                                                 <InputLeftElement>
                                                     <Center w="16px" h="20px">
-                                                        <Image src="/static/images/lock_icon.svg" alt="Password Icon" h="18px" w="16px" />
+                                                        <Image src="static/images/lock_icon.svg" alt="Password Icon" h="18px" w="16px" />
                                                     </Center>
                                                 </InputLeftElement>
                                                 <Input
@@ -138,7 +138,7 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
                                                 <InputRightElement onClick={togglePasswordVisibility} cursor="pointer">
                                                     <Center w="20px" h="18px">
                                                         <Image
-                                                            src={isPasswordVisible ? "/static/images/eye_icon_unchecked.svg" : "/static/images/eye_icon.svg"}
+                                                            src={isPasswordVisible ? "static/images/eye_icon_unchecked.svg" : "static/images/eye_icon.svg"}
                                                             alt="Toggle Password Visibility"
                                                             h="18px"
                                                             w="20px"
@@ -152,7 +152,7 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
                                             <InputGroup>
                                                 <InputLeftElement>
                                                     <Center w="16px" h="20px">
-                                                        <Image src="/static/images/lock_icon.svg" alt="Password Icon" h="18px" w="16px" />
+                                                        <Image src="static/images/lock_icon.svg" alt="Password Icon" h="18px" w="16px" />
                                                     </Center>
                                                 </InputLeftElement>
                                                 <Input
@@ -208,9 +208,9 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
                                                 or continue with
                                             </Text>
                                             <Flex mt="22px" justifyContent="center" gap="20px">
-                                                <Image src="/static/images/google_icon.svg" alt="Google Icon" h="40px" w="40px" />
-                                                <Image src="/static/images/github_icon.svg" alt="GitHub Icon" h="40px" w="40px" />
-                                                <Image src="/static/images/apple_icon.svg" alt="Apple Icon" h="40px" w="40px" />
+                                                <Image src="static/images/google_icon.svg" alt="Google Icon" h="40px" w="40px" />
+                                                <Image src="static/images/github_icon.svg" alt="GitHub Icon" h="40px" w="40px" />
+                                                <Image src="static/images/apple_icon.svg" alt="Apple Icon" h="40px" w="40px" />
                                             </Flex>
                                         </>
                                     )}

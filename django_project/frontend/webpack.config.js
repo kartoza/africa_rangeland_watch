@@ -14,8 +14,7 @@ const minimized = !isDev;
 
 let conf = {
     entry: {
-        App: './src/index.tsx',
-        Map: './src/app/map/index.tsx',
+        App: './src/index.tsx'
     },
     output: {
         path: path.resolve(__dirname, "./bundles/frontend"),
@@ -88,7 +87,7 @@ if (isServe) {
         conf['output'] = {
             path: path.resolve(__dirname, "./bundles/frontend"),
             filename: filename + '.js',
-            publicPath: 'http://localhost:9000/static/',
+            publicPath: 'http://dev.local:9000/static/',
         }
     }
     conf['devServer'] = {
@@ -107,7 +106,7 @@ if (isServe) {
     conf['output'] = {
         path: path.resolve(__dirname, "./bundles/frontend"),
         filename: filename + '.js',
-        publicPath: 'http://localhost:9000/static/',
+        publicPath: 'http://dev.local:9000/static/',
     }
     conf['plugins'].push(
         new ReactRefreshWebpackPlugin()

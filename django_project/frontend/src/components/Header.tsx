@@ -26,7 +26,7 @@ export default function Header(props: any) {
                 {/* Logo on the Left */}
                 <Flex alignItems="center">
                     <Image
-                        src="/static/images/main_logo.svg"
+                        src="static/images/main_logo.svg"
                         alt="Header Logo"
                         h="52px"
                         w="auto"
@@ -44,13 +44,13 @@ export default function Header(props: any) {
                     alignItems="center"
                 >
                     <ListItem>
-                        <Link href="/map"><Text color="white">MAP</Text></Link>
+                        <Link href="/#/map"><Text color="white">MAP</Text></Link>
                     </ListItem>
                     <ListItem>
-                        <Link href="/#"><Text color="white">DASHBOARD</Text></Link>
+                        <Link href="#"><Text color="white">DASHBOARD</Text></Link>
                     </ListItem>
                     <ListItem>
-                        <Link href="/#"><Text color="white">HELP</Text></Link>
+                        <Link href="#"><Text color="white">HELP</Text></Link>
                     </ListItem>
                     <ListItem
                         onMouseEnter={() => setMenuOpen(true)}
@@ -58,7 +58,7 @@ export default function Header(props: any) {
                     >
                         <Flex gap="4px" alignItems="center" cursor="pointer">
                             <Text color="white">ABOUT</Text>
-                            <Image src="/static/images/arrow_down.svg" alt="Dropdown Arrow" h="8px" w="16px" />
+                            <Image src="static/images/arrow_down.svg" alt="Dropdown Arrow" h="8px" w="16px" />
                         </Flex>
                         {menuOpen && <MegaMenu />}
                     </ListItem>
@@ -68,7 +68,7 @@ export default function Header(props: any) {
                     >
                         <Flex gap="4px" alignItems="center" cursor="pointer">
                             <Text color="white">RESOURCES</Text>
-                            <Image src="/static/images/arrow_down.svg" alt="Dropdown Arrow" h="8px" w="16px" />
+                            <Image src="static/images/arrow_down.svg" alt="Dropdown Arrow" h="8px" w="16px" />
                         </Flex>
                         {menuOpenAlt && <MegaMenu />}
                     </ListItem>
@@ -87,10 +87,10 @@ export default function Header(props: any) {
 
                     {/* Desktop Icons */}
                     <Flex display={{ base: "none", sm: "flex" }} gap="20px">
-                        <Link href="/#"><Image src="/static/images/search_icon.svg" alt="search" h="24px" /></Link>
-                        <Link href="/#"><Image src="/static/images/notifications_icon.svg" alt="Notif" h="24px" w="24px" /></Link>
+                        <Link href="#"><Image src="static/images/search_icon.svg" alt="search" h="24px" /></Link>
+                        <Link href="#"><Image src="static/images/notifications_icon.svg" alt="Notif" h="24px" w="24px" /></Link>
                         <Link onClick={() => setIsSignInOpen(true)}>
-                            <Image src="/static/images/user_avatar_header_icon.svg" alt="user" h="24px" />
+                            <Image src="static/images/user_avatar_header_icon.svg" alt="user" h="24px" />
                         </Link>
                     </Flex>
                 </Flex>
@@ -118,20 +118,20 @@ export default function Header(props: any) {
                         display="flex"
                         color="white"
                     >
-                        <ListItem><Link href="/map"><Text>MAP</Text></Link></ListItem>
-                        <ListItem><Link href="/#"><Text>DASHBOARD</Text></Link></ListItem>
-                        <ListItem><Link href="/#"><Text>HELP</Text></Link></ListItem>
+                        <ListItem><Link href="/#/map"><Text>MAP</Text></Link></ListItem>
+                        <ListItem><Link href="#"><Text>DASHBOARD</Text></Link></ListItem>
+                        <ListItem><Link href="#"><Text>HELP</Text></Link></ListItem>
                         <ListItem onMouseEnter={() => setMenuOpen(true)} onMouseLeave={() => setMenuOpen(false)}>
                             <Flex gap="4px" alignItems="center" cursor="pointer">
                                 <Text>ABOUT</Text>
-                                <Image src="/static/images/arrow_down.svg" alt="Dropdown Arrow" h="8px" w="16px" />
+                                <Image src="static/images/arrow_down.svg" alt="Dropdown Arrow" h="8px" w="16px" />
                             </Flex>
                             {menuOpen && <MegaMenu />}
                         </ListItem>
                         <ListItem onMouseEnter={() => setMenuOpenAlt(true)} onMouseLeave={() => setMenuOpenAlt(false)}>
                             <Flex gap="4px" alignItems="center" cursor="pointer">
                                 <Text>RESOURCES</Text>
-                                <Image src="/static/images/arrow_down.svg" alt="Dropdown Arrow" h="8px" w="16px" />
+                                <Image src="static/images/arrow_down.svg" alt="Dropdown Arrow" h="8px" w="16px" />
                             </Flex>
                             {menuOpenAlt && <MegaMenu />}
                         </ListItem>

@@ -1,5 +1,5 @@
 {
-  "status": "done",
+  "status": "error",
   "assets": {
     "09be6892072ac94c44db.ttf": {
       "name": "09be6892072ac94c44db.ttf",
@@ -2880,16 +2880,14 @@
   "chunks": {
     "App": [
       "styles.css",
-      "App.js",
-      "App.a42aef3fb67ecbee18dc.hot-update.js"
+      "App.js"
     ],
     "Map": [
       "styles.css",
-      "Map.js",
-      "Map.a42aef3fb67ecbee18dc.hot-update.js"
+      "Map.js"
     ]
   },
   "publicPath": "http://localhost:9000/static/",
-  "error": "Error",
-  "message": "[tsl] ERROR in /home/web/django_project/frontend/src/components/Map/TopSide.tsx(12,6)\n      TS2304: Cannot find name 'Slide'."
+  "error": "ModuleNotFoundError",
+  "message": "Module not found: Error: Can't resolve './src/app/map/index.tsx' in '/home/web/django_project/frontend'"
 }

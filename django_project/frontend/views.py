@@ -20,12 +20,6 @@ class HomeView(TemplateView):
         return context
 
 
-class MapView(TemplateView):
-    """Renders the map page view."""
-
-    template_name = 'map.html'
-
-
 @method_decorator(csrf_exempt, name="dispatch")
 class SentryProxyView(View):
     """Proxy view for forwarding events to Sentry."""
