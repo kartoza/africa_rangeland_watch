@@ -8,11 +8,7 @@ import {
   Tabs,
   useDisclosure
 } from "@chakra-ui/react";
-import Layers from "./Layers";
-
-interface Props {
-
-}
+import Layers, { LayerCheckboxProps } from "./Layers";
 
 const styles = {
   SelectedTab: {
@@ -22,7 +18,7 @@ const styles = {
 }
 /** LeftSide component of map. */
 export const LeftSide = forwardRef(
-  (props: Props, ref
+  (props: LayerCheckboxProps, ref
   ) => {
     const { isOpen, onOpen, onClose } = useDisclosure();
 
@@ -56,6 +52,7 @@ export const LeftSide = forwardRef(
         >
           <TabList>
             <Tab
+              fontSize='13px'
               padding={4}
               fontWeight='bold'
               _selected={styles.SelectedTab}
@@ -63,6 +60,7 @@ export const LeftSide = forwardRef(
               Layers
             </Tab>
             <Tab
+              fontSize='13px'
               padding={4}
               fontWeight='bold'
               _selected={styles.SelectedTab}
@@ -73,7 +71,7 @@ export const LeftSide = forwardRef(
           <Box flexGrow={1} minHeight={0}>
             <TabPanels overflow='auto' height='100%'>
               <TabPanel padding={0}>
-                <Layers/>
+                <Layers {...props}/>
               </TabPanel>
               <TabPanel padding={4} textAlign='center'>
                 Coming soon

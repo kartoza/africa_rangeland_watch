@@ -1,28 +1,7 @@
 import React, { useEffect, useState } from 'react';
+import { Basemap } from "../DataTypes";
+import { basemapData } from "../DataFixtures";
 
-// TODO:
-//  Move this to use API
-const basemapData = [
-  {
-    id: 1,
-    name: "OpenStreetMap",
-    url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-    thumbnail: ""
-  },
-  {
-    id: 2,
-    name: "Stamen Watercolor",
-    url: "https://tiles.stadiamaps.com/tiles/stamen_watercolor/{z}/{x}/{y}.jpg",
-    thumbnail: ""
-  }
-]
-
-interface Basemap {
-  id: number,
-  name: string,
-  url: string
-  thumbnail?: string,
-}
 
 interface CardProps {
   basemap: Basemap;

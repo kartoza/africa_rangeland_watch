@@ -3,12 +3,13 @@ import { Helmet } from "react-helmet";
 import Header from "../../components/Header";
 import { Box } from "@chakra-ui/react";
 import { LeftSide } from "../../components/Map/LeftSide";
-import MapLibre from "../../components/Map/MapLibre";
+import { MapLibre } from "../../components/Map/MapLibre";
 import TopSide from "../../components/Map/TopSide";
 
 /** Map page **/
 export default function MapPage() {
   const leftSideRef = useRef(null);
+  const mapLibreRef = useRef(null);
 
   return (
     <>
@@ -27,7 +28,15 @@ export default function MapPage() {
         {/* Header */}
         <Header/>
         <Box flexGrow={1} display='flex' minHeight={0}>
-          <LeftSide ref={leftSideRef}/>
+          <LeftSide
+            ref={leftSideRef}
+            onLayerChecked={layer => {
+              mapLibreRef?.current.renderLayer(layer)
+            }}
+            onLayerUnchecked={layer => {
+              mapLibreRef?.current.removeLayer(layer)
+            }}
+          />
           <Box
             flexGrow={1}
             display='flex'
@@ -38,7 +47,7 @@ export default function MapPage() {
                 leftSideRef?.current.toggle()
               }}
             />
-            <MapLibre/>
+            <MapLibre ref={mapLibreRef}/>
           </Box>
         </Box>
       </Box>
