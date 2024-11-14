@@ -57,6 +57,13 @@ export const loginUser = (email: string, password: string) => async (dispatch: A
   dispatch(loginStart());
 
   try {
+    const csrfToken = document.cookie.split(';').find(cookie => cookie.trim().startsWith('csrftoken='));
+
+    if (csrfToken) {
+      const token = csrfToken.split('=')[1];
+      axios.defaults.headers['X-CSRFToken'] = token;
+    }
+    
     const response = await axios.post('/auth/login/', {
       email,
       password,
