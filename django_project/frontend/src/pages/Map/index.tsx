@@ -1,13 +1,14 @@
-import React from "react";
+import React, { useRef } from "react";
 import { Helmet } from "react-helmet";
 import Header from "../../components/Header";
 import { Box } from "@chakra-ui/react";
-import LeftSide from "../../components/Map/LeftSide";
+import { LeftSide } from "../../components/Map/LeftSide";
 import MapLibre from "../../components/Map/MapLibre";
 import TopSide from "../../components/Map/TopSide";
 
-
+/** Map page **/
 export default function MapPage() {
+  const leftSideRef = useRef(null);
 
   return (
     <>
@@ -26,13 +27,17 @@ export default function MapPage() {
         {/* Header */}
         <Header/>
         <Box flexGrow={1} display='flex' minHeight={0}>
-          <LeftSide/>
+          <LeftSide ref={leftSideRef}/>
           <Box
             flexGrow={1}
             display='flex'
             flexDirection='column'
           >
-            <TopSide/>
+            <TopSide
+              toggleClicked={() => {
+                leftSideRef?.current.toggle()
+              }}
+            />
             <MapLibre/>
           </Box>
         </Box>

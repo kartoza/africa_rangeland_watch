@@ -1,13 +1,18 @@
-import React from 'react';
+import React, { forwardRef, useImperativeHandle } from 'react';
 import {
   Box,
   Tab,
   TabList,
   TabPanel,
   TabPanels,
-  Tabs
+  Tabs,
+  useDisclosure
 } from "@chakra-ui/react";
 import Layers from "./Layers";
+
+interface Props {
+
+}
 
 const styles = {
   SelectedTab: {
@@ -16,49 +21,68 @@ const styles = {
   }
 }
 /** LeftSide component of map. */
-export default function LeftSide() {
+export const LeftSide = forwardRef(
+  (props: Props, ref
+  ) => {
+    const { isOpen, onOpen, onClose } = useDisclosure();
 
-  return (
-    <Box
-      width='300px'
-      height='100%'
-      borderRight='1px solid #DDD'
-    >
-      <Tabs
-        isFitted variant="enclosed"
-        display='flex'
-        flexDirection='column'
+    // Toggle
+    useImperativeHandle(ref, () => ({
+      toggle() {
+        if (isOpen) {
+          onClose()
+        } else {
+          onOpen()
+        }
+      }
+    }));
+
+    return (
+      <Box
+        marginLeft={isOpen ? '-300px' : '0'}
+        width='300px'
         height='100%'
-
+        borderRight='1px solid #DDD'
+        style={{
+          transition: "margin-left 0.2s"
+        }}
       >
-        <TabList>
-          <Tab
-            padding={4}
-            fontWeight='bold'
-            _selected={styles.SelectedTab}
-          >
-            Layers
-          </Tab>
-          <Tab
-            padding={4}
-            fontWeight='bold'
-            _selected={styles.SelectedTab}
-          >
-            Analysis
-          </Tab>
-        </TabList>
-        <Box flexGrow={1} minHeight={0}>
-          <TabPanels overflow='auto' height='100%'>
-            <TabPanel padding={0}>
-              <Layers/>
-            </TabPanel>
-            <TabPanel padding={4} textAlign='center'>
-              Coming soon
-            </TabPanel>
-          </TabPanels>
-        </Box>
-      </Tabs>
-    </Box>
-  )
-}
+        <Tabs
+          isFitted variant="enclosed"
+          display='flex'
+          flexDirection='column'
+          height='100%'
+
+        >
+          <TabList>
+            <Tab
+              padding={4}
+              fontWeight='bold'
+              _selected={styles.SelectedTab}
+            >
+              Layers
+            </Tab>
+            <Tab
+              padding={4}
+              fontWeight='bold'
+              _selected={styles.SelectedTab}
+            >
+              Analysis
+            </Tab>
+          </TabList>
+          <Box flexGrow={1} minHeight={0}>
+            <TabPanels overflow='auto' height='100%'>
+              <TabPanel padding={0}>
+                <Layers/>
+              </TabPanel>
+              <TabPanel padding={4} textAlign='center'>
+                Coming soon
+              </TabPanel>
+            </TabPanels>
+          </Box>
+        </Tabs>
+      </Box>
+    )
+  }
+)
 
