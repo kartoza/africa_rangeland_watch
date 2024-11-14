@@ -9,15 +9,20 @@ interface Props {
 /** Top side component of map. */
 export default function TopSide({ toggleClicked }: Props) {
   return (
-    <Box padding={4}>
+    <Box paddingX={4} height='52px' display={"flex"} alignItems={'center'}>
       <IconButton
         onClick={toggleClicked}
-        minWidth={2}
-        height={4}
-        width={2}
+        minWidth={4}
+        height={6}
+        width={6}
+        border='1px solid #ddd'
+        borderRadius={0}
         marginRight={4}
         icon={<HamburgerIcon/>}
         aria-label="Open Sidebar"
+        _hover={{
+          backgroundColor: '#eee'
+        }}
       />
     </Box>
   )

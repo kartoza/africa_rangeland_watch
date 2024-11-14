@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
 // TODO:
-//  Move this to backend
+//  Move this to use API
 const basemapData = [
   {
     id: 1,

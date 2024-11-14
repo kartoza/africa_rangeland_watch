@@ -5,43 +5,31 @@
       "name": "09be6892072ac94c44db.ttf",
       "path": "/home/web/django_project/frontend/bundles/frontend/09be6892072ac94c44db.ttf"
     },
-    "364.29d98cc18f547b7bf28b.js": {
-      "name": "364.29d98cc18f547b7bf28b.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/364.29d98cc18f547b7bf28b.js"
+    "364.6b8131dca2fe5949f288.js": {
+      "name": "364.6b8131dca2fe5949f288.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/364.6b8131dca2fe5949f288.js"
     },
-    "App.29d98cc18f547b7bf28b.js": {
-      "name": "App.29d98cc18f547b7bf28b.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.29d98cc18f547b7bf28b.js"
+    "App.6b8131dca2fe5949f288.js": {
+      "name": "App.6b8131dca2fe5949f288.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.6b8131dca2fe5949f288.js"
     },
-    "App.29d98cc18f547b7bf28b.js.LICENSE.txt": {
-      "name": "App.29d98cc18f547b7bf28b.js.LICENSE.txt",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.29d98cc18f547b7bf28b.js.LICENSE.txt"
+    "App.6b8131dca2fe5949f288.js.LICENSE.txt": {
+      "name": "App.6b8131dca2fe5949f288.js.LICENSE.txt",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.6b8131dca2fe5949f288.js.LICENSE.txt"
     },
     "e9b898342ed8036ee8ea.ttf": {
       "name": "e9b898342ed8036ee8ea.ttf",
       "path": "/home/web/django_project/frontend/bundles/frontend/e9b898342ed8036ee8ea.ttf"
     },
-    "Map.29d98cc18f547b7bf28b.js": {
-      "name": "Map.29d98cc18f547b7bf28b.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/Map.29d98cc18f547b7bf28b.js"
-    },
-    "Map.29d98cc18f547b7bf28b.js.LICENSE.txt": {
-      "name": "Map.29d98cc18f547b7bf28b.js.LICENSE.txt",
-      "path": "/home/web/django_project/frontend/bundles/frontend/Map.29d98cc18f547b7bf28b.js.LICENSE.txt"
-    },
-    "styles.29d98cc18f547b7bf28b.css": {
-      "name": "styles.29d98cc18f547b7bf28b.css",
-      "path": "/home/web/django_project/frontend/bundles/frontend/styles.29d98cc18f547b7bf28b.css"
+    "styles.6b8131dca2fe5949f288.css": {
+      "name": "styles.6b8131dca2fe5949f288.css",
+      "path": "/home/web/django_project/frontend/bundles/frontend/styles.6b8131dca2fe5949f288.css"
     }
   },
   "chunks": {
     "App": [
-      "styles.29d98cc18f547b7bf28b.css",
-      "App.29d98cc18f547b7bf28b.js"
-    ],
-    "Map": [
-      "styles.29d98cc18f547b7bf28b.css",
-      "Map.29d98cc18f547b7bf28b.js"
+      "styles.6b8131dca2fe5949f288.css",
+      "App.6b8131dca2fe5949f288.js"
     ]
   }
 }
