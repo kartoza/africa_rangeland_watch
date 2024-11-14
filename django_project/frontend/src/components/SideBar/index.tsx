@@ -2,7 +2,7 @@ import {
   ChakraProps,
   Box,
   useDisclosure,
-  IconButton,<<<<<<< add-uploaded-resources-page
+  IconButton,
   Drawer,
   DrawerOverlay,
   DrawerContent,
