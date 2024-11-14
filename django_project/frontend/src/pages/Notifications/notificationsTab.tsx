@@ -38,14 +38,14 @@ export default function NotificationsTab() {
           >
             {/* Badge - Custom styled */}
             <Badge
-              color="black" 
-              backgroundColor="#91e05e" 
-              borderRadius="full"
-              p={2}
+              colorScheme="green"
               position="absolute"
               top={2}
               right={2}
               fontSize="sm"
+              fontWeight="normal"
+              px={2}
+              py={1} 
             >
               {notification.badge}
             </Badge>
