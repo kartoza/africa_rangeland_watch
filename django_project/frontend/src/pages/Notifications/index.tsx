@@ -31,49 +31,7 @@ import Header from "../../components/Header";
 import Sidebar from "../../components/SideBar";
 import "../../styles/index.css";
 
-// Dummy data for the "All" tab
-const mockData = [
-  {
-    id: 1,
-    indicator: "Indicator 1",
-    alert: true,
-    alertTrigger: "Less Than",
-    threshold: 0.05,
-    anomalyDetectionAlert: true,
-    email: true,
-    platform: true,
-  },
-  {
-    id: 2,
-    indicator: "Indicator 2",
-    alert: false,
-    alertTrigger: "Greater Than",
-    threshold: 0.10,
-    anomalyDetectionAlert: false,
-    email: false,
-    platform: true,
-  },
-  {
-    id: 3,
-    indicator: "Indicator 3",
-    alert: true,
-    alertTrigger: "Equal To",
-    threshold: 0.20,
-    anomalyDetectionAlert: true,
-    email: true,
-    platform: false,
-  },
-  {
-    id: 4,
-    indicator: "Indicator 4",
-    alert: false,
-    alertTrigger: "Less Than",
-    threshold: 0.05,
-    anomalyDetectionAlert: false,
-    email: true,
-    platform: true,
-  },
-];
+
 
 export default function Notifications() {
   const [selectedTab, setSelectedTab] = useState("all");
@@ -88,7 +46,7 @@ export default function Notifications() {
     // Simulating API calls for fetching data for each tab
     const fetchNotificationsData = async () => {
       // For "All" tab, we simulate fetching data
-      setAllNotifications(mockData);
+      setAllNotifications([]);
 
       // For other tabs, we simulate "No data available" scenario
       setPersonalNotifications([]);
