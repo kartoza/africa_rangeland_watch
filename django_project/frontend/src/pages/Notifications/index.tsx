@@ -10,21 +10,22 @@ import {
   Tab,
   TabPanel,
   Text,
-  useToast,
+  IconButton,
 } from "@chakra-ui/react";
+import { FaCog } from "react-icons/fa"; // Importing the gear icon
 import Header from "../../components/Header";
 import Sidebar from "../../components/SideBar";
 import NotificationsTab from "./notificationsTab";
 import "../../styles/index.css";
 import SystemTab from "./systemTab";
 
-
-
 export default function Notifications() {
   const [selectedTab, setSelectedTab] = useState("all");
-  const toast = useToast();
 
-  
+  const handleSettingsClick = () => {
+    // You can handle the settings button click here (e.g., open a modal or navigate to settings page)
+    alert("Settings clicked");
+  };
 
   return (
     <>
@@ -55,9 +56,19 @@ export default function Notifications() {
             <Tabs
               variant="enclosed"
               isLazy
-              onChange={(index) => setSelectedTab(index === 0 ? "all" : index === 1 ? "personal" : index === 2 ? "organisations" : "system")}
+              onChange={(index) =>
+                setSelectedTab(
+                  index === 0
+                    ? "all"
+                    : index === 1
+                    ? "personal"
+                    : index === 2
+                    ? "organisations"
+                    : "system"
+                )
+              }
             >
-              <TabList>
+              <TabList display="flex" alignItems="center">
                 <Tab
                   _selected={{ color: "white", bg: "dark_green.800" }}
                   color={selectedTab === "all" ? "white" : "black"}
@@ -86,6 +97,17 @@ export default function Notifications() {
                 >
                   System
                 </Tab>
+
+                {/* Gear Icon on the extreme right */}
+                <IconButton
+                  icon={<FaCog />}
+                  aria-label="Settings"
+                  onClick={handleSettingsClick}
+                  size="lg"
+                  variant="ghost"
+                  colorScheme="green"
+                  ml="auto" 
+                />
               </TabList>
 
               <TabPanels>
@@ -93,15 +115,13 @@ export default function Notifications() {
                   <NotificationsTab />
                 </TabPanel>
                 <TabPanel>
-                  {/* No Data Available for "Personal" Tab */}
                   <Text>No data available for Personal notifications.</Text>
                 </TabPanel>
                 <TabPanel>
-                  {/* No Data Available for "Organisations" Tab */}
                   <Text>No data available for Organisations notifications.</Text>
                 </TabPanel>
                 <TabPanel>
-                    <SystemTab />
+                  <SystemTab />
                 </TabPanel>
               </TabPanels>
             </Tabs>
