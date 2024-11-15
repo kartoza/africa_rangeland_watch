@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import {
   Accordion,
   AccordionButton,
@@ -7,30 +7,26 @@ import {
   AccordionPanel,
   Box
 } from "@chakra-ui/react";
-import { GroupName, Layer, SelectOption } from "../DataTypes";
+import { GroupName, Layer, SelectOption } from "../../DataTypes";
 import LayerCheckbox from "./LayerCheckbox";
-import { layerData } from "../fixtures/layer";
 import LandscapeSelector from "./LandscapeSelector";
+import LeftSideLoading from "../Loading";
 
 
 export interface LayerCheckboxProps {
   onLayerChecked: (layer: Layer) => void;
   onLayerUnchecked: (layer: Layer) => void;
+}
+
+export interface Props extends LayerCheckboxProps {
   landscapes?: SelectOption[];
+  layers?: Layer[];
 }
 
 /** Layers component of map. */
 export default function Layers(
-  { landscapes, onLayerChecked, onLayerUnchecked }: LayerCheckboxProps
+  { landscapes, layers, onLayerChecked, onLayerUnchecked }: Props
 ) {
-  const [layers, setLayers] = useState<Array<Layer> | null>(null);
-
-  // TODO:
-  //  Fetch the data here
-  useEffect(() => {
-    setLayers(layerData)
-  }, []);
-
   return (
     <Accordion allowMultiple defaultIndex={[0, 1]}>
       <AccordionItem>
@@ -47,15 +43,17 @@ export default function Layers(
           fontSize='13px'
         >
           {
-            layers?.filter(
-              layer => layer.group === GroupName.BaselineGroup
-            ).map(
-              layer => <LayerCheckbox
-                key={layer.id}
-                layer={layer}
-                onToggle={(checked) => checked ? onLayerChecked(layer) : onLayerUnchecked(layer)}
-              />
-            )
+            layers ?
+              layers?.filter(
+                layer => layer.group === GroupName.BaselineGroup
+              ).map(
+                layer => <LayerCheckbox
+                  key={layer.id}
+                  layer={layer}
+                  onToggle={(checked) => checked ? onLayerChecked(layer) : onLayerUnchecked(layer)}
+                />
+              ) :
+              <LeftSideLoading/>
           }
         </AccordionPanel>
       </AccordionItem>
@@ -80,15 +78,17 @@ export default function Layers(
             <LandscapeSelector landscapes={landscapes}/>
           </Box>
           {
-            layers?.filter(
-              layer => layer.group === GroupName.NearRealtimeGroup
-            ).map(
-              layer => <LayerCheckbox
-                key={layer.id}
-                layer={layer}
-                onToggle={(checked) => checked ? onLayerChecked(layer) : onLayerUnchecked(layer)}
-              />
-            )
+            layers ?
+              layers?.filter(
+                layer => layer.group === GroupName.NearRealtimeGroup
+              ).map(
+                layer => <LayerCheckbox
+                  key={layer.id}
+                  layer={layer}
+                  onToggle={(checked) => checked ? onLayerChecked(layer) : onLayerUnchecked(layer)}
+                />
+              ) :
+              <LeftSideLoading/>
           }
         </AccordionPanel>
       </AccordionItem>

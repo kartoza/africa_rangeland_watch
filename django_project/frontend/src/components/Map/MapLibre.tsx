@@ -10,10 +10,10 @@ import { Box } from "@chakra-ui/react";
 import { BasemapControl, LegendControl } from "./control";
 import { Layer } from "./DataTypes";
 import { hasSource, removeLayer } from "./utils";
+import { initialBound } from "./fixtures/map";
 
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './style.css';
-import { initialBound } from "./fixtures/map";
 
 interface Props {
 
@@ -27,6 +27,7 @@ export const MapLibre = forwardRef(
   ) => {
     const legendRef = useRef(null);
     const [map, setMap] = useState(null);
+    const [layers, setLayers] = useState<Array<Layer> | null>(null);
 
     // Toggle
     useImperativeHandle(ref, () => ({

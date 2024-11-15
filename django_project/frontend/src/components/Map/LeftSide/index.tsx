@@ -1,4 +1,9 @@
-import React, { forwardRef, useImperativeHandle } from 'react';
+import React, {
+  forwardRef,
+  useEffect,
+  useImperativeHandle,
+  useState
+} from 'react';
 import {
   Box,
   Tab,
@@ -9,6 +14,10 @@ import {
   useDisclosure
 } from "@chakra-ui/react";
 import Layers, { LayerCheckboxProps } from "./Layers";
+import { Layer, SelectOption } from "../DataTypes";
+import { Landscapes } from "../fixtures/analysis";
+import { layerData } from "../fixtures/layer";
+import Analysis from "./Analysis";
 
 const styles = {
   SelectedTab: {
@@ -22,7 +31,19 @@ const styles = {
 export const LeftSide = forwardRef(
   (props: LayerCheckboxProps, ref
   ) => {
+
     const { isOpen, onOpen, onClose } = useDisclosure();
+
+    // Required data
+    const [landscapes, setLandscapes] = useState<Array<SelectOption> | null>(null);
+    const [layers, setLayers] = useState<Array<Layer> | null>(null);
+
+    // TODO:
+    //  Fetch the data here
+    useEffect(() => {
+      setLandscapes(Landscapes)
+      setLayers(layerData)
+    }, []);
 
     // Toggle
     useImperativeHandle(ref, () => ({
@@ -77,10 +98,17 @@ export const LeftSide = forwardRef(
           <Box flexGrow={1} minHeight={0}>
             <TabPanels overflow='auto' height='100%'>
               <TabPanel padding={0}>
-                <Layers {...props}/>
+                <Layers
+                  landscapes={landscapes}
+                  layers={layers}
+                  {...props}
+                />
               </TabPanel>
-              <TabPanel padding={4} textAlign='center'>
-                Coming soon
+              <TabPanel padding={0} textAlign='center'>
+                <Analysis
+                  landscapes={landscapes}
+                  layers={layers}
+                />
               </TabPanel>
             </TabPanels>
           </Box>

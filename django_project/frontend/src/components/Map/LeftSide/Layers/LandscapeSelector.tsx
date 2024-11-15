@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { SelectOption } from "../DataTypes";
 import { Box, Select } from "@chakra-ui/react";
+import { SelectOption } from "../../DataTypes";
 
 
 interface Props {
@@ -34,7 +34,12 @@ export default function LandscapeSelector({ landscapes }: Props) {
       >
         {
           landscapes.map(landscape => {
-            return <option value={landscape.value}>{landscape.label}</option>
+            return <option
+              key={landscape.value}
+              value={landscape.value}
+            >
+              {landscape.label}
+            </option>
           })
         }
       </Select>
