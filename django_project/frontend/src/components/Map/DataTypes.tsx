@@ -2,6 +2,11 @@
  * All data types that being used on Map
  */
 
+export interface SelectOption {
+  label: string;
+  value: string;
+}
+
 export interface Basemap {
   id: number;
   name: string;

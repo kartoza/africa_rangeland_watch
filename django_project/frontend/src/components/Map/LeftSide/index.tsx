@@ -16,6 +16,8 @@ const styles = {
     borderBottomColor: "dark_green.800"
   }
 }
+
+
 /** LeftSide component of map. */
 export const LeftSide = forwardRef(
   (props: LayerCheckboxProps, ref
@@ -75,8 +77,7 @@ export const LeftSide = forwardRef(
           <Box flexGrow={1} minHeight={0}>
             <TabPanels overflow='auto' height='100%'>
               <TabPanel padding={0}>
-                <Layers
-                  {...props}/>
+                <Layers {...props}/>
               </TabPanel>
               <TabPanel padding={4} textAlign='center'>
                 Coming soon

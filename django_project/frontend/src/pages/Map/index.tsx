@@ -1,15 +1,26 @@
-import React, { useRef } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { Helmet } from "react-helmet";
 import Header from "../../components/Header";
 import { Box } from "@chakra-ui/react";
 import { LeftSide } from "../../components/Map/LeftSide";
 import { MapLibre } from "../../components/Map/MapLibre";
 import TopSide from "../../components/Map/TopSide";
+import { SelectOption } from "../../components/Map/DataTypes";
+import { Landscapes } from "../../components/Map/fixtures/analysis";
 
 /** Map page **/
 export default function MapPage() {
   const leftSideRef = useRef(null);
   const mapLibreRef = useRef(null);
+
+  // Landscapes
+  const [landscapes, setLandscapes] = useState<Array<SelectOption> | null>(null);
+
+  // TODO:
+  //  Fetch the data here
+  useEffect(() => {
+    setLandscapes(Landscapes)
+  }, []);
 
   return (
     <>
@@ -36,6 +47,7 @@ export default function MapPage() {
             onLayerUnchecked={layer => {
               mapLibreRef?.current.removeLayer(layer)
             }}
+            landscapes={landscapes}
           />
           <Box
             flexGrow={1}

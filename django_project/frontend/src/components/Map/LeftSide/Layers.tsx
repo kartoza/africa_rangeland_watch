@@ -7,19 +7,21 @@ import {
   AccordionPanel,
   Box
 } from "@chakra-ui/react";
-import { GroupName, Layer } from "../DataTypes";
+import { GroupName, Layer, SelectOption } from "../DataTypes";
 import LayerCheckbox from "./LayerCheckbox";
 import { layerData } from "../fixtures/layer";
+import LandscapeSelector from "./LandscapeSelector";
 
 
 export interface LayerCheckboxProps {
   onLayerChecked: (layer: Layer) => void;
   onLayerUnchecked: (layer: Layer) => void;
+  landscapes?: SelectOption[];
 }
 
 /** Layers component of map. */
 export default function Layers(
-  { onLayerChecked, onLayerUnchecked }: LayerCheckboxProps
+  { landscapes, onLayerChecked, onLayerUnchecked }: LayerCheckboxProps
 ) {
   const [layers, setLayers] = useState<Array<Layer> | null>(null);
 
@@ -73,6 +75,9 @@ export default function Layers(
         >
           <Box mb={4}>
             Average for past 30 days
+          </Box>
+          <Box mb={4}>
+            <LandscapeSelector landscapes={landscapes}/>
           </Box>
           {
             layers?.filter(
