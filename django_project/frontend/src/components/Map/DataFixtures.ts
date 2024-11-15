@@ -5,6 +5,12 @@
  */
 import { Basemap, Layer } from "./DataTypes";
 
+export const initialBound: [number, number, number, number] = [
+  -8.143756703599479,
+  -38.91531432942416,
+  65.26520389206175,
+  -2.025356218538789
+]
 export const basemapData: Basemap[] = [
   {
     id: 1,
@@ -82,5 +88,26 @@ export const layerData: Layer[] = [
     url: "https://earthengine.googleapis.com/v1/projects/earthengine-legacy/maps/8baad555a221f5714fe6b4ef55b0c97b-1525b46d5e1f4abf2003bfb522789bb8/tiles/{z}/{x}/{y}",
     type: "raster",
     group: "baseline"
+  },
+  {
+    id: 10,
+    name: "EVI",
+    url: "https://earthengine.googleapis.com/v1/projects/earthengine-legacy/maps/996b5e2d853df74b900997dc260c7368-3866cd61a0c8cdd9b103ab01d70c28b2/tiles/{z}/{x}/{y}",
+    type: "raster",
+    group: "near-real-time"
+  },
+  {
+    id: 11,
+    name: "NDVI",
+    url: "https://earthengine.googleapis.com/v1/projects/earthengine-legacy/maps/273275f84a580af17930754c8d02af5e-5f44a8d79628f3c1e482f8ce22664956/tiles/{z}/{x}/{y}",
+    type: "raster",
+    group: "near-real-time"
+  },
+  {
+    id: 12,
+    name: "Bare ground cover",
+    url: "https://earthengine.googleapis.com/v1/projects/earthengine-legacy/maps/791b350dafa05ace0d15beebe48ea7d7-22b3f473692d97a0b2cd13a55cd89198/tiles/{z}/{x}/{y}",
+    type: "raster",
+    group: "near-real-time"
   }
 ]

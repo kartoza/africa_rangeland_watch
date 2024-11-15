@@ -7,11 +7,12 @@ import React, {
 import maplibregl from 'maplibre-gl';
 import { Box } from "@chakra-ui/react";
 import { BasemapControl } from "./control";
+import { Layer } from "./DataTypes";
+import { hasSource, removeLayer } from "./utils";
 
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './style.css';
-import { Layer } from "./DataTypes";
-import { hasSource, removeLayer } from "./utils";
+import { initialBound } from "./DataFixtures";
 
 interface Props {
 
@@ -76,6 +77,15 @@ export const MapLibre = forwardRef(
         });
         _map.once("load", () => {
           setMap(_map)
+
+          // TODO:
+          //  We put this on admin
+          _map.fitBounds(initialBound,
+            {
+              pitch: 0,
+              bearing: 0
+            }
+          )
         })
         _map.addControl(new BasemapControl(), 'bottom-left');
         _map.addControl(new maplibregl.NavigationControl(), 'bottom-left');

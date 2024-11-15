@@ -64,6 +64,7 @@ export default function BasemapSelector({ onSelected }: Props) {
             {
               basemaps.map(
                 (basemap: Basemap) => <Card
+                  key={basemap.id}
                   onSelected={() => setSelected(basemap)}
                   isSelected={selected?.id === basemap.id}
                   basemap={basemap}

@@ -9,7 +9,13 @@ interface Props {
 /** Top side component of map. */
 export default function TopSide({ toggleClicked }: Props) {
   return (
-    <Box paddingX={4} height='52px' display={"flex"} alignItems={'center'}>
+    <Box
+      paddingX={4}
+      display={"flex"}
+      alignItems={'center'}
+      height='51px'
+      boxSizing='border-box'
+    >
       <IconButton
         onClick={toggleClicked}
         minWidth={4}

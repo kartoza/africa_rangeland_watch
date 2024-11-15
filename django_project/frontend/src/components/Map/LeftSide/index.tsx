@@ -44,14 +44,16 @@ export const LeftSide = forwardRef(
         }}
       >
         <Tabs
-          isFitted variant="enclosed"
+          isFitted
+          variant="enclosed"
           display='flex'
           flexDirection='column'
           height='100%'
-
         >
           <TabList>
             <Tab
+              height='52px'
+              boxSizing='border-box'
               fontSize='13px'
               padding={4}
               fontWeight='bold'
@@ -60,6 +62,8 @@ export const LeftSide = forwardRef(
               Layers
             </Tab>
             <Tab
+              height='52px'
+              boxSizing='border-box'
               fontSize='13px'
               padding={4}
               fontWeight='bold'
@@ -71,7 +75,8 @@ export const LeftSide = forwardRef(
           <Box flexGrow={1} minHeight={0}>
             <TabPanels overflow='auto' height='100%'>
               <TabPanel padding={0}>
-                <Layers {...props}/>
+                <Layers
+                  {...props}/>
               </TabPanel>
               <TabPanel padding={4} textAlign='center'>
                 Coming soon

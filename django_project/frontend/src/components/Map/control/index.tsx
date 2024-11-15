@@ -20,7 +20,6 @@ export class BasemapControl {
     // Create a container for the control
     this.container = document.createElement('div');
     this.container.className = 'maplibre-basemap-control';
-
     this.root = createRoot(this.container);
     this.root.render(
       <BasemapSelector

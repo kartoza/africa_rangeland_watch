@@ -6,1005 +6,375 @@
       "path": "/home/web/django_project/frontend/bundles/frontend/09be6892072ac94c44db.ttf",
       "publicPath": "http://localhost:9000/static/09be6892072ac94c44db.ttf"
     },
-    "App.0458509c8a03cbca5336.hot-update.js": {
-      "name": "App.0458509c8a03cbca5336.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.0458509c8a03cbca5336.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.0458509c8a03cbca5336.hot-update.js"
-    },
-    "App.0458509c8a03cbca5336.hot-update.json": {
-      "name": "App.0458509c8a03cbca5336.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.0458509c8a03cbca5336.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.0458509c8a03cbca5336.hot-update.json"
-    },
-    "App.0465a5a0006177df1032.hot-update.js": {
-      "name": "App.0465a5a0006177df1032.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.0465a5a0006177df1032.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.0465a5a0006177df1032.hot-update.js"
-    },
-    "App.0465a5a0006177df1032.hot-update.json": {
-      "name": "App.0465a5a0006177df1032.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.0465a5a0006177df1032.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.0465a5a0006177df1032.hot-update.json"
-    },
-    "App.0485ef66fb8c483a86b6.hot-update.js": {
-      "name": "App.0485ef66fb8c483a86b6.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.0485ef66fb8c483a86b6.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.0485ef66fb8c483a86b6.hot-update.js"
-    },
-    "App.0485ef66fb8c483a86b6.hot-update.json": {
-      "name": "App.0485ef66fb8c483a86b6.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.0485ef66fb8c483a86b6.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.0485ef66fb8c483a86b6.hot-update.json"
-    },
-    "App.053bb05792405f5f3f69.hot-update.js": {
-      "name": "App.053bb05792405f5f3f69.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.053bb05792405f5f3f69.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.053bb05792405f5f3f69.hot-update.js"
-    },
-    "App.053bb05792405f5f3f69.hot-update.json": {
-      "name": "App.053bb05792405f5f3f69.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.053bb05792405f5f3f69.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.053bb05792405f5f3f69.hot-update.json"
-    },
-    "App.05f8937b7d23cd140a2e.hot-update.js": {
-      "name": "App.05f8937b7d23cd140a2e.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.05f8937b7d23cd140a2e.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.05f8937b7d23cd140a2e.hot-update.js"
-    },
-    "App.05f8937b7d23cd140a2e.hot-update.json": {
-      "name": "App.05f8937b7d23cd140a2e.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.05f8937b7d23cd140a2e.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.05f8937b7d23cd140a2e.hot-update.json"
-    },
-    "App.0863138463793c074dfc.hot-update.js": {
-      "name": "App.0863138463793c074dfc.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.0863138463793c074dfc.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.0863138463793c074dfc.hot-update.js"
-    },
-    "App.0863138463793c074dfc.hot-update.json": {
-      "name": "App.0863138463793c074dfc.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.0863138463793c074dfc.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.0863138463793c074dfc.hot-update.json"
-    },
-    "App.093e927b28e57d7a0d47.hot-update.js": {
-      "name": "App.093e927b28e57d7a0d47.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.093e927b28e57d7a0d47.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.093e927b28e57d7a0d47.hot-update.js"
-    },
-    "App.093e927b28e57d7a0d47.hot-update.json": {
-      "name": "App.093e927b28e57d7a0d47.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.093e927b28e57d7a0d47.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.093e927b28e57d7a0d47.hot-update.json"
-    },
-    "App.0b44b3101f00c064929c.hot-update.js": {
-      "name": "App.0b44b3101f00c064929c.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.0b44b3101f00c064929c.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.0b44b3101f00c064929c.hot-update.js"
-    },
-    "App.0b44b3101f00c064929c.hot-update.json": {
-      "name": "App.0b44b3101f00c064929c.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.0b44b3101f00c064929c.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.0b44b3101f00c064929c.hot-update.json"
-    },
-    "App.0b760093352e69f386ae.hot-update.js": {
-      "name": "App.0b760093352e69f386ae.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.0b760093352e69f386ae.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.0b760093352e69f386ae.hot-update.js"
-    },
-    "App.0b760093352e69f386ae.hot-update.json": {
-      "name": "App.0b760093352e69f386ae.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.0b760093352e69f386ae.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.0b760093352e69f386ae.hot-update.json"
-    },
-    "App.0d461ab7172287c7f0d8.hot-update.js": {
-      "name": "App.0d461ab7172287c7f0d8.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.0d461ab7172287c7f0d8.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.0d461ab7172287c7f0d8.hot-update.js"
-    },
-    "App.0d461ab7172287c7f0d8.hot-update.json": {
-      "name": "App.0d461ab7172287c7f0d8.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.0d461ab7172287c7f0d8.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.0d461ab7172287c7f0d8.hot-update.json"
-    },
-    "App.0e7b017333916ae8f186.hot-update.js": {
-      "name": "App.0e7b017333916ae8f186.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.0e7b017333916ae8f186.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.0e7b017333916ae8f186.hot-update.js"
-    },
-    "App.0e7b017333916ae8f186.hot-update.json": {
-      "name": "App.0e7b017333916ae8f186.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.0e7b017333916ae8f186.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.0e7b017333916ae8f186.hot-update.json"
-    },
-    "App.0f022cdd4583952b0a9b.hot-update.js": {
-      "name": "App.0f022cdd4583952b0a9b.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.0f022cdd4583952b0a9b.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.0f022cdd4583952b0a9b.hot-update.js"
-    },
-    "App.0f022cdd4583952b0a9b.hot-update.json": {
-      "name": "App.0f022cdd4583952b0a9b.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.0f022cdd4583952b0a9b.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.0f022cdd4583952b0a9b.hot-update.json"
-    },
-    "App.107d3b90b355939d2e8e.hot-update.js": {
-      "name": "App.107d3b90b355939d2e8e.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.107d3b90b355939d2e8e.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.107d3b90b355939d2e8e.hot-update.js"
-    },
-    "App.107d3b90b355939d2e8e.hot-update.json": {
-      "name": "App.107d3b90b355939d2e8e.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.107d3b90b355939d2e8e.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.107d3b90b355939d2e8e.hot-update.json"
-    },
-    "App.1567fb29d6da00171885.hot-update.js": {
-      "name": "App.1567fb29d6da00171885.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.1567fb29d6da00171885.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.1567fb29d6da00171885.hot-update.js"
-    },
-    "App.1567fb29d6da00171885.hot-update.json": {
-      "name": "App.1567fb29d6da00171885.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.1567fb29d6da00171885.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.1567fb29d6da00171885.hot-update.json"
-    },
-    "App.16e25477a6d86468d115.hot-update.js": {
-      "name": "App.16e25477a6d86468d115.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.16e25477a6d86468d115.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.16e25477a6d86468d115.hot-update.js"
-    },
-    "App.16e25477a6d86468d115.hot-update.json": {
-      "name": "App.16e25477a6d86468d115.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.16e25477a6d86468d115.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.16e25477a6d86468d115.hot-update.json"
-    },
-    "App.1c0549be3d2fe84610c5.hot-update.js": {
-      "name": "App.1c0549be3d2fe84610c5.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.1c0549be3d2fe84610c5.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.1c0549be3d2fe84610c5.hot-update.js"
-    },
-    "App.1c0549be3d2fe84610c5.hot-update.json": {
-      "name": "App.1c0549be3d2fe84610c5.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.1c0549be3d2fe84610c5.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.1c0549be3d2fe84610c5.hot-update.json"
-    },
-    "App.24ddb64ce5924742dcd7.hot-update.js": {
-      "name": "App.24ddb64ce5924742dcd7.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.24ddb64ce5924742dcd7.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.24ddb64ce5924742dcd7.hot-update.js"
-    },
-    "App.24ddb64ce5924742dcd7.hot-update.json": {
-      "name": "App.24ddb64ce5924742dcd7.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.24ddb64ce5924742dcd7.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.24ddb64ce5924742dcd7.hot-update.json"
-    },
-    "App.291839991d47af4eb09c.hot-update.js": {
-      "name": "App.291839991d47af4eb09c.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.291839991d47af4eb09c.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.291839991d47af4eb09c.hot-update.js"
-    },
-    "App.291839991d47af4eb09c.hot-update.json": {
-      "name": "App.291839991d47af4eb09c.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.291839991d47af4eb09c.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.291839991d47af4eb09c.hot-update.json"
-    },
-    "App.30601b39fe8c6627ab73.hot-update.js": {
-      "name": "App.30601b39fe8c6627ab73.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.30601b39fe8c6627ab73.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.30601b39fe8c6627ab73.hot-update.js"
-    },
-    "App.30601b39fe8c6627ab73.hot-update.json": {
-      "name": "App.30601b39fe8c6627ab73.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.30601b39fe8c6627ab73.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.30601b39fe8c6627ab73.hot-update.json"
-    },
-    "App.32a05b77e042b38d036d.hot-update.js": {
-      "name": "App.32a05b77e042b38d036d.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.32a05b77e042b38d036d.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.32a05b77e042b38d036d.hot-update.js"
-    },
-    "App.32a05b77e042b38d036d.hot-update.json": {
-      "name": "App.32a05b77e042b38d036d.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.32a05b77e042b38d036d.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.32a05b77e042b38d036d.hot-update.json"
-    },
-    "App.37e44d213a9ca4f00aba.hot-update.js": {
-      "name": "App.37e44d213a9ca4f00aba.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.37e44d213a9ca4f00aba.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.37e44d213a9ca4f00aba.hot-update.js"
-    },
-    "App.37e44d213a9ca4f00aba.hot-update.json": {
-      "name": "App.37e44d213a9ca4f00aba.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.37e44d213a9ca4f00aba.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.37e44d213a9ca4f00aba.hot-update.json"
-    },
-    "App.3a1f1359bb8e5ad53853.hot-update.js": {
-      "name": "App.3a1f1359bb8e5ad53853.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.3a1f1359bb8e5ad53853.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.3a1f1359bb8e5ad53853.hot-update.js"
-    },
-    "App.3a1f1359bb8e5ad53853.hot-update.json": {
-      "name": "App.3a1f1359bb8e5ad53853.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.3a1f1359bb8e5ad53853.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.3a1f1359bb8e5ad53853.hot-update.json"
-    },
-    "App.3a26dd4f537bb6a44984.hot-update.js": {
-      "name": "App.3a26dd4f537bb6a44984.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.3a26dd4f537bb6a44984.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.3a26dd4f537bb6a44984.hot-update.js"
-    },
-    "App.3a26dd4f537bb6a44984.hot-update.json": {
-      "name": "App.3a26dd4f537bb6a44984.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.3a26dd4f537bb6a44984.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.3a26dd4f537bb6a44984.hot-update.json"
-    },
-    "App.42d3096b7a43d54e1fd3.hot-update.js": {
-      "name": "App.42d3096b7a43d54e1fd3.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.42d3096b7a43d54e1fd3.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.42d3096b7a43d54e1fd3.hot-update.js"
-    },
-    "App.42d3096b7a43d54e1fd3.hot-update.json": {
-      "name": "App.42d3096b7a43d54e1fd3.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.42d3096b7a43d54e1fd3.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.42d3096b7a43d54e1fd3.hot-update.json"
-    },
-    "App.4645f89b6da6c706913c.hot-update.js": {
-      "name": "App.4645f89b6da6c706913c.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.4645f89b6da6c706913c.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.4645f89b6da6c706913c.hot-update.js"
-    },
-    "App.4645f89b6da6c706913c.hot-update.json": {
-      "name": "App.4645f89b6da6c706913c.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.4645f89b6da6c706913c.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.4645f89b6da6c706913c.hot-update.json"
-    },
-    "App.4a4a2dc6f6c6eb44b16b.hot-update.js": {
-      "name": "App.4a4a2dc6f6c6eb44b16b.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.4a4a2dc6f6c6eb44b16b.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.4a4a2dc6f6c6eb44b16b.hot-update.js"
-    },
-    "App.4a4a2dc6f6c6eb44b16b.hot-update.json": {
-      "name": "App.4a4a2dc6f6c6eb44b16b.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.4a4a2dc6f6c6eb44b16b.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.4a4a2dc6f6c6eb44b16b.hot-update.json"
-    },
-    "App.4bd4f4dc48635ae67f30.hot-update.js": {
-      "name": "App.4bd4f4dc48635ae67f30.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.4bd4f4dc48635ae67f30.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.4bd4f4dc48635ae67f30.hot-update.js"
-    },
-    "App.4bd4f4dc48635ae67f30.hot-update.json": {
-      "name": "App.4bd4f4dc48635ae67f30.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.4bd4f4dc48635ae67f30.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.4bd4f4dc48635ae67f30.hot-update.json"
-    },
-    "App.4cbaa59ed9c986200bc8.hot-update.js": {
-      "name": "App.4cbaa59ed9c986200bc8.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.4cbaa59ed9c986200bc8.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.4cbaa59ed9c986200bc8.hot-update.js"
-    },
-    "App.4cbaa59ed9c986200bc8.hot-update.json": {
-      "name": "App.4cbaa59ed9c986200bc8.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.4cbaa59ed9c986200bc8.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.4cbaa59ed9c986200bc8.hot-update.json"
-    },
-    "App.4d89a8e46602cdc91525.hot-update.js": {
-      "name": "App.4d89a8e46602cdc91525.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.4d89a8e46602cdc91525.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.4d89a8e46602cdc91525.hot-update.js"
-    },
-    "App.4d89a8e46602cdc91525.hot-update.json": {
-      "name": "App.4d89a8e46602cdc91525.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.4d89a8e46602cdc91525.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.4d89a8e46602cdc91525.hot-update.json"
-    },
-    "App.5320b6bbbb3f59dc8bd9.hot-update.js": {
-      "name": "App.5320b6bbbb3f59dc8bd9.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.5320b6bbbb3f59dc8bd9.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.5320b6bbbb3f59dc8bd9.hot-update.js"
-    },
-    "App.5320b6bbbb3f59dc8bd9.hot-update.json": {
-      "name": "App.5320b6bbbb3f59dc8bd9.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.5320b6bbbb3f59dc8bd9.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.5320b6bbbb3f59dc8bd9.hot-update.json"
-    },
-    "App.547b6684d068f8b1bc94.hot-update.js": {
-      "name": "App.547b6684d068f8b1bc94.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.547b6684d068f8b1bc94.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.547b6684d068f8b1bc94.hot-update.js"
-    },
-    "App.547b6684d068f8b1bc94.hot-update.json": {
-      "name": "App.547b6684d068f8b1bc94.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.547b6684d068f8b1bc94.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.547b6684d068f8b1bc94.hot-update.json"
-    },
-    "App.5522f25a09ff6f0d146c.hot-update.js": {
-      "name": "App.5522f25a09ff6f0d146c.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.5522f25a09ff6f0d146c.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.5522f25a09ff6f0d146c.hot-update.js"
-    },
-    "App.5522f25a09ff6f0d146c.hot-update.json": {
-      "name": "App.5522f25a09ff6f0d146c.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.5522f25a09ff6f0d146c.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.5522f25a09ff6f0d146c.hot-update.json"
-    },
-    "App.55f45795f406afb30de0.hot-update.js": {
-      "name": "App.55f45795f406afb30de0.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.55f45795f406afb30de0.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.55f45795f406afb30de0.hot-update.js"
-    },
-    "App.55f45795f406afb30de0.hot-update.json": {
-      "name": "App.55f45795f406afb30de0.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.55f45795f406afb30de0.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.55f45795f406afb30de0.hot-update.json"
-    },
-    "App.580042b2bbe0df63a712.hot-update.js": {
-      "name": "App.580042b2bbe0df63a712.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.580042b2bbe0df63a712.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.580042b2bbe0df63a712.hot-update.js"
-    },
-    "App.580042b2bbe0df63a712.hot-update.json": {
-      "name": "App.580042b2bbe0df63a712.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.580042b2bbe0df63a712.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.580042b2bbe0df63a712.hot-update.json"
-    },
-    "App.59cf6bac71c4350f5f75.hot-update.js": {
-      "name": "App.59cf6bac71c4350f5f75.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.59cf6bac71c4350f5f75.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.59cf6bac71c4350f5f75.hot-update.js"
-    },
-    "App.59cf6bac71c4350f5f75.hot-update.json": {
-      "name": "App.59cf6bac71c4350f5f75.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.59cf6bac71c4350f5f75.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.59cf6bac71c4350f5f75.hot-update.json"
-    },
-    "App.62f6a30668f820ec3bd2.hot-update.js": {
-      "name": "App.62f6a30668f820ec3bd2.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.62f6a30668f820ec3bd2.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.62f6a30668f820ec3bd2.hot-update.js"
-    },
-    "App.62f6a30668f820ec3bd2.hot-update.json": {
-      "name": "App.62f6a30668f820ec3bd2.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.62f6a30668f820ec3bd2.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.62f6a30668f820ec3bd2.hot-update.json"
-    },
-    "App.6329ecf255ba15aaf959.hot-update.js": {
-      "name": "App.6329ecf255ba15aaf959.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.6329ecf255ba15aaf959.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.6329ecf255ba15aaf959.hot-update.js"
-    },
-    "App.6329ecf255ba15aaf959.hot-update.json": {
-      "name": "App.6329ecf255ba15aaf959.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.6329ecf255ba15aaf959.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.6329ecf255ba15aaf959.hot-update.json"
-    },
-    "App.6507549bbc4ea302f083.hot-update.js": {
-      "name": "App.6507549bbc4ea302f083.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.6507549bbc4ea302f083.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.6507549bbc4ea302f083.hot-update.js"
-    },
-    "App.6507549bbc4ea302f083.hot-update.json": {
-      "name": "App.6507549bbc4ea302f083.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.6507549bbc4ea302f083.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.6507549bbc4ea302f083.hot-update.json"
-    },
-    "App.6b65622c7fabef313a79.hot-update.js": {
-      "name": "App.6b65622c7fabef313a79.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.6b65622c7fabef313a79.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.6b65622c7fabef313a79.hot-update.js"
-    },
-    "App.6b65622c7fabef313a79.hot-update.json": {
-      "name": "App.6b65622c7fabef313a79.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.6b65622c7fabef313a79.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.6b65622c7fabef313a79.hot-update.json"
-    },
-    "App.75267fd59cf70864d0f2.hot-update.js": {
-      "name": "App.75267fd59cf70864d0f2.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.75267fd59cf70864d0f2.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.75267fd59cf70864d0f2.hot-update.js"
-    },
-    "App.75267fd59cf70864d0f2.hot-update.json": {
-      "name": "App.75267fd59cf70864d0f2.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.75267fd59cf70864d0f2.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.75267fd59cf70864d0f2.hot-update.json"
-    },
-    "App.7912d8b2a3c381fd306e.hot-update.js": {
-      "name": "App.7912d8b2a3c381fd306e.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.7912d8b2a3c381fd306e.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.7912d8b2a3c381fd306e.hot-update.js"
-    },
-    "App.7912d8b2a3c381fd306e.hot-update.json": {
-      "name": "App.7912d8b2a3c381fd306e.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.7912d8b2a3c381fd306e.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.7912d8b2a3c381fd306e.hot-update.json"
-    },
-    "App.7e3a5e199c85d701444d.hot-update.js": {
-      "name": "App.7e3a5e199c85d701444d.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.7e3a5e199c85d701444d.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.7e3a5e199c85d701444d.hot-update.js"
-    },
-    "App.7e3a5e199c85d701444d.hot-update.json": {
-      "name": "App.7e3a5e199c85d701444d.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.7e3a5e199c85d701444d.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.7e3a5e199c85d701444d.hot-update.json"
-    },
-    "App.7eb76f5bbb336cbab176.hot-update.js": {
-      "name": "App.7eb76f5bbb336cbab176.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.7eb76f5bbb336cbab176.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.7eb76f5bbb336cbab176.hot-update.js"
-    },
-    "App.7eb76f5bbb336cbab176.hot-update.json": {
-      "name": "App.7eb76f5bbb336cbab176.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.7eb76f5bbb336cbab176.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.7eb76f5bbb336cbab176.hot-update.json"
-    },
-    "App.7f4e77998856f423e7be.hot-update.js": {
-      "name": "App.7f4e77998856f423e7be.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.7f4e77998856f423e7be.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.7f4e77998856f423e7be.hot-update.js"
-    },
-    "App.7f4e77998856f423e7be.hot-update.json": {
-      "name": "App.7f4e77998856f423e7be.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.7f4e77998856f423e7be.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.7f4e77998856f423e7be.hot-update.json"
-    },
-    "App.8064563798fac1e581d8.hot-update.js": {
-      "name": "App.8064563798fac1e581d8.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.8064563798fac1e581d8.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.8064563798fac1e581d8.hot-update.js"
-    },
-    "App.8064563798fac1e581d8.hot-update.json": {
-      "name": "App.8064563798fac1e581d8.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.8064563798fac1e581d8.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.8064563798fac1e581d8.hot-update.json"
-    },
-    "App.82dab4457978dab696d6.hot-update.js": {
-      "name": "App.82dab4457978dab696d6.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.82dab4457978dab696d6.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.82dab4457978dab696d6.hot-update.js"
-    },
-    "App.82dab4457978dab696d6.hot-update.json": {
-      "name": "App.82dab4457978dab696d6.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.82dab4457978dab696d6.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.82dab4457978dab696d6.hot-update.json"
-    },
-    "App.837b77ddb5580aeae6eb.hot-update.js": {
-      "name": "App.837b77ddb5580aeae6eb.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.837b77ddb5580aeae6eb.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.837b77ddb5580aeae6eb.hot-update.js"
-    },
-    "App.837b77ddb5580aeae6eb.hot-update.json": {
-      "name": "App.837b77ddb5580aeae6eb.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.837b77ddb5580aeae6eb.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.837b77ddb5580aeae6eb.hot-update.json"
-    },
-    "App.86972ce0a757e5daa0ce.hot-update.js": {
-      "name": "App.86972ce0a757e5daa0ce.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.86972ce0a757e5daa0ce.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.86972ce0a757e5daa0ce.hot-update.js"
-    },
-    "App.86972ce0a757e5daa0ce.hot-update.json": {
-      "name": "App.86972ce0a757e5daa0ce.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.86972ce0a757e5daa0ce.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.86972ce0a757e5daa0ce.hot-update.json"
-    },
-    "App.86a65b2785246c208bb8.hot-update.js": {
-      "name": "App.86a65b2785246c208bb8.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.86a65b2785246c208bb8.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.86a65b2785246c208bb8.hot-update.js"
-    },
-    "App.86a65b2785246c208bb8.hot-update.json": {
-      "name": "App.86a65b2785246c208bb8.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.86a65b2785246c208bb8.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.86a65b2785246c208bb8.hot-update.json"
-    },
-    "App.8a9756e7304c59e4cedd.hot-update.js": {
-      "name": "App.8a9756e7304c59e4cedd.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.8a9756e7304c59e4cedd.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.8a9756e7304c59e4cedd.hot-update.js"
-    },
-    "App.8a9756e7304c59e4cedd.hot-update.json": {
-      "name": "App.8a9756e7304c59e4cedd.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.8a9756e7304c59e4cedd.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.8a9756e7304c59e4cedd.hot-update.json"
-    },
-    "App.90b021f07baca11e93d9.hot-update.js": {
-      "name": "App.90b021f07baca11e93d9.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.90b021f07baca11e93d9.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.90b021f07baca11e93d9.hot-update.js"
-    },
-    "App.90b021f07baca11e93d9.hot-update.json": {
-      "name": "App.90b021f07baca11e93d9.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.90b021f07baca11e93d9.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.90b021f07baca11e93d9.hot-update.json"
-    },
-    "App.90e3e0fdc25e90d7ab49.hot-update.js": {
-      "name": "App.90e3e0fdc25e90d7ab49.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.90e3e0fdc25e90d7ab49.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.90e3e0fdc25e90d7ab49.hot-update.js"
-    },
-    "App.90e3e0fdc25e90d7ab49.hot-update.json": {
-      "name": "App.90e3e0fdc25e90d7ab49.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.90e3e0fdc25e90d7ab49.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.90e3e0fdc25e90d7ab49.hot-update.json"
-    },
-    "App.9559fa824f31050274de.hot-update.js": {
-      "name": "App.9559fa824f31050274de.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.9559fa824f31050274de.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.9559fa824f31050274de.hot-update.js"
-    },
-    "App.9559fa824f31050274de.hot-update.json": {
-      "name": "App.9559fa824f31050274de.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.9559fa824f31050274de.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.9559fa824f31050274de.hot-update.json"
-    },
-    "App.9646d078d8eac73d50f5.hot-update.js": {
-      "name": "App.9646d078d8eac73d50f5.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.9646d078d8eac73d50f5.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.9646d078d8eac73d50f5.hot-update.js"
-    },
-    "App.9646d078d8eac73d50f5.hot-update.json": {
-      "name": "App.9646d078d8eac73d50f5.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.9646d078d8eac73d50f5.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.9646d078d8eac73d50f5.hot-update.json"
-    },
-    "App.974564307fd8c0f2c5e6.hot-update.js": {
-      "name": "App.974564307fd8c0f2c5e6.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.974564307fd8c0f2c5e6.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.974564307fd8c0f2c5e6.hot-update.js"
-    },
-    "App.974564307fd8c0f2c5e6.hot-update.json": {
-      "name": "App.974564307fd8c0f2c5e6.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.974564307fd8c0f2c5e6.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.974564307fd8c0f2c5e6.hot-update.json"
-    },
-    "App.9972015a6486bbd1a909.hot-update.js": {
-      "name": "App.9972015a6486bbd1a909.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.9972015a6486bbd1a909.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.9972015a6486bbd1a909.hot-update.js"
-    },
-    "App.9972015a6486bbd1a909.hot-update.json": {
-      "name": "App.9972015a6486bbd1a909.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.9972015a6486bbd1a909.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.9972015a6486bbd1a909.hot-update.json"
-    },
-    "App.9ad2a916290d1c4de79b.hot-update.js": {
-      "name": "App.9ad2a916290d1c4de79b.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.9ad2a916290d1c4de79b.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.9ad2a916290d1c4de79b.hot-update.js"
-    },
-    "App.9ad2a916290d1c4de79b.hot-update.json": {
-      "name": "App.9ad2a916290d1c4de79b.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.9ad2a916290d1c4de79b.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.9ad2a916290d1c4de79b.hot-update.json"
-    },
-    "App.9cc8a850542ac9b921c8.hot-update.js": {
-      "name": "App.9cc8a850542ac9b921c8.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.9cc8a850542ac9b921c8.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.9cc8a850542ac9b921c8.hot-update.js"
-    },
-    "App.9cc8a850542ac9b921c8.hot-update.json": {
-      "name": "App.9cc8a850542ac9b921c8.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.9cc8a850542ac9b921c8.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.9cc8a850542ac9b921c8.hot-update.json"
-    },
-    "App.a1b9cb20747ed558b12e.hot-update.js": {
-      "name": "App.a1b9cb20747ed558b12e.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.a1b9cb20747ed558b12e.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.a1b9cb20747ed558b12e.hot-update.js"
-    },
-    "App.a1b9cb20747ed558b12e.hot-update.json": {
-      "name": "App.a1b9cb20747ed558b12e.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.a1b9cb20747ed558b12e.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.a1b9cb20747ed558b12e.hot-update.json"
-    },
-    "App.a3332ba81772c08725c3.hot-update.js": {
-      "name": "App.a3332ba81772c08725c3.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.a3332ba81772c08725c3.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.a3332ba81772c08725c3.hot-update.js"
-    },
-    "App.a3332ba81772c08725c3.hot-update.json": {
-      "name": "App.a3332ba81772c08725c3.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.a3332ba81772c08725c3.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.a3332ba81772c08725c3.hot-update.json"
-    },
-    "App.a502ce3c7409dc4fcd8e.hot-update.js": {
-      "name": "App.a502ce3c7409dc4fcd8e.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.a502ce3c7409dc4fcd8e.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.a502ce3c7409dc4fcd8e.hot-update.js"
-    },
-    "App.a502ce3c7409dc4fcd8e.hot-update.json": {
-      "name": "App.a502ce3c7409dc4fcd8e.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.a502ce3c7409dc4fcd8e.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.a502ce3c7409dc4fcd8e.hot-update.json"
-    },
-    "App.a505b3bc85e2132793ce.hot-update.js": {
-      "name": "App.a505b3bc85e2132793ce.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.a505b3bc85e2132793ce.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.a505b3bc85e2132793ce.hot-update.js"
-    },
-    "App.a505b3bc85e2132793ce.hot-update.json": {
-      "name": "App.a505b3bc85e2132793ce.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.a505b3bc85e2132793ce.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.a505b3bc85e2132793ce.hot-update.json"
-    },
-    "App.a76cf5d750cbff304b0c.hot-update.js": {
-      "name": "App.a76cf5d750cbff304b0c.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.a76cf5d750cbff304b0c.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.a76cf5d750cbff304b0c.hot-update.js"
-    },
-    "App.a76cf5d750cbff304b0c.hot-update.json": {
-      "name": "App.a76cf5d750cbff304b0c.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.a76cf5d750cbff304b0c.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.a76cf5d750cbff304b0c.hot-update.json"
-    },
-    "App.a9d4ec6d9a66f16376dc.hot-update.js": {
-      "name": "App.a9d4ec6d9a66f16376dc.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.a9d4ec6d9a66f16376dc.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.a9d4ec6d9a66f16376dc.hot-update.js"
-    },
-    "App.a9d4ec6d9a66f16376dc.hot-update.json": {
-      "name": "App.a9d4ec6d9a66f16376dc.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.a9d4ec6d9a66f16376dc.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.a9d4ec6d9a66f16376dc.hot-update.json"
-    },
-    "App.aafe41a8efade3726bf4.hot-update.js": {
-      "name": "App.aafe41a8efade3726bf4.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.aafe41a8efade3726bf4.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.aafe41a8efade3726bf4.hot-update.js"
-    },
-    "App.aafe41a8efade3726bf4.hot-update.json": {
-      "name": "App.aafe41a8efade3726bf4.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.aafe41a8efade3726bf4.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.aafe41a8efade3726bf4.hot-update.json"
-    },
-    "App.ad93647f0a55b3b334f5.hot-update.js": {
-      "name": "App.ad93647f0a55b3b334f5.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.ad93647f0a55b3b334f5.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.ad93647f0a55b3b334f5.hot-update.js"
-    },
-    "App.ad93647f0a55b3b334f5.hot-update.json": {
-      "name": "App.ad93647f0a55b3b334f5.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.ad93647f0a55b3b334f5.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.ad93647f0a55b3b334f5.hot-update.json"
-    },
-    "App.adf57f8b85f8f4373d52.hot-update.js": {
-      "name": "App.adf57f8b85f8f4373d52.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.adf57f8b85f8f4373d52.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.adf57f8b85f8f4373d52.hot-update.js"
-    },
-    "App.adf57f8b85f8f4373d52.hot-update.json": {
-      "name": "App.adf57f8b85f8f4373d52.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.adf57f8b85f8f4373d52.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.adf57f8b85f8f4373d52.hot-update.json"
-    },
-    "App.ae19b3f8a80d9967a5f1.hot-update.js": {
-      "name": "App.ae19b3f8a80d9967a5f1.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.ae19b3f8a80d9967a5f1.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.ae19b3f8a80d9967a5f1.hot-update.js"
-    },
-    "App.ae19b3f8a80d9967a5f1.hot-update.json": {
-      "name": "App.ae19b3f8a80d9967a5f1.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.ae19b3f8a80d9967a5f1.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.ae19b3f8a80d9967a5f1.hot-update.json"
-    },
-    "App.aed937996bc76b6f936e.hot-update.js": {
-      "name": "App.aed937996bc76b6f936e.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.aed937996bc76b6f936e.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.aed937996bc76b6f936e.hot-update.js"
-    },
-    "App.aed937996bc76b6f936e.hot-update.json": {
-      "name": "App.aed937996bc76b6f936e.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.aed937996bc76b6f936e.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.aed937996bc76b6f936e.hot-update.json"
-    },
-    "App.aeda023a85940a712db9.hot-update.js": {
-      "name": "App.aeda023a85940a712db9.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.aeda023a85940a712db9.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.aeda023a85940a712db9.hot-update.js"
-    },
-    "App.aeda023a85940a712db9.hot-update.json": {
-      "name": "App.aeda023a85940a712db9.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.aeda023a85940a712db9.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.aeda023a85940a712db9.hot-update.json"
-    },
-    "App.b0276fec4d2b6cf98064.hot-update.js": {
-      "name": "App.b0276fec4d2b6cf98064.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.b0276fec4d2b6cf98064.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.b0276fec4d2b6cf98064.hot-update.js"
-    },
-    "App.b0276fec4d2b6cf98064.hot-update.json": {
-      "name": "App.b0276fec4d2b6cf98064.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.b0276fec4d2b6cf98064.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.b0276fec4d2b6cf98064.hot-update.json"
-    },
-    "App.b5cbb03bfa08a19b01d4.hot-update.js": {
-      "name": "App.b5cbb03bfa08a19b01d4.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.b5cbb03bfa08a19b01d4.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.b5cbb03bfa08a19b01d4.hot-update.js"
-    },
-    "App.b5cbb03bfa08a19b01d4.hot-update.json": {
-      "name": "App.b5cbb03bfa08a19b01d4.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.b5cbb03bfa08a19b01d4.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.b5cbb03bfa08a19b01d4.hot-update.json"
-    },
-    "App.b6fe587a9a60791d1418.hot-update.js": {
-      "name": "App.b6fe587a9a60791d1418.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.b6fe587a9a60791d1418.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.b6fe587a9a60791d1418.hot-update.js"
-    },
-    "App.b6fe587a9a60791d1418.hot-update.json": {
-      "name": "App.b6fe587a9a60791d1418.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.b6fe587a9a60791d1418.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.b6fe587a9a60791d1418.hot-update.json"
-    },
-    "App.bb9fc7e7184b2a879553.hot-update.js": {
-      "name": "App.bb9fc7e7184b2a879553.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.bb9fc7e7184b2a879553.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.bb9fc7e7184b2a879553.hot-update.js"
-    },
-    "App.bb9fc7e7184b2a879553.hot-update.json": {
-      "name": "App.bb9fc7e7184b2a879553.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.bb9fc7e7184b2a879553.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.bb9fc7e7184b2a879553.hot-update.json"
-    },
-    "App.be543b7405535d8b9c42.hot-update.js": {
-      "name": "App.be543b7405535d8b9c42.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.be543b7405535d8b9c42.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.be543b7405535d8b9c42.hot-update.js"
-    },
-    "App.be543b7405535d8b9c42.hot-update.json": {
-      "name": "App.be543b7405535d8b9c42.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.be543b7405535d8b9c42.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.be543b7405535d8b9c42.hot-update.json"
-    },
-    "App.c278b1b084f00dc73cf3.hot-update.js": {
-      "name": "App.c278b1b084f00dc73cf3.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.c278b1b084f00dc73cf3.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.c278b1b084f00dc73cf3.hot-update.js"
-    },
-    "App.c278b1b084f00dc73cf3.hot-update.json": {
-      "name": "App.c278b1b084f00dc73cf3.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.c278b1b084f00dc73cf3.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.c278b1b084f00dc73cf3.hot-update.json"
-    },
-    "App.cf2fc3d13a80cc05660d.hot-update.js": {
-      "name": "App.cf2fc3d13a80cc05660d.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.cf2fc3d13a80cc05660d.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.cf2fc3d13a80cc05660d.hot-update.js"
-    },
-    "App.cf2fc3d13a80cc05660d.hot-update.json": {
-      "name": "App.cf2fc3d13a80cc05660d.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.cf2fc3d13a80cc05660d.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.cf2fc3d13a80cc05660d.hot-update.json"
-    },
-    "App.cf5c6c81541ed01849de.hot-update.js": {
-      "name": "App.cf5c6c81541ed01849de.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.cf5c6c81541ed01849de.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.cf5c6c81541ed01849de.hot-update.js"
-    },
-    "App.cf5c6c81541ed01849de.hot-update.json": {
-      "name": "App.cf5c6c81541ed01849de.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.cf5c6c81541ed01849de.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.cf5c6c81541ed01849de.hot-update.json"
-    },
-    "App.cfeb4dc204a93ef41784.hot-update.js": {
-      "name": "App.cfeb4dc204a93ef41784.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.cfeb4dc204a93ef41784.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.cfeb4dc204a93ef41784.hot-update.js"
-    },
-    "App.cfeb4dc204a93ef41784.hot-update.json": {
-      "name": "App.cfeb4dc204a93ef41784.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.cfeb4dc204a93ef41784.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.cfeb4dc204a93ef41784.hot-update.json"
-    },
-    "App.d267f8a6753ae0e74afe.hot-update.js": {
-      "name": "App.d267f8a6753ae0e74afe.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.d267f8a6753ae0e74afe.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.d267f8a6753ae0e74afe.hot-update.js"
-    },
-    "App.d267f8a6753ae0e74afe.hot-update.json": {
-      "name": "App.d267f8a6753ae0e74afe.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.d267f8a6753ae0e74afe.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.d267f8a6753ae0e74afe.hot-update.json"
-    },
-    "App.d427ca832f8059b34716.hot-update.js": {
-      "name": "App.d427ca832f8059b34716.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.d427ca832f8059b34716.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.d427ca832f8059b34716.hot-update.js"
-    },
-    "App.d427ca832f8059b34716.hot-update.json": {
-      "name": "App.d427ca832f8059b34716.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.d427ca832f8059b34716.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.d427ca832f8059b34716.hot-update.json"
-    },
-    "App.d7ca841f0ced18ad81cf.hot-update.js": {
-      "name": "App.d7ca841f0ced18ad81cf.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.d7ca841f0ced18ad81cf.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.d7ca841f0ced18ad81cf.hot-update.js"
-    },
-    "App.d7ca841f0ced18ad81cf.hot-update.json": {
-      "name": "App.d7ca841f0ced18ad81cf.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.d7ca841f0ced18ad81cf.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.d7ca841f0ced18ad81cf.hot-update.json"
-    },
-    "App.d7f94e691ca262e4fe2a.hot-update.js": {
-      "name": "App.d7f94e691ca262e4fe2a.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.d7f94e691ca262e4fe2a.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.d7f94e691ca262e4fe2a.hot-update.js"
-    },
-    "App.d7f94e691ca262e4fe2a.hot-update.json": {
-      "name": "App.d7f94e691ca262e4fe2a.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.d7f94e691ca262e4fe2a.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.d7f94e691ca262e4fe2a.hot-update.json"
-    },
-    "App.da4d88ad6584f9a5e3bf.hot-update.js": {
-      "name": "App.da4d88ad6584f9a5e3bf.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.da4d88ad6584f9a5e3bf.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.da4d88ad6584f9a5e3bf.hot-update.js"
-    },
-    "App.da4d88ad6584f9a5e3bf.hot-update.json": {
-      "name": "App.da4d88ad6584f9a5e3bf.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.da4d88ad6584f9a5e3bf.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.da4d88ad6584f9a5e3bf.hot-update.json"
-    },
-    "App.e054550ea7db88dcd5ea.hot-update.js": {
-      "name": "App.e054550ea7db88dcd5ea.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.e054550ea7db88dcd5ea.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.e054550ea7db88dcd5ea.hot-update.js"
-    },
-    "App.e054550ea7db88dcd5ea.hot-update.json": {
-      "name": "App.e054550ea7db88dcd5ea.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.e054550ea7db88dcd5ea.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.e054550ea7db88dcd5ea.hot-update.json"
-    },
-    "App.e277d406224d2a956130.hot-update.js": {
-      "name": "App.e277d406224d2a956130.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.e277d406224d2a956130.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.e277d406224d2a956130.hot-update.js"
-    },
-    "App.e277d406224d2a956130.hot-update.json": {
-      "name": "App.e277d406224d2a956130.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.e277d406224d2a956130.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.e277d406224d2a956130.hot-update.json"
-    },
-    "App.e4aec23c025b9005d184.hot-update.js": {
-      "name": "App.e4aec23c025b9005d184.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.e4aec23c025b9005d184.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.e4aec23c025b9005d184.hot-update.js"
-    },
-    "App.e4aec23c025b9005d184.hot-update.json": {
-      "name": "App.e4aec23c025b9005d184.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.e4aec23c025b9005d184.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.e4aec23c025b9005d184.hot-update.json"
-    },
-    "App.e6522a91f0d3b115e1ce.hot-update.js": {
-      "name": "App.e6522a91f0d3b115e1ce.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.e6522a91f0d3b115e1ce.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.e6522a91f0d3b115e1ce.hot-update.js"
-    },
-    "App.e6522a91f0d3b115e1ce.hot-update.json": {
-      "name": "App.e6522a91f0d3b115e1ce.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.e6522a91f0d3b115e1ce.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.e6522a91f0d3b115e1ce.hot-update.json"
-    },
-    "App.e68900846b281a3e593a.hot-update.js": {
-      "name": "App.e68900846b281a3e593a.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.e68900846b281a3e593a.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.e68900846b281a3e593a.hot-update.js"
-    },
-    "App.e68900846b281a3e593a.hot-update.json": {
-      "name": "App.e68900846b281a3e593a.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.e68900846b281a3e593a.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.e68900846b281a3e593a.hot-update.json"
-    },
-    "App.e7ee960f9f9fc60348b0.hot-update.js": {
-      "name": "App.e7ee960f9f9fc60348b0.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.e7ee960f9f9fc60348b0.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.e7ee960f9f9fc60348b0.hot-update.js"
-    },
-    "App.e7ee960f9f9fc60348b0.hot-update.json": {
-      "name": "App.e7ee960f9f9fc60348b0.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.e7ee960f9f9fc60348b0.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.e7ee960f9f9fc60348b0.hot-update.json"
-    },
-    "App.e862b32547e82377b2d1.hot-update.js": {
-      "name": "App.e862b32547e82377b2d1.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.e862b32547e82377b2d1.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.e862b32547e82377b2d1.hot-update.js"
-    },
-    "App.e862b32547e82377b2d1.hot-update.json": {
-      "name": "App.e862b32547e82377b2d1.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.e862b32547e82377b2d1.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.e862b32547e82377b2d1.hot-update.json"
-    },
-    "App.ec6b36e113e992e0a2e2.hot-update.js": {
-      "name": "App.ec6b36e113e992e0a2e2.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.ec6b36e113e992e0a2e2.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.ec6b36e113e992e0a2e2.hot-update.js"
-    },
-    "App.ec6b36e113e992e0a2e2.hot-update.json": {
-      "name": "App.ec6b36e113e992e0a2e2.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.ec6b36e113e992e0a2e2.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.ec6b36e113e992e0a2e2.hot-update.json"
-    },
-    "App.eca8f113aa26e6023dcb.hot-update.js": {
-      "name": "App.eca8f113aa26e6023dcb.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.eca8f113aa26e6023dcb.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.eca8f113aa26e6023dcb.hot-update.js"
-    },
-    "App.eca8f113aa26e6023dcb.hot-update.json": {
-      "name": "App.eca8f113aa26e6023dcb.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.eca8f113aa26e6023dcb.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.eca8f113aa26e6023dcb.hot-update.json"
-    },
-    "App.ed7fd5be82dc3475ffe9.hot-update.js": {
-      "name": "App.ed7fd5be82dc3475ffe9.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.ed7fd5be82dc3475ffe9.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.ed7fd5be82dc3475ffe9.hot-update.js"
-    },
-    "App.ed7fd5be82dc3475ffe9.hot-update.json": {
-      "name": "App.ed7fd5be82dc3475ffe9.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.ed7fd5be82dc3475ffe9.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.ed7fd5be82dc3475ffe9.hot-update.json"
-    },
-    "App.ef1d4e2ce2204d4e0010.hot-update.js": {
-      "name": "App.ef1d4e2ce2204d4e0010.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.ef1d4e2ce2204d4e0010.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.ef1d4e2ce2204d4e0010.hot-update.js"
-    },
-    "App.ef1d4e2ce2204d4e0010.hot-update.json": {
-      "name": "App.ef1d4e2ce2204d4e0010.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.ef1d4e2ce2204d4e0010.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.ef1d4e2ce2204d4e0010.hot-update.json"
-    },
-    "App.f101f46f59a3ddbe10f1.hot-update.js": {
-      "name": "App.f101f46f59a3ddbe10f1.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.f101f46f59a3ddbe10f1.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.f101f46f59a3ddbe10f1.hot-update.js"
-    },
-    "App.f101f46f59a3ddbe10f1.hot-update.json": {
-      "name": "App.f101f46f59a3ddbe10f1.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.f101f46f59a3ddbe10f1.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.f101f46f59a3ddbe10f1.hot-update.json"
-    },
-    "App.f3ea4002bdf8e67e7103.hot-update.js": {
-      "name": "App.f3ea4002bdf8e67e7103.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.f3ea4002bdf8e67e7103.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.f3ea4002bdf8e67e7103.hot-update.js"
-    },
-    "App.f3ea4002bdf8e67e7103.hot-update.json": {
-      "name": "App.f3ea4002bdf8e67e7103.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.f3ea4002bdf8e67e7103.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.f3ea4002bdf8e67e7103.hot-update.json"
-    },
-    "App.f407196eb3a87615063b.hot-update.js": {
-      "name": "App.f407196eb3a87615063b.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.f407196eb3a87615063b.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.f407196eb3a87615063b.hot-update.js"
-    },
-    "App.f407196eb3a87615063b.hot-update.json": {
-      "name": "App.f407196eb3a87615063b.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.f407196eb3a87615063b.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.f407196eb3a87615063b.hot-update.json"
-    },
-    "App.f81eda8890bec66bbbee.hot-update.js": {
-      "name": "App.f81eda8890bec66bbbee.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.f81eda8890bec66bbbee.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.f81eda8890bec66bbbee.hot-update.js"
-    },
-    "App.f81eda8890bec66bbbee.hot-update.json": {
-      "name": "App.f81eda8890bec66bbbee.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.f81eda8890bec66bbbee.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.f81eda8890bec66bbbee.hot-update.json"
-    },
-    "App.f835968818e1554703b4.hot-update.js": {
-      "name": "App.f835968818e1554703b4.hot-update.js",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.f835968818e1554703b4.hot-update.js",
-      "publicPath": "http://localhost:9000/static/App.f835968818e1554703b4.hot-update.js"
-    },
-    "App.f835968818e1554703b4.hot-update.json": {
-      "name": "App.f835968818e1554703b4.hot-update.json",
-      "path": "/home/web/django_project/frontend/bundles/frontend/App.f835968818e1554703b4.hot-update.json",
-      "publicPath": "http://localhost:9000/static/App.f835968818e1554703b4.hot-update.json"
+    "App.0b47cde93d535d19d302.hot-update.js": {
+      "name": "App.0b47cde93d535d19d302.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.0b47cde93d535d19d302.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.0b47cde93d535d19d302.hot-update.js"
+    },
+    "App.0b47cde93d535d19d302.hot-update.json": {
+      "name": "App.0b47cde93d535d19d302.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.0b47cde93d535d19d302.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.0b47cde93d535d19d302.hot-update.json"
+    },
+    "App.0cde9b5b14c224f51909.hot-update.js": {
+      "name": "App.0cde9b5b14c224f51909.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.0cde9b5b14c224f51909.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.0cde9b5b14c224f51909.hot-update.js"
+    },
+    "App.0cde9b5b14c224f51909.hot-update.json": {
+      "name": "App.0cde9b5b14c224f51909.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.0cde9b5b14c224f51909.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.0cde9b5b14c224f51909.hot-update.json"
+    },
+    "App.0f5dcb8d626262bfc4cf.hot-update.js": {
+      "name": "App.0f5dcb8d626262bfc4cf.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.0f5dcb8d626262bfc4cf.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.0f5dcb8d626262bfc4cf.hot-update.js"
+    },
+    "App.0f5dcb8d626262bfc4cf.hot-update.json": {
+      "name": "App.0f5dcb8d626262bfc4cf.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.0f5dcb8d626262bfc4cf.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.0f5dcb8d626262bfc4cf.hot-update.json"
+    },
+    "App.1c3e99c038b8e0c7158b.hot-update.js": {
+      "name": "App.1c3e99c038b8e0c7158b.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.1c3e99c038b8e0c7158b.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.1c3e99c038b8e0c7158b.hot-update.js"
+    },
+    "App.1c3e99c038b8e0c7158b.hot-update.json": {
+      "name": "App.1c3e99c038b8e0c7158b.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.1c3e99c038b8e0c7158b.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.1c3e99c038b8e0c7158b.hot-update.json"
+    },
+    "App.24fb5cc12188c876a205.hot-update.js": {
+      "name": "App.24fb5cc12188c876a205.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.24fb5cc12188c876a205.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.24fb5cc12188c876a205.hot-update.js"
+    },
+    "App.24fb5cc12188c876a205.hot-update.json": {
+      "name": "App.24fb5cc12188c876a205.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.24fb5cc12188c876a205.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.24fb5cc12188c876a205.hot-update.json"
+    },
+    "App.272a3e69a66b30bfc433.hot-update.js": {
+      "name": "App.272a3e69a66b30bfc433.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.272a3e69a66b30bfc433.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.272a3e69a66b30bfc433.hot-update.js"
+    },
+    "App.272a3e69a66b30bfc433.hot-update.json": {
+      "name": "App.272a3e69a66b30bfc433.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.272a3e69a66b30bfc433.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.272a3e69a66b30bfc433.hot-update.json"
+    },
+    "App.398faea34fe575de4258.hot-update.js": {
+      "name": "App.398faea34fe575de4258.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.398faea34fe575de4258.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.398faea34fe575de4258.hot-update.js"
+    },
+    "App.398faea34fe575de4258.hot-update.json": {
+      "name": "App.398faea34fe575de4258.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.398faea34fe575de4258.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.398faea34fe575de4258.hot-update.json"
+    },
+    "App.48bfe44299d057a9b975.hot-update.js": {
+      "name": "App.48bfe44299d057a9b975.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.48bfe44299d057a9b975.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.48bfe44299d057a9b975.hot-update.js"
+    },
+    "App.48bfe44299d057a9b975.hot-update.json": {
+      "name": "App.48bfe44299d057a9b975.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.48bfe44299d057a9b975.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.48bfe44299d057a9b975.hot-update.json"
+    },
+    "App.4e13b7962e12c320e14f.hot-update.js": {
+      "name": "App.4e13b7962e12c320e14f.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.4e13b7962e12c320e14f.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.4e13b7962e12c320e14f.hot-update.js"
+    },
+    "App.4e13b7962e12c320e14f.hot-update.json": {
+      "name": "App.4e13b7962e12c320e14f.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.4e13b7962e12c320e14f.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.4e13b7962e12c320e14f.hot-update.json"
+    },
+    "App.54d7b77fb637d4eef234.hot-update.js": {
+      "name": "App.54d7b77fb637d4eef234.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.54d7b77fb637d4eef234.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.54d7b77fb637d4eef234.hot-update.js"
+    },
+    "App.54d7b77fb637d4eef234.hot-update.json": {
+      "name": "App.54d7b77fb637d4eef234.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.54d7b77fb637d4eef234.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.54d7b77fb637d4eef234.hot-update.json"
+    },
+    "App.5ea347facb7c84ef2a28.hot-update.js": {
+      "name": "App.5ea347facb7c84ef2a28.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.5ea347facb7c84ef2a28.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.5ea347facb7c84ef2a28.hot-update.js"
+    },
+    "App.5ea347facb7c84ef2a28.hot-update.json": {
+      "name": "App.5ea347facb7c84ef2a28.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.5ea347facb7c84ef2a28.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.5ea347facb7c84ef2a28.hot-update.json"
+    },
+    "App.685e5989b382448ba9a7.hot-update.js": {
+      "name": "App.685e5989b382448ba9a7.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.685e5989b382448ba9a7.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.685e5989b382448ba9a7.hot-update.js"
+    },
+    "App.685e5989b382448ba9a7.hot-update.json": {
+      "name": "App.685e5989b382448ba9a7.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.685e5989b382448ba9a7.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.685e5989b382448ba9a7.hot-update.json"
+    },
+    "App.750bea043c215b5221a7.hot-update.js": {
+      "name": "App.750bea043c215b5221a7.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.750bea043c215b5221a7.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.750bea043c215b5221a7.hot-update.js"
+    },
+    "App.750bea043c215b5221a7.hot-update.json": {
+      "name": "App.750bea043c215b5221a7.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.750bea043c215b5221a7.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.750bea043c215b5221a7.hot-update.json"
+    },
+    "App.780fcd2d56bc77a0646d.hot-update.js": {
+      "name": "App.780fcd2d56bc77a0646d.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.780fcd2d56bc77a0646d.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.780fcd2d56bc77a0646d.hot-update.js"
+    },
+    "App.780fcd2d56bc77a0646d.hot-update.json": {
+      "name": "App.780fcd2d56bc77a0646d.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.780fcd2d56bc77a0646d.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.780fcd2d56bc77a0646d.hot-update.json"
+    },
+    "App.7c3a9c1a5a69b3a5f60c.hot-update.js": {
+      "name": "App.7c3a9c1a5a69b3a5f60c.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.7c3a9c1a5a69b3a5f60c.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.7c3a9c1a5a69b3a5f60c.hot-update.js"
+    },
+    "App.7c3a9c1a5a69b3a5f60c.hot-update.json": {
+      "name": "App.7c3a9c1a5a69b3a5f60c.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.7c3a9c1a5a69b3a5f60c.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.7c3a9c1a5a69b3a5f60c.hot-update.json"
+    },
+    "App.7e496b12ea21ad3e713f.hot-update.js": {
+      "name": "App.7e496b12ea21ad3e713f.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.7e496b12ea21ad3e713f.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.7e496b12ea21ad3e713f.hot-update.js"
+    },
+    "App.7e496b12ea21ad3e713f.hot-update.json": {
+      "name": "App.7e496b12ea21ad3e713f.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.7e496b12ea21ad3e713f.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.7e496b12ea21ad3e713f.hot-update.json"
+    },
+    "App.80623b69dbf9f8667999.hot-update.js": {
+      "name": "App.80623b69dbf9f8667999.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.80623b69dbf9f8667999.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.80623b69dbf9f8667999.hot-update.js"
+    },
+    "App.80623b69dbf9f8667999.hot-update.json": {
+      "name": "App.80623b69dbf9f8667999.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.80623b69dbf9f8667999.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.80623b69dbf9f8667999.hot-update.json"
+    },
+    "App.83ee86bbb8b9f94e7d5f.hot-update.js": {
+      "name": "App.83ee86bbb8b9f94e7d5f.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.83ee86bbb8b9f94e7d5f.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.83ee86bbb8b9f94e7d5f.hot-update.js"
+    },
+    "App.83ee86bbb8b9f94e7d5f.hot-update.json": {
+      "name": "App.83ee86bbb8b9f94e7d5f.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.83ee86bbb8b9f94e7d5f.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.83ee86bbb8b9f94e7d5f.hot-update.json"
+    },
+    "App.91a5feba2af59e873abb.hot-update.js": {
+      "name": "App.91a5feba2af59e873abb.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.91a5feba2af59e873abb.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.91a5feba2af59e873abb.hot-update.js"
+    },
+    "App.91a5feba2af59e873abb.hot-update.json": {
+      "name": "App.91a5feba2af59e873abb.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.91a5feba2af59e873abb.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.91a5feba2af59e873abb.hot-update.json"
+    },
+    "App.9ac7b6fd34f5244357c4.hot-update.js": {
+      "name": "App.9ac7b6fd34f5244357c4.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.9ac7b6fd34f5244357c4.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.9ac7b6fd34f5244357c4.hot-update.js"
+    },
+    "App.9ac7b6fd34f5244357c4.hot-update.json": {
+      "name": "App.9ac7b6fd34f5244357c4.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.9ac7b6fd34f5244357c4.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.9ac7b6fd34f5244357c4.hot-update.json"
+    },
+    "App.9ec1e6b47f0b251b10db.hot-update.js": {
+      "name": "App.9ec1e6b47f0b251b10db.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.9ec1e6b47f0b251b10db.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.9ec1e6b47f0b251b10db.hot-update.js"
+    },
+    "App.9ec1e6b47f0b251b10db.hot-update.json": {
+      "name": "App.9ec1e6b47f0b251b10db.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.9ec1e6b47f0b251b10db.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.9ec1e6b47f0b251b10db.hot-update.json"
+    },
+    "App.c0a3bb8e270c36b039ed.hot-update.js": {
+      "name": "App.c0a3bb8e270c36b039ed.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.c0a3bb8e270c36b039ed.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.c0a3bb8e270c36b039ed.hot-update.js"
+    },
+    "App.c0a3bb8e270c36b039ed.hot-update.json": {
+      "name": "App.c0a3bb8e270c36b039ed.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.c0a3bb8e270c36b039ed.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.c0a3bb8e270c36b039ed.hot-update.json"
+    },
+    "App.cb4d572f03711bbac9f5.hot-update.js": {
+      "name": "App.cb4d572f03711bbac9f5.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.cb4d572f03711bbac9f5.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.cb4d572f03711bbac9f5.hot-update.js"
+    },
+    "App.cb4d572f03711bbac9f5.hot-update.json": {
+      "name": "App.cb4d572f03711bbac9f5.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.cb4d572f03711bbac9f5.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.cb4d572f03711bbac9f5.hot-update.json"
+    },
+    "App.cedbbe0a39e9f419eafc.hot-update.js": {
+      "name": "App.cedbbe0a39e9f419eafc.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.cedbbe0a39e9f419eafc.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.cedbbe0a39e9f419eafc.hot-update.js"
+    },
+    "App.cedbbe0a39e9f419eafc.hot-update.json": {
+      "name": "App.cedbbe0a39e9f419eafc.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.cedbbe0a39e9f419eafc.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.cedbbe0a39e9f419eafc.hot-update.json"
+    },
+    "App.cf7311d4ae818f46d615.hot-update.js": {
+      "name": "App.cf7311d4ae818f46d615.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.cf7311d4ae818f46d615.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.cf7311d4ae818f46d615.hot-update.js"
+    },
+    "App.cf7311d4ae818f46d615.hot-update.json": {
+      "name": "App.cf7311d4ae818f46d615.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.cf7311d4ae818f46d615.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.cf7311d4ae818f46d615.hot-update.json"
+    },
+    "App.d5d161dbb37ea4b6913d.hot-update.js": {
+      "name": "App.d5d161dbb37ea4b6913d.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.d5d161dbb37ea4b6913d.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.d5d161dbb37ea4b6913d.hot-update.js"
+    },
+    "App.d5d161dbb37ea4b6913d.hot-update.json": {
+      "name": "App.d5d161dbb37ea4b6913d.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.d5d161dbb37ea4b6913d.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.d5d161dbb37ea4b6913d.hot-update.json"
+    },
+    "App.d66ce5a833236dbcfad6.hot-update.js": {
+      "name": "App.d66ce5a833236dbcfad6.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.d66ce5a833236dbcfad6.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.d66ce5a833236dbcfad6.hot-update.js"
+    },
+    "App.d66ce5a833236dbcfad6.hot-update.json": {
+      "name": "App.d66ce5a833236dbcfad6.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.d66ce5a833236dbcfad6.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.d66ce5a833236dbcfad6.hot-update.json"
+    },
+    "App.d7d350192bced3d3950a.hot-update.js": {
+      "name": "App.d7d350192bced3d3950a.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.d7d350192bced3d3950a.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.d7d350192bced3d3950a.hot-update.js"
+    },
+    "App.d7d350192bced3d3950a.hot-update.json": {
+      "name": "App.d7d350192bced3d3950a.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.d7d350192bced3d3950a.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.d7d350192bced3d3950a.hot-update.json"
+    },
+    "App.dfb71fba11734cb68b9d.hot-update.js": {
+      "name": "App.dfb71fba11734cb68b9d.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.dfb71fba11734cb68b9d.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.dfb71fba11734cb68b9d.hot-update.js"
+    },
+    "App.dfb71fba11734cb68b9d.hot-update.json": {
+      "name": "App.dfb71fba11734cb68b9d.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.dfb71fba11734cb68b9d.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.dfb71fba11734cb68b9d.hot-update.json"
+    },
+    "App.e072dfaf5f328b1b8c4a.hot-update.js": {
+      "name": "App.e072dfaf5f328b1b8c4a.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.e072dfaf5f328b1b8c4a.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.e072dfaf5f328b1b8c4a.hot-update.js"
+    },
+    "App.e072dfaf5f328b1b8c4a.hot-update.json": {
+      "name": "App.e072dfaf5f328b1b8c4a.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.e072dfaf5f328b1b8c4a.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.e072dfaf5f328b1b8c4a.hot-update.json"
+    },
+    "App.e2a1f7ecb96ab3a695cb.hot-update.js": {
+      "name": "App.e2a1f7ecb96ab3a695cb.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.e2a1f7ecb96ab3a695cb.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.e2a1f7ecb96ab3a695cb.hot-update.js"
+    },
+    "App.e2a1f7ecb96ab3a695cb.hot-update.json": {
+      "name": "App.e2a1f7ecb96ab3a695cb.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.e2a1f7ecb96ab3a695cb.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.e2a1f7ecb96ab3a695cb.hot-update.json"
+    },
+    "App.e7177f5c3903b69699d8.hot-update.js": {
+      "name": "App.e7177f5c3903b69699d8.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.e7177f5c3903b69699d8.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.e7177f5c3903b69699d8.hot-update.js"
+    },
+    "App.e7177f5c3903b69699d8.hot-update.json": {
+      "name": "App.e7177f5c3903b69699d8.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.e7177f5c3903b69699d8.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.e7177f5c3903b69699d8.hot-update.json"
+    },
+    "App.eb6701d5d78efe5d8030.hot-update.js": {
+      "name": "App.eb6701d5d78efe5d8030.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.eb6701d5d78efe5d8030.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.eb6701d5d78efe5d8030.hot-update.js"
+    },
+    "App.eb6701d5d78efe5d8030.hot-update.json": {
+      "name": "App.eb6701d5d78efe5d8030.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.eb6701d5d78efe5d8030.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.eb6701d5d78efe5d8030.hot-update.json"
+    },
+    "App.f356ce06c4f112415503.hot-update.js": {
+      "name": "App.f356ce06c4f112415503.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.f356ce06c4f112415503.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.f356ce06c4f112415503.hot-update.js"
+    },
+    "App.f356ce06c4f112415503.hot-update.json": {
+      "name": "App.f356ce06c4f112415503.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.f356ce06c4f112415503.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.f356ce06c4f112415503.hot-update.json"
+    },
+    "App.f71940138eded628357a.hot-update.js": {
+      "name": "App.f71940138eded628357a.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.f71940138eded628357a.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.f71940138eded628357a.hot-update.js"
+    },
+    "App.f71940138eded628357a.hot-update.json": {
+      "name": "App.f71940138eded628357a.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.f71940138eded628357a.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.f71940138eded628357a.hot-update.json"
+    },
+    "App.fb9b46227452c7b4dec6.hot-update.js": {
+      "name": "App.fb9b46227452c7b4dec6.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.fb9b46227452c7b4dec6.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.fb9b46227452c7b4dec6.hot-update.js"
+    },
+    "App.fb9b46227452c7b4dec6.hot-update.json": {
+      "name": "App.fb9b46227452c7b4dec6.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.fb9b46227452c7b4dec6.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.fb9b46227452c7b4dec6.hot-update.json"
+    },
+    "App.ff8dc97246bf8f8938e7.hot-update.js": {
+      "name": "App.ff8dc97246bf8f8938e7.hot-update.js",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.ff8dc97246bf8f8938e7.hot-update.js",
+      "publicPath": "http://localhost:9000/static/App.ff8dc97246bf8f8938e7.hot-update.js"
+    },
+    "App.ff8dc97246bf8f8938e7.hot-update.json": {
+      "name": "App.ff8dc97246bf8f8938e7.hot-update.json",
+      "path": "/home/web/django_project/frontend/bundles/frontend/App.ff8dc97246bf8f8938e7.hot-update.json",
+      "publicPath": "http://localhost:9000/static/App.ff8dc97246bf8f8938e7.hot-update.json"
     },
     "App.js": {
       "name": "App.js",
@@ -1031,10 +401,10 @@
     "App": [
       "styles.css",
       "App.js",
-      "App.59cf6bac71c4350f5f75.hot-update.js"
+      "App.d7d350192bced3d3950a.hot-update.js"
     ]
   },
   "publicPath": "http://localhost:9000/static/",
   "error": "Error",
-  "message": "[tsl] ERROR in /home/web/django_project/frontend/src/components/Map/LeftSide/LayerCheckbox.tsx(23,9)\n      TS2322: Type '{ children: string; _checked: { \"& .chakra-checkbox__control\": { background: string; borderColor: string; color: string; }; }; _label: { fontSize: string; }; onChange: (evt: ChangeEvent<HTMLInputElement>) => void; }' is not assignable to type 'IntrinsicAttributes & Omit<DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>, keyof CheckboxProps> & { ...; } & CheckboxProps & { ...; }'.\n  Property '_label' does not exist on type 'IntrinsicAttributes & Omit<DetailedHTMLProps<InputHTMLAttributes<HTMLInputElement>, HTMLInputElement>, keyof CheckboxProps> & { ...; } & CheckboxProps & { ...; }'."
+  "message": "[tsl] ERROR in /home/web/django_project/frontend/src/components/Map/LeftSide/index.tsx(79,19)\n      TS2322: Type '{ onLayerChecked: (layer: Layer) => void; onLayerUnchecked: (layer: Layer) => void; fontSize: string; }' is not assignable to type 'IntrinsicAttributes & LayerCheckboxProps'.\n  Property 'fontSize' does not exist on type 'IntrinsicAttributes & LayerCheckboxProps'."
 }
