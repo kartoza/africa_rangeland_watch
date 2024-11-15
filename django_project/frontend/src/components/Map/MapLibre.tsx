@@ -2,17 +2,18 @@ import React, {
   forwardRef,
   useEffect,
   useImperativeHandle,
+  useRef,
   useState
 } from 'react';
 import maplibregl from 'maplibre-gl';
 import { Box } from "@chakra-ui/react";
-import { BasemapControl } from "./control";
+import { BasemapControl, LegendControl } from "./control";
 import { Layer } from "./DataTypes";
 import { hasSource, removeLayer } from "./utils";
 
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './style.css';
-import { initialBound } from "./DataFixtures";
+import { initialBound } from "./fixtures/map";
 
 interface Props {
 
@@ -24,6 +25,7 @@ interface Props {
 export const MapLibre = forwardRef(
   (props: Props, ref
   ) => {
+    const legendRef = useRef(null);
     const [map, setMap] = useState(null);
 
     // Toggle
@@ -49,6 +51,7 @@ export const MapLibre = forwardRef(
                 type: "raster"
               }
             )
+            legendRef?.current?.renderLayer(layer)
           }
         }
       },
@@ -57,6 +60,7 @@ export const MapLibre = forwardRef(
         if (map) {
           const ID = `layer-${layer.id}`
           removeLayer(map, ID)
+          legendRef?.current?.removeLayer(layer)
         }
       }
     }));
@@ -88,6 +92,7 @@ export const MapLibre = forwardRef(
           )
         })
         _map.addControl(new BasemapControl(), 'bottom-left');
+        _map.addControl(new LegendControl(legendRef), 'top-left');
         _map.addControl(new maplibregl.NavigationControl(), 'bottom-left');
       }
     }, []);

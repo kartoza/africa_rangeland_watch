@@ -8,8 +8,8 @@ import {
   Box
 } from "@chakra-ui/react";
 import { GroupName, Layer } from "../DataTypes";
-import { layerData } from "../DataFixtures";
 import LayerCheckbox from "./LayerCheckbox";
+import { layerData } from "../fixtures/layer";
 
 
 export interface LayerCheckboxProps {

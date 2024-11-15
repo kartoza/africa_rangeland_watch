@@ -21,4 +21,10 @@ export interface Layer {
   url: string;
   type: 'raster' | 'vector';
   group: 'baseline' | 'near-real-time' | 'user-defined';
+  metadata?: {
+    minValue: number;
+    maxValue: number;
+    unit?: string;
+    colors: string[];
+  }
 }

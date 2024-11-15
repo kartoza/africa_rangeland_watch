@@ -18,6 +18,11 @@ export default function LayerCheckbox({ layer, onToggle }: Props) {
             background: "white",
             borderColor: "dark_green.800",
             color: "dark_green.800"
+          },
+          "& .chakra-checkbox__control:hover": {
+            color: "white",
+            background: "dark_green.800",
+            borderColor: "dark_green.800",
           }
         }}
         sx={{

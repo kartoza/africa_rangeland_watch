@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Basemap } from "../DataTypes";
-import { basemapData } from "../DataFixtures";
+import { basemapData } from "../fixtures/basemap";
 
 
 interface CardProps {
@@ -9,9 +9,7 @@ interface CardProps {
   onSelected: () => void;
 }
 
-/**
- * Card of basemap
- */
+/** Card of basemap */
 function Card({ basemap, isSelected, onSelected }: CardProps) {
   return (
     <div
