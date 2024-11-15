@@ -1,5 +1,5 @@
 {
-  "status": "done",
+  "status": "error",
   "assets": {
     "09be6892072ac94c44db.ttf": {
       "name": "09be6892072ac94c44db.ttf",
@@ -1035,6 +1035,6 @@
     ]
   },
   "publicPath": "http://localhost:9000/static/",
-  "error": "Error",
-  "message": "[tsl] ERROR in /home/web/django_project/frontend/src/components/Map/LeftSide/Analysis/index.tsx(81,12)\n      TS2552: Cannot find name 'AnalysisVariableBySpatialSelector'. Did you mean 'AnalysisVariableSelector'?"
+  "error": "ModuleNotFoundError",
+  "message": "Module not found: Error: Can't resolve '@reduxjs/toolkit' in '/home/web/django_project/frontend/src/store'"
 }

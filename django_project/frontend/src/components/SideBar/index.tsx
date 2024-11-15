@@ -12,6 +12,9 @@ import React from "react";
 import { MenuItem, Menu } from "react-pro-sidebar";
 import { HamburgerIcon } from "@chakra-ui/icons";
 import { useLocation, useNavigate } from "react-router-dom";
+import { AppDispatch } from '../../store';
+import { useDispatch } from "react-redux";
+import { logoutUser } from "../../store/authSlice";
 
 interface Props extends ChakraProps {
   className?: string;
@@ -19,9 +22,16 @@ interface Props extends ChakraProps {
 
 export default function Sidebar(props: Props) {
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const dispatch = useDispatch<AppDispatch>(); 
   const location = useLocation();
   const navigate = useNavigate();
   const isActive = (path: string) => location.pathname === path;
+
+  const handleLogout = () => {
+    dispatch(logoutUser());
+    onClose();
+    navigate('/');
+  };
 
   return (
     <>
@@ -70,11 +80,23 @@ export default function Sidebar(props: Props) {
             Organisation Information
           </MenuItem>
           <MenuItem onClick={() => navigate('/dashboard')}>My Dashboard</MenuItem>
-          <MenuItem onClick={() => navigate('/analysis-results')}>Analysis Results</MenuItem>
-          <MenuItem onClick={() => navigate('/uploaded-resources')}>Uploaded Resources</MenuItem>
+          <MenuItem 
+            style={{ backgroundColor: isActive('/analysis-results') ? '#a8d159' : 'transparent' }}
+            onClick={() => navigate('/analysis-results')}>
+              Analysis Results
+          </MenuItem>
+          <MenuItem 
+            style={{ backgroundColor: isActive('/uploaded-resources') ? '#a8d159' : 'transparent' }}
+            onClick={() => navigate('/uploaded-resources')}>
+              Uploaded Resources
+          </MenuItem>
           <MenuItem onClick={() => navigate('/support')}>Support</MenuItem>
-          <MenuItem onClick={() => navigate('/notifications')}>Notifications</MenuItem>
-          <MenuItem onClick={() => navigate('/sign-out')}>Sign Out</MenuItem>
+          <MenuItem 
+            style={{ backgroundColor: isActive('/notifications') ? '#a8d159' : 'transparent' }}
+            onClick={() => navigate('/notifications')}>
+              Notifications
+          </MenuItem>
+          <MenuItem onClick={() => handleLogout()}>Sign Out</MenuItem>
         </Box>
       </Box>
 
@@ -151,10 +173,22 @@ export default function Sidebar(props: Props) {
                   Organisation Information
                 </MenuItem>
                 <MenuItem onClick={() => { navigate('/dashboard'); onClose(); }}>My Dashboard</MenuItem>
-                <MenuItem onClick={() => { navigate('/analysis-results'); onClose(); }}>Analysis Results</MenuItem>
-                <MenuItem onClick={() => { navigate('/uploaded-resources'); onClose(); }}>Uploaded Resources</MenuItem>
+                <MenuItem
+                  style={{ backgroundColor: isActive('/analysis-results') ? '#a8d159' : 'transparent' }}
+                  onClick={() => { navigate('/analysis-results'); onClose(); }}>
+                  Analysis Results
+                </MenuItem>
+                <MenuItem
+                  style={{ backgroundColor: isActive('/uploaded-resources') ? '#a8d159' : 'transparent' }}
+                  onClick={() => { navigate('/uploaded-resources'); onClose(); }}>
+                  Uploaded Resources
+                </MenuItem>
                 <MenuItem onClick={() => { navigate('/support'); onClose(); }}>Support</MenuItem>
-                <MenuItem onClick={() => { navigate('/notifications'); onClose(); }}>Notifications</MenuItem>
+                <MenuItem
+                  style={{ backgroundColor: isActive('/notifications') ? '#a8d159' : 'transparent' }}
+                  onClick={() => { navigate('/notifications'); onClose(); }}>
+                  Notifications
+                </MenuItem>
                 <MenuItem onClick={() => { navigate('/sign-out'); onClose(); }}>Sign Out</MenuItem>
               </Box>
             </Box>
