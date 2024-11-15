@@ -338,7 +338,7 @@ export default function SupportPage() {
                     <Button
                       onClick={handleCreateTicket}
                       backgroundColor="dark_green.800"
-                      _hover={{ backgroundColor: "darkgreen" }}
+                      _hover={{ backgroundColor: "light_green.400" }}
                       color="white"
                       w={{base:"auto", md:"25%"}}
                       borderRadius="5px"
