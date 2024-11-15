@@ -41,7 +41,7 @@ const ProjectRoutes = () => {
     },
     {
       path: "/map",
-      element: <PrivateRoute Component={MapPage} />,
+      element: <MapPage />,
     },
   ]);
 
