@@ -12,7 +12,7 @@ const OrganisationInformation = React.lazy(() => import("./pages/OrganisationInf
 const AnalysisResults = React.lazy(() => import("./pages/AnalysisResults"));
 const NotificationsPage  = React.lazy(() => import("./pages/Notifications"));
 const UploadedResourcesPage  = React.lazy(() => import("./pages/UploadedResources"));
-import SupportPage = React.lazy(() => import("./pages/Support"));
+const SupportPage = React.lazy(() => import("./pages/Support"));
 
 const ProjectRoutes = () => {
   const routes = useRoutes([
