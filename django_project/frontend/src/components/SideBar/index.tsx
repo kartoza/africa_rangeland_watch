@@ -90,7 +90,11 @@ export default function Sidebar(props: Props) {
             onClick={() => navigate('/uploaded-resources')}>
               Uploaded Resources
           </MenuItem>
-          <MenuItem onClick={() => navigate('/support')}>Support</MenuItem>
+          <MenuItem 
+            style={{ backgroundColor: isActive('/analysis-results') ? '#a8d159' : 'transparent' }}
+            onClick={() => navigate('/support')}>
+            Support
+          </MenuItem>
           <MenuItem 
             style={{ backgroundColor: isActive('/notifications') ? '#a8d159' : 'transparent' }}
             onClick={() => navigate('/notifications')}>
@@ -183,7 +187,9 @@ export default function Sidebar(props: Props) {
                   onClick={() => { navigate('/uploaded-resources'); onClose(); }}>
                   Uploaded Resources
                 </MenuItem>
-                <MenuItem onClick={() => { navigate('/support'); onClose(); }}>Support</MenuItem>
+                <MenuItem 
+                  style={{ backgroundColor: isActive('/support') ? '#a8d159' : 'transparent' }}
+                  onClick={() => { navigate('/support'); onClose(); }}>Support</MenuItem>
                 <MenuItem
                   style={{ backgroundColor: isActive('/notifications') ? '#a8d159' : 'transparent' }}
                   onClick={() => { navigate('/notifications'); onClose(); }}>
