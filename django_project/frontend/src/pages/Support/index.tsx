@@ -251,7 +251,7 @@ export default function SupportPage() {
                       onChange={(e) => setIssueType(e.target.value)}
                       placeholder="Select issue type"
                       isRequired
-                      width="45%"
+                      width={{base:"auto", md:"45%"}}
                     >
                       <option value="login">Dashbboard creation</option>
                       <option value="payment">Analysis error</option>
@@ -268,7 +268,7 @@ export default function SupportPage() {
                       onChange={(e) => setIssueTitle(e.target.value)}
                       placeholder="Describe your issue"
                       isRequired
-                      width="45%" 
+                      width={{base:"auto", md:"45%"}}
                     />
                   </Box>
 
