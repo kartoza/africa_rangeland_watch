@@ -31,6 +31,7 @@ urlpatterns = [
         'api/auth/check-token/',
         CheckTokenView.as_view(), name='check-token'
     ),
+    path('', include('support.urls')),
 ]
 
 if settings.DEBUG:
