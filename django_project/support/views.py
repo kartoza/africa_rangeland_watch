@@ -40,10 +40,14 @@ class TicketViewSet(viewsets.ModelViewSet):
                     issue_type_id = int(issue_type_id)
                     issue_type = IssueType.objects.get(id=issue_type_id)
                 except ValueError:
-                    raise ValidationError("Invalid issue type ID provided. It must be an integer.")
+                    raise ValidationError(
+                        "Invalid issue type ID provided. It must be an integer."
+                    )
                 except ObjectDoesNotExist:
-                    raise ValidationError("The specified issue type does not exist.")
-                
+                    raise ValidationError(
+                        "The specified issue type does not exist."
+                    )
+
                 ticket = serializer.save(issue_type=issue_type)
             else:
                 ticket = serializer.save()
@@ -61,6 +65,7 @@ class TicketViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['patch'])
     def update_status(self, request, pk=None):
         """Update the ticket status."""
+
         ticket = self.get_object()
         status = request.data.get('status', None)
 
@@ -77,17 +82,22 @@ class TicketViewSet(viewsets.ModelViewSet):
             {"error": "Invalid status"},
             status=status.HTTP_400_BAD_REQUEST
         )
-    
+
     @action(detail=True, methods=['post'])
     def associate_alert(self, request, pk=None):
-        """Associate a ticket with an alert setting when the alert is triggered."""
+        """Associate a ticket with an alert setting when the alert is"
+        "triggered."""
+
         ticket = self.get_object()
         alert_setting_id = request.data.get('alert_setting_id')
 
         try:
             alert_setting = AlertSetting.objects.get(id=alert_setting_id)
         except AlertSetting.DoesNotExist:
-            return Response({"error": "Alert setting not found."}, status=status.HTTP_404_NOT_FOUND)
+            return Response(
+                {"error": "Alert setting not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
 
         if alert_setting.enable_alert:
             ticket.alert_setting = alert_setting
@@ -100,4 +110,7 @@ class TicketViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_200_OK
             )
 
-        return Response({"error": "Alert setting is not enabled."}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            {"error": "Alert setting is not enabled."},
+            status=status.HTTP_400_BAD_REQUEST
+        )
