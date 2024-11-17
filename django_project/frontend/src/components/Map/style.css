@@ -1,0 +1,75 @@
+.maplibregl-ctrl-bottom-left .maplibregl-ctrl {
+  float: unset !important;
+  width: fit-content;
+}
+
+.maplibre-basemap-control,
+.maplibre-legend-control {
+  pointer-events: auto;
+}
+
+.maplibre-basemap-control .BasemapSelector {
+  display: flex;
+  box-shadow: 0 .1rem 1rem rgba(0, 0, 0, .15);
+  background-color: hsla(0, 0%, 100%, .7333333333);
+  border-radius: 5px;
+  margin: 10px 0 10px 10px;
+  box-sizing: border-box;
+  padding: 5px;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.maplibre-basemap-control .BasemapSelector .Card {
+  cursor: pointer;
+  border: 1px solid #ddd;
+  display: none;
+  height: 48px;
+  width: 48px;
+}
+
+.maplibre-basemap-control .BasemapSelector:hover .Card {
+  display: block;
+}
+
+.maplibre-basemap-control .BasemapSelector .Card.Selected {
+  display: block;
+}
+
+.maplibre-basemap-control .BasemapSelector .Card:hover {
+  opacity: 0.8;
+}
+
+.maplibre-basemap-control .BasemapSelector .Card img {
+  height: 100%;
+  width: 100%;
+  object-fit: cover;
+}
+
+.maplibre-legend-control {
+  margin: 10px 0 0 10px;
+}
+
+.maplibre-legend-control .Card {
+  border-radius: 5px;
+  box-shadow: 0 .1rem 1rem rgba(0, 0, 0, .15);
+  background-color: hsla(0, 0%, 100%, .7333333333);
+  padding: 0.5rem;
+  margin-bottom: 10px;
+}
+
+.maplibre-legend-control .LegendColorWrapper {
+  min-width: 150px;
+}
+
+.maplibre-legend-control .Card .LegendValue {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.maplibre-legend-control .Card .LegendColor {
+  border: 1px solid #ddd;
+  height: 1rem;
+  width: 100%;
+}

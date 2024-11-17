@@ -12,6 +12,7 @@ const OrganisationInformation = React.lazy(() => import("./pages/OrganisationInf
 const AnalysisResults = React.lazy(() => import("./pages/AnalysisResults"));
 const NotificationsPage  = React.lazy(() => import("./pages/Notifications"));
 const UploadedResourcesPage  = React.lazy(() => import("./pages/UploadedResources"));
+const MapPage  = React.lazy(() => import("./pages/Map"));
 
 const ProjectRoutes = () => {
   const routes = useRoutes([
@@ -37,6 +38,10 @@ const ProjectRoutes = () => {
     {
       path: "/notifications",
       element: <PrivateRoute Component={NotificationsPage} />,
+    },
+    {
+      path: "/map",
+      element: <MapPage />,
     },
   ]);
 
