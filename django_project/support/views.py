@@ -24,7 +24,6 @@ class TicketViewSet(viewsets.ModelViewSet):
     parser_classes = [MultiPartParser, FormParser]
 
     def get_queryset(self):
-        """Filter tickets based on user role."""
         if self.request.user.is_staff:
             return Ticket.objects.all()
         return Ticket.objects.filter(user=self.request.user)
