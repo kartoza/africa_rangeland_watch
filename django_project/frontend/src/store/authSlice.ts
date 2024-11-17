@@ -108,5 +108,6 @@ export const logoutUser = () => (dispatch: AppDispatch) => {
 
 export const selectIsLoggedIn = (state: RootState) => !!state.auth.token;
 export const selectAuthLoading = (state: RootState) => state.auth.loading;
+export const selectUserEmail = (state: RootState) => state.auth.user?.email;
 
 export default authSlice.reducer;
