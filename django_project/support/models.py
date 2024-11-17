@@ -11,6 +11,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class IssueType(models.Model):
     name = models.CharField(max_length=255)
 
@@ -80,7 +81,7 @@ class Ticket(models.Model):
         blank=True
     )
     resolution_summary = models.TextField(
-        null=True, 
+        null=True,
         blank=True,
         help_text=(
             "Summary of the resolution provided by the admin when the ticket "
@@ -95,7 +96,8 @@ class Ticket(models.Model):
     def save(self, *args, **kwargs):
         if self.status == 'resolved' and not self.resolution_summary:
             raise ValueError(
-                "A resolution summary is required when marking the ticket as resolved."
+                "A resolution summary is required when marking the ticket as"
+                "resolved."
             )
         super().save(*args, **kwargs)
 
@@ -112,7 +114,10 @@ class Ticket(models.Model):
         support_staff = settings.SUPPORT_STAFF
 
         if isinstance(support_staff, str):
-            support_staff = [email.strip() for email in support_staff.split(',')]
+            support_staff = [
+                email.strip() for email in support_staff.split(',')
+            ]
+
 
         try:
             send_mail(
@@ -124,8 +129,10 @@ class Ticket(models.Model):
             )
         except Exception as e:
             logger.error(
-                f"Failed to send ticket submission email for ticket {self.id}: {e}"
+                f"Failed to send ticket submission email for ticket {self.id}: "
+                f"{e}"
             )
+
 
     def send_status_update_email(self):
         """Email the user when the status of their ticket is updated."""
@@ -136,7 +143,11 @@ class Ticket(models.Model):
             'pending': 'Ticket Pending',
         }
 
-        subject = f"{status_titles.get(self.status, 'Ticket Update')}: {self.title}"
+        subject = (
+            f"{status_titles.get(self.status, 'Ticket Update')}: "
+            f"{self.title}"
+        )
+
 
         context = {
             'title': subject,
@@ -157,7 +168,10 @@ class Ticket(models.Model):
                 html_message=html_message
             )
         except Exception as e:
-            logger.error(f"Failed to send status update email for ticket {self.id}: {e}")
+            logger.error(
+                f"Failed to send ticket submission email for ticket {self.id}: "
+                f"{e}"
+            )
 
     def send_ticket_details_email(self):
         """Send ticket details to the user."""
@@ -179,7 +193,10 @@ class Ticket(models.Model):
                 html_message=html_message
             )
         except Exception as e:
-            logger.error(f"Failed to send ticket details email for ticket {self.id}: {e}")
+            logger.error(
+                f"Failed to send ticket submission email for ticket {self.id}: "
+                f"{e}"
+            )
 
     def send_alert_email(self):
         """Send an email when a ticket is associated with an alert."""
@@ -187,7 +204,10 @@ class Ticket(models.Model):
         if self.alert_setting and self.alert_setting.email_alert:
             subject = f"Alert: {self.title}"
             context = {'ticket': self}
-            html_message = render_to_string('emails/alert_ticket_notification.html', context)
+            html_message = render_to_string(
+                'emails/alert_ticket_notification.html',
+                context
+            )
 
             try:
                 send_mail(
