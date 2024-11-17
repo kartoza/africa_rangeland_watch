@@ -129,7 +129,7 @@ class Ticket(models.Model):
             )
         except Exception as e:
             logger.error(
-                f"Failed to send ticket submission email for ticket {self.id}: "
+                f"Failed to send ticket submission email for ticket {self.id}:"
                 f"{e}"
             )
 
@@ -169,7 +169,7 @@ class Ticket(models.Model):
             )
         except Exception as e:
             logger.error(
-                f"Failed to send ticket submission email for ticket {self.id}: "
+                f"Failed to send ticket submission email for ticket {self.id}:"
                 f"{e}"
             )
 
@@ -194,7 +194,7 @@ class Ticket(models.Model):
             )
         except Exception as e:
             logger.error(
-                f"Failed to send ticket submission email for ticket {self.id}: "
+                f"Failed to send ticket submission email for ticket {self.id}:"
                 f"{e}"
             )
 
@@ -217,4 +217,6 @@ class Ticket(models.Model):
                     html_message=html_message
                 )
             except Exception as e:
-                logger.error(f"Failed to send alert email for ticket {self.id}: {e}")
+                logger.error(
+                    f"Failed to send alert email for ticket {self.id}: {e}"
+                )
