@@ -3,6 +3,7 @@
 from django.contrib import admin
 from .models import Ticket, IssueType
 
+
 class TicketAdmin(admin.ModelAdmin):
     list_display = (
         'id',
@@ -36,6 +37,7 @@ class TicketAdmin(admin.ModelAdmin):
         queryset.update(status='pending')
         for ticket in queryset:
             ticket.send_status_update_email()
+
 
 admin.site.register(Ticket, TicketAdmin)
 admin.site.register(IssueType)
