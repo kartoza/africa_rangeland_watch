@@ -41,7 +41,7 @@ class TicketViewSet(viewsets.ModelViewSet):
                     issue_type = IssueType.objects.get(id=issue_type_id)
                 except ValueError:
                     raise ValidationError(
-                        "Invalid issue type ID provided. It must be an integer."
+                        "Invalid issue type ID provided.It must be an integer."
                     )
                 except ObjectDoesNotExist:
                     raise ValidationError(
