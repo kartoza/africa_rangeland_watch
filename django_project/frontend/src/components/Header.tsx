@@ -80,7 +80,7 @@ export default function Header(props: any) {
                     zIndex={10}
                 >
                     <ListItem>
-                        <Link href="#" _hover={{ textDecoration: 'underline', textDecorationColor: 'white' }}>
+                        <Link href="/#/map" _hover={{ textDecoration: 'underline', textDecorationColor: 'white' }}>
                             <Text color="white">MAP</Text>
                         </Link>
                     </ListItem>
@@ -180,7 +180,7 @@ export default function Header(props: any) {
                         display="flex"
                         color="white"
                     >
-                        <ListItem><Link href="#"><Text>MAP</Text></Link></ListItem>
+                        <ListItem><Link href="/#/map"><Text>MAP</Text></Link></ListItem>
                         <ListItem><Link href="/dashboard"><Text>DASHBOARD</Text></Link></ListItem>
                         <ListItem><Link href="#"><Text>HELP</Text></Link></ListItem>
                         <ListItem onMouseEnter={() => setMenuOpen(true)} onMouseLeave={() => setMenuOpen(false)}>
