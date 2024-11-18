@@ -282,7 +282,7 @@ export default function SupportPage() {
                         onChange={(e) => setIssueType(e.target.value)}
                         placeholder="Select issue type"
                         isRequired
-                        width="45%"
+                        width={{base:"100%" ,md:"45%"}}
                     >
                         {issueTypes.map((issue) => (
                         <option key={issue.id} value={issue.id}>
@@ -300,7 +300,7 @@ export default function SupportPage() {
                       onChange={(e) => setIssueTitle(e.target.value)}
                       placeholder="Describe your issue"
                       isRequired
-                      width="45%" 
+                      width={{base:"100%" ,md:"45%"}}
                     />
                   </Box>
 

@@ -9,38 +9,34 @@ import { AppDispatch, RootState } from '../store';
 import { checkLoginStatus, logoutUser } from '../store/authSlice';
 
 export default function Header(props: any) {
-    const dispatch = useDispatch<AppDispatch>(); 
+    const dispatch = useDispatch<AppDispatch>();
     const { user, token } = useSelector((state: RootState) => state.auth);
-    const [menuOpen, setMenuOpen] = useState(false);
-    const [menuOpenAlt, setMenuOpenAlt] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-    const [isSignInOpen, setIsSignInOpen] = useState(false);
+    const [hoveredSection, setHoveredSection] = useState<string | null>(null);
     const { isOpen, onOpen, onClose } = useDisclosure();
     const location = useLocation();
     const navigate = useNavigate();
 
-    // Handle avatar click
-    const handleAvatarClick = () => {
-        if (token) {
-            // Show popup with links to profile and other pages
-            onOpen();
-        } else {
-            // Trigger sign-in modal
-            setIsSignInOpen(true);
-        }
-    };
-
-    
-    useEffect(() => {
-        dispatch(checkLoginStatus());
-    }, [dispatch]);
-
+    // Handle logout
     const handleLogout = () => {
         dispatch(logoutUser());
         onClose();
         navigate('/');
     };
-    
+
+    // Handle hover for different sections
+    const handleHoverEnter = (section: string) => {
+        setHoveredSection(section);
+    };
+
+    const handleHoverLeave = () => {
+        setHoveredSection(null);
+    };
+
+    useEffect(() => {
+        dispatch(checkLoginStatus());
+    }, [dispatch]);
+
     const isDashboard = location.pathname === '/dashboard';
     const isProfile = location.pathname === '/profile';
 
@@ -57,6 +53,7 @@ export default function Header(props: any) {
                 as="header"
                 w="100%"
                 position="relative"
+                zIndex={100}
             >
                 {/* Logo on the Left */}
                 <Flex alignItems="center">
@@ -66,7 +63,6 @@ export default function Header(props: any) {
                         h="52px"
                         w="auto"
                         maxW="190px"
-                        zIndex={100}
                     />
                 </Flex>
 
@@ -80,13 +76,13 @@ export default function Header(props: any) {
                     zIndex={10}
                 >
                     <ListItem>
-                        <Link href="#" _hover={{ textDecoration: 'underline', textDecorationColor: 'white' }}>
+                        <Link href="/#/map" _hover={{ textDecoration: 'underline', textDecorationColor: 'white' }}>
                             <Text color="white">MAP</Text>
                         </Link>
                     </ListItem>
                     <ListItem>
                         <Link
-                            href="/dashboard" // Link to the dashboard
+                            href="/dashboard"
                             _hover={{ textDecoration: 'underline', textDecorationColor: 'white' }}
                             _focus={{ textDecoration: 'underline', textDecorationColor: 'white' }}
                             style={{ textDecoration: isDashboard ? 'underline' : 'none', textDecorationColor: 'white' }}
@@ -100,62 +96,76 @@ export default function Header(props: any) {
                         </Link>
                     </ListItem>
                     <ListItem
-                        onMouseEnter={() => setMenuOpen(true)}
-                        onMouseLeave={() => setMenuOpen(false)}
+                        onMouseEnter={() => handleHoverEnter('about')}
+                        onMouseLeave={handleHoverLeave}
                     >
                         <Flex gap="4px" alignItems="center" cursor="pointer">
                             <Text color="white">ABOUT</Text>
                             <Image src="static/images/arrow_down.svg" alt="Dropdown Arrow" h="8px" w="16px" />
                         </Flex>
-                        {menuOpen && <MegaMenu />}
+                        {hoveredSection === 'about' && <MegaMenu hoveredSection="about" isUserAvatarHovered={false} />}
                     </ListItem>
                     <ListItem
-                        onMouseEnter={() => setMenuOpenAlt(true)}
-                        onMouseLeave={() => setMenuOpenAlt(false)}
+                        onMouseEnter={() => handleHoverEnter('resources')}
+                        onMouseLeave={handleHoverLeave}
                     >
                         <Flex gap="4px" alignItems="center" cursor="pointer">
                             <Text color="white">RESOURCES</Text>
                             <Image src="static/images/arrow_down.svg" alt="Dropdown Arrow" h="8px" w="16px" />
                         </Flex>
-                        {menuOpenAlt && <MegaMenu />}
+                        {hoveredSection === 'resources' && <MegaMenu hoveredSection="resources" isUserAvatarHovered={false} />}
                     </ListItem>
                 </UnorderedList>
 
                 {/* Right-aligned Icons (Desktop) and Hamburger (Mobile) */}
                 <Flex alignItems="center">
-                    <IconButton
-                        display={{ base: "flex", sm: "none" }}
-                        icon={isMobileMenuOpen ? <CloseIcon /> : <HamburgerIcon />}
-                        aria-label="Toggle Menu"
-                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                        bg="transparent"
-                        color="white"
-                    />
-
-                    {/* Desktop Icons */}
-                    <Flex display={{ base: "none", sm: "flex" }} gap="20px">
-                        {/* Show search and notification icons only if logged in */}
-                        {token && (
-                            <>
-                                <Link href="#"><Image src="static/images/search_icon.svg" alt="search" h="24px" /></Link>
-                                <Link href="#"><Image src="static/images/notifications_icon.svg" alt="Notif" h="24px" w="24px" /></Link>
-                            </>
-                        )}
-
-                        {/* User Avatar - Conditionally rendered based on login status */}
-                        {token ? (
-                            <Link onClick={handleAvatarClick}>
-                                {/* Show logged-in user avatar */}
-                                <Image src={"static/images/logged_in_user_avatar.svg"} alt="user" h="28px" />
+                <Flex
+                    display={{ base: "flex", sm: "flex" }}
+                    gap="20px"
+                >
+                    {token && (
+                        <>
+                            <Link href="#">
+                                <Image src="static/images/search_icon.svg" alt="search" h="24px" w="24px" />
                             </Link>
-                        ) : (
-                            <Link onClick={() => setIsSignInOpen(true)}>
-                                {/* Default avatar for non-logged-in users */}
-                                <Image src="static/images/user_avatar_header_icon.svg" alt="user" h="24px" />
+                            <Link href="#">
+                                <Image src="static/images/notifications_icon.svg" alt="Notif" h="24px" w="24px" />
                             </Link>
-                        )}
-                    </Flex>
+                        </>
+                    )}
+
+                    {/* User Avatar - Conditionally rendered based on login status */}
+                    {token ? (
+                        <Link
+                            onMouseEnter={() => handleHoverEnter('userAvatar')}
+                            onMouseLeave={handleHoverLeave}
+                        >
+                            {/* Show logged-in user avatar */}
+                            <Image src={"static/images/logged_in_user_avatar.svg"} alt="user" h="28px" w="28px" />
+                            {hoveredSection === 'userAvatar' && <MegaMenu hoveredSection="userAvatar" isUserAvatarHovered={true} />}
+                        </Link>
+                    ) : (
+                        <Link onClick={() => onOpen()}>
+                            <Image src="static/images/user_avatar_header_icon.svg" alt="user" h="24px" />
+                        </Link>
+                    )}
                 </Flex>
+
+                {/* Hamburger Icon for Mobile */}
+                <IconButton
+                    display={{ base: "flex", sm: "none" }}
+                    icon={isMobileMenuOpen ? <CloseIcon /> : <HamburgerIcon />}
+                    aria-label="Toggle Menu"
+                    onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                    bg="transparent"
+                    color="white"
+                    mr="-5px"
+                    width={"5%"}
+                    padding={0}
+                    order={{ base: 3, sm: 0 }}
+                />
+            </Flex>
+
             </Flex>
 
             {/* Dropdown Menu for Mobile */}
@@ -166,10 +176,12 @@ export default function Header(props: any) {
                     borderRadius={'5px'}
                     py="16px"
                     display={{ base: "block", sm: "none" }}
-                    position="absolute"
-                    top="5%"
-                    left="10%"
-                    zIndex="10"
+                    position="fixed"
+                    top="70px"
+                    left="50%"
+                    transform="translateX(-50%)"
+                    zIndex={999}
+                    boxShadow="0px 4px 12px rgba(0, 0, 0, 0.2)"
                 >
                     <UnorderedList
                         styleType="none"
@@ -180,48 +192,30 @@ export default function Header(props: any) {
                         display="flex"
                         color="white"
                     >
-                        <ListItem><Link href="#"><Text>MAP</Text></Link></ListItem>
+                        <ListItem><Link href="/#/map"><Text>MAP</Text></Link></ListItem>
                         <ListItem><Link href="/dashboard"><Text>DASHBOARD</Text></Link></ListItem>
                         <ListItem><Link href="#"><Text>HELP</Text></Link></ListItem>
-                        <ListItem onMouseEnter={() => setMenuOpen(true)} onMouseLeave={() => setMenuOpen(false)}>
+                        <ListItem onMouseEnter={() => handleHoverEnter('about')} onMouseLeave={handleHoverLeave}>
                             <Flex gap="4px" alignItems="center" cursor="pointer">
                                 <Text>ABOUT</Text>
                                 <Image src="static/images/arrow_down.svg" alt="Dropdown Arrow" h="8px" w="16px" />
                             </Flex>
-                            {menuOpen && <MegaMenu />}
+                            {hoveredSection === 'about' && <MegaMenu hoveredSection="about" isUserAvatarHovered={false} />}
                         </ListItem>
-                        <ListItem onMouseEnter={() => setMenuOpenAlt(true)} onMouseLeave={() => setMenuOpenAlt(false)}>
+                        <ListItem onMouseEnter={() => handleHoverEnter('resources')} onMouseLeave={handleHoverLeave}>
                             <Flex gap="4px" alignItems="center" cursor="pointer">
                                 <Text>RESOURCES</Text>
                                 <Image src="static/images/arrow_down.svg" alt="Dropdown Arrow" h="8px" w="16px" />
                             </Flex>
-                            {menuOpenAlt && <MegaMenu />}
+                            {hoveredSection === 'resources' && <MegaMenu hoveredSection="resources" isUserAvatarHovered={false} />}
                         </ListItem>
                     </UnorderedList>
                 </Box>
             )}
 
-            {/* Sign-In Modal */}
-            <SignIn isOpen={isSignInOpen} onClose={() => setIsSignInOpen(false)} />
 
-            {/* Avatar Popup / Menu for logged-in users */}
-            {token && isOpen && (
-                <Flex
-                    direction="column"
-                    bg="white"
-                    p="20px"
-                    position="absolute"
-                    right="16px"
-                    top="60px"
-                    zIndex={999}
-                    borderRadius="8px"
-                    boxShadow="0 4px 12px rgba(0, 0, 0, 0.2)"
-                >
-                    <Link href="#/profile" mb="4px">Profile</Link>
-                    <Link href="#/dashboard" mb="4px">Dashboard</Link>
-                    <Link onClick={handleLogout}>Logout</Link>
-                </Flex>
-            )}
+            {/* Sign-In Modal */}
+            <SignIn isOpen={isOpen} onClose={onClose} />
         </>
     );
 }
