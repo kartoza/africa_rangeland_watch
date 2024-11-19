@@ -106,7 +106,83 @@ export const logoutUser = () => (dispatch: AppDispatch) => {
   dispatch(logout());
 };
 
+// Action to request password reset
+export const resetPasswordRequest = (email: string) => async (dispatch: AppDispatch) => {
+  dispatch(loginStart());
+
+  try {
+    await axios.post('/auth/password-reset/', { email });
+    dispatch(loginSuccess({ user: null, token: null }));
+  } catch (error) {
+    dispatch(loginFailure(error.response?.data?.non_field_errors[0] || 'Error sending password reset email'));
+  }
+};
+
+// Action to confirm password reset with new password
+export const resetPasswordConfirm = (uid: string, token: string, newPassword: string) => async (dispatch: AppDispatch) => {
+  dispatch(loginStart());
+
+  try {
+    const response = await axios.post('/auth/password-reset/confirm/', {
+      uid,
+      token,
+      new_password: newPassword,
+    });
+
+    dispatch(loginSuccess({ user: null, token: response.data.key }));
+  } catch (error) {
+    dispatch(loginFailure(error.response?.data?.non_field_errors[0] || 'Error resetting password'));
+  }
+};
+
+
+// Register user action (with email verification)
+export const registerUser = (email: string, password: string, repeatPassword: string) => async (dispatch: AppDispatch) => {
+  dispatch(loginStart());
+
+  try {
+    const response = await axios.post('/auth/registration/', {
+      email,
+      password1: password,
+      password2: repeatPassword,
+    });
+
+    // If successful, dispatch success and show message
+    dispatch(loginSuccess({ user: null, token: null }));
+
+  } catch (error) {
+    // Handle different error cases
+    if (error.response) {
+      const { data } = error.response;
+      const errorMessages = [];
+
+      if (data?.non_field_errors) {
+        errorMessages.push(data.non_field_errors[0]);
+      }
+
+      if (data?.password1) {
+        errorMessages.push(...data.password1); 
+      }
+
+      if (data?.password2) {
+        errorMessages.push(...data.password2);
+      }
+
+      if (data?.email) {
+        errorMessages.push(...data.email); 
+      }
+
+      dispatch(loginFailure(errorMessages.join(' ')));
+    } else {
+      dispatch(loginFailure('An unexpected error occurred during registration.'));
+    }
+  }
+};
+
+
+
 export const selectIsLoggedIn = (state: RootState) => !!state.auth.token;
 export const selectAuthLoading = (state: RootState) => state.auth.loading;
+export const selectUserEmail = (state: RootState) => state.auth.user?.email;
 
 export default authSlice.reducer;
