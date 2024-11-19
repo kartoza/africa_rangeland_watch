@@ -9,5 +9,5 @@ router.register(r'tickets', TicketViewSet, basename='ticket')
 router.register(r'issue_types', IssueTypeViewSet, basename='issue_type')
 
 urlpatterns = [
-    path('api/', include(router.urls)),
+    path('tickets-api/', include(router.urls)),
 ]
