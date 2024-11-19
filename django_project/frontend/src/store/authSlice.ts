@@ -140,44 +140,49 @@ export const resetPasswordConfirm = (uid: string, token: string, newPassword: st
 export const registerUser = (email: string, password: string, repeatPassword: string) => async (dispatch: AppDispatch) => {
   dispatch(loginStart());
 
+  const errorMessages = [];
+
+  if (password !== repeatPassword) {
+    errorMessages.push("Passwords do not match.");
+  }
+
+  if (password.length < 6) {
+    errorMessages.push("Password must be at least 6 characters.");
+  }
+
+  if (errorMessages.length > 0) {
+    dispatch(loginFailure(errorMessages.join(' ')));
+    return;
+  }
+
   try {
-    const response = await axios.post('/auth/registration/', {
+    const response = await axios.post('/registration/', {
       email,
       password1: password,
-      password2: repeatPassword,
     });
 
-    // If successful, dispatch success and show message
     dispatch(loginSuccess({ user: null, token: null }));
 
+    if (response.data?.message) {
+      dispatch(loginFailure(response.data.message));
+    }
+
   } catch (error) {
-    // Handle different error cases
     if (error.response) {
       const { data } = error.response;
       const errorMessages = [];
 
-      if (data?.non_field_errors) {
-        errorMessages.push(data.non_field_errors[0]);
-      }
-
-      if (data?.password1) {
-        errorMessages.push(...data.password1); 
-      }
-
-      if (data?.password2) {
-        errorMessages.push(...data.password2);
-      }
-
       if (data?.email) {
-        errorMessages.push(...data.email); 
+        errorMessages.push(data.email); 
       }
-
       dispatch(loginFailure(errorMessages.join(' ')));
     } else {
       dispatch(loginFailure('An unexpected error occurred during registration.'));
     }
   }
 };
+
+
 
 
 
