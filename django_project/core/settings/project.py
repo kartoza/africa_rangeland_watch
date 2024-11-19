@@ -13,7 +13,6 @@ ALLOWED_HOSTS = ['*']
 ADMINS = (
     ('Dimas Ciputra', 'dimas@kartoza.com'),
 )
-SUPPORT_STAFF = os.getenv("SUPPORT_STAFF", "dimas@kartoza.com,amy@kartoza.com")
 NO_REPLY_EMAIL = os.getenv("NO_REPLY_EMAIL", "noreply@kartoza.com")
 DJANGO_BACKEND_URL = os.getenv("DJANGO_BACKEND_URL", "http://localhost:8888/")
 DATABASES = {
