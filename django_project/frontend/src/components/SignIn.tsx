@@ -92,6 +92,8 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
       setResetError("Passwords do not match!");
       return;
     }
+    setStatusMessage("");
+    setResetError("");
     dispatch(registerUser(email, password, confirmPassword));
   };
 
@@ -162,8 +164,18 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
                 </Flex>
 
                 {statusMessage && <Text color="green.500">{statusMessage}</Text>}
-                {resetError && <Text color="red.500">{resetError}</Text>}
-                {error && <Text color="red.500">{error}</Text>}
+                {resetError && (
+                  <Text color={resetError === "verification email sent." ? "green.500" : "red.500"}>
+                    {resetError}
+                  </Text>
+                )}
+
+                {error && (
+                  <Text color={error === "verification email sent." ? "green.500" : "red.500"}>
+                    {error}
+                  </Text>
+                )}
+
 
                 <Flex mb="6px" flexDirection="column" alignItems="center">
                   <Flex gap="20px" alignSelf="stretch" flexDirection="column">
