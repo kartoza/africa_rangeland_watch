@@ -9,8 +9,25 @@ from django.core.exceptions import ValidationError
 from alerts.models import AlertSetting, Indicator
 import logging
 
+from base.models import UserProfile
+
 
 logger = logging.getLogger(__name__)
+
+
+def get_support_staff_emails():
+    """
+    Returns a list of emails for users marked as support staff.
+    """
+    support_staff_profiles = UserProfile.objects.filter(is_support_staff=True)
+    support_staff_emails = [
+        profile.user.email for profile in support_staff_profiles
+    ]
+
+    if not support_staff_emails:
+        logger.warning("No support staff found to send the email.")
+
+    return support_staff_emails
 
 
 class IssueType(models.Model):
@@ -113,12 +130,7 @@ class Ticket(models.Model):
         html_message = render_to_string(
             'new_ticket_notification.html', context
         )
-        support_staff = settings.SUPPORT_STAFF
-
-        if isinstance(support_staff, str):
-            support_staff = [
-                email.strip() for email in support_staff.split(',')
-            ]
+        support_staff_emails = get_support_staff_emails()
 
 
         try:
@@ -126,7 +138,7 @@ class Ticket(models.Model):
                 subject,
                 '',
                 settings.NO_REPLY_EMAIL,
-                support_staff,
+                support_staff_emails,
                 html_message=html_message
             )
         except Exception as e:
