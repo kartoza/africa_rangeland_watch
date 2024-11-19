@@ -35,8 +35,12 @@
                     We’re happy to inform you that your support ticket {{ ticket.id }} has been resolved!
                 </p>
                 <p style="font-size: 16px; color: #333333;">
-                    Ticket Code: {{ ticket.id }}<br>
-                    Resolution Summary: {{ ticket.resolution_summary if ticket.resolution_summary else 'No summary available.' }}
+                    <strong>Resolution Summary:</strong> 
+                    {% if ticket.resolution_summary %}
+                        {{ ticket.resolution_summary }}
+                    {% else %}
+                        No summary available.
+                    {% endif %}
                 </p>
                 <p style="font-size: 16px; color: #333333;">
                     Thank you for your patience as we worked to address this. If you have any further questions or notice any additional issues, please don’t hesitate to reach out or create a new ticket.
