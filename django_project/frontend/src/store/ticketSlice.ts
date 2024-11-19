@@ -41,7 +41,7 @@ interface TicketState {
 export const fetchTickets = createAsyncThunk(
   'tickets/fetchTickets',
   async () => {
-    const response = await axios.get('/api/tickets/');
+    const response = await axios.get('/tickets-api/tickets/');
     return response.data;
   }
 );
@@ -49,7 +49,7 @@ export const fetchTickets = createAsyncThunk(
 export const fetchTicketById = createAsyncThunk(
   'tickets/fetchTicketById',
   async (ticketId: number) => {
-    const response = await axios.get(`/api/tickets/${ticketId}/`);
+    const response = await axios.get(`/tickets-api/tickets/${ticketId}/`);
     return response.data;
   }
 );
@@ -72,7 +72,7 @@ export const createTicket = createAsyncThunk<
     }
 
     try {
-      const response = await axios.post('/api/tickets/', formData, {
+      const response = await axios.post('/tickets-api/tickets/', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
       return response.data;
@@ -88,7 +88,7 @@ export const createTicket = createAsyncThunk<
 export const updateTicketStatus = createAsyncThunk(
   'tickets/updateTicketStatus',
   async ({ ticketId, status }: { ticketId: number; status: string }) => {
-    const response = await axios.patch(`/api/tickets/${ticketId}/update_status/`, { status });
+    const response = await axios.patch(`/tickets-api/tickets/${ticketId}/update_status/`, { status });
     return response.data;
   }
 );
@@ -96,7 +96,7 @@ export const updateTicketStatus = createAsyncThunk(
 export const fetchIssueTypes = createAsyncThunk(
     'tickets/fetchIssueTypes',
     async () => {
-      const response = await axios.get('/api/issue_types/');
+      const response = await axios.get('/tickets-api/issue_types/');
       return response.data;
     }
   );
