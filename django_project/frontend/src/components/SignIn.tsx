@@ -21,17 +21,15 @@ import {
   useBreakpointValue,
 } from "@chakra-ui/react";
 import { useDispatch, useSelector } from "react-redux";
-import { loginUser } from "../store/authSlice";
-
-// Redux state types
+import { loginUser, registerUser, resetPasswordRequest } from "../store/authSlice";
 import { RootState, AppDispatch } from "../store";
+import { useLocation } from "react-router-dom";
 
 interface SignInProps {
   isOpen: boolean;
   onClose: () => void;
 }
 
-// Define allowed positions for modal positioning
 type ModalPosition = "absolute" | "fixed";
 
 export default function SignIn({ isOpen, onClose }: SignInProps) {
@@ -47,42 +45,75 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
   });
 
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-  const [formType, setFormType] = useState<"signin" | "forgotPassword" | "signup">("signin");
+  const [formType, setFormType] = useState<"signin" | "forgotPassword" | "signup" | "resetPassword">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [resetError, setResetError] = useState("");
+  const [canSubmit, setCanSubmit] = useState(true);
 
   const dispatch = useDispatch<AppDispatch>();
   const { loading, error, token } = useSelector((state: RootState) => state.auth);
 
-  // Toggle password visibility and icon
+  const location = useLocation();
+
+  const searchParams = new URLSearchParams(location.search);
+  const uid = searchParams.get("uid");
+  const tokenFromUrl = searchParams.get("token");
+
+  useEffect(() => {
+    if (uid && tokenFromUrl) {
+      setFormType("resetPassword");
+    }
+  }, [uid, tokenFromUrl]);
+
+  useEffect(() => {
+    setStatusMessage("");
+    setResetError("");
+  }, [formType]);
+
   const togglePasswordVisibility = () => {
     setIsPasswordVisible(!isPasswordVisible);
   };
 
-  useEffect(() => {
-    setStatusMessage("");
-  }, [formType]);
-
-  // Validate email format
   const isValidEmail = (email: string) =>
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
   const handleSendResetLink = () => {
     setStatusMessage("Reset link sent to your email.");
+    dispatch(resetPasswordRequest(email));
   };
 
   const handleSignUp = () => {
-    setStatusMessage("Verification email sent.");
+    if (password !== confirmPassword) {
+      setResetError("Passwords do not match!");
+      return;
+    }
+    dispatch(registerUser(email, password, confirmPassword));
   };
 
   const handleSignIn = () => {
     dispatch(loginUser(email, password));
   };
 
-  // Check if the login is successful
+  const handleResetPassword = () => {
+    if (newPassword !== confirmPassword) {
+      setResetError("Passwords do not match.");
+      return;
+    }
+
+    if (uid && tokenFromUrl) {
+      dispatch(resetPasswordRequest(newPassword));
+      setStatusMessage("Password has been successfully reset.");
+      setFormType("signin");
+    } else {
+      setResetError("Invalid reset link.");
+    }
+  };
+
   useEffect(() => {
     if (token) {
       setEmail("");
@@ -115,6 +146,8 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
                       ? "Welcome Back!"
                       : formType === "forgotPassword"
                       ? "Forgot Password"
+                      : formType === "resetPassword"
+                      ? "Reset Password"
                       : "Sign Up"}
                   </Heading>
                   <Text color="gray.800" fontSize="16px">
@@ -122,12 +155,15 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
                       ? "Please sign into your profile."
                       : formType === "forgotPassword"
                       ? "Enter your email to receive a reset link."
+                      : formType === "resetPassword"
+                      ? "Please set your new password."
                       : "Create a new account."}
                   </Text>
                 </Flex>
 
                 {statusMessage && <Text color="green.500">{statusMessage}</Text>}
-                {error && <Text color="red.500">{error}</Text>} {/* Display error message */}
+                {resetError && <Text color="red.500">{resetError}</Text>}
+                {error && <Text color="red.500">{error}</Text>}
 
                 <Flex mb="6px" flexDirection="column" alignItems="center">
                   <Flex gap="20px" alignSelf="stretch" flexDirection="column">
@@ -151,7 +187,7 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
                       </InputGroup>
                     )}
 
-                    {(formType === "signin" || formType === "signup") && (
+                    {(formType === "signin" || formType === "signup" || formType === "resetPassword") && (
                       <InputGroup>
                         <InputLeftElement>
                           <Center w="16px" h="20px">
@@ -181,7 +217,7 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
                       </InputGroup>
                     )}
 
-                    {formType === "signup" && (
+                    {(formType === "signup" || formType === "resetPassword") && (
                       <InputGroup>
                         <InputLeftElement>
                           <Center w="16px" h="20px">
@@ -201,6 +237,8 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
                       </InputGroup>
                     )}
 
+                    
+
                     {formType === "signin" && (
                       <Flex mt="8px" justifyContent="space-between" alignItems="center" gap="20px">
                         <Checkbox
@@ -210,7 +248,7 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
                           gap="2px"
                           py="4px"
                           size={"lg"}
-                          onChange={() => setRememberMe(!rememberMe)} // Handle Remember me toggle
+                          onChange={() => setRememberMe(!rememberMe)}
                         >
                           Remember me
                         </Checkbox>
@@ -232,25 +270,39 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
                           ? handleSignIn
                           : formType === "forgotPassword"
                           ? handleSendResetLink
+                          : formType === "resetPassword"
+                          ? handleResetPassword
                           : handleSignUp
                       }
-                      disabled={!isValidEmail(email) || loading}
+                      disabled={
+                        formType === "signin" || formType === "signup"
+                          ? !isValidEmail(email) || loading
+                          : formType === "resetPassword"
+                          ? canSubmit
+                          : !canSubmit || loading
+                      }
                     >
                       {formType === "signin"
                         ? "Sign In"
                         : formType === "forgotPassword"
                         ? "Send Email"
+                        : formType === "resetPassword"
+                        ? "Reset Password"
                         : "Sign Up"}
                     </Button>
+
                   </Flex>
                 </Flex>
 
                 {/* Social login options */}
                 {(formType === "signin" || formType === "signup") && (
                   <>
-                    <Text color="gray.800" fontSize="16px" mt="14px"  justifyContent="center">
-                      or continue with
-                    </Text>
+                   <Flex mt="22px" justifyContent="center" gap="20px">
+                      <Text color="gray.800" fontSize="16px" mt="14px">
+                        or continue with
+                      </Text>
+                   </Flex>
+                    
                     <Flex mt="22px" justifyContent="center" gap="20px">
                       <Image src="static/images/google_icon.svg" alt="Google Icon" h="40px" w="40px" />
                       <Image src="static/images/github_icon.svg" alt="GitHub Icon" h="40px" w="40px" />
