@@ -4,6 +4,7 @@ from django.core.mail import send_mail
 from django.utils import timezone
 from django.conf import settings
 from django.template.loader import render_to_string
+from django.core.exceptions import ValidationError
 
 from alerts.models import AlertSetting, Indicator
 import logging
@@ -19,15 +20,16 @@ class IssueType(models.Model):
         return self.name
 
 
-STATUS_CHOICES = [
-    ('open', 'Open'),
-    ('in_progress', 'In Progress'),
-    ('resolved', 'Resolved'),
-    ('pending', 'Pending'),
-]
+
 
 
 class Ticket(models.Model):
+    STATUS_CHOICES = [
+        ('open', 'Open'),
+        ('in_progress', 'In Progress'),
+        ('resolved', 'Resolved'),
+        ('pending', 'Pending'),
+    ]
     title = models.CharField(max_length=255)
     issue_type = models.ForeignKey(
         IssueType,
@@ -95,9 +97,9 @@ class Ticket(models.Model):
 
     def save(self, *args, **kwargs):
         if self.status == 'resolved' and not self.resolution_summary:
-            raise ValueError(
+            raise ValidationError(
                 "A resolution summary is required when marking the ticket as"
-                "resolved."
+                " resolved."
             )
         super().save(*args, **kwargs)
 
@@ -156,7 +158,7 @@ class Ticket(models.Model):
         }
 
         html_message = render_to_string(
-            'templates/ticket_status_update.html', context
+            'ticket_status_update.html', context
         )
 
         try:
@@ -181,7 +183,7 @@ class Ticket(models.Model):
             'django_backend_url': settings.DJANGO_BACKEND_URL,
         }
         html_message = render_to_string(
-            'templates/ticket_details.html', context
+            'ticket_details.html', context
         )
 
         try:
@@ -203,9 +205,12 @@ class Ticket(models.Model):
 
         if self.alert_setting and self.alert_setting.email_alert:
             subject = f"Alert: {self.title}"
-            context = {'ticket': self}
+            context = {
+                'ticket': self,
+                'django_backend_url': settings.DJANGO_BACKEND_URL,
+            }
             html_message = render_to_string(
-                'emails/alert_ticket_notification.html',
+                'alert_ticket_notification.html',
                 context
             )
 
