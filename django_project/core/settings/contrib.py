@@ -17,6 +17,7 @@ INSTALLED_APPS = INSTALLED_APPS + (
     'allauth.socialaccount',
     'rest_framework.authtoken',
     'dj_rest_auth',
+    'dj_rest_auth.registration',
 
     'invitations',
 )
