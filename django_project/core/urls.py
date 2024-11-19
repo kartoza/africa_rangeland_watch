@@ -17,7 +17,11 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from .custom_auth_view import CheckTokenView
+from .custom_auth_view import (
+    CheckTokenView,
+    CustomRegistrationView,
+    AccountActivationView
+)
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -27,12 +31,23 @@ urlpatterns = [
     path('', include('base.urls')),
     path('', include('frontend.urls')),
     path('auth/', include('dj_rest_auth.urls')),
-    path('auth/registration/', include('dj_rest_auth.registration.urls')),
     path('auth/activation/', include('allauth.account.urls')),
     path(
         'api/auth/check-token/',
         CheckTokenView.as_view(), name='check-token'
     ),
+    path('', include('support.urls')),
+    path(
+        'registration/',
+        CustomRegistrationView.as_view(),
+        name='registration'
+    ),
+    path(
+        'activate/<uidb64>/<token>/',
+        AccountActivationView.as_view(),
+        name='account-activation'
+    ),
+
 ]
 
 if settings.DEBUG:
