@@ -78,6 +78,8 @@ export default function HomePage() {
               Learn More
             </Button>
             <Button
+              as='a'
+              href="/#/map"
               backgroundColor="dark_green.800"
               _hover={{ backgroundColor: "light_green.400" }}
               fontWeight={700}

@@ -169,8 +169,8 @@ import {
                           Cancel
                         </Button>
                         <Button
-                          backgroundColor="darkgreen"
-                          _hover={{ backgroundColor: "dark_green.800" }}
+                          backgroundColor="dark_green.800"
+                          _hover={{ backgroundColor: "light_green.400" }}
                           color="white"
                           w={{"base": "auto", md: "25%"}}
                           borderRadius="5px"
