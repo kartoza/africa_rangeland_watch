@@ -27,6 +27,8 @@ urlpatterns = [
     path('', include('base.urls')),
     path('', include('frontend.urls')),
     path('auth/', include('dj_rest_auth.urls')),
+    path('auth/registration/', include('dj_rest_auth.registration.urls')),
+    path('auth/activation/', include('allauth.account.urls')),
     path(
         'api/auth/check-token/',
         CheckTokenView.as_view(), name='check-token'
