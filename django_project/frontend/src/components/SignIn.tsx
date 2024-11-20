@@ -51,7 +51,6 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [statusMessage, setStatusMessage] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
-  const [newPassword, setNewPassword] = useState("");
   const [resetError, setResetError] = useState("");
   const [canSubmit, setCanSubmit] = useState(true);
 
@@ -70,7 +69,7 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
     if (uid && tokenFromUrl) {
       setFormType("resetPassword");
       setIsOpen(true);
-      setCanSubmit(false)
+      setCanSubmit(false);
     }
   }, [uid, tokenFromUrl]);
 
@@ -115,7 +114,10 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
     if (uid && tokenFromUrl) {
       dispatch(resetPasswordRequest(password));
       setStatusMessage("Password has been successfully reset.");
-      setFormType("signin");
+      setTimeout(() => {
+        setFormType("signin");
+        setResetError("");
+      }, 3000)
     } else {
       setResetError("Invalid reset link.");
     }
@@ -130,7 +132,8 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
       setRememberMe(false);
       onClose();
     }
-    setIsOpen(false)
+    if(formType === "resetPassword")
+      setIsOpen(false)
   }, [token, onClose]);
 
   return (
