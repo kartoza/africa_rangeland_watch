@@ -1,7 +1,7 @@
 from alerts.models import Indicator, AlertSetting
 from rest_framework.test import APITestCase
 from rest_framework import status
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from support.models import Ticket, IssueType
 from rest_framework.authtoken.models import Token
 from django.urls import reverse
@@ -10,7 +10,7 @@ from django.urls import reverse
 class TicketViewSetTest(APITestCase):
 
     def setUp(self):
-        self.user = User.objects.create_user(username='testuser', password='testpassword')
+        self.user = get_user_model().objects.create_user(username='testuser', password='testpassword')
         self.issue_type = IssueType.objects.create(name='Technical Issue')
         indicator = Indicator.objects.create(name="Test Indicator")
         self.alert_setting = AlertSetting.objects.create(
