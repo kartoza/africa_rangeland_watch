@@ -113,7 +113,7 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
 
     if (uid && tokenFromUrl) {
       dispatch(resetPasswordRequest(password));
-      setStatusMessage("Password has been successfully reset.");
+      // setStatusMessage("Password has been successfully reset.");
       setTimeout(() => {
         setFormType("signin");
         setResetError("");
@@ -132,8 +132,6 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
       setRememberMe(false);
       onClose();
     }
-    if(formType === "resetPassword")
-      setIsOpen(false)
   }, [token, onClose]);
 
   return (
