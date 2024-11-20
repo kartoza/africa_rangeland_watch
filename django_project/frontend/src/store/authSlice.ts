@@ -166,10 +166,14 @@ export const registerUser = (email: string, password: string, repeatPassword: st
       password1: password,
       password2: repeatPassword
     });
-    dispatch(loginSuccess({ user: null, token: null }));
+    
 
     if (response.data?.errors) {
       dispatch(loginFailure(response.data.errors.join(' ')));
+    }else if (response.data?.message) {
+      dispatch(loginSuccess({ user: null, token: null }));
+      errorMessages.push("Verification email sent.")
+      dispatch(loginFailure(errorMessages.join(' ')));
     }
 
   } catch (error) {
