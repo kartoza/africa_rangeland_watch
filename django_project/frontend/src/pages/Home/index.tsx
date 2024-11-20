@@ -2,11 +2,34 @@ import { Helmet } from "react-helmet";
 import Header from "../../components/Header";
 import  Footer  from "../../components/Footer";
 import SignIn from "../../components/SignIn";
-import { IconButton, Image, Button, Flex, Text, Heading, Box } from "@chakra-ui/react";
-import React, { useState } from "react";
+import { IconButton, Image, Button, Flex, Text, Heading, Box, useToast } from "@chakra-ui/react";
+import React, { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 
 export default function HomePage() {
   const [isSignInOpen, setIsSignInOpen] = useState(false);
+  const toast = useToast();
+  const location = useLocation();
+
+
+  useEffect(() => {
+    const url = location.search;
+
+    if (url.includes('registration_complete=true')) {
+      toast({
+        title: "Registration completed",
+        description: "Your registration has been completed. You may now login.",
+        status: "success",
+        duration: 5000,
+        isClosable: true,
+        position: "top-right",
+        containerStyle: {
+          backgroundColor: "#00634b",
+          color: "white",
+        },
+      });
+    }
+  }, [location.hash]);
   
   return (
     <>
@@ -78,8 +101,6 @@ export default function HomePage() {
               Learn More
             </Button>
             <Button
-              as='a'
-              href="/#/map"
               backgroundColor="dark_green.800"
               _hover={{ backgroundColor: "light_green.400" }}
               fontWeight={700}
