@@ -1,7 +1,7 @@
 from django.test import TestCase  # noqa: F401
 
 from django.test import TestCase
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
 from alerts.models import Indicator, AlertSetting
 from support.models import Ticket, IssueType
@@ -13,7 +13,7 @@ class TicketModelTest(TestCase):
     
     def setUp(self):
         # Create test users
-        self.user = User.objects.create_user(username='testuser', password='testpassword')
+        self.user = get_user_model().objects.create_user(username='testuser', password='testpassword')
         self.issue_type = IssueType.objects.create(name='Technical Issue')
     
     def test_ticket_str_method(self):
@@ -63,7 +63,7 @@ class TicketModelTest(TestCase):
     def test_ticket_associated_alert_email(self):
         # Create a required indicator for the alert setting
         indicator = Indicator.objects.create(name="Test Indicator")
-        self.user = User.objects.create_user(username='testuser3', password='testpassword')
+        self.user = get_user_model().objects.create_user(username='testuser3', password='testpassword')
         alert_setting = AlertSetting.objects.create(
             name='Test Alert',
             email_alert=True,
