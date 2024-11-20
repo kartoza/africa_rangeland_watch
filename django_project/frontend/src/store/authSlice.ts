@@ -142,7 +142,6 @@ export const resetPasswordConfirm = (uid: string, token: string, newPassword: st
 };
 
 
-// Register user action (with email verification)
 export const registerUser = (email: string, password: string, repeatPassword: string) => async (dispatch: AppDispatch) => {
   dispatch(loginStart());
 
@@ -167,27 +166,27 @@ export const registerUser = (email: string, password: string, repeatPassword: st
       password1: password,
       password2: repeatPassword
     });
-
     dispatch(loginSuccess({ user: null, token: null }));
 
     if (response.data?.errors) {
-      dispatch(loginFailure(response.data.errors[0]));
+      dispatch(loginFailure(response.data.errors.join(' ')));
     }
 
   } catch (error) {
     if (error.response) {
-      const { data } = error.response;
-      const errorMessages = [];
-
-      if (data?.email) {
-        errorMessages.push(data.email); 
+      const { data, status } = error.response;
+      
+      if (status === 400 && data?.errors) {
+        dispatch(loginFailure(data.errors.join(' ')));
+      } else {
+        dispatch(loginFailure('An unexpected error occurred during registration.'));
       }
-      dispatch(loginFailure(errorMessages.join(' ')));
     } else {
       dispatch(loginFailure('An unexpected error occurred during registration.'));
     }
   }
 };
+
 
 
 
