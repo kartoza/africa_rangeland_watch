@@ -12,5 +12,7 @@ license: This program is free software; you can redistribute it and/or modify it
 ---
 
 # User guide
-<!-- Narrative Instructions on how to use the product/platform -->
-<!-- Replace all of the titles with relevant titles -->
+Welcome to the Africa RangeLand Watch (ARW). This section of the documentation describes every page in the application and what the various components of that page do. The manual is intended to function as a reference for the application. For narrative / workflow based tutorials.
+
+* **[MAP](./map.md):** This page guides you on how to access and navigate the map effectively.
+

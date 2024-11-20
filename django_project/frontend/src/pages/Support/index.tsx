@@ -20,60 +20,82 @@ import { FaFilter, FaPlus, FaCloudUploadAlt, FaTrash } from "react-icons/fa";
 import Header from "../../components/Header";
 import Sidebar from "../../components/SideBar";
 import "../../styles/index.css";
+import { useDispatch, useSelector } from "react-redux";
+import { fetchTickets, createTicket, fetchIssueTypes } from "../../store/ticketSlice";
+import { AppDispatch, RootState } from "../../store";
+import { selectUserEmail } from "../../store/authSlice";
+
 
 export default function SupportPage() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [tickets, setTickets] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
   const [creatingTicket, setCreatingTicket] = useState(false);
-  const [issueType, setIssueType] = useState("");
+  const [issueType, setIssueType] = useState<number | string>('');
   const [issueTitle, setIssueTitle] = useState("");
   const [additionalDetails, setAdditionalDetails] = useState("");
-  const [screenshot, setScreenshot] = useState(null);
+  const [screenshot, setScreenshot] = useState<File | null>(null);
 
+  const dispatch = useDispatch<AppDispatch>();
   const toast = useToast();
 
-  // Simulate fetching data
+ 
+  const { tickets, loading, error } = useSelector((state: RootState) => state.ticket);
+  const issueTypes = useSelector((state: RootState) => state.ticket.issueTypes);
+  const userEmail = useSelector(selectUserEmail); 
+
+
   useEffect(() => {
-    const fetchTickets = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        setTickets([]);
-      } catch (err) {
-        setError("Unable to fetch tickets.");
-        setTickets([]);
-      } finally {
-        setLoading(false);
+    dispatch(fetchTickets());
+    dispatch(fetchIssueTypes());
+  }, [dispatch]);
+
+  // Handle ticket creation
+  const handleCreateTicket = async () => {
+    try {
+      const ticketData = { 
+        title: issueTitle,
+        issue_type: typeof issueType === 'string' ? parseInt(issueType, 10) : issueType,
+        description: additionalDetails,
+        email: userEmail,
+        file_attachment: screenshot
+      };
+  
+      await dispatch(createTicket(ticketData));
+
+      dispatch(fetchTickets());
+  
+      if (!error) {
+        toast({
+          title: "Ticket Created",
+          description: "Your support ticket has been submitted.",
+          status: "success",
+          duration: 5000,
+          isClosable: true,
+          position: "top-right",
+          containerStyle: {
+            backgroundColor: "#00634b",
+            color: "white",
+          },
+        });
+  
+        setCreatingTicket(false);
+        setIssueType("");
+        setIssueTitle("");
+        setAdditionalDetails("");
+        setScreenshot(null);
       }
-    };
-
-    fetchTickets();
-  }, []);
-
-  const handleCreateTicket = () => {
-    toast({
-      title: "Ticket Created",
-      description: "Your support ticket has been submitted.",
-      status: "success",
-      duration: 5000,
-      isClosable: true,
-      position: "top-right",
-      containerStyle: {
-        backgroundColor: "#00634b",
-        color: "white",
-      }
-    });
-
-    // Reset form and go back to the tickets view
-    setCreatingTicket(false);
-    setIssueType("");
-    setIssueTitle("");
-    setAdditionalDetails("");
-    setScreenshot(null);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Something went wrong while creating your ticket.",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+        position: "top-right",
+      });
+    }
   };
+  
 
   const handleCancel = () => {
     setCreatingTicket(false);
@@ -127,7 +149,7 @@ export default function SupportPage() {
                       backgroundColor="dark_green.800"
                       _hover={{ backgroundColor: "light_green.400" }}
                       fontWeight={700}
-                      w="auto"
+                      w={{base: "100%",md:"auto"}}
                       h={10}
                       color="white.a700"
                       borderRadius="0px"
@@ -168,7 +190,6 @@ export default function SupportPage() {
               </Flex>
             )}
 
-
             {/* Content Section */}
             <Divider mb={6} borderColor="black" borderWidth="1px" />
 
@@ -186,39 +207,47 @@ export default function SupportPage() {
                 gap={4}
               >
                 {(showAll ? tickets : tickets.slice(0, 7)).map((ticket, index) => (
-                  <Box key={index} boxShadow="md" borderRadius="md" p={4} border="1px" borderColor="gray.300">
+                <Box key={index} boxShadow="md" borderRadius="md" p={4} border="1px" borderColor="gray.300">
                     <Flex direction="column" gap={2} position="relative">
-                      {/* Badge */}
-                      <Tag
+                    {/* Badge (Status) */}
+                    <Tag
                         style={{
-                          backgroundColor:
-                            ticket.badge === "new" ? "#91e05e" : ticket.badge === "in progress" ? "yellow" : "#c4c4c4",
+                        backgroundColor:
+                            ticket.status === "open"
+                            ? "#91e05e"
+                            : ticket.status === "in_progress"
+                            ? "yellow" 
+                            : ticket.status === "resolved"
+                            ? "#c4c4c4" 
+                            : "#c4c4c4",
                         }}
                         position="absolute"
                         top="0"
                         right="0"
                         borderRadius="full"
-                      >
-                        <TagLabel>{ticket.badge}</TagLabel>
-                      </Tag>
+                    >
+                        <TagLabel>{ticket.status}</TagLabel> 
+                    </Tag>
 
-                      {/* Title */}
-                      <Heading size="md" fontWeight="bold" color="black">
+                    {/* Title */}
+                    <Heading size="md" fontWeight="bold" color="black">
                         {ticket.title}
-                      </Heading>
+                    </Heading>
 
-                      {/* Description */}
-                      <Text mt={2} color="black">
+                    {/* Description */}
+                    <Text mt={2} color="black">
                         {ticket.description}
-                      </Text>
+                    </Text>
 
-                      {/* Timestamp */}
-                      <Text mt={2} color="gray.500" fontSize="sm">
-                        {ticket.timestamp}
-                      </Text>
+                    {/* Created Timestamp */}
+                    <Text mt={2} color="gray.500" fontSize="sm">
+                        {new Date(ticket.created_at).toLocaleString()}
+                    </Text>
+
                     </Flex>
-                  </Box>
+                </Box>
                 ))}
+
                 {/* View All Button */}
                 {!showAll && tickets.length > 7 && (
                   <Flex justify="flex-end" width="100%" mt={4}>
@@ -245,20 +274,23 @@ export default function SupportPage() {
                 <Stack spacing={4}>
                   {/* Issue Type */}
                   <Box>
-                    <Text color="black" fontWeight="bold" mb={2}>What issues are you experiencing?</Text>
+                    <Text color="black" fontWeight="bold" mb={2}>
+                        What issues are you experiencing?
+                    </Text>
                     <Select
-                      value={issueType}
-                      onChange={(e) => setIssueType(e.target.value)}
-                      placeholder="Select issue type"
-                      isRequired
-                      width={{base:"auto", md:"45%"}}
+                        value={issueType}
+                        onChange={(e) => setIssueType(e.target.value)}
+                        placeholder="Select issue type"
+                        isRequired
+                        width={{base:"100%" ,md:"45%"}}
                     >
-                      <option value="login">Dashbboard creation</option>
-                      <option value="payment">Analysis error</option>
-                      <option value="technical">Bug</option>
-                      <option value="feature">Feature Request</option>
+                        {issueTypes.map((issue) => (
+                        <option key={issue.id} value={issue.id}>
+                            {issue.name}
+                        </option>
+                        ))}
                     </Select>
-                  </Box>
+                </Box>
 
                   {/* Issue Title */}
                   <Box>
@@ -268,7 +300,7 @@ export default function SupportPage() {
                       onChange={(e) => setIssueTitle(e.target.value)}
                       placeholder="Describe your issue"
                       isRequired
-                      width={{base:"auto", md:"45%"}}
+                      width={{base:"100%" ,md:"45%"}}
                     />
                   </Box>
 
