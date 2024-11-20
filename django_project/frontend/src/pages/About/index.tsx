@@ -62,7 +62,7 @@ export default function AboutPage() {
 
       {/* Section with text below the image */}
       <Box bg="gray.100" py="50px" px="20px" textAlign="center">
-        <Text fontSize="18px" maxW="80%" mx="auto" color="gray.700">
+        <Text fontSize="18px" maxW="60%" mx="auto" color="gray.700">
           Rangeland Explorer is designed to be a rangeland monitoring and decision support tool for
           managers and conservation planners in southern Africa. It originated out of work with Meat
           Naturally in the Uzimbuvu Catchment, Eastern Cape, to gather satellite data on baseline
@@ -87,9 +87,9 @@ export default function AboutPage() {
 
       {/* Green ribbon section */}
       <Box
-        bg="green.500"
+        bg="dark_green.800"
         h="322px"
-        w="100%"
+        w="auto"
         display="flex"
         justifyContent="center"
         alignItems="center"
@@ -105,24 +105,35 @@ export default function AboutPage() {
         <Heading as="h2" fontSize="36px" color="black" fontWeight="bold" mb="30px">
           The Goal
         </Heading>
+        <Box py="50px" textAlign="center" bg="white">
+          <Text fontSize="18px" color="gray.800" maxW="970px" mx="auto" mb="30px">
+            The African Rangeland Watch Platform was developed to allow for easier rangeland monitoring and to be a decision support tool for managers and conservation planners in southern Africa.
+          </Text>
+        </Box>
         <Flex justify="space-evenly" wrap="wrap">
           {/* Icons with titles */}
           <Box textAlign="center" mb="20px">
-            <Image src="/path/to/icon1.png" boxSize="219px" mb="15px" />
+            <Image src="static/images/analytics_icon.svg" boxSize="219px" mb="15px" />
             <Text fontSize="18px" fontWeight="bold" color="black">
-              Goal 1
+              Rangeland Monitoring
             </Text>
           </Box>
           <Box textAlign="center" mb="20px">
-            <Image src="/path/to/icon2.png" boxSize="219px" mb="15px" />
-            <Text fontSize="18px" fontWeight="bold" color="black">
-              Goal 2
+            <Image src="static/images/analytics_icon.svg" boxSize="219px" mb="15px" />
+            <Text fontSize="18px" fontWeight="bold" color="black" width={"50%"}>
+              Gather satellite data on baseline rangeland conditions
             </Text>
           </Box>
           <Box textAlign="center" mb="20px">
-            <Image src="/path/to/icon3.png" boxSize="219px" mb="15px" />
+            <Image src="static/images/dashboard_and_reports.svg" boxSize="219px" mb="15px" />
             <Text fontSize="18px" fontWeight="bold" color="black">
-              Goal 3
+              Dashboards and Reporting
+            </Text>
+          </Box>
+          <Box textAlign="center" mb="20px">
+            <Image src="static/images/interactive_map_icon.svg" boxSize="219px" mb="15px" />
+            <Text fontSize="18px" fontWeight="bold" color="black">
+              Interactive map analysis
             </Text>
           </Box>
         </Flex>
@@ -173,38 +184,86 @@ export default function AboutPage() {
           Contact Us
         </Heading>
         <Flex justify="center">
-          <Box width={{ base: "100%", md: "50%" }}>
+          <Box width={{ base: "100%", md: "60%" }}>
             <form>
+              {/* First Row - Name and Last Name */}
+              <Flex mb="20px" justify="space-between" flexWrap="wrap">
+                <Box width={{ base: "100%", md: "48%" }} mb={{ base: "20px", md: "0" }}>
+                  <Text fontWeight="bold" mb="8px" color="gray.700">First Name</Text>
+                  <Input
+                    placeholder="First Name"
+                    size="lg"
+                    bg="white"
+                    border="1px solid gray"
+                    mb="20px"
+                    _focus={{ borderColor: "green.500" }}
+                  />
+                </Box>
+                <Box width={{ base: "100%", md: "48%" }} mb={{ base: "20px", md: "0" }}>
+                  <Text fontWeight="bold" mb="8px" color="gray.700">Last Name</Text>
+                  <Input
+                    placeholder="Last Name"
+                    size="lg"
+                    bg="white"
+                    border="1px solid gray"
+                    mb="20px"
+                    _focus={{ borderColor: "green.500" }}
+                  />
+                </Box>
+              </Flex>
+
+              {/* Second Row - Email and Organisation */}
+              <Flex mb="20px" justify="space-between" flexWrap="wrap">
+                <Box width={{ base: "100%", md: "48%" }} mb={{ base: "20px", md: "0" }}>
+                  <Text fontWeight="bold" mb="8px" color="gray.700">Email</Text>
+                  <Input
+                    placeholder="Your Email"
+                    size="lg"
+                    bg="white"
+                    border="1px solid gray"
+                    mb="20px"
+                    _focus={{ borderColor: "green.500" }}
+                  />
+                </Box>
+                <Box width={{ base: "100%", md: "48%" }} mb={{ base: "20px", md: "0" }}>
+                  <Text fontWeight="bold" mb="8px" color="gray.700">Organisation</Text>
+                  <Input
+                    placeholder="Organisation"
+                    size="lg"
+                    bg="white"
+                    border="1px solid gray"
+                    mb="20px"
+                    _focus={{ borderColor: "green.500" }}
+                  />
+                </Box>
+              </Flex>
+
+              {/* Third Row - Additional Details */}
               <Box mb="20px">
-                <Input
-                  placeholder="Your Name"
-                  size="lg"
-                  bg="white"
-                  border="1px solid gray"
-                  mb="20px"
-                  _focus={{ borderColor: "green.500" }}
-                />
-                <Input
-                  placeholder="Your Email"
-                  size="lg"
-                  bg="white"
-                  border="1px solid gray"
-                  mb="20px"
-                  _focus={{ borderColor: "green.500" }}
-                />
-              </Box>
-              <Box mb="20px">
+                <Text fontWeight="bold" mb="8px" color="gray.700">Additional Details</Text>
                 <Textarea
-                  placeholder="Your Message"
+                  placeholder="Provide additional details"
                   size="lg"
                   bg="white"
                   border="1px solid gray"
                   _focus={{ borderColor: "green.500" }}
                 />
               </Box>
-              <Button colorScheme="green" size="lg" width="100%">
-                Send Message
-              </Button>
+
+              {/* Button Section - Placing Button on Right */}
+              <Flex justify="flex-end">
+                <Button
+                    backgroundColor="dark_green.800"
+                    _hover={{ backgroundColor: "light_green.400" }}
+                    fontWeight={700}
+                    w="30%"
+                    color="white.a700"
+                    borderRadius={0}
+                    p={4}
+                  >
+                    Submit
+                </Button>
+              </Flex>
             </form>
           </Box>
         </Flex>
