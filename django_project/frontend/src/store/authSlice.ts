@@ -111,25 +111,31 @@ export const resetPasswordRequest = (email: string) => async (dispatch: AppDispa
   dispatch(loginStart());
 
   try {
-    await axios.post('/auth/password-reset/', { email });
+    await axios.post('/password-reset/', { email });
     dispatch(loginSuccess({ user: null, token: null }));
   } catch (error) {
-    dispatch(loginFailure(error.response?.data?.non_field_errors[0] || 'Error sending password reset email'));
+    const errorMessage = error.response?.data?.error || 'Error sending password reset email';
+    dispatch(loginFailure(errorMessage));
   }
 };
+
+
 
 // Action to confirm password reset with new password
 export const resetPasswordConfirm = (uid: string, token: string, newPassword: string) => async (dispatch: AppDispatch) => {
   dispatch(loginStart());
 
   try {
-    const response = await axios.post('/auth/password-reset/confirm/', {
+    const response = await axios.post('/password-reset/confirm/', {
       uid,
       token,
       new_password: newPassword,
     });
 
     dispatch(loginSuccess({ user: null, token: response.data.key }));
+    if (response.data?.message) {
+      dispatch(loginFailure(response.data.message));
+    }
   } catch (error) {
     dispatch(loginFailure(error.response?.data?.non_field_errors[0] || 'Error resetting password'));
   }
