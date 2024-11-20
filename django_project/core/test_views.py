@@ -14,17 +14,18 @@ class CustomRegistrationViewTest(TestCase):
     def setUp(self):
         self.registration_url = reverse('registration')
         self.email = 'testuser@example.com'
-        self.password = 'password123'
+        self.password = 'password123****'
 
     def test_registration_success(self):
         data = {
             'email': self.email,
             'password1': self.password,
+            'password2': self.password
         }
         
         response = self.client.post(self.registration_url, data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(response.data['message'], 'verification email sent.')
+        self.assertEqual(response.data['message'], 'Verification email sent.')
 
     def test_registration_email_already_exists(self):
         get_user_model().objects.create_user(email=self.email, password=self.password, username=self.email)
@@ -35,7 +36,7 @@ class CustomRegistrationViewTest(TestCase):
         }
         response = self.client.post(self.registration_url, data)
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-        self.assertIn('Email is already registered.', response.data['email'])
+        self.assertIn('Email is already registered.', response.data['errors'][0])
 
 
 class AccountActivationViewTest(TestCase):
@@ -54,7 +55,7 @@ class AccountActivationViewTest(TestCase):
         
         response = self.client.get(activation_url)
         
-        # self.assertRedirects(response, f"{settings.DJANGO_BACKEND_URL}/#/?registration_complete=true")
+        self.assertRedirects(response, f"{settings.DJANGO_BACKEND_URL}/#/?registration_complete=true")
         
         self.user.refresh_from_db()
         self.assertTrue(self.user.is_active)
@@ -69,7 +70,8 @@ class AccountActivationViewTest(TestCase):
         
         response_data = response.json()
 
-        self.assertIn('Invalid activation link', response_data['error'])
+        self.assertIn('error', response_data)
+        self.assertEqual(response_data['error'], 'Invalid activation link')
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
 
