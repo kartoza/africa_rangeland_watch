@@ -45,3 +45,5 @@ dj-rest-auth==7.0.0
 django-allauth==65.1.0
 
 django-invitations==2.1.0
+
+earthengine-api==1.4.0
