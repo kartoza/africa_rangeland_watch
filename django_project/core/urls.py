@@ -36,7 +36,6 @@ urlpatterns = [
         'api/auth/check-token/',
         CheckTokenView.as_view(), name='check-token'
     ),
-    path('', include('support.urls')),
     path(
         'registration/',
         CustomRegistrationView.as_view(),
