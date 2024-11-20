@@ -66,7 +66,7 @@ export default function AboutPage() {
         py="50px"
         px="20px"
         textAlign="center"
-        height={{ base: "200px", md: "auto" }}
+        height={{ base: "350px", md: "auto" }}
         overflowY="auto"
       >
         <Text fontSize="18px" maxW="60%" mx="auto" color="gray.700">
