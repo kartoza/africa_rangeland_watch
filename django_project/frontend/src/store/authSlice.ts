@@ -165,12 +165,13 @@ export const registerUser = (email: string, password: string, repeatPassword: st
     const response = await axios.post('/registration/', {
       email,
       password1: password,
+      password2: repeatPassword
     });
 
     dispatch(loginSuccess({ user: null, token: null }));
 
-    if (response.data?.message) {
-      dispatch(loginFailure(response.data.message));
+    if (response.data?.errors) {
+      dispatch(loginFailure(response.data.errors[0]));
     }
 
   } catch (error) {
