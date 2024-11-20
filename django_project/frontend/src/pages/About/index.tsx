@@ -18,7 +18,7 @@ export default function AboutPage() {
       {/* Main container with background image */}
       <Box
         h={{ md: "60vh", base: "70vh" }}
-        bgImage="url('/static/dashboard/dashboard_image1.svg')"
+        bgImage="url('/static/dashboard/dashboard_image2.svg')"
         bgSize="cover"
         bgPosition="center"
         bgRepeat="no-repeat"
@@ -61,7 +61,14 @@ export default function AboutPage() {
       </Box>
 
       {/* Section with text below the image */}
-      <Box bg="gray.100" py="50px" px="20px" textAlign="center">
+      <Box
+        bg="gray.100"
+        py="50px"
+        px="20px"
+        textAlign="center"
+        height={{ base: "200px", md: "auto" }}
+        overflowY="auto"
+      >
         <Text fontSize="18px" maxW="60%" mx="auto" color="gray.700">
           Rangeland Explorer is designed to be a rangeland monitoring and decision support tool for
           managers and conservation planners in southern Africa. It originated out of work with Meat
@@ -85,6 +92,7 @@ export default function AboutPage() {
         </Text>
       </Box>
 
+
       {/* Green ribbon section */}
       <Box
         bg="dark_green.800"
@@ -95,10 +103,16 @@ export default function AboutPage() {
         alignItems="center"
         mb="50px"
       >
-        <Text fontSize="24px" fontWeight="bold" color="white">
+        <Text
+          fontSize={{ base: "20px", md: "24px" }}
+          fontWeight="bold"
+          color="white"
+          textAlign="center"
+        >
           Sustainable Rangeland Management
         </Text>
       </Box>
+
 
       {/* The Goal Section */}
       <Box py="50px" textAlign="center">
@@ -110,27 +124,27 @@ export default function AboutPage() {
             The African Rangeland Watch Platform was developed to allow for easier rangeland monitoring and to be a decision support tool for managers and conservation planners in southern Africa.
           </Text>
         </Box>
-        <Flex justify="space-evenly" wrap="wrap">
+        <Flex justify="space-between" wrap="wrap" gap={{ base: "20px", md: "40px" }}>
           {/* Icons with titles */}
-          <Box textAlign="center" mb="20px">
+          <Box textAlign="center" mb="20px" width={{ base: "100%", md: "23%" }}>
             <Image src="static/images/analytics_icon.svg" boxSize="219px" mb="15px" />
             <Text fontSize="18px" fontWeight="bold" color="black">
               Rangeland Monitoring
             </Text>
           </Box>
-          <Box textAlign="center" mb="20px">
+          <Box textAlign="center" mb="20px" width={{ base: "100%", md: "23%" }}>
             <Image src="static/images/analytics_icon.svg" boxSize="219px" mb="15px" />
-            <Text fontSize="18px" fontWeight="bold" color="black" width={"50%"}>
+            <Text fontSize="18px" fontWeight="bold" color="black">
               Gather satellite data on baseline rangeland conditions
             </Text>
           </Box>
-          <Box textAlign="center" mb="20px">
+          <Box textAlign="center" mb="20px" width={{ base: "100%", md: "23%" }}>
             <Image src="static/images/dashboard_and_reports.svg" boxSize="219px" mb="15px" />
             <Text fontSize="18px" fontWeight="bold" color="black">
               Dashboards and Reporting
             </Text>
           </Box>
-          <Box textAlign="center" mb="20px">
+          <Box textAlign="center" mb="20px" width={{ base: "100%", md: "23%" }}>
             <Image src="static/images/interactive_map_icon.svg" boxSize="219px" mb="15px" />
             <Text fontSize="18px" fontWeight="bold" color="black">
               Interactive map analysis
@@ -138,6 +152,7 @@ export default function AboutPage() {
           </Box>
         </Flex>
       </Box>
+
 
       {/* YouTube Video Section */}
       <Box py="50px" px="20px">
@@ -247,8 +262,11 @@ export default function AboutPage() {
                   bg="white"
                   border="1px solid gray"
                   _focus={{ borderColor: "green.500" }}
+                  height="200px"
+                  resize="vertical"
                 />
               </Box>
+
 
               {/* Button Section - Placing Button on Right */}
               <Flex justify="flex-end">
@@ -256,9 +274,9 @@ export default function AboutPage() {
                     backgroundColor="dark_green.800"
                     _hover={{ backgroundColor: "light_green.400" }}
                     fontWeight={700}
-                    w="30%"
+                    w="20%"
                     color="white.a700"
-                    borderRadius={0}
+                    borderRadius={5}
                     p={4}
                   >
                     Submit
