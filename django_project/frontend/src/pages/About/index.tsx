@@ -139,13 +139,13 @@ export default function AboutPage() {
             </Text>
           </Box>
           <Box textAlign="center" mb="20px" width={{ base: "100%", md: "23%" }}>
-            <Image ml={{base: "100px", md:"120px"}} src="static/images/dashboard_and_reports.svg" boxSize="219px" mb="15px" />
+            <Image ml={{base: "100px", md:"110px"}} src="static/images/dashboard_and_reports.svg" boxSize="219px" mb="15px" />
             <Text fontSize="18px" fontWeight="bold" color="black">
               Dashboards and Reporting
             </Text>
           </Box>
           <Box textAlign="center" mb="20px" width={{ base: "100%", md: "23%" }}>
-            <Image ml={{base: "100px", md:"125px"}} src="static/images/interactive_map_icon.svg" boxSize="219px" mb="15px" />
+            <Image ml={{base: "100px", md:"120px"}} src="static/images/interactive_map_icon.svg" boxSize="219px" mb="15px" />
             <Text fontSize="18px" fontWeight="bold" color="black">
               Interactive map analysis
             </Text>
