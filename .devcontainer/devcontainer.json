@@ -1,0 +1,35 @@
+{
+    "name": "Django Docker Environment",
+    "remoteUser": "vscode",
+    "postCreateCommand": "git config --global --add safe.directory /home/web/project",
+    "dockerComposeFile": [
+      "../deployment/docker-compose.yml",
+      "../deployment/docker-compose.override.devcontainer.yml"
+    ],
+    "service": "dev",
+    "runServices": ["db", "redis", "worker", "dev"],
+    "workspaceFolder": "/home/web/project",
+    "runArgs": [
+      "--env-file",
+      "../deployment/.env"
+    ],
+    "portsAttributes": {
+      "9000": {
+        "label": "Frontend",
+        "onAutoForward": "notify"
+      }
+    },
+    "forwardPorts": [8000, 9000],
+    "shutdownAction": "stopCompose",
+    "customizations": {
+      "vscode": {
+        "extensions": ["ms-python.python", "ms-azuretools.vscode-docker", "njpwerner.autodocstring"],
+        "settings": {
+          "terminal.integrated.shell.linux": "/bin/bash",
+          "python.pythonPath": "/usr/local/bin/python",
+          "python.linting.pylintEnabled": true,
+          "python.linting.enabled": true
+        }
+      }
+    }
+  }
