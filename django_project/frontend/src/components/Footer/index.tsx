@@ -39,7 +39,7 @@ export default function Footer(props: Props) {
             <Heading size="lg" mb="2" fontWeight="bold" color="white">About Us</Heading>
             <UnorderedList styleType="none" spacing={1}>
               <ListItem>
-                <Link href="#" fontSize="13px" fontWeight="bold" color="white">Africa Rangeland Watch</Link>
+                <Link href="/about" fontSize="13px" fontWeight="bold" color="white">Africa Rangeland Watch</Link>
               </ListItem>
               <ListItem>
                 <Link href="#" fontSize="13px" fontWeight="bold" color="white">Conservation South Africa</Link>
