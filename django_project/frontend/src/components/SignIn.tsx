@@ -64,15 +64,20 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
   const uid = searchParams.get("uid");
   const tokenFromUrl = searchParams.get("token");
 
+  const [isOpenReset, setIsOpen] = useState(false);
+
   useEffect(() => {
     if (uid && tokenFromUrl) {
       setFormType("resetPassword");
+      setIsOpen(true);
+      setCanSubmit(false)
     }
   }, [uid, tokenFromUrl]);
 
   useEffect(() => {
     setStatusMessage("");
     setResetError("");
+    setIsOpen(false)
   }, [formType]);
 
   const togglePasswordVisibility = () => {
@@ -102,18 +107,19 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
   };
 
   const handleResetPassword = () => {
-    if (newPassword !== confirmPassword) {
+    if (password !== confirmPassword) {
       setResetError("Passwords do not match.");
       return;
     }
 
     if (uid && tokenFromUrl) {
-      dispatch(resetPasswordRequest(newPassword));
+      dispatch(resetPasswordRequest(password));
       setStatusMessage("Password has been successfully reset.");
       setFormType("signin");
     } else {
       setResetError("Invalid reset link.");
     }
+    setCanSubmit(true)
   };
 
   useEffect(() => {
@@ -124,10 +130,11 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
       setRememberMe(false);
       onClose();
     }
+    setIsOpen(false)
   }, [token, onClose]);
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} isCentered={modalPosition === "absolute"}>
+    <Modal isOpen={isOpen || isOpenReset} onClose={onClose} isCentered={modalPosition === "absolute"}>
       <ModalOverlay />
       <ModalContent
         maxW={{ base: "90vw", md: "25vw" }}
