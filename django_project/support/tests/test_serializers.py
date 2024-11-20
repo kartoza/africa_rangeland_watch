@@ -2,13 +2,13 @@ from rest_framework.exceptions import ValidationError
 from django.test import TestCase
 from support.models import Ticket, IssueType
 from support.serializers import TicketSerializer, TicketCreateSerializer
-from django.contrib.auth.models import User
+from django.contrib.auth import get_user_model
 
 
 class TicketSerializerTest(TestCase):
     
     def setUp(self):
-        self.user = User.objects.create_user(username='testuser', password='testpassword')
+        self.user = get_user_model().objects.create_user(username='testuser', password='testpassword')
         self.issue_type = IssueType.objects.create(name='Technical Issue')
     
     def test_ticket_create_serializer_valid_data(self):
