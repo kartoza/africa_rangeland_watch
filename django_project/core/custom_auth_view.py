@@ -14,9 +14,13 @@ from django.contrib.auth.tokens import default_token_generator
 from django.contrib.auth import get_user_model
 from django.http import JsonResponse
 from django.shortcuts import redirect
-from django.contrib.auth.models import User
 from rest_framework.permissions import AllowAny
 from django.core.exceptions import MultipleObjectsReturned
+from django.core.exceptions import ValidationError
+from django.core.validators import EmailValidator
+from django.contrib.auth.password_validation import validate_password
+from rest_framework.throttling import AnonRateThrottle
+
 
 
 
@@ -37,20 +41,34 @@ class CheckTokenView(APIView):
 
 class CustomRegistrationView(APIView):
     permission_classes = [AllowAny]
+    throttle_classes = [AnonRateThrottle]
 
     def post(self, request, *args, **kwargs):
         email = request.data.get('email')
         password1 = request.data.get('password1')
+        password2 = request.data.get('password2')
 
         error_messages = []
 
-        # Check if email already exists
-        if User.objects.filter(email=email).exists():
+        try:
+            EmailValidator()(email)
+        except ValidationError:
+            error_messages.append('Invalid email format.')
+
+        if get_user_model().objects.filter(email=email).exists():
             error_messages.append('Email is already registered.')
+
+        if password1 != password2:
+            error_messages.append('Passwords do not match.')
+
+        try:
+            validate_password(password1)
+        except ValidationError as e:
+            error_messages.extend(e.messages)
 
         if error_messages:
             return Response(
-                {'email': error_messages},
+                {'errors': error_messages},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
@@ -62,15 +80,13 @@ class CustomRegistrationView(APIView):
         user.is_active = False
         user.save()
 
-        # Create activation token
         token = default_token_generator.make_token(user)
         uid = urlsafe_base64_encode(str(user.pk).encode())
 
-        # Build activation link
         activation_link = f"{
             get_current_site(request).domain}/auth/activate/{uid}/{token}/"
 
-        # Send activation email (use a custom template for this)
+        # Send email with activation link
         subject = "Activate Your Account"
         message = render_to_string('account/email_confirmation.html', {
             'user': user,
@@ -80,11 +96,10 @@ class CustomRegistrationView(APIView):
         send_mail(subject, message, settings.NO_REPLY_EMAIL, [email])
 
         return Response(
-            {
-                'message': 'verification email sent.'
-            },
+            {'message': 'Verification email sent.'},
             status=status.HTTP_201_CREATED
         )
+
 
 
 class AccountActivationView(APIView):
