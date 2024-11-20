@@ -1,7 +1,7 @@
 import { Helmet } from "react-helmet";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
-import { Flex, Text, Heading, Box, Image, Button, Input, Textarea } from "@chakra-ui/react";
+import { Flex, Text, Heading, Box, Image, Button, Input, Textarea, Center } from "@chakra-ui/react";
 import React, { useState } from "react";
 
 export default function AboutPage() {
@@ -126,26 +126,26 @@ export default function AboutPage() {
         </Box>
         <Flex justify="space-between" wrap="wrap" gap={{ base: "20px", md: "40px" }}>
           {/* Icons with titles */}
-          <Box textAlign="center" mb="20px" width={{ base: "100%", md: "23%" }}>
-            <Image src="static/images/analytics_icon.svg" boxSize="219px" mb="15px" />
+          <Box textAlign="center"  justifyContent="center" mb="20px" width={{ base: "100%", md: "23%" }}>
+            <Image ml={{base: "100px", md:"150px"}} src="static/images/analytics_icon.svg" boxSize="219px" mb="15px" />
             <Text fontSize="18px" fontWeight="bold" color="black">
               Rangeland Monitoring
             </Text>
           </Box>
           <Box textAlign="center" mb="20px" width={{ base: "100%", md: "23%" }}>
-            <Image src="static/images/analytics_icon.svg" boxSize="219px" mb="15px" />
+            <Image ml={{base: "100px", md:"150px"}} src="static/images/analytics_icon.svg" boxSize="219px" mb="15px"/>
             <Text fontSize="18px" fontWeight="bold" color="black">
               Gather satellite data on baseline rangeland conditions
             </Text>
           </Box>
           <Box textAlign="center" mb="20px" width={{ base: "100%", md: "23%" }}>
-            <Image src="static/images/dashboard_and_reports.svg" boxSize="219px" mb="15px" />
+            <Image ml={{base: "100px", md:"150px"}} src="static/images/dashboard_and_reports.svg" boxSize="219px" mb="15px" />
             <Text fontSize="18px" fontWeight="bold" color="black">
               Dashboards and Reporting
             </Text>
           </Box>
           <Box textAlign="center" mb="20px" width={{ base: "100%", md: "23%" }}>
-            <Image src="static/images/interactive_map_icon.svg" boxSize="219px" mb="15px" />
+            <Image ml={{base: "100px", md:"150px"}} src="static/images/interactive_map_icon.svg" boxSize="219px" mb="15px" />
             <Text fontSize="18px" fontWeight="bold" color="black">
               Interactive map analysis
             </Text>
