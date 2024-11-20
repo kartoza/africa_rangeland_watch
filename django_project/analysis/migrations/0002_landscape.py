@@ -16,7 +16,6 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('name', models.CharField(help_text='The name of the landscape.', max_length=255)),
-                ('value', models.CharField(help_text='The value of the landscape.', max_length=255)),
                 ('bbox', django.contrib.gis.db.models.fields.PolygonField(blank=True, help_text='Bounding box of the landscape.', null=True, srid=4326)),
                 ('zoom', models.IntegerField(help_text='Zoom level of the landscape.')),
             ],

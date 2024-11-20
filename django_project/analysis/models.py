@@ -164,11 +164,6 @@ class Landscape(models.Model):
         help_text="The name of the landscape."
     )
 
-    value = models.CharField(
-        max_length=255,
-        help_text="The value of the landscape."
-    )
-
     bbox = models.PolygonField(
         srid=4326,
         blank=True,

@@ -70,7 +70,7 @@ class InterventionAreaAdmin(OSMGeoAdmin):
 class LandscapeAdmin(OSMGeoAdmin):
     """Admin for landscape model."""
 
-    list_display = ('name', 'value',)
+    list_display = ('name',)
     search_fields = ('name',)
 
     map_template = 'gis/admin/osm.html'

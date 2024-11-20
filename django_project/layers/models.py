@@ -59,6 +59,9 @@ class LayerGroupType(models.Model):
         help_text="The name of the group type."
     )
 
+    def __str__(self):
+        return self.name
+
 
 class InputLayer(models.Model):
     """
