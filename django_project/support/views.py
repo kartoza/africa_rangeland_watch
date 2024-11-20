@@ -3,13 +3,13 @@ from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework.decorators import action
 from rest_framework import status
-from .models import Ticket, IssueType
-from .serializers import TicketSerializer, IssueTypeSerializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.exceptions import ValidationError
 from django.core.exceptions import ObjectDoesNotExist
 
+from support.models import Ticket, IssueType
+from support.serializers import TicketSerializer, IssueTypeSerializer
 
 
 class IssueTypeViewSet(viewsets.ReadOnlyModelViewSet):
