@@ -91,7 +91,7 @@ export default function Sidebar(props: Props) {
               Uploaded Resources
           </MenuItem>
           <MenuItem 
-            style={{ backgroundColor: isActive('/analysis-results') ? '#a8d159' : 'transparent' }}
+            style={{ backgroundColor: isActive('/support') ? '#a8d159' : 'transparent' }}
             onClick={() => navigate('/support')}>
             Support
           </MenuItem>

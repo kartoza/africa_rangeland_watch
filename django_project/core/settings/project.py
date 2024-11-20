@@ -38,9 +38,12 @@ INSTALLED_APPS = INSTALLED_APPS + (
     'alerts',
     'dashboard',
     'analysis',
-    'layers'
+    'layers',
+    'support'
 )
 
 TEMPLATES[0]['DIRS'] += [
     absolute_path('frontend', 'templates'),
+    absolute_path('support', 'templates'),
 ]
+

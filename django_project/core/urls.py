@@ -57,7 +57,8 @@ urlpatterns = [
         'password-reset/confirm/<uidb64>/<token>/',
         ResetPasswordConfirmView.as_view(),
         name='password-reset-confirm'
-    )
+    ),
+    path('', include('support.urls')),
 ]
 
 if settings.DEBUG:

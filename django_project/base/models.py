@@ -95,6 +95,11 @@ class UserProfile(models.Model):
         help_text="The role of the user in the system."
     )
 
+    is_support_staff = models.BooleanField(
+        default=False,
+        help_text="Indicates if the user is a support staff member."
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
