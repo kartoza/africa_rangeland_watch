@@ -20,7 +20,9 @@ from django.conf.urls.static import static
 from .custom_auth_view import (
     CheckTokenView,
     CustomRegistrationView,
-    AccountActivationView
+    AccountActivationView,
+    ForgotPasswordView,
+    ResetPasswordConfirmView
 )
 
 urlpatterns = [
@@ -46,7 +48,16 @@ urlpatterns = [
         AccountActivationView.as_view(),
         name='account-activation'
     ),
-
+    path(
+        'password-reset/',
+        ForgotPasswordView.as_view(),
+        name='password-reset'
+    ),
+    path(
+        'password-reset/confirm/<uidb64>/<token>/',
+        ResetPasswordConfirmView.as_view(),
+        name='password-reset-confirm'
+    )
 ]
 
 if settings.DEBUG:
