@@ -38,9 +38,9 @@ export default function MegaMenu({ hoveredSection, isUserAvatarHovered }: MegaMe
   // Menu items based on hover
   const menuItems: Record<string, MenuItem[]> = {
     about: [
-      { label: "Africa RangeWatch", to: "/africa-rangewatch" },
-      { label: "Conversation", to: "/conversation" },
-      { label: "Learn More", to: "/learn-more" },
+      { label: "Africa RangeWatch", to: "#/about" },
+      { label: "Conversation", to: "#/about" },
+      { label: "Learn More", to: "#/about" },
     ],
     userAvatar: !isAuthenticated
       ? [{ label: "Login", to: "/login" }]
