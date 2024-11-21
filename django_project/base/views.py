@@ -9,13 +9,14 @@ from .models import (
 from django.http import JsonResponse
 import json
 from invitations.utils import get_invitation_model
+from django.views.decorators.csrf import csrf_exempt
 
 Invitation = get_invitation_model()
 
 
 
 
-
+@csrf_exempt
 @login_required
 def delete_organisation_member(request):
     """
@@ -97,7 +98,7 @@ def fetch_organisation_data(request):
 
             invitations = []
             invitations = list(
-                org.invitations.values("email", "accepted")
+                org.custom_invitations.values("email", "accepted")
             )
 
             data[org.name] = {
