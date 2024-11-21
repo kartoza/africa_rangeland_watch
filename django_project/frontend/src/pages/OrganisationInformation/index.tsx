@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React from "react";
 import Helmet from "react-helmet";
 import {
   Box,
@@ -24,58 +24,21 @@ import { FaPlus, FaTrash } from "react-icons/fa";
 import Header from "../../components/Header";
 import Sidebar from "../../components/SideBar";
 import "../../styles/index.css";
-
-// Define types for the data
-interface Member {
-  user: string;
-  role: string;
-}
-
-interface Invitation {
-  user: string;
-  role: string;
-  status: string;
-}
-
-interface Organization {
-  members: Member[];
-  invitations: Invitation[];
-}
+import { useSelector, useDispatch } from "react-redux";
+import { fetchOrganizations } from "../../store/organisationSlice";
+import { AppDispatch } from "../../store";
 
 export default function OrganisationInformation() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [organizations, setOrganizations] = useState<{ [key: string]: Organization }>({});
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const dispatch = useDispatch<AppDispatch>();
 
-  useEffect(() => {
-    const fetchOrganizations = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        const response = await fetch("/api/organizations"); // Example API endpoint will replace with real one TODO
-        if (!response.ok) {
-          throw new Error("Failed to fetch organizations.");
-        }
-        
-        const data = await response.json();
-        setOrganizations(data);
-      } catch (err: any) {
-        setError("No data available.");
-        setOrganizations({
-            default: {
-              members: [],
-              invitations: [],
-            }
-          })
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Get data from the store
+  const { organizations, loading, error } = useSelector((state: any) => state.organization);
+  const [searchTerm, setSearchTerm] = React.useState("");
 
-    fetchOrganizations();
-  }, []);
+  // Fetch organizations when the component mounts
+  React.useEffect(() => {
+    dispatch(fetchOrganizations());
+  }, [dispatch]);
 
   return (
     <>
@@ -136,7 +99,7 @@ export default function OrganisationInformation() {
               <Divider mb={6} borderColor="black" borderWidth="1px" width={{ base: "auto", md: "99%" }} />
 
               <TabPanels>
-                {Object.values(organizations).map((organization, index) => (
+                {Object.values(organizations).map((organization: any, index: number) => (
                   <TabPanel key={index}>
                     {/* Organisation Members Section */}
                     <Heading size="md" mb={4} color="black">
@@ -182,7 +145,7 @@ export default function OrganisationInformation() {
                           </Tr>
                         </Thead>
                         <Tbody>
-                          {organization.members.slice(0, 5).map((member, idx) => (
+                          {organization.members.slice(0, 5).map((member: any, idx: number) => (
                             <Tr key={idx}>
                               <Td>{member.user}</Td>
                               <Td>{member.role}</Td>
@@ -224,13 +187,19 @@ export default function OrganisationInformation() {
                           </Tr>
                         </Thead>
                         <Tbody>
-                          {organization.invitations.slice(0, 5).map((invite, idx) => (
+                          {organization.invitations.slice(0, 5).map((invite: any, idx: number) => (
                             <Tr key={idx}>
                               <Td>{invite.user}</Td>
                               <Td>{invite.role}</Td>
                               <Td>
                                 <Badge
-                                  backgroundColor={invite.status === "Joined" ? "light_green.400" : invite.status === "Pending" ? "#3e3e3e" : "yellow"}
+                                  backgroundColor={
+                                    invite.status === "Joined"
+                                      ? "light_green.400"
+                                      : invite.status === "Pending"
+                                      ? "#3e3e3e"
+                                      : "yellow"
+                                  }
                                   color="white"
                                   variant="solid"
                                   px={4}
