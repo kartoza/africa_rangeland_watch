@@ -56,7 +56,7 @@ class OrganisationInvitation(Invitation):
 
         subject = f"You've been invited to join {self.organisation.name}!"
         email_body = render_to_string(
-            "emails/invitation_to_join_organization.html",
+            "invitation_to_join_organization.html",
             context
         )
 
