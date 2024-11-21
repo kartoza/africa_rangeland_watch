@@ -9,4 +9,7 @@ urlpatterns = [
     path('organisation/<int:organisation_id>/invite/',
          views.invite_to_organisation,
          name='invite_to_organization'),
+    path('api/organizations',
+         views.fetch_organisation_data,
+         name='fetch_organisation_data'),
 ]
