@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import Helmet from "react-helmet";
 import {
   Box,
@@ -25,11 +25,21 @@ import Header from "../../components/Header";
 import Sidebar from "../../components/SideBar";
 import "../../styles/index.css";
 import { useSelector, useDispatch } from "react-redux";
-import { fetchOrganizations } from "../../store/organisationSlice";
+import { deleteMember, fetchOrganizations } from "../../store/organizationSlice";
 import { AppDispatch } from "../../store";
+import InviteMember from "../../components/inviteMembers";
 
 export default function OrganisationInformation() {
   const dispatch = useDispatch<AppDispatch>();
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+
+  const openInviteModal = () => {
+    setIsInviteModalOpen(true);
+  };
+
+  const closeInviteModal = () => {
+    setIsInviteModalOpen(false);
+  };
 
   // Get data from the store
   const { organizations, loading, error } = useSelector((state: any) => state.organization);
@@ -39,6 +49,18 @@ export default function OrganisationInformation() {
   React.useEffect(() => {
     dispatch(fetchOrganizations());
   }, [dispatch]);
+
+  // Filter members based on search term
+  const filteredMembers = (members: any[]) => {
+    if (!searchTerm) return members;
+    return members.filter((member) =>
+      member.user.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  };
+
+  const handleDelete = (orgKey: any, user: any) => {
+    dispatch(deleteMember({ orgKey, user: user.user }));
+  };
 
   return (
     <>
@@ -128,9 +150,16 @@ export default function OrganisationInformation() {
                         h={10}
                         color="white.a700"
                         borderRadius="0px"
+                        onClick={openInviteModal}
                       >
                         Add People
                       </Button>
+                      <InviteMember 
+                        isOpen={isInviteModalOpen} 
+                        onClose={closeInviteModal} 
+                        orgKey={index.toString()}
+                        organizationName={organization}
+                      />
                     </Flex>
 
                     <Divider mb={6} borderColor="black" borderWidth="1px" />
@@ -145,16 +174,17 @@ export default function OrganisationInformation() {
                           </Tr>
                         </Thead>
                         <Tbody>
-                          {organization.members.slice(0, 5).map((member: any, idx: number) => (
+                          {filteredMembers(organization.members).slice(0, 5).map((member: any, idx: number) => (
                             <Tr key={idx}>
-                              <Td>{member.user}</Td>
-                              <Td>{member.role}</Td>
+                              <Td color={"black"}>{member.user__email}</Td>
+                              <Td color={"black"}>{member.user_role}</Td>
                               <Td textAlign="center" display="flex" justifyContent="center">
                                 <IconButton
                                   aria-label="Delete member"
                                   icon={<FaTrash />}
                                   colorScheme="red"
                                   variant="ghost"
+                                  onClick={() => handleDelete(index, member)}
                                 />
                               </Td>
                             </Tr>
@@ -181,20 +211,18 @@ export default function OrganisationInformation() {
                       <Table variant="unstyled" size="sm">
                         <Thead borderBottom="1px solid" borderColor="gray.400">
                           <Tr>
-                            <Td fontWeight="bold">User</Td>
-                            <Td fontWeight="bold">Role</Td>
+                            <Td fontWeight="bold">Email</Td>
                             <Td fontWeight="bold">Status</Td>
                           </Tr>
                         </Thead>
                         <Tbody>
                           {organization.invitations.slice(0, 5).map((invite: any, idx: number) => (
                             <Tr key={idx}>
-                              <Td>{invite.user}</Td>
-                              <Td>{invite.role}</Td>
+                              <Td>{invite.email}</Td>
                               <Td>
                                 <Badge
                                   backgroundColor={
-                                    invite.status === "Joined"
+                                    invite.status === "accepted"
                                       ? "light_green.400"
                                       : invite.status === "Pending"
                                       ? "#3e3e3e"
