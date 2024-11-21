@@ -1,5 +1,5 @@
 import React, { forwardRef, useImperativeHandle, useState } from 'react';
-import { Layer } from "../DataTypes";
+import { Layer } from '../../../store/layerSlice';
 
 interface CardProps {
   layer: Layer;
@@ -58,8 +58,6 @@ export const Legend = forwardRef(
         setLayers(layers.filter(_layer => _layer.id !== layer.id))
       }
     }));
-
-    console.log(layers)
 
     return (
       <div>

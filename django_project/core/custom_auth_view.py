@@ -28,6 +28,7 @@ class CheckTokenView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        """Get request for check token."""
         user = request.user
         return Response({
             "message": "Token is valid",

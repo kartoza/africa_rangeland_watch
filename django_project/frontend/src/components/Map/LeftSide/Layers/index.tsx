@@ -7,7 +7,9 @@ import {
   AccordionPanel,
   Box
 } from "@chakra-ui/react";
-import { GroupName, Layer, SelectOption } from "../../DataTypes";
+import { Layer } from '../../../../store/layerSlice';
+import { Landscape } from '../../../../store/landscapeSlice';
+import { GroupName } from "../../DataTypes";
 import LayerCheckbox from "./LayerCheckbox";
 import LandscapeSelector from "./LandscapeSelector";
 import LeftSideLoading from "../Loading";
@@ -19,7 +21,7 @@ export interface LayerCheckboxProps {
 }
 
 export interface Props extends LayerCheckboxProps {
-  landscapes?: SelectOption[];
+  landscapes?: Landscape[];
   layers?: Layer[];
 }
 
