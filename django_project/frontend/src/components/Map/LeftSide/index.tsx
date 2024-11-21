@@ -1,8 +1,7 @@
 import React, {
   forwardRef,
   useEffect,
-  useImperativeHandle,
-  useState
+  useImperativeHandle
 } from 'react';
 import {
   Box,
@@ -13,10 +12,11 @@ import {
   Tabs,
   useDisclosure
 } from "@chakra-ui/react";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "../../../store";
+import { fetchLandscapes } from '../../../store/landscapeSlice';
+import { fetchLayers } from '../../../store/layerSlice';
 import Layers, { LayerCheckboxProps } from "./Layers";
-import { Layer, SelectOption } from "../DataTypes";
-import { Landscapes } from "../fixtures/analysis";
-import { layerData } from "../fixtures/layer";
 import Analysis from "./Analysis";
 
 const styles = {
@@ -33,17 +33,15 @@ export const LeftSide = forwardRef(
   ) => {
 
     const { isOpen, onOpen, onClose } = useDisclosure();
-
+    const dispatch = useDispatch<AppDispatch>();
     // Required data
-    const [landscapes, setLandscapes] = useState<Array<SelectOption> | null>(null);
-    const [layers, setLayers] = useState<Array<Layer> | null>(null);
+    const { landscapes } = useSelector((state: RootState) => state.landscape);
+    const { layers } = useSelector((state: RootState) => state.layer);
 
-    // TODO:
-    //  Fetch the data here
     useEffect(() => {
-      setLandscapes(Landscapes)
-      setLayers(layerData)
-    }, []);
+      dispatch(fetchLayers())
+      dispatch(fetchLandscapes())
+    }, [dispatch])
 
     // Toggle
     useImperativeHandle(ref, () => ({

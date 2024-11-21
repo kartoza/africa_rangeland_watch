@@ -59,8 +59,6 @@ export const Legend = forwardRef(
       }
     }));
 
-    console.log(layers)
-
     return (
       <div>
         {layers && layers.map(layer => <Card key={layer.id} layer={layer}/>)}

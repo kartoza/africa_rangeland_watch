@@ -7,7 +7,8 @@ import {
   Box,
   Select
 } from "@chakra-ui/react";
-import { AnalysisData, GroupName, Layer } from "../../DataTypes";
+import { Layer } from '../../../../store/layerSlice';
+import { AnalysisData, GroupName } from "../../DataTypes";
 
 
 interface Props {

@@ -7,10 +7,13 @@ import React, {
 } from 'react';
 import maplibregl from 'maplibre-gl';
 import { Box } from "@chakra-ui/react";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "../../store";
 import { BasemapControl, LegendControl } from "./control";
 import { Layer } from "./DataTypes";
 import { hasSource, removeLayer } from "./utils";
-import { initialBound } from "./fixtures/map";
+import { fetchBaseMaps } from '../../store/baseMapSlice';
+import { fetchMapConfig } from '../../store/mapConfigSlice';
 
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './style.css';
@@ -25,9 +28,19 @@ interface Props {
 export const MapLibre = forwardRef(
   (props: Props, ref
   ) => {
+    const dispatch = useDispatch<AppDispatch>();
     const legendRef = useRef(null);
+    const baseMapRef = useRef(null);
     const [map, setMap] = useState(null);
-    const [layers, setLayers] = useState<Array<Layer> | null>(null);
+    const { mapConfig } = useSelector((state: RootState) => state.mapConfig);
+    const { baseMaps } = useSelector((state: RootState) => state.baseMap);
+    const { selected: selectedLandscape } = useSelector((state: RootState) => state.landscape);
+
+    //  Fetch the data here
+    useEffect(() => {
+      dispatch(fetchBaseMaps())
+      dispatch(fetchMapConfig())
+    }, [dispatch]);
 
     // Toggle
     useImperativeHandle(ref, () => ({
@@ -68,6 +81,9 @@ export const MapLibre = forwardRef(
 
     /** First initiate */
     useEffect(() => {
+      if (baseMaps.length == 0 || !mapConfig) {
+        return;
+      }
       if (!map) {
         const _map = new maplibregl.Map({
           container: 'map',
@@ -83,20 +99,34 @@ export const MapLibre = forwardRef(
         _map.once("load", () => {
           setMap(_map)
 
-          // TODO:
-          //  We put this on admin
-          _map.fitBounds(initialBound,
+          _map.fitBounds(mapConfig.initial_bound,
             {
               pitch: 0,
               bearing: 0
             }
           )
+
+          // render default base map
+          baseMapRef?.current?.setBaseMapLayer(baseMaps[0])
         })
-        _map.addControl(new BasemapControl(), 'bottom-left');
+        _map.addControl(new BasemapControl(baseMaps, baseMapRef), 'bottom-left');
         _map.addControl(new LegendControl(legendRef), 'top-left');
         _map.addControl(new maplibregl.NavigationControl(), 'bottom-left');
       }
-    }, []);
+    }, [baseMaps, mapConfig]);
+
+    // zoom when landscape is selected
+    useEffect(() => {
+      if (!map || !selectedLandscape) {
+        return;
+      }
+      map.fitBounds(selectedLandscape.bbox,
+        {
+          pitch: 0,
+          bearing: 0
+        }
+      )
+    }, [selectedLandscape])
 
     return (
       <Box id="map" flexGrow={1}/>

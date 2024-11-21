@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Accordion, Box, Button, HStack } from "@chakra-ui/react";
-import { AnalysisData, Layer, SelectOption } from "../../DataTypes";
+import { Layer } from '../../../../store/layerSlice';
+import { Landscape } from '../../../../store/landscapeSlice';
+import { AnalysisData } from "../../DataTypes";
 import LeftSideLoading from "../Loading";
 import AnalysisLandscapeSelector from "./AnalysisLandscapeSelector";
 import AnalysisTypeSelector from "./AnalysisTypeSelector";
@@ -14,7 +16,7 @@ import AnalysisVariableBySpatialSelector
 
 
 interface Props {
-  landscapes?: SelectOption[];
+  landscapes?: Landscape[];
   layers?: Layer[];
 }
 
