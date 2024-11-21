@@ -1,7 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 import authReducer from './authSlice';
 import ticketReducer from './ticketSlice';
-import organisationReducer from './organisationSlice';
+import organizationReducer from './organizationSlice';
 
 const store = configureStore({
   reducer: {
