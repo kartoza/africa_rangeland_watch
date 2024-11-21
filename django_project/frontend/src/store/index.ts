@@ -7,7 +7,7 @@ const store = configureStore({
   reducer: {
     auth: authReducer,
     ticket: ticketReducer,
-    organisation: organisationReducer
+    organization: organizationReducer
   },
 });
 
