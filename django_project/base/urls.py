@@ -13,7 +13,7 @@ urlpatterns = [
          views.fetch_organisation_data,
          name='fetch_organisation_data'),
     path(
-        'organisation/<int:organisation_id>/member/<int:user_id>/delete/',
+        'api/organizations/member/delete/',
         views.delete_organisation_member,
-        name='delete_organisation_member'),
+        name='delete_member'),
 ]
