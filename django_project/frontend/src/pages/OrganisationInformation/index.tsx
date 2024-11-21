@@ -67,9 +67,15 @@ export default function OrganisationInformation() {
         member.user__email && member.user__email.toLowerCase().includes(searchTerm.toLowerCase())
     );
   };
+  
 
-  const handleDelete = (orgKey: any, user: any) => {
-    dispatch(deleteMember({ orgKey, user: user.user__email }));
+  const handleDelete = async (orgKey: any, user: any) => {
+    try {
+      await dispatch(deleteMember({ orgKey, user: user.user__email })).unwrap();
+      dispatch(fetchOrganizations());
+    } catch (error) {
+      console.error("Error deleting member:", error);
+    }
   };
 
   return (
@@ -101,7 +107,7 @@ export default function OrganisationInformation() {
             </Heading>
 
             {loading && <p>Loading...</p>}
-            {error && <p>{error}</p>}
+            {/* {error && <p>{error}</p>} */}
 
             {/* Organisation Tabs */}
             <Tabs variant="unstyled">
@@ -168,7 +174,7 @@ export default function OrganisationInformation() {
                       <InviteMember 
                         isOpen={isInviteModalOpen} 
                         onClose={closeInviteModal} 
-                        orgKey={index.toString()}
+                        orgKey={organization.org_id}
                         organizationName={selectedOrgKey || "Unknown"} 
                       />
                     </Flex>
