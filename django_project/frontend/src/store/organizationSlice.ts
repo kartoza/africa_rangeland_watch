@@ -59,13 +59,23 @@ export const inviteMemberThunk = createAsyncThunk(
 export const deleteMember = createAsyncThunk(
   "organizations/deleteMember",
   async ({ orgKey, user }: { orgKey: string; user: string }) => {
-    const response = await fetch(`/api/organizations/${orgKey}/member/${user}/delete/`, {
+    const response = await fetch(`/api/organizations/member/delete/`, {
       method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        organisation_id: orgKey,
+        user_email: user,
+      }),
     });
+
     if (!response.ok) throw new Error("Failed to delete member.");
+
     return { orgKey, user };
   }
 );
+
 
 // Slice
 const organizationsSlice = createSlice({
