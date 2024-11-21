@@ -19,7 +19,8 @@ class UserProfileInline(admin.StackedInline):
     fk_name = "user"
     fields = (
         'organisation', 'country', 'user_type',
-        'user_role', 'created_at', 'updated_at')
+        'user_role', 'is_support_staff',
+        'created_at', 'updated_at')
     readonly_fields = ('created_at', 'updated_at')
 
 

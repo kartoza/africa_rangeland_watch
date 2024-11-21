@@ -21,6 +21,17 @@ const initialState: AuthState = {
   error: null,
 };
 
+
+const setCSRFToken = () => {
+  const csrfToken = document.cookie.split(';').find((cookie) => cookie.trim().startsWith('csrftoken='));
+  if (csrfToken) {
+    const token = csrfToken.split('=')[1];
+    axios.defaults.headers['X-CSRFToken'] = token;
+  } else {
+    console.warn('CSRF token not found.');
+  }
+};
+
 const authSlice = createSlice({
   name: 'auth',
   initialState,
@@ -57,12 +68,7 @@ export const loginUser = (email: string, password: string) => async (dispatch: A
   dispatch(loginStart());
 
   try {
-    const csrfToken = document.cookie.split(';').find(cookie => cookie.trim().startsWith('csrftoken='));
-
-    if (csrfToken) {
-      const token = csrfToken.split('=')[1];
-      axios.defaults.headers['X-CSRFToken'] = token;
-    }
+    setCSRFToken();
     
     const response = await axios.post('/auth/login/', {
       email,
@@ -111,6 +117,7 @@ export const resetPasswordRequest = (email: string) => async (dispatch: AppDispa
   dispatch(loginStart());
 
   try {
+    setCSRFToken();
     await axios.post('/password-reset/', { email });
     dispatch(loginSuccess({ user: null, token: null }));
   } catch (error) {
@@ -126,6 +133,7 @@ export const resetPasswordConfirm = (uid: string, token: string, newPassword: st
   dispatch(loginStart());
 
   try {
+    setCSRFToken();
     const response = await axios.post('/password-reset/confirm/', {
       uid,
       token,
@@ -161,6 +169,7 @@ export const registerUser = (email: string, password: string, repeatPassword: st
   }
 
   try {
+    setCSRFToken();
     const response = await axios.post('/registration/', {
       email,
       password1: password,
