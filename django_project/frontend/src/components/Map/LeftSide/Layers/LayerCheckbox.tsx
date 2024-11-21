@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Checkbox } from "@chakra-ui/react";
-import { Layer } from "../../DataTypes";
+import { Layer } from '../../../../store/layerSlice';
 
 
 interface Props {

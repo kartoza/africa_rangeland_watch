@@ -1,23 +1,17 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Box, Select } from "@chakra-ui/react";
-import { SelectOption } from "../../DataTypes";
+import { useDispatch } from "react-redux";
+import { AppDispatch } from "../../../../store";
+import { Landscape, setSelectedLandscape } from '../../../../store/landscapeSlice';
 
 
 interface Props {
-  landscapes?: SelectOption[];
+  landscapes?: Landscape[];
 }
 
 /** Layer Checkbox component of map. */
 export default function LandscapeSelector({ landscapes }: Props) {
-  const [landscape, setLandscape] = useState<string | null>(null);
-
-  /** Landscape changed */
-  useEffect(() => {
-    if (landscape) {
-      // TODO:
-      //  Handle the process when landscape changed
-    }
-  }, [landscape]);
+  const dispatch = useDispatch<AppDispatch>();
 
   if (!landscapes) {
     return null
@@ -30,15 +24,15 @@ export default function LandscapeSelector({ landscapes }: Props) {
         fontSize='13px'
         height='2rem'
         placeholder="Select a value"
-        onChange={evt => setLandscape(evt.target.value)}
+        onChange={evt => dispatch(setSelectedLandscape(parseInt(evt.target.value)))}
       >
         {
           landscapes.map(landscape => {
             return <option
-              key={landscape.value}
-              value={landscape.value}
+              key={landscape.id}
+              value={landscape.id}
             >
-              {landscape.label}
+              {landscape.name}
             </option>
           })
         }
