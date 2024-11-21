@@ -154,3 +154,26 @@ class Analysis(models.Model):
 
     def __str__(self):
         return f"Analysis {self.uuid}"
+
+
+class Landscape(models.Model):
+    """Model that represents the landscape."""
+
+    name = models.CharField(
+        max_length=255,
+        help_text="The name of the landscape."
+    )
+
+    bbox = models.PolygonField(
+        srid=4326,
+        blank=True,
+        null=True,
+        help_text="Bounding box of the landscape."
+    )
+
+    zoom = models.IntegerField(
+        help_text="Zoom level of the landscape."
+    )
+
+    def __str__(self):
+        return self.name

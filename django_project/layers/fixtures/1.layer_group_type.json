@@ -1,0 +1,23 @@
+[
+{
+    "model": "layers.layergrouptype",
+    "pk": 1,
+    "fields": {
+        "name": "baseline"
+    }
+},
+{
+    "model": "layers.layergrouptype",
+    "pk": 2,
+    "fields": {
+        "name": "near-real-time"
+    }
+},
+{
+    "model": "layers.layergrouptype",
+    "pk": 3,
+    "fields": {
+        "name": "user-defined"
+    }
+}
+]

@@ -50,6 +50,19 @@ class InputLayerType(models.TextChoices):
     RASTER = 'raster', 'Raster'
 
 
+class LayerGroupType(models.Model):
+    """Model to represent layer group type."""
+
+    name = models.CharField(
+        max_length=255,
+        unique=True,
+        help_text="The name of the group type."
+    )
+
+    def __str__(self):
+        return self.name
+
+
 class InputLayer(models.Model):
     """
     Model to represent data layers.
@@ -79,6 +92,27 @@ class InputLayer(models.Model):
         on_delete=models.CASCADE,
         related_name="input_layers",
         help_text="The data provider associated with this layer."
+    )
+
+    url = models.URLField(
+        blank=True,
+        null=True,
+        help_text="URL for the input layer."
+    )
+
+    group = models.ForeignKey(
+        LayerGroupType,
+        blank=True,
+        null=True,
+        on_delete=models.CASCADE,
+        help_text="Layer group type: baseline, near real time, etc."
+    )
+
+    metadata = models.JSONField(
+        default=dict,
+        blank=True,
+        null=True,
+        help_text="Layer metadata."
     )
 
     created_by = models.ForeignKey(

@@ -1,0 +1,13 @@
+[
+{
+    "model": "layers.dataprovider",
+    "pk": 1,
+    "fields": {
+        "name": "Google Earth Engine",
+        "file": "",
+        "url": null,
+        "created_at": "2024-11-20T16:33:42.946Z",
+        "updated_at": "2024-11-20T16:33:42.946Z"
+    }
+}
+]

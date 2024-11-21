@@ -3,6 +3,8 @@ services:
     volumes:
       - ./volumes/database:/opt/postgres/data
       - ./volumes/backups:/backups
+    ports:
+      - "${DATABASE_PORT:-6432}:5432"
 
   dbbackups:
     volumes:
