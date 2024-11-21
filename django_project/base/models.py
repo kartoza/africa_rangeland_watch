@@ -3,6 +3,9 @@ from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from invitations.models import Invitation
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.conf import settings
 
 
 class Organisation(models.Model):
@@ -32,11 +35,36 @@ class OrganisationInvitation(Invitation):
     organisation = models.ForeignKey(
         Organisation,
         on_delete=models.CASCADE,
-        related_name="invitations")
+        related_name="custom_invitations"
+    )
 
     def __str__(self):
         return (
             f"Invitation for {self.email} to join {self.organisation.name}"
+        )
+
+    def send_invitation(self, request, custom_message):
+        """Send email with a custom message and template."""
+        context = {
+            "invitation": self,
+            "custom_message": custom_message,
+            "inviter": self.inviter,
+            "organisation": self.organisation,
+            "accept_url": self.get_invite_url(request),
+            "django_backend_url": settings.DJANGO_BACKEND_URL
+        }
+
+        subject = f"You've been invited to join {self.organisation.name}!"
+        email_body = render_to_string(
+            "emails/invitation_to_join_organization.html",
+            context
+        )
+
+        send_mail(
+            subject=subject,
+            message=email_body,
+            from_email=settings.NO_REPLY_EMAIL,
+            recipient_list=[self.email]
         )
 
 
