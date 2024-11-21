@@ -12,7 +12,7 @@ const store = configureStore({
   reducer: {
     auth: authReducer,
     ticket: ticketReducer,
-    organization: organizationReducer
+    organization: organizationReducer,
     baseMap: baseMapReducer,
     landscape: landscapeReducer,
     layer: layerReducer,
