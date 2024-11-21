@@ -62,8 +62,9 @@ export default function OrganisationInformation() {
   // Filter members based on search term
   const filteredMembers = (members: any[]) => {
     if (!searchTerm) return members;
-    return members.filter((member) =>
-      member.user.toLowerCase().includes(searchTerm.toLowerCase())
+    return members.filter(
+      (member) =>
+        member.user__email && member.user__email.toLowerCase().includes(searchTerm.toLowerCase())
     );
   };
 
