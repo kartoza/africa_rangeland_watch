@@ -10,10 +10,10 @@ import { Box } from "@chakra-ui/react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../store";
 import { BasemapControl, LegendControl } from "./control";
-import { Layer } from "./DataTypes";
 import { hasSource, removeLayer } from "./utils";
 import { fetchBaseMaps } from '../../store/baseMapSlice';
 import { fetchMapConfig } from '../../store/mapConfigSlice';
+import { Layer } from '../../store/layerSlice';
 
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './style.css';

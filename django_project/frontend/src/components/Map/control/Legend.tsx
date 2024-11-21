@@ -1,5 +1,5 @@
 import React, { forwardRef, useImperativeHandle, useState } from 'react';
-import { Layer } from "../DataTypes";
+import { Layer } from '../../../store/layerSlice';
 
 interface CardProps {
   layer: Layer;
