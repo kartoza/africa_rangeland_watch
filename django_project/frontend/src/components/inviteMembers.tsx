@@ -12,6 +12,7 @@ import {
     ModalCloseButton,
     ModalBody,
     useBreakpointValue,
+    Textarea,
   } from "@chakra-ui/react";
   import React, { useState } from "react";
   import { useDispatch } from "react-redux";
@@ -116,15 +117,19 @@ import { AppDispatch } from "../store";
                       <FormLabel htmlFor="message" color="black" fontWeight={"bold"}>
                         Custom Message
                       </FormLabel>
-                      <Input
+                      <Textarea
                         id="message"
                         placeholder="Custom Message"
                         value={message}
                         onChange={(e) => setMessage(e.target.value)}
+                        size="lg"
                         borderRadius="md"
                         borderWidth="1px"
                         borderColor="gray.500"
-                      />
+                        _focus={{ borderColor: "green.500" }}
+                        height="150px"
+                        resize="vertical"
+                        />
                     </FormControl>
   
                     <Flex justifyContent="flex-end" gap="20px">
