@@ -32,6 +32,8 @@ import InviteMember from "../../components/inviteMembers";
 export default function OrganisationInformation() {
   const dispatch = useDispatch<AppDispatch>();
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [selectedOrgKey, setSelectedOrgKey] = useState<string | null>(null);
+
 
   const openInviteModal = () => {
     setIsInviteModalOpen(true);
@@ -50,6 +52,13 @@ export default function OrganisationInformation() {
     dispatch(fetchOrganizations());
   }, [dispatch]);
 
+  React.useEffect(() => {
+    const orgKeys = Object.keys(organizations);
+    if (orgKeys.length === 1) {
+      setSelectedOrgKey(orgKeys[0]);
+    }
+  }, [organizations]);
+
   // Filter members based on search term
   const filteredMembers = (members: any[]) => {
     if (!searchTerm) return members;
@@ -59,7 +68,7 @@ export default function OrganisationInformation() {
   };
 
   const handleDelete = (orgKey: any, user: any) => {
-    dispatch(deleteMember({ orgKey, user: user.user }));
+    dispatch(deleteMember({ orgKey, user: user.user__email }));
   };
 
   return (
@@ -111,6 +120,7 @@ export default function OrganisationInformation() {
                       _hover={{ bg: "light_green.400" }}
                       px={6}
                       py={2}
+                      onClick={() => setSelectedOrgKey(orgKey)}
                     >
                       {orgKey}
                     </Tab>
@@ -158,7 +168,7 @@ export default function OrganisationInformation() {
                         isOpen={isInviteModalOpen} 
                         onClose={closeInviteModal} 
                         orgKey={index.toString()}
-                        organizationName={organization}
+                        organizationName={selectedOrgKey || "Unknown"} 
                       />
                     </Flex>
 
@@ -184,7 +194,7 @@ export default function OrganisationInformation() {
                                   icon={<FaTrash />}
                                   colorScheme="red"
                                   variant="ghost"
-                                  onClick={() => handleDelete(index, member)}
+                                  onClick={() => handleDelete(organization.org_id, member)}
                                 />
                               </Td>
                             </Tr>
