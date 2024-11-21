@@ -1,5 +1,6 @@
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
+
 from .forms import OrganisationInviteForm
 from .models import (
     Organisation,
@@ -7,6 +8,12 @@ from .models import (
 )
 from django.http import JsonResponse
 import json
+from invitations.utils import get_invitation_model
+
+Invitation = get_invitation_model()
+
+
+
 
 
 @login_required
@@ -101,6 +108,22 @@ def fetch_organisation_data(request):
 
         return JsonResponse(data, status=200)
 
+    except AttributeError as e:
+        return JsonResponse(
+            {
+                "error": "User profile is not set up correctly.",
+                "details": str(e)
+            },
+            status=500
+        )
+    except Exception as e:
+        return JsonResponse(
+            {"error": "An unexpected error occurred.", "details": str(e)},
+            status=500
+        )
+
+
+
 @login_required
 def invite_to_organisation(request, organisation_id):
     """View to invite a user to an organisation."""
@@ -108,19 +131,21 @@ def invite_to_organisation(request, organisation_id):
     if request.method == 'POST':
         form = OrganisationInviteForm(request.POST)
         if form.is_valid():
+            message = request.POST.get('message', '')
+
+            # Send the invitation
             form.send_invitation(
                 request=request,
                 inviter=request.user,
-                organisation=organisation)
-            return redirect(
-                'organisation_detail',
-                organisation_id=organisation.id)
+                organisation=organisation,
+                message=message
+            )
+            return JsonResponse({"success": True}, status=200)
     else:
         form = OrganisationInviteForm()
-    return render(
-        request,
-        'invite_to_organization.html',
-        {'form': form, 'organisation': organisation})
+    return JsonResponse({"error": "Invalid request"}, status=400)
+
+
 
 
 @login_required
