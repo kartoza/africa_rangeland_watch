@@ -1,35 +1,51 @@
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from .forms import OrganisationInviteForm
-from .models import Organisation
+from .models import (
+    Organisation,
+    UserProfile
+)
 from django.http import JsonResponse
+import json
 
 
 @login_required
-def delete_organisation_member(request, organisation_id, user_id):
+def delete_organisation_member(request):
     """
     View to remove a member from an organization by clearing the
     `organisation` field in UserProfile.
     """
-    try:
-        organisation = get_object_or_404(Organisation, id=organisation_id)
-        user_profile = get_object_or_404(UserProfile, id=user_id)
+    if request.method != "DELETE":
+        return JsonResponse(
+            {"error": "Invalid HTTP method. Use DELETE."},
+            status=405
+        )
 
-        # Check if the current user has the right to delete members
+    try:
+        body = json.loads(request.body)
+        organisation_id = body.get("organisation_id")
+        user_email = body.get("user_email")
+
+        if not organisation_id or not user_email:
+            return JsonResponse(
+                {"error": "Organisation ID and User Email are required."},
+                status=400
+            )
+
+        organisation = get_object_or_404(Organisation, id=organisation_id)
+        user_profile = get_object_or_404(UserProfile, user__email=user_email)
+
         if request.user.profile.user_type != "organisation_manager":
             return JsonResponse(
                 {"error": "You don't have permission to remove members."},
                 status=403
             )
-
-        # Check if the user is part of the specified organization
         if user_profile.organisation != organisation:
             return JsonResponse(
                 {"error": "User is not a member of this organization."},
                 status=400
             )
 
-        # Remove the user from the organization
         user_profile.organisation = None
         user_profile.save()
 
@@ -43,6 +59,7 @@ def delete_organisation_member(request, organisation_id, user_id):
             {"error": "An error occurred.", "details": str(e)},
             status=500
         )
+
 
 
 @login_required
@@ -71,34 +88,18 @@ def fetch_organisation_data(request):
                 )
             )
 
-            # Fetch invitations only if the user is a manager
             invitations = []
-            if user_profile.user_type == "organisation_manager":
-                invitations = list(
-                    org.invitations.values("email", "accepted")
-                )
+            invitations = list(
+                org.invitations.values("email", "accepted")
+            )
 
-            # Add organization data to the response
             data[org.name] = {
+                "org_id": org.id,
                 "members": members,
                 "invitations": invitations,
             }
 
         return JsonResponse(data, status=200)
-
-    except AttributeError as e:
-        return JsonResponse(
-            {
-                "error": "User profile is not set up correctly.",
-                "details": str(e)
-            },
-            status=500
-        )
-    except Exception as e:
-        return JsonResponse(
-            {"error": "An unexpected error occurred.", "details": str(e)},
-            status=500
-        )
 
 @login_required
 def invite_to_organisation(request, organisation_id):
