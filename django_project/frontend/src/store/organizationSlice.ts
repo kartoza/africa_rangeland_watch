@@ -1,4 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
+import { RootState } from ".";
 
 // Define types for the state
 interface Member {
@@ -8,7 +9,7 @@ interface Member {
 
 interface Invitation {
   email: string;
-  status: string;
+  accepted: boolean;
 }
 
 interface Organization {
@@ -20,6 +21,7 @@ interface OrganizationsState {
   organizations: { [key: string]: Organization };
   loading: boolean;
   error: string | null;
+  refetch: boolean; 
 }
 
 // Initial state
@@ -27,6 +29,7 @@ const initialState: OrganizationsState = {
   organizations: {},
   loading: false,
   error: null,
+  refetch: false,
 };
 
 // Async thunk for fetching organizations
@@ -42,18 +45,19 @@ export const fetchOrganizations = createAsyncThunk(
 // Async thunk for inviting a member to an organization
 export const inviteMemberThunk = createAsyncThunk(
   "organizations/inviteMember",
-  async ({ orgKey, email }: { orgKey: string; email: string }) => {
-    const response = await fetch(`/api/organizations/${orgKey}/invite/`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({ email }),
-    });
-    if (!response.ok) throw new Error("Failed to send invitation.");
-    return { orgKey, email };
+  async ({ orgKey, email, message }: { orgKey: number; email: string; message: string }) => {
+      const response = await fetch(`/api/organization/${orgKey}/invite/`, {
+          method: "POST",
+          headers: {
+              "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ email, message }),
+      });
+      if (!response.ok) throw new Error("Failed to send invitation.");
+      return { orgKey, email };
   }
 );
+
 
 // Async thunk for deleting a member from an organization
 export const deleteMember = createAsyncThunk(
@@ -89,17 +93,20 @@ const organizationsSlice = createSlice({
     deleteMemberFromState: (state, action: PayloadAction<{ orgKey: string; user: string }>) => {
       const { orgKey, user } = action.payload;
       state.organizations[orgKey].members = state.organizations[orgKey]?.members.filter(
-        (member) => member.user !== user 
+        (member) => member.user !== user
       );
     },
     inviteMember: (state, action: PayloadAction<{ orgKey: string; email: string; message: string }>) => {
       const { orgKey, email, message } = action.payload;
-      const newInvitation: Invitation = { 
-        email, 
-        status: "pending"
+      const newInvitation: Invitation = {
+        email,
+        accepted: false
       };
       state.organizations[orgKey].invitations.push(newInvitation);
     },
+    resetRefetch: (state) => {
+      state.refetch = false;
+    }
   },
   extraReducers: (builder) => {
     builder
@@ -110,6 +117,7 @@ const organizationsSlice = createSlice({
       .addCase(fetchOrganizations.fulfilled, (state, action) => {
         state.organizations = action.payload;
         state.loading = false;
+        state.refetch = false;
       })
       .addCase(fetchOrganizations.rejected, (state, action) => {
         state.error = action.error.message || "Failed to fetch data.";
@@ -121,9 +129,10 @@ const organizationsSlice = createSlice({
       })
       .addCase(inviteMemberThunk.fulfilled, (state, action) => {
         const { orgKey, email } = action.payload;
-        const invitation: Invitation = { email, status: "pending" };
+        const invitation: Invitation = { email, accepted: false };
         state.organizations[orgKey]?.invitations.push(invitation);
         state.loading = false;
+        state.refetch = true;
       })
       .addCase(inviteMemberThunk.rejected, (state, action) => {
         state.error = action.error.message || "Failed to send invitation.";
@@ -135,10 +144,8 @@ const organizationsSlice = createSlice({
       })
       .addCase(deleteMember.fulfilled, (state, action) => {
         const { orgKey, user } = action.payload;
-        state.organizations[orgKey].members = state.organizations[orgKey]?.members.filter(
-          (member) => member.user !== user
-        );
         state.loading = false;
+        state.refetch = true;
       })
       .addCase(deleteMember.rejected, (state, action) => {
         state.error = action.error.message || "Failed to delete member.";
@@ -147,6 +154,7 @@ const organizationsSlice = createSlice({
   },
 });
 
-// Export actions and reducer
-export const { addMember, deleteMemberFromState, inviteMember } = organizationsSlice.actions;
+
+export const selectRefetch = (state: RootState) => state.organization.refetch;
+export const { addMember, deleteMemberFromState, inviteMember, resetRefetch } = organizationsSlice.actions;
 export default organizationsSlice.reducer;
