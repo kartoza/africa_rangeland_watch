@@ -20,10 +20,20 @@ class LayerAPI(APIView):
 
     def get(self, request, *args, **kwargs):
         """Fetch list of Layer."""
+        layers = InputLayer.objects.exclude(
+            group__name='user-defined'
+        )
+        if self.request.user.is_authenticated:
+            layers = layers.union(
+                InputLayer.objects.filter(
+                    group__name='user-defined',
+                    created_by=request.user
+                )
+            )
         return Response(
             status=200,
             data=LayerSerializer(
-                InputLayer.objects.all(),
+                layers,
                 many=True
             ).data
         )

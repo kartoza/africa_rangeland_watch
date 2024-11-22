@@ -5,7 +5,7 @@ import React, {
   useRef,
   useState
 } from 'react';
-import maplibregl from 'maplibre-gl';
+import maplibregl, { Style } from 'maplibre-gl';
 import { Box } from "@chakra-ui/react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../store";
@@ -49,7 +49,47 @@ export const MapLibre = forwardRef(
         if (map) {
           const ID = `layer-${layer.id}`
           removeLayer(map, ID)
-          if (layer.type == "raster") {
+          if (layer.type === 'vector') {
+            if (!hasSource(map, ID)) {
+              if (layer.url.startsWith('pmtiles://')) {
+                map.addSource(ID, {
+                    type: "vector",
+                    url: `${layer.url}`
+                  }
+                )
+              } else {
+                map.addSource(ID, {
+                    type: "vector",
+                    tiles: [
+                      `${layer.url}`
+                    ]
+                  }
+                )
+              }
+            }
+            let layerStyle = {
+              "source": ID,
+              "id": ID,
+              "type": "fill",
+              "paint": {
+                "fill-color": "#ff7800",
+                "fill-opacity": 0.8
+              },
+              "filter": [
+                "==",
+                "$type",
+                "Polygon"
+              ],
+              "source-layer": "default"
+            }
+            if (layer.style) {
+              // @ts-ignore
+              layerStyle = layer.style['layers'][0]
+              layerStyle['source'] = ID
+              layerStyle['id'] = ID
+            }
+            map.addLayer(layerStyle)
+          } else if (layer.type == "raster") {
             if (!hasSource(map, ID)) {
               map.addSource(ID, {
                   type: "raster",

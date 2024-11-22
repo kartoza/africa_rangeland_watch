@@ -1,10 +1,12 @@
 import * as Sentry from "@sentry/react";
-import React from 'react';
+import React, { useEffect } from 'react';
 import reportWebVitals from './reportWebVitals';
 import ErrorBoundary from "./components/ErrorBoundary";
 import { HashRouter as Router } from "react-router-dom";
 import { ChakraProvider } from "@chakra-ui/react";
 import { Provider } from 'react-redux';
+import maplibregl from "maplibre-gl";
+import { Protocol } from "pmtiles";
 import theme from "./theme";
 import store from "./store";
 import ProjectRoutes from "./Routes";
@@ -17,6 +19,16 @@ Sentry.init({
 
 
 function App() {
+
+  // Initialize maplibre pmtiles protocol
+  useEffect(() => {
+    let protocol = new Protocol();
+    maplibregl.addProtocol("pmtiles", protocol.tile);
+    return () => {
+      maplibregl.removeProtocol("pmtiles");
+    };
+  }, []);
+
   return (
     <ErrorBoundary>
       <ChakraProvider theme={theme}>

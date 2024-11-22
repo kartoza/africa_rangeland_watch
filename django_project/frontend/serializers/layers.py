@@ -6,6 +6,7 @@ Africa Rangeland Watch (ARW).
 """
 
 from rest_framework import serializers
+from cloud_native_gis.models import Layer, Style
 
 from layers.models import InputLayer
 
@@ -16,11 +17,27 @@ class LayerSerializer(serializers.ModelSerializer):
     id = serializers.CharField(source='uuid')
     type = serializers.CharField(source='layer_type')
     group = serializers.SerializerMethodField()
+    style = serializers.SerializerMethodField()
 
     def get_group(self, obj: InputLayer):
         """Get group name."""
         return obj.group.name if obj.group else ''
 
+    def get_style(self, obj: InputLayer):
+        """Get layer style."""
+        layer = Layer.objects.filter(unique_id=obj.uuid).first()
+        if not layer:
+            return None
+
+        style = layer.styles.first()
+        if style is None:
+            style = layer.default_style
+        
+        if style is None:
+            return None
+
+        return style.style
+
     class Meta:  # noqa
         model = InputLayer
-        fields = ['id', 'name', 'url', 'type', 'group', 'metadata']
+        fields = ['id', 'name', 'url', 'type', 'group', 'metadata', 'style']
