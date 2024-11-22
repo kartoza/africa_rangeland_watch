@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
-import { Navigate, useLocation } from "react-router-dom";
+import { Navigate, useLocation, useNavigate } from "react-router-dom";
 import SignIn from "./components/SignIn";
 import { selectIsLoggedIn } from "./store/authSlice";
 
@@ -13,6 +13,7 @@ const PrivateRoute = ({ Component }: PrivateRouteProps) => {
   const [isSignInOpen, setIsSignInOpen] = useState(false);
   const location = useLocation();
   const token = localStorage.getItem("auth_token");
+  const navigate = useNavigate();
 
   const handleLoginSuccess = () => {
     setIsSignInOpen(false);
@@ -38,7 +39,10 @@ const PrivateRoute = ({ Component }: PrivateRouteProps) => {
       {isSignInOpen && (
         <SignIn
           isOpen={isSignInOpen}
-          onClose={() => setIsSignInOpen(false)}
+          onClose={() => {
+            setIsSignInOpen(false);
+            navigate("/");
+          }}
         />
       )}
     </>
