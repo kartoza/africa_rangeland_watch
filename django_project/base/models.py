@@ -7,6 +7,7 @@ from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.conf import settings
 from django.urls import reverse
+import uuid
 
 
 class Organisation(models.Model):
@@ -42,6 +43,12 @@ class OrganisationInvitation(Invitation):
 
     def __str__(self):
         return f"Invitation for {self.email} to join {self.organisation.name}"
+
+    def save(self, *args, **kwargs):
+        # Ensure a unique key is generated if missing
+        if not self.key:
+            self.key = uuid.uuid4().hex
+        super().save(*args, **kwargs)
 
     def get_invite_url(self, request):
         return request.build_absolute_uri(
