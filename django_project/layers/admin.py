@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import DataProvider, InputLayer, DataFeedSetting
+from .models import DataProvider, InputLayer, DataFeedSetting, LayerGroupType
 
 
 @admin.register(DataProvider)
@@ -41,6 +41,9 @@ class InputLayerAdmin(admin.ModelAdmin):
         ('Timestamps', {
             'fields': ('created_at', 'updated_at')
         }),
+        ('Metadata', {
+            'fields': ('url', 'group', 'metadata')
+        }),
     )
 
 
@@ -68,3 +71,10 @@ class DataFeedSettingAdmin(admin.ModelAdmin):
             'fields': ('created_at', 'updated_at')
         }),
     )
+
+
+@admin.register(LayerGroupType)
+class LayerGroupTypeAdmin(admin.ModelAdmin):
+    """Admin for LayerGroupType model."""
+
+    list_display = ('name',)

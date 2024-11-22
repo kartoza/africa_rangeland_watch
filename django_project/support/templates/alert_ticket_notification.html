@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Support Ticket Alert</title>
+</head>
+<body style="font-family: Helvetica, sans-serif; margin: 0; padding: 0; background-color: #f4f4f4;">
+    <table align="center" border="0" cellpadding="0" cellspacing="0" width="900" style="background-color: #2f5c4a; padding: 10px;">
+        <tr>
+            <!-- Left Column: Logo -->
+            <td align="left" width="50%" style="padding: 10px;">
+                <img src="{{ django_backend_url }}/static/images/main_logo.svg" alt="Logo" width="200" style="display: block;">
+            </td>
+            <!-- Right Column: Title or Navigation Links -->
+            <td align="right" width="50%" style="padding: 10px; color: #ffffff; font-family: Helvetica,sans-serif;">
+                <h2 style="margin: 0; font-size: 24px;">Africa Rangeland Watch</h2>
+            </td>
+        </tr>
+    </table> 
+
+    <table align="center" border="0" cellpadding="0" cellspacing="0" width="900" style="background-color: #ffffff; padding: 20px; border: 10px solid #dddddd;">
+        <tr>
+            <td style="padding: 20px;">
+                <h2 style="font-size: 20px; color: #333333;">Ticket Alert: {{ ticket.title }}</h2>
+               
+                <p style="font-size: 16px; color: #333333;">
+                    Hello,
+                </p>
+                <p style="font-size: 16px; color: #333333;">
+                    We wanted to notify you about the following ticket:
+                </p>
+                <p style="font-size: 16px; color: #333333;">
+                    <strong>Ticket Code:</strong> {{ ticket.id }}<br>
+                    <strong>Title:</strong> {{ ticket.title }}<br>
+                    <strong>Description:</strong> {{ ticket.description }}
+                </p>
+
+                <p style="font-size: 16px; color: #333333;">
+                    The ticket has been associated with an alert. Please take the necessary actions as needed.
+                </p>
+
+                <p style="font-size: 16px; color: #333333;">
+                    If you have any questions or need further assistance, feel free to contact our support team at <a href="mailto:[Support Email]" style="color: #FFA500;">[Support Email]</a>.
+                </p>
+
+                <p style="font-size: 16px; color: #333333;">
+                    Thank you for being part of Africa Rangeland Watch!
+                </p>
+                <p style="font-size: 16px; color: #333333;">
+                    Best regards,<br>The Africa Rangeland Watch Team
+                </p>
+            </td>
+        </tr>
+
+        <tr>
+            <td style="padding: 10px; text-align: center; font-size: 14px; color: #999999;">
+                <p>Visit our platform: <a href="{{ django_backend_url }}" style="color: #FFA500;">Africa Rangeland Watch</a>.<br>
+                Not interested in receiving these updates? <a href="[Unsubscribe Link]" style="color: #FFA500;">Unsubscribe here</a>.</p>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

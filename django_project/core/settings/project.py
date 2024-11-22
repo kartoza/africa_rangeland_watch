@@ -13,6 +13,8 @@ ALLOWED_HOSTS = ['*']
 ADMINS = (
     ('Dimas Ciputra', 'dimas@kartoza.com'),
 )
+NO_REPLY_EMAIL = os.getenv("NO_REPLY_EMAIL", "noreply@kartoza.com")
+DJANGO_BACKEND_URL = os.getenv("DJANGO_BACKEND_URL", "http://localhost:8888/")
 DATABASES = {
     'default': {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
@@ -29,16 +31,20 @@ DATABASES = {
 DEBUG = TEMPLATE_DEBUG = False
 
 # Extra installed apps
-INSTALLED_APPS = INSTALLED_APPS + (
+PROJECT_APPS = (
     'core',
     'frontend',
     'base',
     'alerts',
     'dashboard',
     'analysis',
-    'layers'
+    'layers',
+    'support'
 )
+INSTALLED_APPS = INSTALLED_APPS + PROJECT_APPS
 
 TEMPLATES[0]['DIRS'] += [
     absolute_path('frontend', 'templates'),
+    absolute_path('support', 'templates'),
 ]
+

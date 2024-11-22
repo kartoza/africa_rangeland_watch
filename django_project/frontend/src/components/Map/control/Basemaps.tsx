@@ -1,10 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { Basemap } from "../DataTypes";
-import { basemapData } from "../fixtures/basemap";
+import React, { forwardRef, useImperativeHandle, useState, useEffect } from 'react';
+import { BaseMap } from '../../../store/baseMapSlice';
 
 
 interface CardProps {
-  basemap: Basemap;
+  basemap: BaseMap;
   isSelected: boolean;
   onSelected: () => void;
 }
@@ -26,51 +25,43 @@ function Card({ basemap, isSelected, onSelected }: CardProps) {
 }
 
 interface Props {
-  onSelected: (basemap: Basemap) => void;
+  baseMaps: BaseMap[];
+  onSelected: (basemap: BaseMap) => void;
 }
 
 /** Basemaps selector.*/
-export default function BasemapSelector({ onSelected }: Props) {
-  const [selected, setSelected] = useState<Basemap | null>(null);
-  const [basemaps, setBasemaps] = useState<Array<Basemap> | null>(null);
+export const BasemapSelector = forwardRef(
+  ({ baseMaps, onSelected }: Props, ref
+  ) => {
+    const [selected, setSelected] = useState<BaseMap | null>(null);
 
-  // TODO:
-  //  Fetch the data here
-  useEffect(() => {
-    setBasemaps(basemapData)
-  }, []);
-
-  // Default basemap
-  useEffect(() => {
-    if (basemaps) {
-      setSelected(basemaps[0])
-    }
-  }, [basemaps]);
-
-  // When selected
-  useEffect(() => {
-    if (selected) {
-      onSelected(selected)
-    }
-  }, [selected]);
-
-  return (
-    <>
-      {
-        basemaps ?
-          <div className='BasemapSelector'>
-            {
-              basemaps.map(
-                (basemap: Basemap) => <Card
-                  key={basemap.id}
-                  onSelected={() => setSelected(basemap)}
-                  isSelected={selected?.id === basemap.id}
-                  basemap={basemap}
-                />
-              )
-            }
-          </div> : null
+    // When selected
+    useEffect(() => {
+      if (selected) {
+        onSelected(selected)
       }
-    </>
-  )
-}
+    }, [selected]);
+
+    useImperativeHandle(ref, () => ({
+      /** Render layer */
+      setBaseMapLayer(baseMap: BaseMap) {
+        setSelected(baseMap)
+      }
+    }));
+
+    return (
+      <div className='BasemapSelector'>
+        {
+          baseMaps.map(
+            (basemap: BaseMap) => <Card
+              key={basemap.id}
+              onSelected={() => setSelected(basemap)}
+              isSelected={selected?.id === basemap.id}
+              basemap={basemap}
+            />
+          )
+        }
+      </div>
+    )
+  }
+)

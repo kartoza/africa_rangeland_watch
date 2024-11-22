@@ -13,6 +13,7 @@ const AnalysisResults = React.lazy(() => import("./pages/AnalysisResults"));
 const NotificationsPage  = React.lazy(() => import("./pages/Notifications"));
 const UploadedResourcesPage  = React.lazy(() => import("./pages/UploadedResources"));
 const SupportPage = React.lazy(() => import("./pages/Support"));
+import AboutPage from "./pages/About";
 const MapPage  = React.lazy(() => import("./pages/Map"));
 
 
@@ -20,6 +21,7 @@ const ProjectRoutes = () => {
   const routes = useRoutes([
     { path: "/", element: <HomePage /> },
     { path: "*", element: <NotFound /> },
+    { path: "/about", element: <AboutPage /> },
     // Use PrivateRoute for protected routes
     {
       path: "/profile",

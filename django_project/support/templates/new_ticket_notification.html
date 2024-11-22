@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Support Ticket Notification</title>
+</head>
+<body style="font-family: Helvetica, Arial, sans-serif; margin: 0; padding: 20px; background-color: #f4f4f4;">
+    <table align="center" border="0" cellpadding="0" cellspacing="0" width="600" style="background-color: #ffffff; padding: 20px; border: 1px solid #dddddd;">
+        <tr>
+            <td style="padding: 10px 0; text-align: center; background-color: #2f5c4a; color: #ffffff;">
+                <h2>New Support Ticket Created</h2>
+            </td>
+        </tr>
+        <tr>
+            <td style="padding: 20px; font-size: 16px; color: #333333;">
+                <p>Dear Support Desk,</p>
+                <p>A new support ticket has been created on the Africa Rangeland Watch platform. Please find the details below:</p>
+
+                <table border="0" cellpadding="5" cellspacing="0" width="100%" style="font-size: 16px; color: #333333;">
+                    <tr>
+                        <td style="font-weight: bold; width: 30%;">Ticket Number:</td>
+                        <td>{{ ticket.id }}</td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: bold;">User Name:</td>
+                        <td>
+                            {% if ticket.user %}
+                                {{ ticket.user.username }}
+                            {% else %}
+                                {{ ticket.email }}
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: bold;">User Email:</td>
+                        <td>{{ ticket.email }}</td>
+                    </tr>
+                    <!-- <tr>
+                        <td style="font-weight: bold;">Priority Level:</td>
+                        <td>{{ ticket.priority }}</td>
+                    </tr> -->
+                    <tr>
+                        <td style="font-weight: bold;">Issue Type:</td>
+                        <td>{{ ticket.issue_type }}</td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: bold;">Screenshot:</td>
+                        <td>
+                            {% if ticket.file_attachment %}
+                                <a href="{{ ticket.file_attachment.url }}">View Screenshot</a>
+                            {% else %}
+                                No screenshot provided
+                            {% endif %}
+                        </td>
+                    </tr>                    
+                    <tr>
+                        <td style="font-weight: bold;">Description:</td>
+                        <td>{{ ticket.description }}</td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: bold;">Date Created:</td>
+                        <td>{{ ticket.created_at }}</td>
+                    </tr>
+                </table>
+
+                <p>To start working on resolving the issue, please log in to the Django backend using the link below:</p>
+                
+                <p style="text-align: center;">
+                    <a href="{{ django_backend_url }}" style="display: inline-block; padding: 10px 20px; color: #ffffff; background-color: #ff9800; text-decoration: none; border-radius: 4px;">
+                        Access Django Backend
+                    </a>
+                </p>
+
+                <p>Thank you,<br>
+                The Africa Rangeland Watch Notification System</p>
+            </td>
+        </tr>
+        <tr>
+            <td style="padding: 10px; text-align: center; font-size: 12px; color: #999999;">
+                <p>This is an automated message. Please do not reply directly to this email.</p>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

@@ -1,9 +1,19 @@
 import { configureStore } from '@reduxjs/toolkit';
 import authReducer from './authSlice';
+import ticketReducer from './ticketSlice';
+import baseMapReducer from './baseMapSlice';
+import landscapeReducer from './landscapeSlice';
+import layerReducer from './layerSlice';
+import mapConfigReducer from './mapConfigSlice';
 
 const store = configureStore({
   reducer: {
     auth: authReducer,
+    ticket: ticketReducer,
+    baseMap: baseMapReducer,
+    landscape: landscapeReducer,
+    layer: layerReducer,
+    mapConfig: mapConfigReducer
   },
 });
 

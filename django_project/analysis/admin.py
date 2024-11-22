@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.gis.admin import OSMGeoAdmin
-from .models import Analysis, InterventionArea
+from .models import Analysis, InterventionArea, Landscape
 
 
 @admin.register(Analysis)
@@ -64,3 +64,13 @@ class InterventionAreaAdmin(OSMGeoAdmin):
     default_lon = 0
     default_lat = 0
     default_zoom = 2
+
+
+@admin.register(Landscape)
+class LandscapeAdmin(OSMGeoAdmin):
+    """Admin for landscape model."""
+
+    list_display = ('name',)
+    search_fields = ('name',)
+
+    map_template = 'gis/admin/osm.html'

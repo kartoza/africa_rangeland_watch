@@ -21,6 +21,17 @@ const initialState: AuthState = {
   error: null,
 };
 
+
+const setCSRFToken = () => {
+  const csrfToken = document.cookie.split(';').find((cookie) => cookie.trim().startsWith('csrftoken='));
+  if (csrfToken) {
+    const token = csrfToken.split('=')[1];
+    axios.defaults.headers['X-CSRFToken'] = token;
+  } else {
+    console.warn('CSRF token not found.');
+  }
+};
+
 const authSlice = createSlice({
   name: 'auth',
   initialState,
@@ -57,12 +68,7 @@ export const loginUser = (email: string, password: string) => async (dispatch: A
   dispatch(loginStart());
 
   try {
-    const csrfToken = document.cookie.split(';').find(cookie => cookie.trim().startsWith('csrftoken='));
-
-    if (csrfToken) {
-      const token = csrfToken.split('=')[1];
-      axios.defaults.headers['X-CSRFToken'] = token;
-    }
+    setCSRFToken();
     
     const response = await axios.post('/auth/login/', {
       email,
@@ -106,7 +112,101 @@ export const logoutUser = () => (dispatch: AppDispatch) => {
   dispatch(logout());
 };
 
+// Action to request password reset
+export const resetPasswordRequest = (email: string) => async (dispatch: AppDispatch) => {
+  dispatch(loginStart());
+
+  try {
+    setCSRFToken();
+    await axios.post('/password-reset/', { email });
+    dispatch(loginSuccess({ user: null, token: null }));
+  } catch (error) {
+    const errorMessage = error.response?.data?.error || 'Error sending password reset email';
+    dispatch(loginFailure(errorMessage));
+  }
+};
+
+
+
+// Action to confirm password reset with new password
+export const resetPasswordConfirm = (uid: string, token: string, newPassword: string) => async (dispatch: AppDispatch) => {
+  dispatch(loginStart());
+
+  try {
+    setCSRFToken();
+    const response = await axios.post('/password-reset/confirm/', {
+      uid,
+      token,
+      new_password: newPassword,
+    });
+
+    dispatch(loginSuccess({ user: null, token: response.data.key }));
+    if (response.data?.message) {
+      dispatch(loginFailure(response.data.message));
+    }
+  } catch (error) {
+    dispatch(loginFailure(error.response?.data?.non_field_errors[0] || 'Error resetting password'));
+  }
+};
+
+
+export const registerUser = (email: string, password: string, repeatPassword: string) => async (dispatch: AppDispatch) => {
+  dispatch(loginStart());
+
+  const errorMessages = [];
+
+  if (password !== repeatPassword) {
+    errorMessages.push("Passwords do not match.");
+  }
+
+  if (password.length < 6) {
+    errorMessages.push("Password must be at least 6 characters.");
+  }
+
+  if (errorMessages.length > 0) {
+    dispatch(loginFailure(errorMessages.join(' ')));
+    return;
+  }
+
+  try {
+    setCSRFToken();
+    const response = await axios.post('/registration/', {
+      email,
+      password1: password,
+      password2: repeatPassword
+    });
+    
+
+    if (response.data?.errors) {
+      dispatch(loginFailure(response.data.errors.join(' ')));
+    }else if (response.data?.message) {
+      dispatch(loginSuccess({ user: null, token: null }));
+      errorMessages.push("Verification email sent.")
+      dispatch(loginFailure(errorMessages.join(' ')));
+    }
+
+  } catch (error) {
+    if (error.response) {
+      const { data, status } = error.response;
+      
+      if (status === 400 && data?.errors) {
+        dispatch(loginFailure(data.errors.join(' ')));
+      } else {
+        dispatch(loginFailure('An unexpected error occurred during registration.'));
+      }
+    } else {
+      dispatch(loginFailure('An unexpected error occurred during registration.'));
+    }
+  }
+};
+
+
+
+
+
+
 export const selectIsLoggedIn = (state: RootState) => !!state.auth.token;
 export const selectAuthLoading = (state: RootState) => state.auth.loading;
+export const selectUserEmail = (state: RootState) => state.auth.user?.email;
 
 export default authSlice.reducer;

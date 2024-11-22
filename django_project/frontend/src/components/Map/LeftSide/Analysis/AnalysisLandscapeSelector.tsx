@@ -7,12 +7,13 @@ import {
   Box,
   Select
 } from "@chakra-ui/react";
-import { AnalysisData, SelectOption } from "../../DataTypes";
+import { AnalysisData } from "../../DataTypes";
+import { Landscape } from '../../../../store/landscapeSlice';
 
 
 interface Props {
   data: AnalysisData;
-  landscapes?: SelectOption[];
+  landscapes?: Landscape[];
   onSelected: (value: string) => void;
 }
 
@@ -48,10 +49,10 @@ export default function AnalysisLandscapeSelector(
           {
             landscapes.map(landscape => {
               return <option
-                key={landscape.value}
-                value={landscape.value}
+                key={landscape.id}
+                value={landscape.name}
               >
-                {landscape.label}
+                {landscape.name}
               </option>
             })
           }
