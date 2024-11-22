@@ -1,31 +1,48 @@
 import React, { useEffect, useState } from "react";
-import { Navigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { useLocation } from "react-router-dom";
+import SignIn from "./components/SignIn";
+import { selectIsLoggedIn } from "./store/authSlice";
 
 interface PrivateRouteProps {
   Component: React.ComponentType;
 }
 
 const PrivateRoute = ({ Component }: PrivateRouteProps) => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const isAuthenticated = useSelector(selectIsLoggedIn);
+  const [isSignInOpen, setIsSignInOpen] = useState(false);
+  const location = useLocation();
+
+  const handleLoginSuccess = () => {
+    setIsSignInOpen(false);
+    return <Component />;
+  };
+
+  
 
   useEffect(() => {
     const token = localStorage.getItem("auth_token");
-    if (token) {
-      setIsAuthenticated(true);
+    if (isAuthenticated || token) {
+      handleLoginSuccess();
     } else {
-      setIsAuthenticated(false);
+      setIsSignInOpen(true);
     }
-  }, []);
-
-  if (isAuthenticated === null) {
-    return <div>Loading...</div>;
-  }
+  }, [isAuthenticated, location.pathname]);
 
   if (isAuthenticated) {
     return <Component />;
   }
 
-  return <Navigate to="/" />;
+  return (
+    <>
+      {isSignInOpen && (
+        <SignIn
+          isOpen={isSignInOpen}
+          onClose={() => setIsSignInOpen(false)}
+        />
+      )}
+    </>
+  );
 };
 
 export default PrivateRoute;
