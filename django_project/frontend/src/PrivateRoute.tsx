@@ -8,12 +8,22 @@ interface PrivateRouteProps {
   Component: React.ComponentType;
 }
 
+interface LocationState {
+  from: {
+    pathname: string;
+  };
+}
+
+
 const PrivateRoute = ({ Component }: PrivateRouteProps) => {
   const isAuthenticated = useSelector(selectIsLoggedIn);
   const [isSignInOpen, setIsSignInOpen] = useState(false);
   const location = useLocation();
   const token = localStorage.getItem("auth_token");
   const navigate = useNavigate();
+
+  const fromLocation = sessionStorage.getItem("redirectBack") || '/';
+
 
   const handleLoginSuccess = () => {
     setIsSignInOpen(false);
@@ -41,7 +51,7 @@ const PrivateRoute = ({ Component }: PrivateRouteProps) => {
           isOpen={isSignInOpen}
           onClose={() => {
             setIsSignInOpen(false);
-            navigate("/");
+            navigate(fromLocation);
           }}
         />
       )}
