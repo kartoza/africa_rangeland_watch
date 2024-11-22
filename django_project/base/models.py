@@ -6,6 +6,7 @@ from invitations.models import Invitation
 from django.core.mail import send_mail
 from django.template.loader import render_to_string
 from django.conf import settings
+from django.urls import reverse
 
 
 class Organisation(models.Model):
@@ -31,6 +32,7 @@ class Organisation(models.Model):
         return self.name
 
 
+
 class OrganisationInvitation(Invitation):
     organisation = models.ForeignKey(
         Organisation,
@@ -39,8 +41,14 @@ class OrganisationInvitation(Invitation):
     )
 
     def __str__(self):
-        return (
-            f"Invitation for {self.email} to join {self.organisation.name}"
+        return f"Invitation for {self.email} to join {self.organisation.name}"
+
+    def get_invite_url(self, request):
+        return request.build_absolute_uri(
+            reverse(
+                'organisation-invite-accept',
+                kwargs={'invitation_id': self.id}
+            )
         )
 
     def send_invitation(self, request, custom_message):
@@ -66,6 +74,8 @@ class OrganisationInvitation(Invitation):
             from_email=settings.NO_REPLY_EMAIL,
             recipient_list=[self.email]
         )
+
+
 
 
 class UserProfile(models.Model):
