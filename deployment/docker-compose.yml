@@ -24,6 +24,7 @@ x-common-django:
     - CSRF_TRUSTED_ORIGINS=${CSRF_TRUSTED_ORIGINS:-[]}
     - SENTRY_ENVIRONMENT=${SENTRY_ENVIRONMENT:-production}
     - SENTRY_DSN=${SENTRY_DSN:-}
+    - DJANGO_BACKEND_URL=${DJANGO_BACKEND_URL:-}
 
     # Email where alters should be sent. This will be used by let's encrypt and as the django admin email.
     - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
