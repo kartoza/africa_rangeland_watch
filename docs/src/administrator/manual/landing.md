@@ -8,14 +8,7 @@ some_url: PROJECT_GITHUB_URL
 copyright: Copyright 2023, PROJECT_OWNER
 contact: PROJECT_CONTACT
 license: This program is free software; you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation; either version 3 of the License, or (at your option) any later version.
---- 
+#context_id: 1234
+---
 
-
-
-# SignUp-SignIn
-
-This section of documentation pertains to Signing up and Signing in on the Africa RangeLand Watch (ARW). It consists of:
-
-* **[Signup:](./sign-up.md)** This user guide will guide you through the signup process on ARW.
-
-* **[Signin:](./sign-in.md)** This user guide will guide you through the signin process on ARW.
+# Landing Page: Africa RangeLand Watch (ARW)
