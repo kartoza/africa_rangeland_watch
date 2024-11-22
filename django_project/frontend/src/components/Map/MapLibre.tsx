@@ -84,7 +84,7 @@ export const MapLibre = forwardRef(
             }
             if (layer.style) {
               // @ts-ignore
-              layerStyle = layer.style['layers'][0]
+              layerStyle = { ...layer.style['layers'][0] }
               layerStyle['source'] = ID
               layerStyle['id'] = ID
             }
