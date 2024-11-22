@@ -50,7 +50,6 @@ The normalised difference vegetation index (NDVI) is very similar to the EVI how
 
 Bare ground cover refers to the proportion of the landscape where the surface is exposed without significant vegetation, such as grass or woody plants. These areas may consist of soil, sand, or rock and are important in ecological assessments as they affect processes like erosion, water infiltration, and habitat stability.
 
-
 ### Analysis?
 
 Analysis allows you to select specific landscape from the 1️⃣ `Select Landscape` drop down menu.
