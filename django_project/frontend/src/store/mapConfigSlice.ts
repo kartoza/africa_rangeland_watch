@@ -21,7 +21,7 @@ const initialMapConfigState: MapConfigState = {
 export const fetchMapConfig = createAsyncThunk(
     'map/fetchMapConfig',
     async () => {
-      const response = await axios.get('/frontend-api/map_config/');
+      const response = await axios.get('/frontend-api/map-config/');
       return response.data;
     }
 );
