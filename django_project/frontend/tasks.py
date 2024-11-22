@@ -20,9 +20,18 @@ from layers.models import InputLayer, InputLayerType
 logger = get_task_logger(__name__)
 
 
+def get_link_from_gdrive(file_url):
+    """Get downloadable link from gdrive."""
+    file_id = file_url.split('/d/')[1].split('/')[0]
+    return f"https://drive.google.com/uc?export=download&id={file_id}"
+
+
 def download_file_from_url(file_url, download_dir):
     """Download file from url to download_dir."""
     try:
+        if 'drive.google' in file_url:
+            file_url = get_link_from_gdrive(file_url)
+
         response = requests.get(file_url, stream=True)
 
         # Check if the request was successful
@@ -37,13 +46,13 @@ def download_file_from_url(file_url, download_dir):
                 # Default filename if none provided in the header
                 local_filename = "downloaded_file"
 
-            # Get the Content-Type header and infer file extension
-            content_type = response.headers.get('Content-Type')
-            if content_type:
-                # Use mimetypes to guess the file extension
-                extension = mimetypes.guess_extension(content_type)
-                if extension and not local_filename.endswith(extension):
-                    local_filename += extension
+                # Get the Content-Type header and infer file extension
+                content_type = response.headers.get('Content-Type')
+                if content_type:
+                    # Use mimetypes to guess the file extension
+                    extension = mimetypes.guess_extension(content_type)
+                    if extension and not local_filename.endswith(extension):
+                        local_filename += extension
 
             # Write the content to a local file
             full_path = os.path.join(download_dir, local_filename)
