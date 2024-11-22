@@ -172,6 +172,9 @@ def create_user_profile(sender, instance, created, **kwargs):
             user_profile.organisation = organisation
             user_profile.save()
 
+            invitation.accepted = True
+            invitation.save()
+
 
 @receiver(post_save, sender=User)
 def save_user_profile(sender, instance, **kwargs):
