@@ -34,4 +34,3 @@ class OrganisationInviteForm(JSONCompatibleForm):
                 request=request,
                 custom_message=message
             )
-
