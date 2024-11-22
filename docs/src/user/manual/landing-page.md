@@ -22,7 +22,8 @@ Welcome to the ARW Landing Page! This is your gateway to exploring and understan
 
 In the navigation bar, users will find several options to easily interact with the ARW site.
 
-1. **MAP:** This button allows users to access the interactive map, where they can explore and visualize data related to sustainable rangeland management.
+1. **MAP:** This button allows users to access the [interactive map](./map.md), where they can explore and visualize data related to sustainable rangeland management.
+
 
 2. **DASHBOARD:** The Dashboard button in the header provides users with an overview of key metrics, insights, and visualisations related to sustainable rangeland management on the ARW platform.
 
