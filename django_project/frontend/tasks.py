@@ -67,7 +67,7 @@ def download_file_from_url(file_url, download_dir):
 def detect_file_type_by_extension(file_path):
     """Detect file type by extension."""
     raster_extensions = ['.tif', '.tiff', '.img', '.nc']
-    vector_extensions = ['.shp', '.geojson', '.gpkg', '.kml', 'zip']
+    vector_extensions = ['.shp', '.geojson', '.gpkg', '.kml', '.zip']
 
     ext = os.path.splitext(file_path)[-1].lower()
     if ext in raster_extensions:
@@ -124,7 +124,7 @@ def import_layer(layer_id, file_url):
             base_url = base_url[:-1]
         if layer.pmtile:
             input_layer.url = (
-                f'pmtiles://{settings.DJANGO_BACKEND_URL}'
+                f'pmtiles://{base_url}'
                 + reverse('serve-pmtiles', kwargs={
                     'layer_uuid': layer.unique_id,
                 })
