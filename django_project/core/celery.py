@@ -14,7 +14,7 @@ BASE_REDIS_URL = (
     f'@{os.environ.get("REDIS_HOST", "")}',
 )
 
-app = Celery('georepo')
+app = Celery('africa-rangeland-watch')
 
 # Using a string here means the worker don't have to serialize
 # the configuration object to child processes.
