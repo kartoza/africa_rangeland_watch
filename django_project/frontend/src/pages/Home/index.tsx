@@ -13,6 +13,11 @@ export default function HomePage() {
 
 
   useEffect(() => {
+    sessionStorage.setItem("redirectBack", location.pathname);
+  }, [location.pathname]);
+
+
+  useEffect(() => {
     const url = location.search;
 
     if (url.includes('registration_complete=true')) {
