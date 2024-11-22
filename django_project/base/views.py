@@ -230,7 +230,7 @@ def accept_invite(request, invitation_id):
     try:
         user = User.objects.get(email=invitation.email)
     except User.DoesNotExist:
-        return redirect(f"{reverse('home')}?register_first=true")
+        return redirect(f"{reverse('home')}/#/?register_first=true")
 
     user_profile = UserProfile.objects.get(user=user)
 
@@ -245,4 +245,4 @@ def accept_invite(request, invitation_id):
     user_profile.organisation = invitation.organisation
     user_profile.save()
 
-    return redirect(f"{reverse('home')}?invitation_accepted=true")
+    return redirect(f"{reverse('home')}/#/?invitation_accepted=true")
