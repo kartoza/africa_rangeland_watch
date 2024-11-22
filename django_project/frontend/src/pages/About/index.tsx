@@ -3,8 +3,14 @@ import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import { Flex, Text, Heading, Box, Image, Button, Input, Textarea, Center } from "@chakra-ui/react";
 import React, { useState } from "react";
+import { useLocation } from "react-router-dom";
 
 export default function AboutPage() {
+  const location = useLocation();
+  React.useEffect(() => {
+    sessionStorage.setItem("redirectBack", location.pathname);
+  }, [location.pathname]);
+  
   return (
     <>
       <Helmet>
