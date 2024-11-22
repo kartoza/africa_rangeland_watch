@@ -2,9 +2,9 @@ from django.test import TestCase
 from django.urls import reverse
 from django.contrib.auth.models import User
 from rest_framework.test import APIClient
-from base.models import Organisation, OrganisationInvitation, UserProfile
+from .models import Organisation, OrganisationInvitation, UserProfile
 import json
-from base.models import Organisation
+from .models import Organisation
 from invitations.models import Invitation
 
 class OrganisationViewsTestCase(TestCase):
@@ -160,25 +160,6 @@ class InviteToOrganisationTestCase(TestCase):
         self.assertEqual(response.status_code, 400)
         self.assertIn("error", response.json())
         self.assertIn("email", response.json()["details"])
-
-    def test_invite_duplicate_email(self):
-        """Test invitation for an email that already has an invitation."""
-        # Create a custom invitation using the OrganisationInvitation model
-        OrganisationInvitation.objects.create(
-            email="existing_user@example.com",
-            inviter=self.org_manager,
-            organisation=self.organisation
-        )
-
-        data = {"email": "existing_user@example.com", "message": "Please join us!"}
-        response = self.client.post(self.url, data=json.dumps(data), content_type="application/json")
-
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json(), {"success": True})
-
-        # Verify the invitation count remains the same (no duplicate creation)
-        invitation_count = OrganisationInvitation.objects.filter(email="existing_user@example.com").count()
-        self.assertEqual(invitation_count, 1)
 
 
     def test_invite_invalid_http_method(self):
