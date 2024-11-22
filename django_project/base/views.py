@@ -11,6 +11,9 @@ from django.http import JsonResponse
 import json
 from invitations.utils import get_invitation_model
 from django.views.decorators.csrf import csrf_exempt
+from django.shortcuts import redirect
+from django.urls import reverse
+from django.contrib.auth.models import User
 
 Invitation = get_invitation_model()
 
@@ -102,10 +105,17 @@ def fetch_organisation_data(request):
                 org.custom_invitations.values("email", "accepted")
             )
 
+            is_manager = org.members.filter(
+                user=request.user,
+                user_type='organisation_manager'
+            ).exists()
+
+
             data[org.name] = {
                 "org_id": org.id,
                 "members": members,
                 "invitations": invitations,
+                "is_manager": is_manager
             }
 
         return JsonResponse(data, status=200)
@@ -125,6 +135,7 @@ def fetch_organisation_data(request):
         )
 
 
+@csrf_exempt
 @login_required
 def invite_to_organisation(request, organisation_id):
     """View to invite a user to an organisation."""
@@ -165,7 +176,6 @@ def invite_to_organisation(request, organisation_id):
                 status=403
             )
 
-        # Create or reuse an invitation
         invitation = OrganisationInvitation.objects.filter(
             email=email,
             organisation=organisation
@@ -177,16 +187,19 @@ def invite_to_organisation(request, organisation_id):
                 organisation=organisation
             )
 
-        # Send the invitation
-        try:
-            invitation.send_invitation(request=request, custom_message=message)
-            return JsonResponse({"success": True}, status=200)
-        except Exception as e:
-            return JsonResponse(
-                {
-                    "error": "Failed to send invitation.",
-                    "details": str(e)
-                }, status=500)
+            # Send the invitation
+            try:
+                invitation.send_invitation(
+                    request=request,
+                    custom_message=message
+                )
+                return JsonResponse({"success": True}, status=200)
+            except Exception as e:
+                return JsonResponse(
+                    {
+                        "error": "Failed to send invitation.",
+                        "details": str(e)
+                    }, status=500)
 
     except Organisation.DoesNotExist:
         return JsonResponse({"error": "Organisation not found."}, status=404)
@@ -214,14 +227,22 @@ def organisation_detail(request, organisation_id):
 def accept_invite(request, invitation_id):
     invitation = get_object_or_404(OrganisationInvitation, id=invitation_id)
 
-    if request.user.email == invitation.email:
-        user_profile = get_object_or_404(UserProfile, user=request.user)
-        user_profile.organisation = invitation.organisation
-        user_profile.save()
+    try:
+        user = User.objects.get(email=invitation.email)
+    except User.DoesNotExist:
+        return redirect(f"{reverse('home')}?register_first=true")
 
-        return JsonResponse({"success": "Invitation accepted!"}, status=200)
-    else:
+    user_profile = UserProfile.objects.get(user=user)
+
+    if user_profile.organisation == invitation.organisation:
         return JsonResponse(
             {
-                "error": "You are not authorized to accept this invitation."
-            }, status=403)
+                "error": "You are already a member of this organization."
+            },
+            status=400
+        )
+
+    user_profile.organisation = invitation.organisation
+    user_profile.save()
+
+    return redirect(f"{reverse('home')}?invitation_accepted=true")
