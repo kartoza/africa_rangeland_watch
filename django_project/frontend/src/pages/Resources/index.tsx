@@ -5,73 +5,89 @@ import { Flex, Text, Heading, Box, Image, Button, Input, Textarea, Grid, useBrea
 import React from "react";
 
 
-type Article = {
+type ImageItem = {
+  src: string;
   title: string;
-  link: string;
 };
 
 type SectionProps = {
   title: string;
-  articles: Article[];
+  items: ImageItem[];
+  imageWidth: string;
+  imageHeight: string;
 };
 
-const Section: React.FC<SectionProps> = ({ title, articles }) => {
+const Section: React.FC<SectionProps> = ({
+  title,
+  items,
+  imageWidth,
+  imageHeight,
+}) => {
   return (
-    <Box mb={10}>
-      <Heading as="h2" fontSize="2xl" mb={6} textAlign="center">
+    <Box mb={15}>
+      {/* Section Title */}
+      <Heading as="h2" fontSize="2xl" color="black" mb={10} textAlign="center">
         {title}
       </Heading>
-      <Grid
-        templateColumns={{
-          base: '1fr',
-          sm: 'repeat(2, 1fr)',
-          md: 'repeat(3, 1fr)',
-        }}
-        gap={6}
-      >
-        {articles.map((article, index) => (
-          <Box
-            key={index}
-            bg="teal.50"
-            p={5}
-            borderRadius="md"
-            boxShadow="md"
-            _hover={{ boxShadow: 'lg', bg: 'teal.100' }}
-          >
-            <Text
-              fontSize="lg"
-              fontWeight="bold"
-              isTruncated
-              noOfLines={2}
-              mb={3}
-            >
-              {article.title}
-            </Text>
-            <Link
-              href={article.link}
-              color="teal.600"
-              fontWeight="medium"
-              _hover={{ textDecoration: 'underline' }}
-            >
-              Read More
-            </Link>
-          </Box>
-        ))}
-      </Grid>
+      {/* Responsive Grid */}
+      <Flex justifyContent="center">
+        <Grid
+          templateColumns={{
+            base: '1fr',
+            sm: 'repeat(2, 1fr)',
+            md: 'repeat(3, 1fr)',
+            lg: items.length === 4 ? 'repeat(4, 1fr)' : 'repeat(3, 1fr)',
+          }}
+          gap={6}
+          w="100%"
+          maxWidth="1200px"
+          placeItems="center"
+        >
+          {items.map((item, index) => (
+            <Box key={index} textAlign="center">
+              {/* Image */}
+              <Image
+                src={item.src}
+                alt={item.title}
+                width={imageWidth}
+                height={imageHeight}
+                objectFit="cover"
+                borderRadius="md"
+                boxShadow="md"
+              />
+              {/* Title */}
+              <Text mt={2} color="black" fontSize="md" fontWeight="bold">
+                {item.title}
+              </Text>
+            </Box>
+          ))}
+        </Grid>
+      </Flex>
     </Box>
   );
 };
 
+
 export default function ResourcesPage() {
-  const articles = [
-    { title: 'Innovative Finance in Namakwa', link: '#' },
-    { title: 'Small Grants Facility in Namakwa', link: '#' },
-    { title: 'Low-cost erosion control in Namakwa', link: '#' },
-    {
-      title:
-        'Case study title will go here and if it goes over into the next line this is what it will look like',
-      link: '#',
-    },
+  // Dummy image data for each section
+  const caseStudies = [
+    { src: '/images/case1.jpg', title: 'Innovative Finance in Namakwa' },
+    { src: '/images/case2.jpg', title: 'Small Grants Facility in Namakwa' },
+    { src: '/images/case3.jpg', title: 'Low-cost erosion control in Namakwa' },
+    { src: '/images/case4.jpg', title: 'Case study title goes here' },
+  ];
+
+  const policyBriefs = [
+    { src: '/images/policy1.jpg', title: 'Policy Brief 1' },
+    { src: '/images/policy2.jpg', title: 'Policy Brief 2' },
+    { src: '/images/policy3.jpg', title: 'Policy Brief 3' },
+    { src: '/images/policy4.jpg', title: 'Policy Brief 4' },
+  ];
+
+  const conservationNews = [
+    { src: '/images/conserve1.jpg', title: 'Conservation News 1' },
+    { src: '/images/conserve2.jpg', title: 'Conservation News 2' },
+    { src: '/images/conserve3.jpg', title: 'Conservation News 3' },
   ];
 
   return (
@@ -131,9 +147,29 @@ export default function ResourcesPage() {
 
 
       <Box maxWidth="1200px" mx="auto" p={5}>
-        <Section title="Case Studies" articles={articles} />
-        <Section title="Policy Briefs" articles={articles} />
-        <Section title="Conservation News" articles={articles} />
+        {/* Case Studies Section */}
+        <Section
+          title="Case Studies"
+          items={caseStudies}
+          imageWidth="345px"
+          imageHeight="426px"
+        />
+
+        {/* Policy Briefs Section */}
+        <Section
+          title="Policy Briefs"
+          items={policyBriefs}
+          imageWidth="345px"
+          imageHeight="426px"
+        />
+
+        {/* Conservation News Section */}
+        <Section
+          title="Conservation News"
+          items={conservationNews}
+          imageWidth="470px"
+          imageHeight="426px"
+        />
       </Box>
 
       
