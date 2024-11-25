@@ -8,10 +8,7 @@ from .models import (
 )
 from django.http import JsonResponse
 import json
-from invitations.utils import get_invitation_model
 from django.views.decorators.csrf import csrf_exempt
-from django.shortcuts import redirect
-from django.urls import reverse
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
 from django.conf import settings
@@ -174,6 +171,7 @@ def add_organisation(request):
     )
 
     return JsonResponse({"message": "Request sent successfully!"})
+
 
 @login_required
 def invite_to_organisation(request, organisation_id):
