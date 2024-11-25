@@ -46,5 +46,6 @@ INSTALLED_APPS = INSTALLED_APPS + PROJECT_APPS
 TEMPLATES[0]['DIRS'] += [
     absolute_path('frontend', 'templates'),
     absolute_path('support', 'templates'),
+    absolute_path('base', 'templates'),
 ]
 
