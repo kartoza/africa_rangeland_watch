@@ -29,14 +29,70 @@ class Organisation(models.Model):
 
 
 class OrganisationInvitation(Invitation):
+    REQUEST_TYPE_CHOICES = [
+        ('add_organisation', 'Add Organisation'),
+        ('join_organisation', 'Join Organisation'),
+    ]
     organisation = models.ForeignKey(
         Organisation,
         on_delete=models.CASCADE,
-        related_name="invitations")
+        related_name="custom_invitations",
+        null=True,
+        blank=True,
+    )
+    request_type = models.CharField(
+        max_length=20,
+        choices=REQUEST_TYPE_CHOICES,
+        default='add_organisation',
+    )
+    metadata = models.TextField(
+        null=True,
+        blank=True,
+        help_text="Additional metadata for the request (JSON format).",
+    )
 
     def __str__(self):
-        return (
-            f"Invitation for {self.email} to join {self.organisation.name}"
+        if self.organisation:
+            return f"Invitation for {self.email} to join {
+                self.organisation.name}"
+        return f"Invitation for {self.email}, organisation not yet created"
+
+    def save(self, *args, **kwargs):
+        # Ensure a unique key is generated if missing
+        if not self.key:
+            self.key = uuid.uuid4().hex
+        super().save(*args, **kwargs)
+
+    def get_invite_url(self, request):
+        return request.build_absolute_uri(
+            reverse(
+                'organisation-invite-accept',
+                kwargs={'invitation_id': self.id}
+            )
+        )
+
+    def send_invitation(self, request, custom_message):
+        """Send email with a custom message and template."""
+        context = {
+            "invitation": self,
+            "custom_message": custom_message,
+            "inviter": self.inviter,
+            "organisation": self.organisation,
+            "accept_url": self.get_invite_url(request),
+            "django_backend_url": settings.DJANGO_BACKEND_URL
+        }
+
+        subject = f"You've been invited to join {self.organisation.name}!"
+        email_body = render_to_string(
+            "invitation_to_join_organization.html",
+            context
+        )
+
+        send_mail(
+            subject=subject,
+            message=email_body,
+            from_email=settings.NO_REPLY_EMAIL,
+            recipient_list=[self.email]
         )
 
 
