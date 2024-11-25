@@ -30,43 +30,38 @@ const Section: React.FC<SectionProps> = ({
         {title}
       </Heading>
       {/* Responsive Grid */}
-      <Flex justifyContent="center">
-        <Grid
-          templateColumns={{
-            base: '1fr',
-            sm: 'repeat(2, 1fr)',
-            md: 'repeat(3, 1fr)',
-            lg: items.length === 4 ? 'repeat(4, 1fr)' : 'repeat(3, 1fr)',
-          }}
-          gap={6}
-          w="100%"
-          maxWidth="1200px"
-          placeItems="center"
-        >
-          {items.map((item, index) => (
-            <Box key={index} textAlign="center">
-              {/* Image */}
-              <Image
-                src={item.src}
-                alt={item.title}
-                width={imageWidth}
-                height={imageHeight}
-                objectFit="cover"
-                borderRadius="md"
-                boxShadow="md"
-              />
-              {/* Title */}
-              <Text mt={2} color="black" fontSize="md" fontWeight="bold">
-                {item.title}
-              </Text>
-            </Box>
-          ))}
-        </Grid>
-      </Flex>
+      <Grid
+        templateColumns={{
+          base: '1fr',
+          sm: 'repeat(2, 1fr)',
+          md: 'repeat(3, 1fr)',
+          lg: items.length === 4 ? 'repeat(4, 1fr)' : 'repeat(3, 1fr)',
+        }}
+        gap={6}
+        justifyContent="center"
+      >
+        {items.map((item, index) => (
+          <Box key={index} textAlign="center">
+            {/* Image */}
+            <Image
+              src={item.src}
+              alt={item.title}
+              width={imageWidth}
+              height={imageHeight}
+              objectFit="cover"
+              borderRadius="md"
+              boxShadow="md"
+            />
+            {/* Title */}
+            <Text mt={2}  color="black" fontSize="md" fontWeight="bold">
+              {item.title}
+            </Text>
+          </Box>
+        ))}
+      </Grid>
     </Box>
   );
 };
-
 
 export default function ResourcesPage() {
   // Dummy image data for each section
