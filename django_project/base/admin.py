@@ -1,7 +1,105 @@
 from django.contrib import admin
 from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import Organisation, UserProfile
+from .models import Organisation, UserProfile, OrganisationInvitation
+from django.core.mail import send_mail
+from django.conf import settings
+from django.template.loader import render_to_string
+import json
+
+
+@admin.action(description="Approve selected join/add requests")
+def approve_join_request(modeladmin, request, queryset):
+    """
+    Admin action to approve join/add requests.
+    Creates organisations for 'add_organisation' requests and assigns roles.
+    """
+    for invitation in queryset:
+        if invitation.request_type == "add_organisation":
+            # Parse metadata from the invitation
+            metadata = json.loads(invitation.metadata or "{}")
+            organisation_name = metadata.get("organisationName", "")
+
+            organisation = Organisation.objects.create(
+                name=organisation_name
+            )
+
+            # Assign the inviter as the organisation manager
+            profile = invitation.inviter.profile
+            profile.organisation = organisation
+            profile.user_type = "organisation_manager"
+            profile.save()
+
+            # Notify the inviter
+            email_body = render_to_string(
+                "organisation_manager_notification.html",
+                {
+                    "user": invitation.inviter,
+                    "organisation": organisation,
+                    "support_email": "support@kartoza.com",
+                    "platform_url": settings.DJANGO_BACKEND_URL,
+                },
+            )
+            send_mail(
+                subject="Your Role as Organisation Manager",
+                message="",
+                html_message=email_body,
+                from_email=settings.NO_REPLY_EMAIL,
+                recipient_list=[invitation.inviter.email],
+            )
+
+            # Delete the invitation after processing
+            invitation.delete()
+
+            modeladmin.message_user(
+                request,
+                f"Organisation '{organisation.name}' "
+                "created and request approved.",
+            )
+
+            return
+
+        elif invitation.request_type == "join_organisation":
+            # Process join requests
+            profile = invitation.inviter.profile
+            organisation = invitation.organisation
+            profile.organisation = organisation
+            profile.user_type = "organisation_member"
+            profile.save()
+
+            email_body = render_to_string(
+                "accepted_organization_request.html",
+                {
+                    "user": invitation.inviter,
+                    "organisation": organisation,
+                    "link": settings.DJANGO_BACKEND_URL,
+                }
+            )
+
+            send_mail(
+                subject="Your join request has been approved",
+                message="",
+                html_message=email_body,
+                from_email=settings.NO_REPLY_EMAIL,
+                recipient_list=[invitation.inviter.email],
+            )
+
+            invitation.delete()
+
+            modeladmin.message_user(
+                request,
+                "Individual has been added."
+            )
+
+            return
+
+
+
+class OrganisationInvitationAdmin(admin.ModelAdmin):
+    list_display = ('email', 'request_type', 'organisation', 'inviter')
+    actions = [approve_join_request]
+    list_filter = ('organisation', 'request_type')
+    search_fields = ('email', 'organisation__name', 'inviter__username')
 
 
 @admin.register(Organisation)
@@ -53,3 +151,5 @@ class UserAdmin(BaseUserAdmin):
 
 admin.site.unregister(User)
 admin.site.register(User, UserAdmin)
+admin.site.unregister(OrganisationInvitation)
+admin.site.register(OrganisationInvitation, OrganisationInvitationAdmin)
