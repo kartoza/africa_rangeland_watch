@@ -9,6 +9,7 @@ from django.conf import settings
 from django.urls import reverse
 import uuid
 
+
 class Organisation(models.Model):
     """
     Model to represent an organization that a user can belong to.
