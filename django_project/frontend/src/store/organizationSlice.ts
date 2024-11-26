@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from ".";
+import axios from "axios";
 
 // Define types for the state
 interface Member {
@@ -21,7 +22,7 @@ interface OrganizationsState {
   organizations: { [key: string]: Organization };
   loading: boolean;
   error: string | null;
-  refetch: boolean; 
+  refetch: boolean;
 }
 
 // Initial state
@@ -32,13 +33,29 @@ const initialState: OrganizationsState = {
   refetch: false,
 };
 
+// Utility to set the CSRF token globally in Axios
+const setCSRFToken = () => {
+  const csrfToken = document.cookie
+    .split(";")
+    .find((cookie) => cookie.trim().startsWith("csrftoken="));
+  if (csrfToken) {
+    const token = csrfToken.split("=")[1];
+    axios.defaults.headers.common["X-CSRFToken"] = token;
+  } else {
+    console.warn("CSRF token not found.");
+  }
+};
+
+// Configure Axios globally for JSON requests
+axios.defaults.headers.common["Content-Type"] = "application/json";
+
 // Async thunk for fetching organizations
 export const fetchOrganizations = createAsyncThunk(
   "organizations/fetchOrganizations",
   async () => {
-    const response = await fetch("/api/organizations");
-    if (!response.ok) throw new Error("Failed to fetch organizations.");
-    return (await response.json()) as { [key: string]: Organization };
+    setCSRFToken();
+    const response = await axios.get("/api/organizations");
+    return response.data as { [key: string]: Organization };
   }
 );
 
@@ -46,40 +63,29 @@ export const fetchOrganizations = createAsyncThunk(
 export const inviteMemberThunk = createAsyncThunk(
   "organizations/inviteMember",
   async ({ orgKey, email, message }: { orgKey: number; email: string; message: string }) => {
-      const response = await fetch(`/api/organization/${orgKey}/invite/`, {
-          method: "POST",
-          headers: {
-              "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ email, message }),
-      });
-      if (!response.ok) throw new Error("Failed to send invitation.");
-      return { orgKey, email };
+    setCSRFToken();
+    const response = await axios.post(`/api/organization/${orgKey}/invite/`, {
+      email,
+      message,
+    });
+    return { orgKey, email };
   }
 );
-
 
 // Async thunk for deleting a member from an organization
 export const deleteMember = createAsyncThunk(
   "organizations/deleteMember",
   async ({ orgKey, user }: { orgKey: string; user: string }) => {
-    const response = await fetch(`/api/organizations/member/delete/`, {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
+    setCSRFToken();
+    const response = await axios.delete(`/api/organizations/member/delete/`, {
+      data: {
         organisation_id: orgKey,
         user_email: user,
-      }),
+      },
     });
-
-    if (!response.ok) throw new Error("Failed to delete member.");
-
     return { orgKey, user };
   }
 );
-
 
 // Slice
 const organizationsSlice = createSlice({
@@ -100,13 +106,13 @@ const organizationsSlice = createSlice({
       const { orgKey, email, message } = action.payload;
       const newInvitation: Invitation = {
         email,
-        accepted: false
+        accepted: false,
       };
       state.organizations[orgKey].invitations.push(newInvitation);
     },
     resetRefetch: (state) => {
       state.refetch = false;
-    }
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -153,7 +159,6 @@ const organizationsSlice = createSlice({
       });
   },
 });
-
 
 export const selectRefetch = (state: RootState) => state.organization.refetch;
 export const { addMember, deleteMemberFromState, inviteMember, resetRefetch } = organizationsSlice.actions;
