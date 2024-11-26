@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Helmet from "react-helmet";
 import {
   Box,
@@ -24,58 +24,66 @@ import { FaPlus, FaTrash } from "react-icons/fa";
 import Header from "../../components/Header";
 import Sidebar from "../../components/SideBar";
 import "../../styles/index.css";
+import { useSelector, useDispatch } from "react-redux";
+import { deleteMember, fetchOrganizations } from "../../store/organizationSlice";
+import { AppDispatch } from "../../store";
+import InviteMember from "../../components/inviteMembers";
+import { selectRefetch }  from "../../store/organizationSlice";
 
-// Define types for the data
-interface Member {
-  user: string;
-  role: string;
-}
-
-interface Invitation {
-  user: string;
-  role: string;
-  status: string;
-}
-
-interface Organization {
-  members: Member[];
-  invitations: Invitation[];
-}
 
 export default function OrganisationInformation() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [organizations, setOrganizations] = useState<{ [key: string]: Organization }>({});
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const dispatch = useDispatch<AppDispatch>();
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+  const [selectedOrgKey, setSelectedOrgKey] = useState<string | null>(null);
+  const refetch = useSelector(selectRefetch);
 
-  useEffect(() => {
-    const fetchOrganizations = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        
-        const response = await fetch("/api/organizations"); // Example API endpoint will replace with real one TODO
-        if (!response.ok) {
-          throw new Error("Failed to fetch organizations.");
-        }
-        
-        const data = await response.json();
-        setOrganizations(data);
-      } catch (err: any) {
-        setError("No data available.");
-        setOrganizations({
-            default: {
-              members: [],
-              invitations: [],
-            }
-          })
-      } finally {
-        setLoading(false);
-      }
-    };
 
-    fetchOrganizations();
-  }, []);
+  const openInviteModal = () => {
+    setIsInviteModalOpen(true);
+  };
+
+  const closeInviteModal = () => {
+    setIsInviteModalOpen(false);
+  };
+
+  // Get data from the store
+  const { organizations, loading, error } = useSelector((state: any) => state.organization);
+  const [searchTerm, setSearchTerm] = React.useState("");
+
+  React.useEffect(() => {
+    if (refetch) {
+      dispatch(fetchOrganizations());
+    } 
+  }, [dispatch, refetch]); 
+
+  React.useEffect(() => {
+      dispatch(fetchOrganizations());
+  }, [dispatch]);
+
+  React.useEffect(() => {
+    const orgKeys = Object.keys(organizations);
+    if (orgKeys.length === 1) {
+      setSelectedOrgKey(orgKeys[0]);
+    }
+  }, [organizations]);
+
+  // Filter members based on search term
+  const filteredMembers = (members: any[]) => {
+    if (!searchTerm) return members;
+    return members.filter(
+      (member) =>
+        member.user__email && member.user__email.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  };
+  
+
+  const handleDelete = async (orgKey: any, user: any) => {
+    try {
+      dispatch(deleteMember({ orgKey, user: user.user__email })).unwrap();
+    } catch (error) {
+      console.error("Error deleting member:", error);
+    }
+  };
 
   return (
     <>
@@ -105,8 +113,8 @@ export default function OrganisationInformation() {
               My Organisations
             </Heading>
 
-            {loading && <p>Loading...</p>}
-            {error && <p>{error}</p>}
+            {/* {loading && <p>Loading...</p>} */}
+            {/* {error && <p>{error}</p>} */}
 
             {/* Organisation Tabs */}
             <Tabs variant="unstyled">
@@ -126,6 +134,7 @@ export default function OrganisationInformation() {
                       _hover={{ bg: "light_green.400" }}
                       px={6}
                       py={2}
+                      onClick={() => setSelectedOrgKey(orgKey)}
                     >
                       {orgKey}
                     </Tab>
@@ -136,7 +145,7 @@ export default function OrganisationInformation() {
               <Divider mb={6} borderColor="black" borderWidth="1px" width={{ base: "auto", md: "99%" }} />
 
               <TabPanels>
-                {Object.values(organizations).map((organization, index) => (
+                {Object.values(organizations).map((organization: any, index: number) => (
                   <TabPanel key={index}>
                     {/* Organisation Members Section */}
                     <Heading size="md" mb={4} color="black">
@@ -153,21 +162,32 @@ export default function OrganisationInformation() {
                           w={{ base: "full", md: 80 }}
                         />
                       </Flex>
-
-                      <Button
-                        leftIcon={<FaPlus />}
-                        colorScheme="green"
-                        variant="solid"
-                        backgroundColor="dark_green.800"
-                        _hover={{ backgroundColor: "light_green.400" }}
-                        fontWeight={700}
-                        w="auto"
-                        h={10}
-                        color="white.a700"
-                        borderRadius="0px"
-                      >
-                        Add People
-                      </Button>
+                      
+                      {organization.is_manager && (
+                      <>
+                        <Button
+                          leftIcon={<FaPlus />}
+                          colorScheme="green"
+                          variant="solid"
+                          backgroundColor="dark_green.800"
+                          _hover={{ backgroundColor: "light_green.400" }}
+                          fontWeight={700}
+                          w="auto"
+                          h={10}
+                          color="white.a700"
+                          borderRadius="0px"
+                          onClick={openInviteModal}
+                        >
+                          Add People
+                        </Button>
+                        <InviteMember 
+                          isOpen={isInviteModalOpen} 
+                          onClose={closeInviteModal} 
+                          orgKey={organization.org_id}
+                          organizationName={selectedOrgKey || "Unknown"} 
+                        />
+                      </>
+                      )}
                     </Flex>
 
                     <Divider mb={6} borderColor="black" borderWidth="1px" />
@@ -182,18 +202,23 @@ export default function OrganisationInformation() {
                           </Tr>
                         </Thead>
                         <Tbody>
-                          {organization.members.slice(0, 5).map((member, idx) => (
+                          {filteredMembers(organization.members).slice(0, 5).map((member: any, idx: number) => (
                             <Tr key={idx}>
-                              <Td>{member.user}</Td>
-                              <Td>{member.role}</Td>
-                              <Td textAlign="center" display="flex" justifyContent="center">
-                                <IconButton
-                                  aria-label="Delete member"
-                                  icon={<FaTrash />}
-                                  colorScheme="red"
-                                  variant="ghost"
-                                />
-                              </Td>
+                              <Td color={"black"}>{member.user__email}</Td>
+                              <Td color={"black"}>{member.user_role}</Td>
+                              {organization.is_manager && (
+                              <>
+                                <Td textAlign="center" display="flex" justifyContent="center">
+                                  <IconButton
+                                    aria-label="Delete member"
+                                    icon={<FaTrash />}
+                                    colorScheme="red"
+                                    variant="ghost"
+                                    onClick={() => handleDelete(organization.org_id, member)}
+                                  />
+                                </Td>
+                              </>
+                              )}
                             </Tr>
                           ))}
                         </Tbody>
@@ -208,51 +233,58 @@ export default function OrganisationInformation() {
                       </Flex>
                     )}
 
-                    <Heading size="md" mt={8} mb={4} color="black">
-                      Invitations
-                    </Heading>
+                  {organization.is_manager && (
+                    <>
+                      <Heading size="md" mt={8} mb={4} color="black">
+                        Invitations
+                      </Heading>
 
-                    <Divider mb={6} borderColor="black" borderWidth="1px" />
+                      <Divider mb={6} borderColor="black" borderWidth="1px" />
 
-                    <Box overflowX="auto">
-                      <Table variant="unstyled" size="sm">
-                        <Thead borderBottom="1px solid" borderColor="gray.400">
-                          <Tr>
-                            <Td fontWeight="bold">User</Td>
-                            <Td fontWeight="bold">Role</Td>
-                            <Td fontWeight="bold">Status</Td>
-                          </Tr>
-                        </Thead>
-                        <Tbody>
-                          {organization.invitations.slice(0, 5).map((invite, idx) => (
-                            <Tr key={idx}>
-                              <Td>{invite.user}</Td>
-                              <Td>{invite.role}</Td>
-                              <Td>
-                                <Badge
-                                  backgroundColor={invite.status === "Joined" ? "light_green.400" : invite.status === "Pending" ? "#3e3e3e" : "yellow"}
-                                  color="white"
-                                  variant="solid"
-                                  px={4}
-                                  py={2}
-                                  borderRadius="full"
-                                >
-                                  {invite.status}
-                                </Badge>
-                              </Td>
+                      <Box overflowX="auto">
+                        <Table variant="unstyled" size="sm">
+                          <Thead borderBottom="1px solid" borderColor="gray.400">
+                            <Tr>
+                              <Td fontWeight="bold">Email</Td>
+                              <Td fontWeight="bold">Status</Td>
                             </Tr>
-                          ))}
-                        </Tbody>
-                      </Table>
-                    </Box>
+                          </Thead>
+                          <Tbody>
+                            {organization.invitations.slice(0, 5).map((invite: any, idx: number) => (
+                              <Tr key={idx}>
+                                <Td>{invite.email}</Td>
+                                <Td>
+                                  <Badge
+                                    backgroundColor={
+                                      invite.accepted
+                                        ? "light_green.400"
+                                        : "#3e3e3e"
+                                    }
+                                    color="white"
+                                    variant="solid"
+                                    px={4}
+                                    py={2}
+                                    borderRadius="full"
+                                  >
+                                    {invite.accepted ? "Joined": "Pending"}
+                                  </Badge>
+                                </Td>
+                              </Tr>
+                            ))}
+                          </Tbody>
+                        </Table>
+                      </Box>
 
-                    {organization.invitations.length > 5 && (
-                      <Flex justify="flex-end" mt={2}>
-                        <Button variant="link" color="black">
-                          View All
-                        </Button>
-                      </Flex>
-                    )}
+                      {organization.invitations.length > 5 && (
+                        <Flex justify="flex-end" mt={2}>
+                          <Button variant="link" color="black">
+                            View All
+                          </Button>
+                        </Flex>
+                      )}
+
+                  </>
+                  )}
                   </TabPanel>
                 ))}
               </TabPanels>

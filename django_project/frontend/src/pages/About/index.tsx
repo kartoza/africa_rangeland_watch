@@ -2,9 +2,10 @@ import { Helmet } from "react-helmet";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
 import { Flex, Text, Heading, Box, Image, Button, Input, Textarea, Center } from "@chakra-ui/react";
-import React, { useState } from "react";
+import React from "react";
 
 export default function AboutPage() {
+  
   return (
     <>
       <Helmet>
