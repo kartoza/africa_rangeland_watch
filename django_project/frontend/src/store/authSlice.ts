@@ -110,6 +110,7 @@ export const logoutUser = () => (dispatch: AppDispatch) => {
   localStorage.removeItem('auth_token');
   axios.defaults.headers['Authorization'] = '';
   dispatch(logout());
+  window.location.href = '/';
 };
 
 // Action to request password reset

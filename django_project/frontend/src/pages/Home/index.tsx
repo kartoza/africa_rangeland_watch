@@ -4,14 +4,32 @@ import  Footer  from "../../components/Footer";
 import SignIn from "../../components/SignIn";
 import { IconButton, Image, Button, Flex, Text, Heading, Box, useToast } from "@chakra-ui/react";
 import React, { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { selectIsLoggedIn } from "../../store/authSlice";
 
 export default function HomePage() {
   const [isSignInOpen, setIsSignInOpen] = useState(false);
   const toast = useToast();
   const location = useLocation();
+  const navigate = useNavigate()
+  const isAuthenticated = useSelector(selectIsLoggedIn);
 
+  // Redirect after successful login
+   const redirectPath = sessionStorage.getItem("redirectAfterLogin");
+   useEffect(() => {
+    if (redirectPath) {
+      setIsSignInOpen(true)
+      
+      if (isAuthenticated){
+        sessionStorage.removeItem("redirectAfterLogin");
+        navigate(redirectPath);
+      }
+        
+    }
+  }, [isAuthenticated]);
 
+  
   useEffect(() => {
     const url = location.search;
 
