@@ -146,3 +146,7 @@ CACHES = {
 
 LOGIN_URL = '/account/login/'
 LOGIN_REDIRECT_URL = '/'
+
+RESEND_API_KEY = os.environ.get(
+    'RESEND_API_KEY', ''
+)

@@ -33,6 +33,7 @@ class Organisation(models.Model):
         return self.name
 
 
+
 class OrganisationInvitation(Invitation):
     REQUEST_TYPE_CHOICES = [
         ('add_organisation', 'Add Organisation'),
@@ -99,6 +100,8 @@ class OrganisationInvitation(Invitation):
             from_email=settings.NO_REPLY_EMAIL,
             recipient_list=[self.email]
         )
+
+
 
 
 class UserProfile(models.Model):
@@ -187,6 +190,10 @@ def create_user_profile(sender, instance, created, **kwargs):
             organisation = invitation.organisation
             user_profile.organisation = organisation
             user_profile.save()
+
+            # Mark invitation as accepted
+            invitation.accepted = True
+            invitation.save()
 
 
 @receiver(post_save, sender=User)

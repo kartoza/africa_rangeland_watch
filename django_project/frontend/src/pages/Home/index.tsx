@@ -4,14 +4,32 @@ import  Footer  from "../../components/Footer";
 import SignIn from "../../components/SignIn";
 import { IconButton, Image, Button, Flex, Text, Heading, Box, useToast } from "@chakra-ui/react";
 import React, { useEffect, useState } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { selectIsLoggedIn } from "../../store/authSlice";
 
 export default function HomePage() {
   const [isSignInOpen, setIsSignInOpen] = useState(false);
   const toast = useToast();
   const location = useLocation();
+  const navigate = useNavigate()
+  const isAuthenticated = useSelector(selectIsLoggedIn);
 
+  // Redirect after successful login
+   const redirectPath = sessionStorage.getItem("redirectAfterLogin");
+   useEffect(() => {
+    if (redirectPath) {
+      setIsSignInOpen(true)
+      
+      if (isAuthenticated){
+        sessionStorage.removeItem("redirectAfterLogin");
+        navigate(redirectPath);
+      }
+        
+    }
+  }, [isAuthenticated]);
 
+  
   useEffect(() => {
     const url = location.search;
 
@@ -28,7 +46,33 @@ export default function HomePage() {
           color: "white",
         },
       });
-    }
+    } else if (url.includes('invitation_accepted=true')) {
+      toast({
+        title: "Inviation Accepted",
+        description: "Thank you for accepting the invitation. You are now a member of the organisation. Proceed to login.",
+        status: "success",
+        duration: 5000,
+        isClosable: true,
+        position: "top-right",
+        containerStyle: {
+          backgroundColor: "#00634b",
+          color: "white",
+        },
+      });
+    } else if (url.includes('register_first=true')) {
+      toast({
+        title: "Registration Incomplete",
+        description: "You must complete registration before being added to the organisation.",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+        position: "top-right",
+        containerStyle: {
+          backgroundColor: "red",
+          color: "white",
+        },
+      });
+    } 
   }, [location.hash]);
   
   return (

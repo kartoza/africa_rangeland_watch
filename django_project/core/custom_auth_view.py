@@ -52,54 +52,68 @@ class CustomRegistrationView(APIView):
         error_messages = []
 
         try:
-            EmailValidator()(email)
-        except ValidationError:
-            error_messages.append('Invalid email format.')
+            # Validate email format
+            try:
+                EmailValidator()(email)
+            except ValidationError:
+                error_messages.append('Invalid email format.')
 
-        if get_user_model().objects.filter(email=email).exists():
-            error_messages.append('Email is already registered.')
+            # Check if email already exists
+            if get_user_model().objects.filter(email=email).exists():
+                error_messages.append('Email is already registered.')
 
-        if password1 != password2:
-            error_messages.append('Passwords do not match.')
+            # Check password match
+            if password1 != password2:
+                error_messages.append('Passwords do not match.')
 
-        try:
-            validate_password(password1)
-        except ValidationError as e:
-            error_messages.extend(e.messages)
+            # Validate password strength
+            try:
+                validate_password(password1)
+            except ValidationError as e:
+                error_messages.extend(e.messages)
 
-        if error_messages:
+            # If any errors exist, return them
+            if error_messages:
+                return Response(
+                    {'errors': error_messages},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+
+            # Create the user
+            user = get_user_model().objects.create_user(
+                email=email,
+                password=password1,
+                username=email
+            )
+            user.is_active = False
+            user.save()
+
+            # Generate account activation token and link
+            token = default_token_generator.make_token(user)
+            uid = urlsafe_base64_encode(str(user.pk).encode())
+            activation_link = f"{
+                get_current_site(request).domain}/auth/activate/{uid}/{token}/"
+
+            # Send email with activation link
+            subject = "Activate Your Account"
+            message = render_to_string('account/email_confirmation.html', {
+                'user': user,
+                'activation_url': activation_link,
+                'django_backend_url': settings.DJANGO_BACKEND_URL,
+            })
+            send_mail(subject, message, settings.NO_REPLY_EMAIL, [email])
+
             return Response(
-                {'errors': error_messages},
-                status=status.HTTP_400_BAD_REQUEST
+                {'message': 'Verification email sent.'},
+                status=status.HTTP_201_CREATED
             )
 
-        user = get_user_model().objects.create_user(
-            email=email,
-            password=password1,
-            username=email
-        )
-        user.is_active = False
-        user.save()
-
-        token = default_token_generator.make_token(user)
-        uid = urlsafe_base64_encode(str(user.pk).encode())
-
-        activation_link = f"{
-            get_current_site(request).domain}/auth/activate/{uid}/{token}/"
-
-        # Send email with activation link
-        subject = "Activate Your Account"
-        message = render_to_string('account/email_confirmation.html', {
-            'user': user,
-            'activation_url': activation_link,
-            'django_backend_url': settings.DJANGO_BACKEND_URL,
-        })
-        send_mail(subject, message, settings.NO_REPLY_EMAIL, [email])
-
-        return Response(
-            {'message': 'Verification email sent.'},
-            status=status.HTTP_201_CREATED
-        )
+        except Exception as e:
+            # Catch unexpected errors and return details to the frontend
+            return Response(
+                {'error': str(e), 'details': 'An unexpected error occurred.'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 
