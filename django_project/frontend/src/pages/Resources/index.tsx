@@ -24,7 +24,7 @@ const Section: React.FC<SectionProps> = ({
   imageHeight,
 }) => {
   return (
-    <Box mb={15}>
+    <Box mb={15} mt={20}>
       {/* Section Title */}
       <Heading as="h2" fontSize="2xl" color="black" mb={10} textAlign="center">
         {title}
@@ -51,6 +51,7 @@ const Section: React.FC<SectionProps> = ({
               objectFit="cover"
               borderRadius="md"
               boxShadow="md"
+              ml={{base: "20px"}}
             />
             {/* Title */}
             <Text mt={2}  color="black" fontSize="md" fontWeight="bold">
