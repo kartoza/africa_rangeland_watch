@@ -8,21 +8,18 @@ from .models import (
 )
 from django.http import JsonResponse
 import json
-from django.views.decorators.csrf import csrf_exempt
 from django.contrib.auth.models import User
 from django.core.mail import send_mail
 from django.conf import settings
 from django.template.loader import render_to_string
 
 
-@csrf_exempt
 @login_required
 def fetch_organisations(request):
     organisations = Organisation.objects.values("id", "name")
     return JsonResponse(list(organisations), safe=False)
 
 
-@csrf_exempt
 @login_required
 def join_organisation(request):
     """
@@ -109,7 +106,6 @@ def join_organisation(request):
 
 
 
-@csrf_exempt
 @login_required
 def add_organisation(request):
     """
