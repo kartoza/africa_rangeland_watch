@@ -10,7 +10,6 @@ from .models import (
 from django.http import JsonResponse
 import json
 from invitations.utils import get_invitation_model
-from django.views.decorators.csrf import csrf_exempt
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.contrib.auth.models import User
@@ -20,7 +19,6 @@ Invitation = get_invitation_model()
 
 
 
-@csrf_exempt
 @login_required
 def delete_organisation_member(request):
     """
@@ -73,7 +71,6 @@ def delete_organisation_member(request):
         )
 
 
-@csrf_exempt
 @login_required
 def fetch_organisation_data(request):
     """
@@ -135,7 +132,6 @@ def fetch_organisation_data(request):
         )
 
 
-@csrf_exempt
 @login_required
 def invite_to_organisation(request, organisation_id):
     """View to invite a user to an organisation."""
