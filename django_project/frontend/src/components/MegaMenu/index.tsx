@@ -30,6 +30,10 @@ export default function MegaMenu({ hoveredSection, isUserAvatarHovered }: MegaMe
     }
   }, []);
 
+  const handleClick = () => {
+    navigate('/about');
+  };
+
   const handleLogout = () => {
     dispatch(logoutUser());
     navigate('/');
