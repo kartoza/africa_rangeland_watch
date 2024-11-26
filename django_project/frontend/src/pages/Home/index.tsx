@@ -28,7 +28,33 @@ export default function HomePage() {
           color: "white",
         },
       });
-    }
+    } else if (url.includes('invitation_accepted=true')) {
+      toast({
+        title: "Inviation Accepted",
+        description: "Thank you for accepting the invitation. You are now a member of the organisation. Proceed to login.",
+        status: "success",
+        duration: 5000,
+        isClosable: true,
+        position: "top-right",
+        containerStyle: {
+          backgroundColor: "#00634b",
+          color: "white",
+        },
+      });
+    } else if (url.includes('register_first=true')) {
+      toast({
+        title: "Registration Incomplete",
+        description: "You must complete registration before being added to the organisation.",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+        position: "top-right",
+        containerStyle: {
+          backgroundColor: "red",
+          color: "white",
+        },
+      });
+    } 
   }, [location.hash]);
   
   return (

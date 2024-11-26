@@ -103,6 +103,7 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
 
   const handleSignIn = () => {
     dispatch(loginUser(email, password));
+    setCanSubmit(true)
   };
 
   const handleResetPassword = () => {

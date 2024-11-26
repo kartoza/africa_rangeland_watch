@@ -3,6 +3,11 @@ from django.contrib.auth.models import User
 from django.db.models.signals import post_save
 from django.dispatch import receiver
 from invitations.models import Invitation
+from django.core.mail import send_mail
+from django.template.loader import render_to_string
+from django.conf import settings
+from django.urls import reverse
+import uuid
 
 
 class Organisation(models.Model):
@@ -28,16 +33,56 @@ class Organisation(models.Model):
         return self.name
 
 
+
 class OrganisationInvitation(Invitation):
     organisation = models.ForeignKey(
         Organisation,
         on_delete=models.CASCADE,
-        related_name="invitations")
+        related_name="custom_invitations"
+    )
 
     def __str__(self):
-        return (
-            f"Invitation for {self.email} to join {self.organisation.name}"
+        return f"Invitation for {self.email} to join {self.organisation.name}"
+
+    def save(self, *args, **kwargs):
+        # Ensure a unique key is generated if missing
+        if not self.key:
+            self.key = uuid.uuid4().hex
+        super().save(*args, **kwargs)
+
+    def get_invite_url(self, request):
+        return request.build_absolute_uri(
+            reverse(
+                'organisation-invite-accept',
+                kwargs={'invitation_id': self.id}
+            )
         )
+
+    def send_invitation(self, request, custom_message):
+        """Send email with a custom message and template."""
+        context = {
+            "invitation": self,
+            "custom_message": custom_message,
+            "inviter": self.inviter,
+            "organisation": self.organisation,
+            "accept_url": self.get_invite_url(request),
+            "django_backend_url": settings.DJANGO_BACKEND_URL
+        }
+
+        subject = f"You've been invited to join {self.organisation.name}!"
+        email_body = render_to_string(
+            "invitation_to_join_organization.html",
+            context
+        )
+
+        send_mail(
+            subject=subject,
+            message=email_body,
+            from_email=settings.NO_REPLY_EMAIL,
+            recipient_list=[self.email]
+        )
+
+
 
 
 class UserProfile(models.Model):
@@ -126,6 +171,9 @@ def create_user_profile(sender, instance, created, **kwargs):
             organisation = invitation.organisation
             user_profile.organisation = organisation
             user_profile.save()
+
+            invitation.accepted = True
+            invitation.save()
 
 
 @receiver(post_save, sender=User)
