@@ -102,6 +102,14 @@ class OrganisationViewsTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertIn("Test Organisation", response.json())
 
+    def test_fetch_organisation_data_unauthenticated(self):
+
+        url = reverse("fetch_organisation_data")
+        response = self.client.get(url)
+
+        # it attempts redirect to login
+        self.assertEqual(response.status_code, 302)
+
     def test_fetch_organisation_data_no_membership(self):
         self.client.login(username="unrelated", password="password")
 
