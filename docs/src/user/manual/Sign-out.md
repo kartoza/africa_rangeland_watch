@@ -11,4 +11,8 @@ license: This program is free software; you can redistribute it and/or modify it
 #context_id: 1234
 ---
 
-# Landing Page: Africa RangeLand Watch (ARW)
+# User Manual: Sign-Out on Africa RangeLand Watch (ARW)
+
+[![Home Page](./img/manual-sign-out-img-1.png)](./img/manual-sign-out-img-1.png)
+
+1. **Profile Icon:** Click on the profile icon in the top right corner of the page and then choose `Logout` option, this will allows users to sign out of their account.
