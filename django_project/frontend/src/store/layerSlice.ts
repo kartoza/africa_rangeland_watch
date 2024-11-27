@@ -20,12 +20,14 @@ export interface Layer {
   
 interface LayerState extends DataState {
     layers: Layer[];
+    selectedNrt: Layer;
 }
 
 const initialLayerState: LayerState = {
     layers: [],
     loading: false,
     error: null,
+    selectedNrt: null
 };
 
 
@@ -44,6 +46,9 @@ export const layerSlice = createSlice({
       clearError(state) {
         state.error = null;
       },
+      setSelectedNrtLayer(state, action: PayloadAction<Layer>) {
+        state.selectedNrt = action.payload
+      }
     },
     extraReducers: (builder) => {
       builder
@@ -61,6 +66,6 @@ export const layerSlice = createSlice({
     }  
 });
   
-export const { clearError } = layerSlice.actions;
+export const { clearError, setSelectedNrtLayer } = layerSlice.actions;
 
 export default layerSlice.reducer;

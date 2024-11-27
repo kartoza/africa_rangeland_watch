@@ -10,10 +10,10 @@ import { Box } from "@chakra-ui/react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../store";
 import { BasemapControl, LegendControl } from "./control";
-import { hasSource, removeLayer } from "./utils";
+import { hasSource, removeLayer, removeSource } from "./utils";
 import { fetchBaseMaps } from '../../store/baseMapSlice';
 import { fetchMapConfig } from '../../store/mapConfigSlice';
-import { Layer } from '../../store/layerSlice';
+import { Layer, setSelectedNrtLayer } from '../../store/layerSlice';
 
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './style.css';
@@ -35,6 +35,32 @@ export const MapLibre = forwardRef(
     const { mapConfig } = useSelector((state: RootState) => state.mapConfig);
     const { baseMaps } = useSelector((state: RootState) => state.baseMap);
     const { selected: selectedLandscape } = useSelector((state: RootState) => state.landscape);
+    const { selectedNrt } = useSelector((state: RootState) => state.layer);
+
+    const doRenderLayer = (layer: Layer) => {
+      if (map) {
+        const ID = `layer-${layer.id}`
+        removeLayer(map, ID)
+        if (layer.type == "raster") {
+          if (!hasSource(map, ID)) {
+            map.addSource(ID, {
+                type: "raster",
+                tiles: [layer.url],
+                tileSize: 256
+              }
+            )
+          }
+          map.addLayer(
+            {
+              id: ID,
+              source: ID,
+              type: "raster"
+            }
+          )
+          legendRef?.current?.renderLayer(layer)
+        }
+      }
+    }
 
     //  Fetch the data here
     useEffect(() => {
@@ -46,28 +72,7 @@ export const MapLibre = forwardRef(
     useImperativeHandle(ref, () => ({
       /** Render layer */
       renderLayer(layer: Layer) {
-        if (map) {
-          const ID = `layer-${layer.id}`
-          removeLayer(map, ID)
-          if (layer.type == "raster") {
-            if (!hasSource(map, ID)) {
-              map.addSource(ID, {
-                  type: "raster",
-                  tiles: [layer.url],
-                  tileSize: 256
-                }
-              )
-            }
-            map.addLayer(
-              {
-                id: ID,
-                source: ID,
-                type: "raster"
-              }
-            )
-            legendRef?.current?.renderLayer(layer)
-          }
-        }
+        doRenderLayer(layer)
       },
       /** Hide layer */
       removeLayer(layer: Layer) {
@@ -117,16 +122,40 @@ export const MapLibre = forwardRef(
 
     // zoom when landscape is selected
     useEffect(() => {
-      if (!map || !selectedLandscape) {
+      if (!map) {
         return;
       }
+      if (!selectedLandscape) {
+        if (selectedNrt) {
+          // remove previous NRT layer
+          const ID = `layer-${selectedNrt.id}`
+          removeSource(map, ID)
+          legendRef?.current?.removeLayer(selectedNrt)
+          dispatch(setSelectedNrtLayer(null))
+        }
+        return;
+      }
+
+      if (selectedNrt) {
+        // remove previous NRT layer
+        const ID = `layer-${selectedNrt.id}`
+        removeSource(map, ID)
+      }
+
       map.fitBounds(selectedLandscape.bbox,
         {
           pitch: 0,
           bearing: 0
         }
       )
-    }, [selectedLandscape])
+
+      if (selectedNrt && selectedLandscape.urls[selectedNrt.id] !== undefined) {
+        // render NRT layer from landscape url
+        let _copyLayer = {...selectedNrt}
+        _copyLayer.url = selectedLandscape.urls[selectedNrt.id]
+        doRenderLayer(_copyLayer)
+      }
+    }, [selectedLandscape, selectedNrt])
 
     return (
       <Box id="map" flexGrow={1}/>

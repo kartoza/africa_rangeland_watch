@@ -51,7 +51,9 @@ export const Legend = forwardRef(
     useImperativeHandle(ref, () => ({
       /** Render layer */
       renderLayer(layer: Layer) {
-        setLayers([...layers, layer])
+        if (layers.findIndex(_layer => _layer.id === layer.id) === -1) {
+          setLayers([...layers, layer])
+        }
       },
       /** Hide layer */
       removeLayer(layer: Layer) {
