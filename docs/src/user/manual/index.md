@@ -15,4 +15,15 @@ context_id: 1234bvctufdfghuiuyg
 
 This section of the documentation describes every page in the application and what the various components of that page do. The manual is intended to function as a reference for the application. For narrative / workflow based tutorials, you may prefer to work through our [user guide](../guide/index.md).
 
-* **[MAP](./map.md):** This page provides a step-by-step walkthrough on accessing and navigating the map with ease.
+# User guide
+Welcome to the Africa RangeLand Watch (ARW). This section of the documentation describes every page in the application and what the various components of that page do. The manual is intended to function as a reference for the application. For narrative / workflow based tutorials.
+
+* **[Sign Up](./sign-up.md):** This page provides a step-by-step walkthrough for creating an account on the ARW platform.
+
+* **[Sign In](./sign-in.md):** This page provides a step-by-step walkthrough for signing in to the ARW platform.
+
+* **[Sign out](./Sign-out.md):** This page provides a step-by-step walkthrough for signing out from the ARW platform.
+
+* **[MAP](./map.md):** This page guides users to navigate the map interface and understand the various components of the map.
+
+* **[User Profile](./user-profile.md):** This page guides users to navigate their user profile and understand the various components of the profile.

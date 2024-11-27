@@ -84,34 +84,34 @@ export default function UploadedResults() {
 
             {/* Search & Action Row */}
             <Flex justify="space-between" align="center" mb={6} direction={{ base: "column", md: "row" }}>
-              {/* Filter Button */}
-              <Box width={{ base: "100%", md: "auto" }} mb={{ base: 4, md: 0 }} mr={{ md: 2 }}>
-                <Button
-                    leftIcon={<FaFilter />}
-                    colorScheme="green"
-                    variant="solid"
-                    backgroundColor="dark_green.800"
-                    _hover={{ backgroundColor: "light_green.400" }}
-                    fontWeight={700}
-                    w="auto"
-                    h={10}
-                    color="white.a700"
-                    borderRadius="0px"
-                  >
-                    Filter
-                  </Button>
-              </Box>
-
-              {/* Search Field */}
               <Box width={{ base: "100%", md: "50%" }} mb={{ base: 4, md: 0 }} ml={{ md: "0px" }}>
-                <Input
-                  placeholder="Search uploaded data"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  borderColor="gray.400"
-                  width="100%"
-                />
-              </Box>
+                  <Flex direction={{ base: "column", md: "row" }} gap={4} align="center">
+                    {/* Filter Button */}
+                    <Button
+                      leftIcon={<FaFilter />}
+                      colorScheme="green"
+                      variant="solid"
+                      backgroundColor="dark_green.800"
+                      _hover={{ backgroundColor: "light_green.400" }}
+                      fontWeight={700}
+                      w={{base: "100%",md:"auto"}}
+                      h={10}
+                      color="white.a700"
+                      borderRadius="0px"
+                    >
+                      Filter
+                    </Button>
+
+                    {/* Search Input */}
+                    <Input
+                      placeholder="Search tickets"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      borderColor="gray.400"
+                      width="100%"
+                    />
+                  </Flex>
+                </Box>
 
               {/* New Add Data Button */}
               <Box display="flex" gap={2} width={{ base: "100%", md: "auto" }} mb={{ base: 4, md: 0 }} flexDirection={{ base: "column", md: "row" }}>
