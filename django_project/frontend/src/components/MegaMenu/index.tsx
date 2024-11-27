@@ -30,6 +30,10 @@ export default function MegaMenu({ hoveredSection, isUserAvatarHovered }: MegaMe
     }
   }, []);
 
+  const handleClick = () => {
+    navigate('/about');
+  };
+
   const handleLogout = () => {
     dispatch(logoutUser());
     navigate('/');
@@ -38,9 +42,9 @@ export default function MegaMenu({ hoveredSection, isUserAvatarHovered }: MegaMe
   // Menu items based on hover
   const menuItems: Record<string, MenuItem[]> = {
     about: [
-      { label: "Africa RangeWatch", to: "#/about" },
-      { label: "Conversation", to: "#/about" },
-      { label: "Learn More", to: "#/about" },
+      { label: "Africa RangeWatch", to: "/about" },
+      { label: "Conversation", to: "/about" },
+      { label: "Learn More", to: "/about" },
     ],
     userAvatar: !isAuthenticated
       ? [{ label: "Login", to: "/login" }]
@@ -49,9 +53,15 @@ export default function MegaMenu({ hoveredSection, isUserAvatarHovered }: MegaMe
           { label: "Logout", to: "", onClick: handleLogout }
       ],
     resources: [
-      { label: "ARW Documentation", to: "/documentation" },
+      { label: "ARW Documentation", to: "/resources" },
       { label: "Resources", to: "/resources" },
     ],
+  };
+
+  const handleNavigation = (to: string | undefined) => {
+    if (to) {
+      navigate(to);
+    }
   };
 
   return (
@@ -67,14 +77,27 @@ export default function MegaMenu({ hoveredSection, isUserAvatarHovered }: MegaMe
           {/* About Section */}
           {hoveredSection === "about" && (
             <Flex gap="16px" flexDirection="column" alignItems="start">
-              <Text color="black" fontSize={{ base: "15px", sm: "18px" }} fontWeight={700}>
+              <Text 
+                color="black" 
+                fontSize={{ base: "15px", sm: "18px" }} 
+                fontWeight={700} 
+                onClick={handleClick}
+                cursor="pointer"
+              >
                 About
               </Text>
               <Flex gap="12px" flexDirection="column" alignItems="start">
                 {menuItems.about.map((item) => (
-                  <Link as={RouterLink} to={item.to} key={item.label} fontSize={{ base: "13px", sm: "medium" }}>
-                    <Text color="black" fontSize="16px" fontWeight={400}>{item.label}</Text>
-                  </Link>
+                  <Box
+                    key={item.label}
+                    onClick={() => handleNavigation(item.to)}
+                    cursor="pointer"
+                    fontSize={{ base: "13px", sm: "medium" }}
+                  >
+                    <Text color="black" fontSize="16px" fontWeight={400}>
+                      {item.label}
+                    </Text>
+                  </Box>
                 ))}
               </Flex>
             </Flex>
@@ -104,9 +127,16 @@ export default function MegaMenu({ hoveredSection, isUserAvatarHovered }: MegaMe
               </Text>
               <Flex gap="12px" flexDirection="column" alignItems="start">
                 {menuItems.resources.map((item) => (
-                  <Link as={RouterLink} to={item.to} key={item.label} fontSize={{ base: "13px", sm: "medium" }}>
-                    <Text color="black" fontSize="16px" fontWeight={400}>{item.label}</Text>
-                  </Link>
+                  <Box
+                    key={item.label}
+                    onClick={() => handleNavigation(item.to)}
+                    cursor="pointer"
+                    fontSize={{ base: "13px", sm: "medium" }}
+                  >
+                    <Text color="black" fontSize="16px" fontWeight={400}>
+                      {item.label}
+                    </Text>
+                  </Box>
                 ))}
               </Flex>
             </Flex>
