@@ -16,7 +16,7 @@ GENERATOR_CLASSES = [
 ]
 
 
-def generate_gee_layers():
+def run_generate_gee_layers():
     """Generate GEE Layers."""
     from analysis.analysis import initialize_engine_analysis
 

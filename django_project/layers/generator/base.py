@@ -61,7 +61,6 @@ class BaseLayerGenerator:
 
     def save_url_to_cache(self, key: str, url: str):
         """Save URL to cache."""
-        print(f'{key}: {url}')
         cache.set(key, url, timeout=self.DEFAULT_TIMEOUT_IN_S)
 
     def metadata_to_vis_params(self, layer: InputLayer) -> dict:

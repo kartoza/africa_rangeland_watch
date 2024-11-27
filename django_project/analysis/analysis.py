@@ -25,9 +25,14 @@ def initialize_engine_analysis():
     """
     Initializes the Earth Engine API for analysis.
     """
-    credentials = ee.ServiceAccountCredentials(
-        SERVICE_ACCOUNT,
-        SERVICE_ACCOUNT_KEY)
+    if SERVICE_ACCOUNT_KEY.startswith('{'):
+        credentials = ee.ServiceAccountCredentials(
+            SERVICE_ACCOUNT,
+            key_data=SERVICE_ACCOUNT_KEY)
+    else:
+        credentials = ee.ServiceAccountCredentials(
+            SERVICE_ACCOUNT,
+            SERVICE_ACCOUNT_KEY)
     try:
         # Initialize the Earth Engine API with the service account
         ee.Initialize(credentials)
