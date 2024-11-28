@@ -74,7 +74,7 @@ export default function SupportPage() {
 
       dispatch(fetchTickets());
   
-      if (!error) {
+      if (error == null) {
         toast({
           title: "Ticket Created",
           description: "Your support ticket has been submitted.",
