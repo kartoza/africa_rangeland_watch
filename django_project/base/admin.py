@@ -1,7 +1,10 @@
 from django.contrib import admin
 from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import Organisation, UserProfile
+from .models import Organisation, UserProfile, OrganisationInvitation
+from django.conf import settings
+from django.template.loader import render_to_string
+import json
 from django.core.mail import EmailMultiAlternatives
 
 
@@ -51,9 +54,6 @@ def approve_join_request(modeladmin, request, queryset):
                     level="error",
                 )
 
-            # Delete the invitation after processing
-            invitation.delete()
-
             modeladmin.message_user(
                 request,
                 f"Organisation '{organisation.name}' created and request "
@@ -93,20 +93,19 @@ def approve_join_request(modeladmin, request, queryset):
                     level="error",
                 )
 
-            invitation.delete()
-
             modeladmin.message_user(
                 request, "Individual has been added."
             )
             return
 
 
-@admin.register(Organisation)
-class OrganisationAdmin(admin.ModelAdmin):
-    list_display = ('name', 'created_at', 'updated_at')
-    search_fields = ('name',)
-    ordering = ('name',)
-    readonly_fields = ('created_at', 'updated_at')
+
+
+class OrganisationInvitationAdmin(admin.ModelAdmin):
+    list_display = ('email', 'request_type', 'organisation', 'inviter')
+    actions = [approve_join_request]
+    list_filter = ('organisation', 'request_type')
+    search_fields = ('email', 'organisation__name', 'inviter__username')
 
 
 class UserProfileInline(admin.StackedInline):
@@ -116,8 +115,7 @@ class UserProfileInline(admin.StackedInline):
     fk_name = "user"
     fields = (
         'organisation', 'country', 'user_type',
-        'user_role', 'is_support_staff',
-        'created_at', 'updated_at')
+        'user_role', 'created_at', 'updated_at')
     readonly_fields = ('created_at', 'updated_at')
 
 
@@ -150,3 +148,5 @@ class UserAdmin(BaseUserAdmin):
 
 admin.site.unregister(User)
 admin.site.register(User, UserAdmin)
+admin.site.unregister(OrganisationInvitation)
+admin.site.register(OrganisationInvitation, OrganisationInvitationAdmin)

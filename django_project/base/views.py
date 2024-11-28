@@ -13,9 +13,19 @@ from invitations.utils import get_invitation_model
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.contrib.auth.models import User
+from django.conf import settings
+from django.template.loader import render_to_string
 from django.core.mail import EmailMultiAlternatives
 
+
 Invitation = get_invitation_model()
+
+
+
+@login_required
+def fetch_organisations(request):
+    organisations = Organisation.objects.values("id", "name")
+    return JsonResponse(list(organisations), safe=False)
 
 
 @login_required
@@ -370,7 +380,7 @@ def accept_invite(request, invitation_id):
     try:
         user = User.objects.get(email=invitation.email)
     except User.DoesNotExist:
-        return redirect(f"{reverse('home')}/#/?register_first=true")
+        return redirect(f"{reverse('home')}?register_first=true")
 
     user_profile = UserProfile.objects.get(user=user)
 
@@ -385,4 +395,4 @@ def accept_invite(request, invitation_id):
     user_profile.organisation = invitation.organisation
     user_profile.save()
 
-    return redirect(f"{reverse('home')}/#/?invitation_accepted=true")
+    return redirect(f"{reverse('home')}?invitation_accepted=true")

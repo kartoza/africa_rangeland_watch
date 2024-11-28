@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Organisation Request</title>
+</head>
+<body style="font-family: Helvetica, sans-serif; margin: 0; padding: 0; background-color: #f4f4f4;">
+    <table align="center" width="900" style="background-color: #2f5c4a; padding: 10px;">
+        <tr>
+            <td align="left" width="50%" style="padding: 10px;">
+                <img src="https://arw.sta.do.kartoza.com/static/images/main_logo.svg" alt="Logo" width="200">
+            </td>
+            <td align="right" width="50%" style="padding: 10px; color: #ffffff;">
+                <h2>Africa Rangeland Watch</h2>
+            </td>
+        </tr>
+    </table>
+    <table align="center" width="900" style="background-color: #ffffff; padding: 20px; border: 10px solid #dddddd;">
+        <tr>
+            <td style="padding: 20px;">
+                <h2>Hello Admin,</h2>
+                <p>
+                    {{ requester.first_name }} {{ requester.last_name }} has
+                    requested to add a new organisation with the following details:
+                </p>
+                <ul>
+                    <li><strong>Name:</strong> {{ organisation.name }}</li>
+                    <li><strong>Email:</strong> {{ organisation.email }}</li>
+                    <li><strong>Industry:</strong> {{ organisation.industry }}</li>
+                </ul>
+                <p>Click below to review the request:</p>
+                <p style="text-align: center;">
+                    <a href="{{ admin_link }}" style="background-color: #FFA500; color: #ffffff; padding: 15px 50px; text-decoration: none; border-radius: 5px;">Review Request</a>
+                </p>
+                <p>
+                    If you have any questions, contact us at
+                    <a href="mailto:support@africarangelandwatch.com">
+                        support@africarangelandwatch.com
+                    </a>.
+                </p>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

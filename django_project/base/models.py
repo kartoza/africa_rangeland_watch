@@ -35,14 +35,33 @@ class Organisation(models.Model):
 
 
 class OrganisationInvitation(Invitation):
+    REQUEST_TYPE_CHOICES = [
+        ('add_organisation', 'Add Organisation'),
+        ('join_organisation', 'Join Organisation'),
+    ]
     organisation = models.ForeignKey(
         Organisation,
         on_delete=models.CASCADE,
-        related_name="custom_invitations"
+        related_name="custom_invitations",
+        null=True,
+        blank=True,
+    )
+    request_type = models.CharField(
+        max_length=20,
+        choices=REQUEST_TYPE_CHOICES,
+        default='add_organisation',
+    )
+    metadata = models.TextField(
+        null=True,
+        blank=True,
+        help_text="Additional metadata for the request (JSON format).",
     )
 
     def __str__(self):
-        return f"Invitation for {self.email} to join {self.organisation.name}"
+        if self.organisation:
+            return f"Invitation for {self.email} to join {
+                self.organisation.name}"
+        return f"Invitation for {self.email}, organisation not yet created"
 
     def save(self, *args, **kwargs):
         # Ensure a unique key is generated if missing
@@ -178,6 +197,7 @@ def create_user_profile(sender, instance, created, **kwargs):
             user_profile.organisation = organisation
             user_profile.save()
 
+            # Mark invitation as accepted
             invitation.accepted = True
             invitation.save()
 
