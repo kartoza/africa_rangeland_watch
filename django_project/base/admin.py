@@ -108,6 +108,14 @@ class OrganisationInvitationAdmin(admin.ModelAdmin):
     search_fields = ('email', 'organisation__name', 'inviter__username')
 
 
+@admin.register(Organisation)
+class OrganisationAdmin(admin.ModelAdmin):
+    list_display = ('name', 'created_at', 'updated_at')
+    search_fields = ('name',)
+    ordering = ('name',)
+    readonly_fields = ('created_at', 'updated_at')
+
+
 class UserProfileInline(admin.StackedInline):
     model = UserProfile
     can_delete = False
