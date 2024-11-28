@@ -61,6 +61,14 @@ export const MapLibre = forwardRef(
         }
       }
     }
+  
+    const doRemoveLayer = (layer: Layer) => {
+      if (map) {
+        const ID = `layer-${layer.id}`
+        removeLayer(map, ID)
+        legendRef?.current?.removeLayer(layer)
+      }
+    }
 
     //  Fetch the data here
     useEffect(() => {
@@ -76,11 +84,7 @@ export const MapLibre = forwardRef(
       },
       /** Hide layer */
       removeLayer(layer: Layer) {
-        if (map) {
-          const ID = `layer-${layer.id}`
-          removeLayer(map, ID)
-          legendRef?.current?.removeLayer(layer)
-        }
+        doRemoveLayer(layer)
       }
     }));
 
@@ -128,9 +132,7 @@ export const MapLibre = forwardRef(
       if (!selectedLandscape) {
         if (selectedNrt) {
           // remove previous NRT layer
-          const ID = `layer-${selectedNrt.id}`
-          removeSource(map, ID)
-          legendRef?.current?.removeLayer(selectedNrt)
+          doRemoveLayer(selectedNrt)
           dispatch(setSelectedNrtLayer(null))
         }
         return;
