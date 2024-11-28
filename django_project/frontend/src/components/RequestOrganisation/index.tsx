@@ -29,6 +29,18 @@ interface Props {
 
 type ModalPosition = "absolute" | "fixed";
 
+const setCSRFToken = () => {
+  const csrfToken = document.cookie
+    .split(";")
+    .find((cookie) => cookie.trim().startsWith("csrftoken="));
+  if (csrfToken) {
+    const token = csrfToken.split("=")[1];
+    axios.defaults.headers.common["X-CSRFToken"] = token;
+  } else {
+    console.warn("CSRF token not found.");
+  }
+};
+
 export default function RequestOrganisation({ isOpen, onClose }: Props) {
   const modalPosition = useBreakpointValue<ModalPosition>({
     base: "absolute",
@@ -61,6 +73,7 @@ export default function RequestOrganisation({ isOpen, onClose }: Props) {
   }, [action]);
 
   const handleSubmit = () => {
+    setCSRFToken();
     const data =
       action === "join"
         ? { firstName, lastName, selectedOrganisationId }
