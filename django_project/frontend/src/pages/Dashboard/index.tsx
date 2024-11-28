@@ -206,7 +206,7 @@ const DashboardPage: React.FC = () => {
           </SimpleGrid>
 
         {data.length > 0 && (
-          <Flex justifyContent="center">
+          <Flex justifyContent="center" mb={5}>
               <Pagination
                   currentPage={currentPage}
                   totalPages={totalPages}
