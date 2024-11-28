@@ -48,9 +48,6 @@ def approve_join_request(modeladmin, request, queryset):
                 recipient_list=[invitation.inviter.email],
             )
 
-            # Delete the invitation after processing
-            invitation.delete()
-
             modeladmin.message_user(
                 request,
                 f"Organisation '{organisation.name}' "
@@ -83,8 +80,6 @@ def approve_join_request(modeladmin, request, queryset):
                 from_email=settings.NO_REPLY_EMAIL,
                 recipient_list=[invitation.inviter.email],
             )
-
-            invitation.delete()
 
             modeladmin.message_user(
                 request,
