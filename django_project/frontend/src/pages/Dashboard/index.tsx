@@ -75,7 +75,7 @@ const DashboardPage: React.FC = () => {
   };
 
   return (
-    <><Box width="100%" height="100vh">
+    <><Box width="100%" height={{base: "auto", md:"100vh"}}>
           <Helmet>
               <title>Dashboard | Africa Rangeland Watch | Sustainable Management</title>
               <meta name="description" content="dashboard data." />
@@ -203,16 +203,15 @@ const DashboardPage: React.FC = () => {
                       ))
                       
               )}
+            {data.length > 11 && (
+                <Flex mr={50}>
+                    <Pagination
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        handlePageChange={handlePageChange} />
+                </Flex>
+                )}
           </SimpleGrid>
-
-        {data.length > 11 && (
-          <Flex justifyContent="center">
-              <Pagination
-                  currentPage={currentPage}
-                  totalPages={totalPages}
-                  handlePageChange={handlePageChange} />
-          </Flex>
-        )}
 
 
 
