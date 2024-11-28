@@ -40,6 +40,12 @@ export default function Header(props: any) {
     const isDashboard = location.pathname === '/dashboard';
     const isProfile = location.pathname === '/profile';
 
+    const handleNavigation = (to: string | undefined) => {
+        if (to) {
+          navigate(to);
+        }
+      };
+
     return (
         <>
             {/* Header Section */}
@@ -82,7 +88,7 @@ export default function Header(props: any) {
                     </ListItem>
                     <ListItem>
                         <Link
-                            href="/dashboard"
+                            onClick={() => handleNavigation('/dashboard')}
                             _hover={{ textDecoration: 'underline', textDecorationColor: 'white' }}
                             _focus={{ textDecoration: 'underline', textDecorationColor: 'white' }}
                             style={{ textDecoration: isDashboard ? 'underline' : 'none', textDecorationColor: 'white' }}
