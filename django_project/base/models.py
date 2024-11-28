@@ -8,6 +8,7 @@ from django.template.loader import render_to_string
 from django.conf import settings
 from django.urls import reverse
 import uuid
+from django.core.mail import EmailMultiAlternatives
 
 
 class Organisation(models.Model):
@@ -66,21 +67,27 @@ class OrganisationInvitation(Invitation):
             "inviter": self.inviter,
             "organisation": self.organisation,
             "accept_url": self.get_invite_url(request),
-            "django_backend_url": settings.DJANGO_BACKEND_URL
+            "django_backend_url": settings.DJANGO_BACKEND_URL,
         }
 
         subject = f"You've been invited to join {self.organisation.name}!"
         email_body = render_to_string(
-            "invitation_to_join_organization.html",
-            context
+            "invitation_to_join_organization.html", context
         )
 
-        send_mail(
-            subject=subject,
-            message=email_body,
-            from_email=settings.NO_REPLY_EMAIL,
-            recipient_list=[self.email]
-        )
+        try:
+            email = EmailMultiAlternatives(
+                subject=subject,
+                body="",
+                from_email=settings.NO_REPLY_EMAIL,
+                to=[self.email],
+            )
+            email.attach_alternative(email_body, "text/html")
+            email.send()
+        except Exception as e:
+            raise Exception(
+                f"Failed to send email to {self.email}: {str(e)}"
+            )
 
 
 
