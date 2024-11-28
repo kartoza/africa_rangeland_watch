@@ -82,7 +82,7 @@ export default function Header(props: any) {
                     </ListItem>
                     <ListItem>
                         <Link
-                            href="/dashboard"
+                            href="#/dashboard"
                             _hover={{ textDecoration: 'underline', textDecorationColor: 'white' }}
                             _focus={{ textDecoration: 'underline', textDecorationColor: 'white' }}
                             style={{ textDecoration: isDashboard ? 'underline' : 'none', textDecorationColor: 'white' }}
