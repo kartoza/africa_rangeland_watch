@@ -15,6 +15,7 @@ export interface Layer {
     maxValue: number;
     unit?: string;
     colors: string[];
+    opacity: number;
   } 
 }
   
