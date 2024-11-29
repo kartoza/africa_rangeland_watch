@@ -3,8 +3,6 @@ from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework import status
-from django.core.mail import send_mail
-from django.contrib.sites.shortcuts import get_current_site
 from django.utils.http import (
     urlsafe_base64_encode,
     urlsafe_base64_decode
@@ -20,6 +18,7 @@ from django.core.exceptions import ValidationError
 from django.core.validators import EmailValidator
 from django.contrib.auth.password_validation import validate_password
 from rest_framework.throttling import AnonRateThrottle
+from django.core.mail import EmailMultiAlternatives
 
 
 
@@ -28,7 +27,6 @@ class CheckTokenView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        """Get request for check token."""
         user = request.user
         return Response({
             "message": "Token is valid",
@@ -92,16 +90,27 @@ class CustomRegistrationView(APIView):
             token = default_token_generator.make_token(user)
             uid = urlsafe_base64_encode(str(user.pk).encode())
             activation_link = f"{
-                get_current_site(request).domain}/auth/activate/{uid}/{token}/"
+                settings.DJANGO_BACKEND_URL}/auth/activate/{uid}/{token}/"
 
             # Send email with activation link
             subject = "Activate Your Account"
-            message = render_to_string('account/email_confirmation.html', {
-                'user': user,
-                'activation_url': activation_link,
-                'django_backend_url': settings.DJANGO_BACKEND_URL,
-            })
-            send_mail(subject, message, settings.NO_REPLY_EMAIL, [email])
+            html_message = render_to_string(
+                'account/email_confirmation.html',
+                {
+                    'user': user,
+                    'activation_url': activation_link,
+                    'django_backend_url': settings.DJANGO_BACKEND_URL,
+                }
+            )
+
+            email_message = EmailMultiAlternatives(
+                subject=subject,
+                body="Please activate your account using the link below.",
+                from_email=settings.NO_REPLY_EMAIL,
+                to=[email]
+            )
+            email_message.attach_alternative(html_message, "text/html")
+            email_message.send()
 
             return Response(
                 {'message': 'Verification email sent.'},
@@ -109,11 +118,11 @@ class CustomRegistrationView(APIView):
             )
 
         except Exception as e:
-            # Catch unexpected errors and return details to the frontend
             return Response(
                 {'error': str(e), 'details': 'An unexpected error occurred.'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
 
 
 
@@ -180,23 +189,32 @@ class ForgotPasswordView(APIView):
         uid = urlsafe_base64_encode(str(user.pk).encode())
 
         reset_password_link = (
-            f"{get_current_site(request).domain}/auth/password-reset/"
+            f"{settings.DJANGO_BACKEND_URL}/auth/password-reset/"
             f"{uid}/{token}/"
         )
 
         # Send the password reset email
         subject = "Password Reset"
-        message = render_to_string('account/password_reset_email.html', {
+        html_message = render_to_string('account/password_reset_email.html', {
             'user': user,
             'reset_password_url': reset_password_link,
             'django_backend_url': settings.DJANGO_BACKEND_URL,
         })
-        send_mail(subject, message, settings.NO_REPLY_EMAIL, [email])
+
+        email_message = EmailMultiAlternatives(
+            subject=subject,
+            body="Please reset your password using the link below.",
+            from_email=settings.NO_REPLY_EMAIL,
+            to=[email]
+        )
+        email_message.attach_alternative(html_message, "text/html")
+        email_message.send()
 
         return Response(
             {'message': 'Password reset link sent to your email.'},
             status=status.HTTP_200_OK
         )
+
 
 
 

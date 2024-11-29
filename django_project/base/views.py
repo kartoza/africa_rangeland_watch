@@ -13,9 +13,9 @@ from invitations.utils import get_invitation_model
 from django.shortcuts import redirect
 from django.urls import reverse
 from django.contrib.auth.models import User
-from django.core.mail import send_mail
 from django.conf import settings
 from django.template.loader import render_to_string
+from django.core.mail import EmailMultiAlternatives
 
 
 Invitation = get_invitation_model()
@@ -39,75 +39,69 @@ def join_organisation(request):
     try:
         # Convert the selectedOrganisationId to an integer
         selected_org_id = int(data["selectedOrganisationId"])
-
-        # Attempt to get the Organisation by ID
         selected_org = Organisation.objects.get(id=selected_org_id)
     except ValueError:
         return JsonResponse(
-            {"error": "Invalid organisation ID format."},
-            status=400
+            {"error": "Invalid organisation ID format."}, status=400
         )
     except Organisation.DoesNotExist:
         return JsonResponse(
-            {"error": "Organisation does not exist."},
-            status=400
+            {"error": "Organisation does not exist."}, status=400
         )
 
     # Find a manager of the selected organisation
     try:
         manager_profile = UserProfile.objects.get(
-            organisation=selected_org,
-            user_type="organisation_manager"
+            organisation=selected_org, user_type="organisation_manager"
         )
         manager_user = manager_profile.user
     except UserProfile.DoesNotExist:
         return JsonResponse(
-            {"error": "No manager found for this organisation."},
-            status=400
+            {"error": "No manager found for this organisation."}, status=400
         )
 
     # Manager's email
     manager_email = manager_user.email
 
-    link = f"{settings.DJANGO_BACKEND_URL}admin/base/organisationinvitation/" \
-           f"{selected_org.id}/change/"
-
-    # Render the email content
+    # Email content rendering
+    link = (
+        f"{settings.DJANGO_BACKEND_URL}/admin/base/organisationinvitation/"
+        f"{selected_org.id}/change/"
+    )
     email_body = render_to_string(
         "join_organization_request.html",
         {
             "user": request.user,
             "organisation": selected_org.name,
-            "link": link
+            "link": link,
         },
     )
 
     # Send the email to the manager
     try:
-        send_mail(
+        email = EmailMultiAlternatives(
             subject="Request to join organisation",
-            message=email_body,
+            body="",  # Empty plain text content
             from_email=settings.NO_REPLY_EMAIL,
-            recipient_list=[manager_email],
+            to=[manager_email],
         )
+        email.attach_alternative(email_body, "text/html")
+        email.send()
     except Exception as e:
         return JsonResponse(
-            {"error": f"Failed to send email: {str(e)}"},
-            status=500
+            {"error": f"Failed to send email: {str(e)}"}, status=500
         )
 
-    # Create an OrganisationInvitation object for tracking the request
     try:
         OrganisationInvitation.objects.create(
             inviter=request.user,
             email=request.user.email,
             organisation=selected_org,
-            request_type="join_organisation"
+            request_type="join_organisation",
         )
     except Exception as e:
         return JsonResponse(
-            {"error": f"Failed to create invitation: {str(e)}"},
-            status=500
+            {"error": f"Failed to create invitation: {str(e)}"}, status=500
         )
 
     return JsonResponse({"message": "Request sent successfully!"})
@@ -122,6 +116,7 @@ def add_organisation(request):
     """
     data = json.loads(request.body)
 
+    # Create the organisation invitation
     OrganisationInvitation.objects.create(
         inviter=request.user,
         email=data.get("organisationEmail", ""),
@@ -165,14 +160,15 @@ def add_organisation(request):
         },
     )
 
-    # Send the email
-    send_mail(
+    # Prepare and send the email
+    email = EmailMultiAlternatives(
         subject="New Organisation Request",
-        message="",
-        html_message=email_body,
+        body="",
         from_email=settings.NO_REPLY_EMAIL,
-        recipient_list=[admin_email],
+        to=[admin_email],
     )
+    email.attach_alternative(email_body, "text/html")
+    email.send()
 
     return JsonResponse({"message": "Request sent successfully!"})
 
