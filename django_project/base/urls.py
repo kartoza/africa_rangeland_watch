@@ -22,4 +22,19 @@ urlpatterns = [
         views.accept_invite,
         name='organisation-invite-accept'
     ),
+    path(
+        'api/join-organization/',
+        views.join_organisation,
+        name='join_organization'
+    ),
+    path(
+        'api/add-organization/',
+        views.add_organisation,
+        name='add_organization'
+    ),
+    path(
+        'api/fetch-organizations/',
+        views.fetch_organisations,
+        name='fetch_organization'
+    ),
 ]
