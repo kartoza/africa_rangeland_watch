@@ -91,6 +91,8 @@ class UploadLayerAPI(APIView):
         return Response(
             status=200,
             data={
-                'id': str(layer.unique_id)
+                'id': str(layer.unique_id),
+                'layer_id': str(layer.id),
+                'upload_id': str(instance.id)
             }
         )
