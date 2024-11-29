@@ -1,5 +1,6 @@
 import datetime
 import time
+import base64
 
 import ee
 import os
@@ -25,14 +26,15 @@ def initialize_engine_analysis():
     """
     Initializes the Earth Engine API for analysis.
     """
-    if SERVICE_ACCOUNT_KEY.startswith('{'):
-        credentials = ee.ServiceAccountCredentials(
-            SERVICE_ACCOUNT,
-            key_data=SERVICE_ACCOUNT_KEY)
-    else:
+    if os.path.exists(SERVICE_ACCOUNT_KEY):
         credentials = ee.ServiceAccountCredentials(
             SERVICE_ACCOUNT,
             SERVICE_ACCOUNT_KEY)
+    else:
+        credentials = ee.ServiceAccountCredentials(
+            SERVICE_ACCOUNT,
+            key_data=base64.b64decode(SERVICE_ACCOUNT_KEY).decode('utf-8')
+        )
     try:
         # Initialize the Earth Engine API with the service account
         ee.Initialize(credentials)
