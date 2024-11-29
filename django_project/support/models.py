@@ -1,10 +1,10 @@
 from django.db import models
 from django.contrib.auth.models import User
-from django.core.mail import send_mail
 from django.utils import timezone
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.core.exceptions import ValidationError
+from django.core.mail import EmailMultiAlternatives
 
 from alerts.models import AlertSetting, Indicator
 import logging
@@ -128,25 +128,28 @@ class Ticket(models.Model):
             'django_backend_url': settings.DJANGO_BACKEND_URL,
         }
         html_message = render_to_string(
-            'new_ticket_notification.html', context
+            'new_ticket_notification.html',
+            context
         )
         support_staff_emails = get_support_staff_emails()
 
+        if not support_staff_emails:
+            logger.warning("No support staff found to send the email.")
 
+        email = EmailMultiAlternatives(
+            subject=subject,
+            body="",
+            from_email=settings.NO_REPLY_EMAIL,
+            to=support_staff_emails,
+        )
+        email.attach_alternative(html_message, "text/html")
         try:
-            send_mail(
-                subject,
-                '',
-                settings.NO_REPLY_EMAIL,
-                support_staff_emails,
-                html_message=html_message
-            )
+            email.send()
         except Exception as e:
             logger.error(
-                f"Failed to send ticket submission email for ticket {self.id}:"
-                f"{e}"
+                f"Failed to send ticket submission email for ticket"
+                f"{self.id}: {e}"
             )
-
 
     def send_status_update_email(self):
         """Email the user when the status of their ticket is updated."""
@@ -157,34 +160,28 @@ class Ticket(models.Model):
             'pending': 'Ticket Pending',
         }
 
-        subject = (
-            f"{status_titles.get(self.status, 'Ticket Update')}: "
-            f"{self.title}"
-        )
-
-
+        subject = f"{
+            status_titles.get(self.status, 'Ticket Update')
+        }: {self.title}"
         context = {
             'title': subject,
             'ticket': self,
             'django_backend_url': settings.DJANGO_BACKEND_URL,
         }
+        html_message = render_to_string('ticket_status_update.html', context)
 
-        html_message = render_to_string(
-            'ticket_status_update.html', context
+        email = EmailMultiAlternatives(
+            subject=subject,
+            body="",  # No plain text content
+            from_email=settings.NO_REPLY_EMAIL,
+            to=[self.email],
         )
-
+        email.attach_alternative(html_message, "text/html")
         try:
-            send_mail(
-                subject,
-                '',
-                settings.NO_REPLY_EMAIL,
-                [self.email],
-                html_message=html_message
-            )
+            email.send()
         except Exception as e:
             logger.error(
-                f"Failed to send ticket submission email for ticket {self.id}:"
-                f"{e}"
+                f"Failed to send status update email for ticket {self.id}: {e}"
             )
 
     def send_ticket_details_email(self):
@@ -194,27 +191,25 @@ class Ticket(models.Model):
             'ticket': self,
             'django_backend_url': settings.DJANGO_BACKEND_URL,
         }
-        html_message = render_to_string(
-            'ticket_details.html', context
-        )
+        html_message = render_to_string('ticket_details.html', context)
 
+        email = EmailMultiAlternatives(
+            subject=subject,
+            body="",  # No plain text content
+            from_email=settings.NO_REPLY_EMAIL,
+            to=[self.email],
+        )
+        email.attach_alternative(html_message, "text/html")
         try:
-            send_mail(
-                subject,
-                '',
-                settings.NO_REPLY_EMAIL,
-                [self.email],
-                html_message=html_message
-            )
+            email.send()
         except Exception as e:
             logger.error(
-                f"Failed to send ticket submission email for ticket {self.id}:"
-                f"{e}"
+                f"Failed to send ticket details email for ticket"
+                f"{self.id}: {e}"
             )
 
     def send_alert_email(self):
         """Send an email when a ticket is associated with an alert."""
-
         if self.alert_setting and self.alert_setting.email_alert:
             subject = f"Alert: {self.title}"
             context = {
@@ -226,13 +221,15 @@ class Ticket(models.Model):
                 context
             )
 
+            email = EmailMultiAlternatives(
+                subject=subject,
+                body="",  # No plain text content
+                from_email=settings.NO_REPLY_EMAIL,
+                to=[self.email],
+            )
+            email.attach_alternative(html_message, "text/html")
             try:
-                send_mail(
-                    subject, '',
-                    settings.NO_REPLY_EMAIL,
-                    [self.email],
-                    html_message=html_message
-                )
+                email.send()
             except Exception as e:
                 logger.error(
                     f"Failed to send alert email for ticket {self.id}: {e}"

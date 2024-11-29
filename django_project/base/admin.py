@@ -2,10 +2,10 @@ from django.contrib import admin
 from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from .models import Organisation, UserProfile, OrganisationInvitation
-from django.core.mail import send_mail
 from django.conf import settings
 from django.template.loader import render_to_string
 import json
+from django.core.mail import EmailMultiAlternatives
 
 
 @admin.action(description="Approve selected join/add requests")
@@ -20,9 +20,7 @@ def approve_join_request(modeladmin, request, queryset):
             metadata = json.loads(invitation.metadata or "{}")
             organisation_name = metadata.get("organisationName", "")
 
-            organisation = Organisation.objects.create(
-                name=organisation_name
-            )
+            organisation = Organisation.objects.create(name=organisation_name)
 
             # Assign the inviter as the organisation manager
             profile = invitation.inviter.profile
@@ -32,7 +30,7 @@ def approve_join_request(modeladmin, request, queryset):
 
             # Notify the inviter
             email_body = render_to_string(
-                "organisation_manager_notification.html",
+                "organization_manager_notification.html",
                 {
                     "user": invitation.inviter,
                     "organisation": organisation,
@@ -40,20 +38,27 @@ def approve_join_request(modeladmin, request, queryset):
                     "platform_url": settings.DJANGO_BACKEND_URL,
                 },
             )
-            send_mail(
-                subject="Your Role as Organisation Manager",
-                message="",
-                html_message=email_body,
-                from_email=settings.NO_REPLY_EMAIL,
-                recipient_list=[invitation.inviter.email],
-            )
+            try:
+                email = EmailMultiAlternatives(
+                    subject="Your Role as Organisation Manager",
+                    body="",  # Plain text content (empty)
+                    from_email=settings.NO_REPLY_EMAIL,
+                    to=[invitation.inviter.email],
+                )
+                email.attach_alternative(email_body, "text/html")
+                email.send()
+            except Exception as e:
+                modeladmin.message_user(
+                    request,
+                    f"Failed to send email: {str(e)}",
+                    level="error",
+                )
 
             modeladmin.message_user(
                 request,
-                f"Organisation '{organisation.name}' "
-                "created and request approved.",
+                f"Organisation '{organisation.name}' created and request "
+                "approved.",
             )
-
             return
 
         elif invitation.request_type == "join_organisation":
@@ -70,23 +75,29 @@ def approve_join_request(modeladmin, request, queryset):
                     "user": invitation.inviter,
                     "organisation": organisation,
                     "link": settings.DJANGO_BACKEND_URL,
-                }
+                },
             )
-
-            send_mail(
-                subject="Your join request has been approved",
-                message="",
-                html_message=email_body,
-                from_email=settings.NO_REPLY_EMAIL,
-                recipient_list=[invitation.inviter.email],
-            )
+            try:
+                email = EmailMultiAlternatives(
+                    subject="Your join request has been approved",
+                    body="",  # Plain text content (empty)
+                    from_email=settings.NO_REPLY_EMAIL,
+                    to=[invitation.inviter.email],
+                )
+                email.attach_alternative(email_body, "text/html")
+                email.send()
+            except Exception as e:
+                modeladmin.message_user(
+                    request,
+                    f"Failed to send email: {str(e)}",
+                    level="error",
+                )
 
             modeladmin.message_user(
-                request,
-                "Individual has been added."
+                request, "Individual has been added."
             )
-
             return
+
 
 
 
@@ -112,8 +123,7 @@ class UserProfileInline(admin.StackedInline):
     fk_name = "user"
     fields = (
         'organisation', 'country', 'user_type',
-        'user_role', 'is_support_staff',
-        'created_at', 'updated_at')
+        'user_role', 'created_at', 'updated_at')
     readonly_fields = ('created_at', 'updated_at')
 
 
