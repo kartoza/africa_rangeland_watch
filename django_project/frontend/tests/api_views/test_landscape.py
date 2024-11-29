@@ -35,6 +35,6 @@ class LandscapeAPITest(BaseAPIViewTest):
         item = response.data[0]
         self._assert_keys_in_dict(
             item,
-            ['name', 'bbox', 'zoom']
+            ['name', 'bbox', 'zoom', 'urls']
         )
         self.assertEqual(len(item['bbox']), 4)

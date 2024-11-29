@@ -9,6 +9,9 @@ export interface Landscape {
   name: string;
   bbox: number[];
   zoom: number;
+  urls: {
+    [key: string]: string;
+  };
 }
   
 interface LandscapeState extends DataState {

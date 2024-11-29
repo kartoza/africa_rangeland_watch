@@ -3,6 +3,7 @@ from __future__ import absolute_import, unicode_literals
 
 import os
 from celery import Celery
+from celery.schedules import crontab
 
 # set the default Django settings module for the 'celery' program.
 # this is also used in manage.py
@@ -29,3 +30,12 @@ app.conf.broker_url = BASE_REDIS_URL
 
 # this allows you to schedule items in the Django admin.
 app.conf.beat_scheduler = 'django_celery_beat.schedulers.DatabaseScheduler'
+
+# Task cron job schedules
+app.conf.beat_schedule = {
+    'generate-baseline-nrt-layers': {
+        'task': 'generate_baseline_nrt_layers',
+        # Run everyday at 00:00 UTC
+        'schedule': crontab(minute='00', hour='00'),
+    },
+}
