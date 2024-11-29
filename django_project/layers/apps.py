@@ -8,6 +8,7 @@ class LayersConfig(AppConfig):
 
     def ready(self):
         """Disable LayerUpload post_save signal."""
+        from layers.tasks import generate_baseline_nrt_layers  # noqa
         from cloud_native_gis.models.layer_upload import (
             LayerUpload,
             run_layer_upload

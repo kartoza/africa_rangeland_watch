@@ -25,9 +25,14 @@ def initialize_engine_analysis():
     """
     Initializes the Earth Engine API for analysis.
     """
-    credentials = ee.ServiceAccountCredentials(
-        SERVICE_ACCOUNT,
-        SERVICE_ACCOUNT_KEY)
+    if SERVICE_ACCOUNT_KEY.startswith('{'):
+        credentials = ee.ServiceAccountCredentials(
+            SERVICE_ACCOUNT,
+            key_data=SERVICE_ACCOUNT_KEY)
+    else:
+        credentials = ee.ServiceAccountCredentials(
+            SERVICE_ACCOUNT,
+            SERVICE_ACCOUNT_KEY)
     try:
         # Initialize the Earth Engine API with the service account
         ee.Initialize(credentials)
@@ -300,7 +305,7 @@ def get_sent_quarterly(aoi):
     return sent_quarterly
 
 
-def train_bgt(aoi):
+def train_bgt(aoi, training_path = TRAINING_DATA_ASSET_PATH):
     """
     Trains a Random Forest classifier to estimate
      bare ground, tree, and grass cover fractions.
@@ -309,6 +314,8 @@ def train_bgt(aoi):
     ----------
     aoi : ee.Geometry
         The area of interest over which to filter the training data.
+    training_path : str
+        The training data asset path. Default to TRAINING_DATA_ASSET_PATH.
 
     Returns
     -------
@@ -329,7 +336,7 @@ def train_bgt(aoi):
     >>> # Train the classifier
     >>> classifier = train_bgt(aoi)
     """
-    training_testing_master = ee.FeatureCollection(TRAINING_DATA_ASSET_PATH)
+    training_testing_master = ee.FeatureCollection(training_path)
     training_testing = training_testing_master.filterBounds(aoi)
     classifier = ee.Classifier.smileRandomForest(100).train(
         features=training_testing,

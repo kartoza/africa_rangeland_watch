@@ -7,7 +7,9 @@ import {
   AccordionPanel,
   Box
 } from "@chakra-ui/react";
-import { Layer } from '../../../../store/layerSlice';
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "../../../../store";
+import { Layer, setSelectedNrtLayer } from '../../../../store/layerSlice';
 import { Landscape } from '../../../../store/landscapeSlice';
 import { GroupName } from "../../DataTypes";
 import LayerCheckbox from "./LayerCheckbox";
@@ -29,6 +31,18 @@ export interface Props extends LayerCheckboxProps {
 export default function Layers(
   { landscapes, layers, onLayerChecked, onLayerUnchecked }: Props
 ) {
+  const dispatch = useDispatch<AppDispatch>();
+  const { selected: selectedLandscape } = useSelector((state: RootState) => state.landscape);
+
+  const handleNrtLayerChecked = (layer: Layer) => {
+    let _copyLayer = {...layer}
+    if (selectedLandscape && selectedLandscape.urls[layer.id] !== undefined) {
+      _copyLayer.url = selectedLandscape.urls[layer.id]
+    }
+    dispatch(setSelectedNrtLayer(layer))
+    onLayerChecked(_copyLayer)
+  }
+
   return (
     <Accordion allowMultiple defaultIndex={[0, 1]}>
       <AccordionItem>
@@ -80,17 +94,18 @@ export default function Layers(
             <LandscapeSelector landscapes={landscapes}/>
           </Box>
           {
-            layers ?
+            layers && selectedLandscape ?
               layers?.filter(
                 layer => layer.group === GroupName.NearRealtimeGroup
               ).map(
                 layer => <LayerCheckbox
                   key={layer.id}
                   layer={layer}
-                  onToggle={(checked) => checked ? onLayerChecked(layer) : onLayerUnchecked(layer)}
+                  onToggle={(checked) => checked ? handleNrtLayerChecked(layer) : onLayerUnchecked(layer)}
                 />
-              ) :
-              <LeftSideLoading/>
+              ) : (
+                layers ? null : <LeftSideLoading/>
+              )
           }
         </AccordionPanel>
       </AccordionItem>

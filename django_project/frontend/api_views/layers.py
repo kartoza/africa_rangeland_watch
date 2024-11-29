@@ -6,7 +6,7 @@ Africa Rangeland Watch (ARW).
 """
 
 from django.core.files.storage import FileSystemStorage
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from cloud_native_gis.models import Layer, LayerUpload
@@ -19,14 +19,12 @@ from frontend.tasks import import_layer, detect_file_type_by_extension
 class LayerAPI(APIView):
     """API to return list of Layer."""
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get(self, request, *args, **kwargs):
         """Fetch list of Layer."""
         layers = InputLayer.objects.exclude(
             group__name='user-defined'
-        ).exclude(
-            url__isnull=True
         )
         if self.request.user.is_authenticated:
             layers = layers.union(

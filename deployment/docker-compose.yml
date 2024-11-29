@@ -25,6 +25,9 @@ x-common-django:
     - SENTRY_ENVIRONMENT=${SENTRY_ENVIRONMENT:-production}
     - SENTRY_DSN=${SENTRY_DSN:-}
     - DJANGO_BACKEND_URL=${DJANGO_BACKEND_URL:-}
+    # GEE
+    - SERVICE_ACCOUNT_KEY=${SERVICE_ACCOUNT_KEY:-}
+    - SERVICE_ACCOUNT=${SERVICE_ACCOUNT:-}
 
     # Email where alters should be sent. This will be used by let's encrypt and as the django admin email.
     - ADMIN_USERNAME=${ADMIN_USERNAME:-admin}
@@ -91,7 +94,7 @@ services:
   worker:
     <<: *default-common-django
     entrypoint: []
-    command: 'celery -A core worker -l info'
+    command: 'celery -A core worker --beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler'
     links:
       - redis
 

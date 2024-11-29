@@ -79,7 +79,7 @@ license: This program is free software; you can redistribute it and/or modify it
 
         **3. Spatial:** After selecting this option, the user can choose the desired variable, select a polygon from the map, and proceed to run the analysis.
 
-        [![Spatial Type Variable](./img/manual-map-img-10.png)](./img/landing-page-img-10.png)
+        [![Spatial Type Variable](./img/manual-map-img-10.png)](./img/manual-map-img-10.png)
 
         **4. BACI:** BACI (Before-After-Control-Impact) evaluates land management effects by comparing changes over time between impacted and control areas.
 
@@ -87,13 +87,13 @@ license: This program is free software; you can redistribute it and/or modify it
 
         **6. Reset From:** This option allows users to reset the analysis to its default state.
 
-    **3. [![Menu Icon](./img/manual-map-img-11.png)](./img/landing-page-img-11.png):** This button allows user to hide the left menu.
+    **3. [![Menu Icon](./img/manual-map-img-11.png)](./img/manual-map-img-11.png):** This button allows user to hide the left menu.
 
-    [![Map](./img/manual-map-img-12.png)](./img/landing-page-img-12.png)
+    [![Map](./img/manual-map-img-12.png)](./img/manual-map-img-12.png)
 
     **4. ➕ and ➖ buttons:** These buttons allow users to zoom in and out of the map.
 
-    [![Zooming Buttons](./img/manual-map-img-12.png)](./img/landing-page-img-12.png)
+    [![Zooming Buttons](./img/manual-map-img-13.png)](./img/manual-map-img-13.png)
 
 
             

@@ -6,6 +6,7 @@ Africa Rangeland Watch (ARW).
 """
 
 from rest_framework import serializers
+from django.core.cache import cache
 from cloud_native_gis.models import Layer, Style
 
 from layers.models import InputLayer
@@ -18,6 +19,7 @@ class LayerSerializer(serializers.ModelSerializer):
     type = serializers.CharField(source='layer_type')
     group = serializers.SerializerMethodField()
     style = serializers.SerializerMethodField()
+    url = serializers.SerializerMethodField()
 
     def get_group(self, obj: InputLayer):
         """Get group name."""
@@ -37,6 +39,14 @@ class LayerSerializer(serializers.ModelSerializer):
             return None
 
         return style.style
+
+    def get_url(self, obj: InputLayer):
+        """Get tile url."""
+        if obj.group.name not in ['baseline', 'near-real-time']:
+            return obj.url
+
+        # get from cache
+        return cache.get(f'{str(obj.uuid)}', '')
 
     class Meta:  # noqa
         model = InputLayer
