@@ -21,7 +21,7 @@ context_id: 09820vctyusuytr4hcdty
 
 1. **Site Admin:** The site administrator, with full access to the Django backend and the system, adds the organisation manager to the system.
 
-2. **Email Invitation:** The site admin sends an invitation email to the organisation manager with a registration link to register on the system as an organisation manager.
+2. **Email Invitation:** The system generates an invitation email and sends it to the organisation manager with a registration link to register on the system as an organisation manager.
 
 3. **Organisation Manager Receives Email:** The organisation manager receives an email and can use the provided link to register on the organisation.
 
@@ -47,7 +47,7 @@ context_id: 09820vctyusuytr4hcdty
 
     1. **Select an existing organisation:** The user selects an organisation from the list of known organisations and submits the form.
 
-    2. **Organisation Manager Approval:** The organisation manager receives a notification and approve the user's request to add user to the organisation.
+    2. **Organisation Manager Approval:** The organisation manager receives a notification and approve the user's request to join user to the organisation.
 
     2. **Verification email:** After approval, user receives a verification email from the organisation manager.
 
@@ -61,11 +61,11 @@ context_id: 09820vctyusuytr4hcdty
 
     ##### Admin actions
 
-    1. **Site Admin:** The site administrator, with full access to the Django backend, adds the organisation to the system and designates the requested user as the organisation manager.
+    1. **Site Admin:** The site administrator, with full access to the django backend, uses the link provided in the notification email to access the admin panel and approve the request. The system then automatically creates the organisation and designates the requested user as the organisation manager.
 
-    2. **Notification Email to the User:** The site admin will send a notification email to the user, informing them that their organisation has been successfully added to the system.
+    2. **Notification Email to the User:** The system automatically generates a notification email and sends it to the user, informing them that their organisation has been successfully added to the system.
 
-    3. **Email Invitation:** The site admin sends an invitation email to the organisation manager with a registration link to register on the system as an organisation manager.
+    3. **Email Invitation:** The system generates an invitation email and sends it to the organisation manager with a registration link to register on the system as an organisation manager.
 
     4. **Organisation Manager Receives Email:** The organisation manager receives an email and can use the provided link to register on the organisation.
 
