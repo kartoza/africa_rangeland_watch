@@ -2,7 +2,7 @@
 """
 Africa Rangeland Watch (ARW).
 
-.. note:: Background task for layers
+.. note:: Background task for generating layers
 """
 from core.celery import app
 from layers.generator import run_generate_gee_layers

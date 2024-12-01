@@ -7,7 +7,7 @@ Africa Rangeland Watch (ARW).
 
 from rest_framework import serializers
 from django.core.cache import cache
-from cloud_native_gis.models import Layer, Style
+from cloud_native_gis.models import Layer
 
 from layers.models import InputLayer
 
@@ -34,7 +34,7 @@ class LayerSerializer(serializers.ModelSerializer):
         style = layer.styles.first()
         if style is None:
             style = layer.default_style
-        
+
         if style is None:
             return None
 

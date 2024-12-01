@@ -13,7 +13,10 @@ from cloud_native_gis.models import Layer, LayerUpload
 
 from layers.models import InputLayer, DataProvider, LayerGroupType
 from frontend.serializers.layers import LayerSerializer
-from frontend.tasks import import_layer, detect_file_type_by_extension
+from layers.tasks.import_layer import (
+    import_layer,
+    detect_file_type_by_extension
+)
 
 
 class LayerAPI(APIView):
@@ -86,8 +89,8 @@ class UploadLayerAPI(APIView):
         instance.save()
 
         # trigger task import the layer
-        import_layer.delay(layer.unique_id, file_url)
-        
+        import_layer.delay(layer.unique_id, instance.id, file_url)
+
         return Response(
             status=200,
             data={
