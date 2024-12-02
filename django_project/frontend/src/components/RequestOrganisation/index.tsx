@@ -21,7 +21,7 @@ import {
 } from "@chakra-ui/react";
 import React, { useState, useEffect } from "react";
 import axios from "axios";
-import { setCSRFToken } from "../utils/csrfUtils";
+import { setCSRFToken } from "../../utils/csrfUtils";
 
 
 interface Props {
