@@ -21,6 +21,8 @@ import {
 } from "@chakra-ui/react";
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { setCSRFToken } from "../utils/csrfUtils";
+
 
 interface Props {
   isOpen: boolean;
@@ -29,17 +31,6 @@ interface Props {
 
 type ModalPosition = "absolute" | "fixed";
 
-const setCSRFToken = () => {
-  const csrfToken = document.cookie
-    .split(";")
-    .find((cookie) => cookie.trim().startsWith("csrftoken="));
-  if (csrfToken) {
-    const token = csrfToken.split("=")[1];
-    axios.defaults.headers.common["X-CSRFToken"] = token;
-  } else {
-    console.warn("CSRF token not found.");
-  }
-};
 
 export default function RequestOrganisation({ isOpen, onClose }: Props) {
   const modalPosition = useBreakpointValue<ModalPosition>({
