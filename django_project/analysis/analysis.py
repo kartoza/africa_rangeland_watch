@@ -431,9 +431,9 @@ def run_analysis(lat, lon, analysisDict, *args, **kwargs):
             baselineQuart = quarter_dict[analysisDict['Temporal']['Quarterly']['ref']]
             testQuart = quarter_dict[analysisDict['Temporal']['Quarterly']['test']]
 
-            toPlot = temporalTable.filter(ee.Filter.inList('Name', selectNames)).filter(ee.Filter.or (
-                ee.Filter.and (ee.Filter.eq('year', baselineYr), ee.Filter.eq('month', baselineQuart)),
-                ee.Filter.and (ee.Filter.eq('year', testYr), ee.Filter.eq('month', testQuart))
+            toPlot = temporalTable.filter(ee.Filter.inList('Name', selectNames)).filter(ee.Filter.or(
+                ee.Filter.and(ee.Filter.eq('year', baselineYr), ee.Filter.eq('month', baselineQuart)),
+                ee.Filter.and(ee.Filter.eq('year', testYr), ee.Filter.eq('month', testQuart))
             ))
         else:
             toPlot = temporalTableYr.filter(ee.Filter.inList('Name', selectNames)).filter(
