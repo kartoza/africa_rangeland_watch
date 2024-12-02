@@ -6,6 +6,10 @@ import os
 
 SERVICE_ACCOUNT_KEY = os.environ.get('SERVICE_ACCOUNT_KEY', '')
 SERVICE_ACCOUNT = os.environ.get('SERVICE_ACCOUNT', '')
+
+SERVICE_ACCOUNT_KEY = '/home/web/django_project/analysis/management/commands/private_key.json'
+SERVICE_ACCOUNT = 'earth-engine-service-account@inspired-vault-412007.iam.gserviceaccount.com'
+
 TRAINING_DATA_ASSET_PATH = os.environ.get(
     'TRAINING_DATA_ASSET_PATH',
     ''
@@ -17,8 +21,426 @@ S2_NAMES = [
     'cb', 'blue', 'green', 'red', 'R1', 'R2', 'R3', 'nir', 'swir1', 'swir2']
 
 # Bands to select after processing
-selectBands = [
+select_bands = [
     'blue', 'green', 'red', 'R2', 'nir', 'swir1', 'ndvi', 'nbr', 'evi']
+
+
+# Dictionary converting quarter strings to start months
+quarter_dict = {
+  '01': 1,
+  '02':4,
+  '03':7,
+  '04':10
+}
+
+
+class InputLayer:
+    
+    def __init__(self):
+        self.countries = self.get_countries()
+
+    # Get pre-exported baseline statistics for project areas
+    def get_baseline_table(self):
+        baselineTable = ee.FeatureCollection('projects/ee-yekelaso1818/assets/CSA/Baseline_pre_export_20241007')
+        return baselineTable
+
+    def get_temporal_table(self):
+        import ee
+
+        # Initialize the Earth Engine library
+        ee.Initialize()
+
+        # Get the pre-exported time series statistics for project areas
+        temporal_table = ee.FeatureCollection('projects/ee-yekelaso1818/assets/CSA/Temporal_pre_export_20241007')
+
+        # Format the table correctly
+        temporal_table = temporal_table.select(
+            ['Name', 'ndvi', 'evi', 'bare', 'year', 'month'],
+            ['Name', 'NDVI', 'EVI', 'Bare ground', 'year', 'month']
+        )
+
+        # Map function to create a 'date' property
+        def add_date(ft):
+            date = ee.Date.parse('yyyy-MM-dd', ee.String(ft.get('year')).cat(ee.String('-01-01'))).advance(
+                ee.Number(ft.get('month')), 'months')
+            return ft.set('date', date.millis())
+
+        temporal_table = temporal_table.map(add_date)
+
+        # Get annual aggregates
+        temporal_table_yr = temporal_table.reduceColumns(
+            selectors=['NDVI', 'EVI', 'Bare ground', 'Name', 'year'],
+            reducer=ee.Reducer.mean().repeat(3).group(
+                groupField=3,
+                groupName='Name',
+            ).group(
+                groupField=4,
+                groupName='year',
+            )
+        )
+
+        # Process the results
+        groups = ee.List(temporal_table_yr.get('groups'))
+        temporal_table_yr = groups.map(lambda g: (
+            ee.List(ee.Dictionary(g).get('groups'))
+            .map(lambda i: (
+                ee.Feature(None, {
+                    "Name": ee.Dictionary(i).get('Name'),
+                    "year": ee.Dictionary(g).get('year'),
+                    "NDVI": ee.List(ee.Dictionary(i).get('mean')).get(0),
+                    "EVI": ee.List(ee.Dictionary(i).get('mean')).get(1),
+                    "Bare ground": ee.List(ee.Dictionary(i).get('mean')).get(2)
+                })
+            ))
+        ).flatten())
+
+        # Convert the list to a FeatureCollection
+        temporal_table_yr = ee.FeatureCollection(temporal_table_yr)
+
+        # Add date property and sort
+        def add_date_property(ft):
+            date = ee.Date.parse('yyyy-MM-dd', ee.String(ft.get('year')).cat(ee.String('-01-01')))
+            return ft.set('date', date.millis())
+
+        temporal_table_yr = temporal_table_yr.map(add_date_property)
+        temporal_table_yr = temporal_table_yr.sort(['Name', 'date'])
+        return temporal_table, temporal_table_yr
+
+    def get_selected_geos(self):
+        selectedGeos = ee.FeatureCollection([])
+        return selectedGeos
+
+    # Import master shapefile database (feature collection) with project areas
+    def get_communities(self):
+        communities = ee.FeatureCollection('projects/ee-yekelaso1818/assets/CSA/CSA_master_20241007')
+        communities = communities.map(lambda ft: ft.set('area', ft.geometry().area().divide(ee.Number(10000))))
+        communities = communities.select(['Name', 'Project', 'area'])
+        return communities
+
+    def get_countries(self):
+        # Get countries for clipping images to var
+        names = ['SOUTH AFRICA', 'LESOTHO', 'SWAZILAND', 'NAMIBIA', 'ZIMBABWE', 'BOTSWANA', 'MOZAMBIQUE', 'ZAMBIA']
+        countries = ee.FeatureCollection('USDOS/LSIB/2013').filter(ee.Filter.inList('name', names))
+        return countries
+
+    def get_cropland_urban_mask(self):
+        # Cropland and urban mask
+        glc_coll = ee.ImageCollection('users/cgmorton/GlobeLand30')
+        glc_img = glc_coll.mosaic()
+
+        masked = (glc_img.neq(10)
+                  .And(glc_img.neq(60))
+                  .And(glc_img.neq(80))
+                  .And(glc_img.neq(100))
+                  .And(glc_img.neq(255)))
+        return masked
+
+    def _process_cgls(self, col):
+        bg = col.select('bare-coverfraction').add(col.select('urban-coverfraction'))
+        t = col.select('tree-coverfraction').add(col.select('shrub-coverfraction'))
+        g = col.select('grass-coverfraction')
+        return (bg.rename(['bg'])
+                .addBands(t.rename(['t']))
+                .addBands(g.rename(['g']))
+                .copyProperties(col)
+                .set('year', ee.Number.parse(col.get('system:index'))))
+
+    def get_soil_carbon(self):
+        # Coast fragment fraction 0-1
+        cfvo = (ee.Image('users/zandersamuel/SA_misc/Soilgrids_CFVO')
+                .selfMask()
+                .rename('soil_cfvo')
+                .divide(1000))
+
+        cfvo2 = (ee.Image("ISDASOIL/Africa/v1/stone_content")
+                 .select('mean_0_20')
+                 .rename('soil_cfvo')
+                 .divide(100))
+
+        cfvo = ee.ImageCollection([cfvo2.float(), cfvo.float()]).mosaic()
+
+        # Additional SOC data from iSDA dataset for the rest of Africa
+        # Convert to SOC stocks using bulk density, fraction coarse fragments
+        # Fill in gaps with SoilGrids
+
+        isda = ee.Image("users/zandersamuel/Africa_misc/iSDA_SOC_m_30m_0_20cm_2001_2017_v0_13_wgs84")
+        isda = ee.Image(isda.divide(10)).exp().subtract(1)
+        # Soil bulk density (fine earth) g/m³
+        bd = (ee.Image("users/zandersamuel/SA_misc/SoilGrids_BD")
+              .rename('soil_bd')
+              .selfMask()
+              .divide(100))
+
+        bd2 = (ee.Image("ISDASOIL/Africa/v1/bulk_density")
+               .select('mean_0_20')
+               .rename('soil_bd')
+               .divide(100))
+        bd = ee.ImageCollection([bd2.float(), bd.float()]).mosaic()
+        isda = (isda.multiply(bd)
+                .multiply(ee.Image(1).subtract(cfvo))
+                .multiply(0.6)
+                .rename('SOC'))
+
+        soc_col = self.get_soc_col()
+        lt_mean = (soc_col
+                   # Uncomment the following line to filter years if necessary
+                   # .filterMetadata('year', 'greater_than', 2000)
+                   .select(1).median().rename('SOC'))
+
+        # Get mean SOC from Venter et al and iSDA
+        soc_lt_mean = ee.ImageCollection([isda.float(), lt_mean.float()]).mean()
+        soc_lt_mean = soc_lt_mean.clipToCollection(self.countries)
+        return soc_lt_mean
+
+    def get_grazing_capacity(self):
+        masked = self.get_cropland_urban_mask()
+
+        # Import pre-exported grazing capacity map
+        grazing_capacity = ee.Image('users/zandersamuel/Consult_CSA/grazingCapacity_srnAfrica_LSU_ha')
+        grazing_capacity = grazing_capacity.rename('grazingCap')
+        grazing_capacity = (grazing_capacity
+                            .updateMask(masked)
+                            .unmask(0)
+                            .clipToCollection(self.countries))
+        return grazing_capacity
+
+    def get_soc_col(self):
+        # Import soil organic carbon data from Venter et al. 2021
+        # https://www.sciencedirect.com/science/article/pii/S0048969721004526
+        soc_col = ee.ImageCollection("users/grazingresearch/Collaboration/Soil_C/predictions2")
+
+        def process_image(i):
+            i = i.divide(ee.Image(1000)).copyProperties(i)
+            year = ee.Number(i.get('year'))
+            return ee.Image(year).int().addBands(i).set('year', year)
+
+        soc_col = soc_col.map(process_image)
+        return soc_col
+
+    def get_soil_carbon_change(self):
+        # SOC mean
+        soc_col = self.get_soc_col()
+
+        # SOC trend
+        trend_sens_img = soc_col.reduce(ee.Reducer.sensSlope())
+        trend_sens_img = trend_sens_img.rename(['scale', 'offset'])
+
+        soc_lt_trend = trend_sens_img.select('scale').multiply(35).clipToCollection(self.countries)
+        return soc_lt_trend
+
+    def get_spatial_layer_dict(self):
+        # Get MODIS vegetation data
+        modis_veg = (ee.ImageCollection("MODIS/061/MOD13Q1")
+                     .filterDate('2016-01-01', '2020-01-01')
+                     .select(['NDVI', 'EVI'])
+                     .map(lambda i: i.divide(10000)))
+
+        evi_baseline = modis_veg.select('EVI').median().clipToCollection(self.countries)
+        ndvi_baseline = modis_veg.select('NDVI').median().clipToCollection(self.countries)
+
+        # Get fractional ground cover from CGLS
+        cgls_col = (ee.ImageCollection("COPERNICUS/Landcover/100m/Proba-V-C3/Global")
+                    .select(['bare-coverfraction', 'crops-coverfraction', 'urban-coverfraction',
+                             'shrub-coverfraction', 'grass-coverfraction', 'tree-coverfraction'])
+                    .filterBounds(self.countries))
+
+        cgls_col = cgls_col.map(self._process_cgls)
+        cgls = cgls_col.median()
+        bg = cgls.select('bg').clipToCollection(self.countries)
+        t = cgls.select('t').clipToCollection(self.countries)
+        g = cgls.select('g').clipToCollection(self.countries)
+
+        grazing_capacity = self.get_grazing_capacity()
+        soc_lt_mean = self.get_soil_carbon()
+        soc_lt_trend = self.get_soil_carbon_change()
+
+        # Dictionary with names for map layers and their ee.Image() objects
+        spatial_layer_dict = {
+            'EVI': evi_baseline,
+            'NDVI': ndvi_baseline,
+            'Bare ground': bg,
+            'Grass cover': g,
+            'Woody cover': t,
+            'Grazing capacity': grazing_capacity,
+            'Soil carbon': soc_lt_mean,
+            'Soil carbon change': soc_lt_trend
+        }
+        return spatial_layer_dict
+
+    def get_landscape_dict(self):
+        import ee
+
+        # Initialize the Earth Engine library
+        ee.Initialize()
+
+        # Define the geometries
+        geometry = ee.Geometry.Polygon(
+            [[[31.23125396489256, -22.2108383566201],
+              [31.23125396489256, -24.229971486534726],
+              [33.42302642583006, -24.229971486534726],
+              [33.42302642583006, -22.2108383566201]]])
+
+        geometry2 = ee.Geometry.MultiPolygon(
+            [[[[28.33378423367544, -30.249456381789305],
+               [28.33378423367544, -30.897391153446016],
+               [29.23466313992544, -30.897391153446016],
+               [29.23466313992544, -30.249456381789305]]],
+             [[[28.7890869564936, -32.05624939716554],
+               [28.7890869564936, -32.208593381736804],
+               [28.883844036571723, -32.208593381736804],
+               [28.883844036571723, -32.05624939716554]]]])
+
+        geometry3 = ee.Geometry.Polygon(
+            [[[20.95024748677959, -17.842248671588656],
+              [20.95024748677959, -21.094178276654002],
+              [25.190970143029585, -21.094178276654002],
+              [25.190970143029585, -17.842248671588656]]])
+
+        geometry4 = ee.Geometry.Polygon(
+            [[[29.187987374711472, -22.788392235251568],
+              [29.187987374711472, -23.137384763111807],
+              [29.970763253617722, -23.137384763111807],
+              [29.970763253617722, -22.788392235251568]]])
+
+        geometry5 = ee.Geometry.Polygon(
+            [[[31.2569524356448, -24.525712407318565],
+              [31.2569524356448, -24.745411382234263],
+              [31.52337089267605, -24.745411382234263],
+              [31.52337089267605, -24.525712407318565]]])
+
+        geometry6 = ee.Geometry.Polygon(
+            [[[28.690026287829856, -21.346586704704198],
+              [28.690026287829856, -22.47286905403228],
+              [29.947960858142356, -22.47286905403228],
+              [29.947960858142356, -21.346586704704198]]])
+
+        geometry7 = ee.Geometry.Polygon(
+            [[[17.449015007575344, -28.89105074204393],
+              [17.449015007575344, -30.513248612037206],
+              [18.294962273200344, -30.513248612037206],
+              [18.294962273200344, -28.89105074204393]]])
+
+        geometry8 = ee.Geometry.Polygon(
+            [[[28.266480385610254, -28.243949117596102],
+              [28.266480385610254, -31.550492042788992],
+              [31.309693276235254, -31.550492042788992],
+              [31.309693276235254, -28.243949117596102]]])
+
+        geometry9 = ee.Geometry.Polygon(
+            [[[32.08297498295084, -22.215135255355992],
+              [32.08297498295084, -23.43024891314733],
+              [33.47823865482584, -23.43024891314733],
+              [33.47823865482584, -22.215135255355992]]])
+
+        geometry10 = ee.Geometry.Polygon(
+            [[[24.555562849533654, -17.69827351054879],
+              [25.549825544846154, -17.69827351054879],
+              [25.549825544846154, -16.83538161448828],
+              [24.555562849533654, -16.83538161448828]]])
+
+        landscapesDict = {
+            'Limpopo NP': geometry,
+            'UCPP': geometry2,
+            'Ngamiland': geometry3,
+            'Soutpansberg': geometry4,
+            'K2C': geometry5,
+            'Mapungubwe TFCA': geometry6,
+            'Namakwa': geometry7,
+            'Drakensberg Sub-Escarpment': geometry8,
+            'Bahine NP': geometry9,
+            'Zambia': geometry10
+        }
+        return landscapesDict
+
+def get_rel_diff(spatial_layer_dict, analysis_dict, reference_layer):
+    # Select the image layer from the spatial layer dictionary based on the variable in analysisDict
+    img_select = spatial_layer_dict[analysis_dict['variable']]
+    img_select = img_select.rename('val')
+
+    geo_manual = ee.Geometry.Polygon(reference_layer['coordinates'])
+
+    # Calculate mean using reduceRegion
+    red = img_select.reduceRegion(
+        reducer=ee.Reducer.mean(),
+        geometry=geo_manual,
+        scale=60,
+        bestEffort=True
+    )
+    print("Reduced Region:", red.getInfo())
+
+    # Extract the mean value
+    mean = ee.Number(red.get('val'))
+    print("Mean Value:", mean.getInfo())
+
+    # Calculate relative difference
+    rel_diff = (img_select.subtract(ee.Image(mean))
+                .divide(ee.Image(mean))
+                .multiply(ee.Image(100)))
+    return rel_diff
+
+
+def run_analysis(lat, lon, analysisDict, *args, **kwargs):
+    input_layers = InputLayer()
+    selectedGeos = input_layers.get_selected_geos()
+    communities = input_layers.get_communities()
+    baselineTable = input_layers.get_baseline_table()
+
+    geo = ee.Geometry.Point([lon, lat])
+    selectedGeos = selectedGeos.merge(ee.FeatureCollection([ee.Feature(geo)]))
+    selectNames = communities.filterBounds(selectedGeos).distinct(['Name']).reduceColumns(ee.Reducer.toList(), ['Name'])
+    print(selectNames.get('list'))
+
+    if analysisDict['analysisType'] == "Spatial":
+        reference_layer = kwargs.get('reference_layer', None)
+        if not reference_layer:
+            raise ValueError("Reference layer not provided")
+        relDiff = get_rel_diff(input_layers.get_spatial_layer_dict(), analysisDict, reference_layer)
+        reduced = relDiff.reduceRegions(
+            collection=communities.filterBounds(selectedGeos),
+            reducer=ee.Reducer.mean(),
+            scale=60,
+            tileScale=4
+        )
+        return reduced.getInfo()
+
+    if analysisDict['analysisType'] == "Baseline":
+        select = baselineTable.filterBounds(selectedGeos)
+        return select.getInfo()
+
+    if analysisDict['analysisType'] == "Temporal":
+        res = analysisDict['t_resolution']
+        baselineYr = int(analysisDict['Temporal']['Annual']['ref'])
+        testYr = int(analysisDict['Temporal']['Annual']['test'])
+
+        if res == "Quarterly":
+            landscapesDict = input_layers.get_landscape_dict()
+            temporalTable, temporalTableYr = input_layers.get_temporal_table()
+            if analysisDict['Temporal']['Annual']['ref'] == "2023" or analysisDict['Temporal']['Annual'][
+                'test'] == "2023":
+                newStats = get_latest_stats(landscapesDict[analysisDict['landscape']],
+                                          communities.filterBounds(selectedGeos))
+                newStats = newStats.select(['Name', 'ndvi', 'evi', 'bare', 'year', 'month'],
+                                           ['Name', 'NDVI', 'EVI', 'Bare ground', 'year', 'month'])
+                newStats = newStats.map(lambda ft: ft.set('date', ee.Date.parse('yyyy-mm-dd',
+                                                                                ee.String(ft.get('year')).cat(
+                                                                                    ee.String('-01-01'))).advance(
+                    ee.Number(ft.get('month')), 'months').millis()))
+                temporalTable = temporalTable.merge(newStats)
+                print('updated Temporal table', temporalTable)
+
+            baselineQuart = quarter_dict[analysisDict['Temporal']['Quarterly']['ref']]
+            testQuart = quarter_dict[analysisDict['Temporal']['Quarterly']['test']]
+
+            toPlot = temporalTable.filter(ee.Filter.inList('Name', selectNames)).filter(ee.Filter.or (
+                ee.Filter.and (ee.Filter.eq('year', baselineYr), ee.Filter.eq('month', baselineQuart)),
+                ee.Filter.and (ee.Filter.eq('year', testYr), ee.Filter.eq('month', testQuart))
+            ))
+        else:
+            toPlot = temporalTableYr.filter(ee.Filter.inList('Name', selectNames)).filter(
+                ee.Filter.inList('year', [baselineYr, testYr]))
+
+        toPlot = toPlot.sort('Name').sort('date')
+        breakpoint()
 
 
 def initialize_engine_analysis():
@@ -137,7 +559,7 @@ def get_s2_cloud_masked(aoi, start_date, end_date):
         .select(S2_BANDS, S2_NAMES) \
         .map(add_indices)
 
-    return s2.select(selectBands)
+    return s2.select(select_bands)
 
 
 def get_nrt_sentinel(aoi, months):
@@ -296,7 +718,7 @@ def get_sent_quarterly(aoi):
             sentinel_2, '2021-01-01', 'month', 3,
             ee.Reducer.median())
     )
-    sent_quarterly = sent_quarterly.map(lambda i: i.rename(selectBands))
+    sent_quarterly = sent_quarterly.map(lambda i: i.rename(select_bands))
     return sent_quarterly
 
 
@@ -334,7 +756,7 @@ def train_bgt(aoi):
     classifier = ee.Classifier.smileRandomForest(100).train(
         features=training_testing,
         classProperty='landcover',
-        inputProperties=selectBands
+        inputProperties=select_bands
     ).setOutputMode('MULTIPROBABILITY')
     return classifier
 
