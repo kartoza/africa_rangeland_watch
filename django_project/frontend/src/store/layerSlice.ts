@@ -1,7 +1,6 @@
 // store/layerSlice.ts
 import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
-
 import { DataState } from './common';
 
 export interface Layer {
@@ -16,7 +15,8 @@ export interface Layer {
     unit?: string;
     colors: string[];
     opacity: number;
-  } 
+  },
+  style?: object;
 }
   
 interface LayerState extends DataState {
