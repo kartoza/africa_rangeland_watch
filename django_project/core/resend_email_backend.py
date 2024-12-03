@@ -46,9 +46,8 @@ class ResendBackend(BaseEmailBackend):
         try:
             if email.alternatives:
                 for alternative in email.alternatives:
-                    content_type, content = alternative
-                    if alternative:
-                        payload["html"] = alternative
+                    if alternative[1] == "text/html":
+                        payload["html"] = alternative[0]
                         break
         except AttributeError:
             pass
