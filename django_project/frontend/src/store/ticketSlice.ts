@@ -1,6 +1,7 @@
 // store/ticketSlice.ts
 import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
+import { setCSRFToken } from '../utils/csrfUtils';
 
 interface Ticket {
   id: number;
@@ -37,15 +38,6 @@ interface TicketState {
     error: null,
   };
 
-const setCSRFToken = () => {
-    const csrfToken = document.cookie.split(';').find((cookie) => cookie.trim().startsWith('csrftoken='));
-    if (csrfToken) {
-      const token = csrfToken.split('=')[1];
-      axios.defaults.headers['X-CSRFToken'] = token;
-    } else {
-      console.warn('CSRF token not found.');
-    }
-  };
 
 export const fetchTickets = createAsyncThunk(
   'tickets/fetchTickets',
