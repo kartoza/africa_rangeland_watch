@@ -74,9 +74,13 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
   }, [uid, tokenFromUrl]);
 
   useEffect(() => {
-    setStatusMessage("");
-    setResetError("");
-    setIsOpen(false)
+    setStatusMessage(null);
+    setResetError(null);
+    setEmail("");
+    setPassword("");
+    setConfirmPassword("");
+    setIsOpen(false);
+    setCanSubmit(true);
   }, [formType]);
 
   const togglePasswordVisibility = () => {
@@ -86,9 +90,11 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
   const isValidEmail = (email: string) =>
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-  const handleSendResetLink = () => {
-    setStatusMessage("Reset link sent to your email.");
-    dispatch(resetPasswordRequest(email));
+  const handleSendResetLink = async () => {
+    setStatusMessage(null)
+    await dispatch(resetPasswordRequest(email));
+    if(error ==  null)
+      setStatusMessage("Reset link sent to your email.");
   };
 
   const handleSignUp = () => {
@@ -96,14 +102,13 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
       setResetError("Passwords do not match!");
       return;
     }
-    setStatusMessage("");
-    setResetError("");
+    setStatusMessage(null);
+    setResetError(null);
     dispatch(registerUser(email, password, confirmPassword));
   };
 
   const handleSignIn = () => {
     dispatch(loginUser(email, password));
-    setCanSubmit(true)
   };
 
   const handleResetPassword = () => {
@@ -114,7 +119,6 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
 
     if (uid && tokenFromUrl) {
       dispatch(resetPasswordRequest(password));
-      // setStatusMessage("Password has been successfully reset.");
       setTimeout(() => {
         setFormType("signin");
         setResetError("");
@@ -126,14 +130,23 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
   };
 
   useEffect(() => {
-    if (token) {
       setEmail("");
       setPassword("");
       setConfirmPassword("");
       setRememberMe(false);
-      onClose();
-    }
+      if(token)
+        onClose()
   }, [token, onClose]);
+
+  useEffect(() => {
+    if (error) {
+      setResetError(error);
+      setStatusMessage(null)
+    } else
+    if (statusMessage) {
+      setResetError(null);
+    }
+  }, [error, statusMessage]); 
 
   return (
     <Modal isOpen={isOpen || isOpenReset} onClose={onClose} isCentered={modalPosition === "absolute"}>
@@ -176,12 +189,6 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
                 {resetError && (
                   <Text color={resetError === "Verification email sent." ? "green.500" : "red.500"}>
                     {resetError}
-                  </Text>
-                )}
-
-                {error && (
-                  <Text color={error === "Verification email sent." ? "green.500" : "red.500"}>
-                    {error}
                   </Text>
                 )}
 

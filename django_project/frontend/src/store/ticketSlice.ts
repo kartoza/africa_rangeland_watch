@@ -1,6 +1,7 @@
 // store/ticketSlice.ts
 import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
+import { setCSRFToken } from '../utils/csrfUtils';
 
 interface Ticket {
   id: number;
@@ -72,6 +73,7 @@ export const createTicket = createAsyncThunk<
     }
 
     try {
+      setCSRFToken();
       const response = await axios.post('/tickets-api/tickets/', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });

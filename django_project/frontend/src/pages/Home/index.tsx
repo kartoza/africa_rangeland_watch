@@ -154,17 +154,19 @@ export default function HomePage() {
             >
               View Map
             </Button>
-            <Button
-              backgroundColor="dark_orange.800"
-              _hover={{ backgroundColor: "light_orange.400" }}
-                fontWeight={700}
-                w="100%"
-                color="white.a700"
-                borderRadius="28px"
-                onClick={() => setIsSignInOpen(true)}
-            >
-              Sign In
-            </Button>
+            {!isAuthenticated && 
+              <Button
+                backgroundColor="dark_orange.800"
+                _hover={{ backgroundColor: "light_orange.400" }}
+                  fontWeight={700}
+                  w="100%"
+                  color="white.a700"
+                  borderRadius="28px"
+                  onClick={() => setIsSignInOpen(true)}
+              >
+                Sign In
+              </Button>
+            }
           </Flex>
 
           {/* Scroll Down Icon */}
