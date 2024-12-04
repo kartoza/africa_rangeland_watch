@@ -69,7 +69,7 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
     if (uid && tokenFromUrl) {
       setFormType("resetPassword");
       setIsOpen(true);
-      setCanSubmit(false);
+      setCanSubmit(true);
     }
   }, [uid, tokenFromUrl]);
 
@@ -136,6 +136,7 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
       setRememberMe(false);
       if(token)
         onClose()
+      setIsOpen(false)
   }, [token, onClose]);
 
   useEffect(() => {
