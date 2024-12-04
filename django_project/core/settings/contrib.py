@@ -15,6 +15,7 @@ INSTALLED_APPS = INSTALLED_APPS + (
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
     'rest_framework.authtoken',
     'dj_rest_auth',
     'dj_rest_auth.registration',
@@ -23,6 +24,18 @@ INSTALLED_APPS = INSTALLED_APPS + (
     'drf_yasg',
     'cloud_native_gis'
 )
+
+SOCIALACCOUNT_PROVIDERS = {
+    "google": {
+        "SCOPE": [
+            "profile",
+            "email"
+        ],
+        "AUTH_PARAMS": {
+            "access_type": "online"
+        }
+    }
+}
 
 MIDDLEWARE += (
     "allauth.account.middleware.AccountMiddleware",
