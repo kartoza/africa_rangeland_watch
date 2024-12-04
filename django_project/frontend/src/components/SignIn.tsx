@@ -21,7 +21,7 @@ import {
   useBreakpointValue,
 } from "@chakra-ui/react";
 import { useDispatch, useSelector } from "react-redux";
-import { loginUser, registerUser, resetPasswordRequest } from "../store/authSlice";
+import { loginUser, registerUser, resetPasswordRequest, resetPasswordConfirm } from "../store/authSlice";
 import { RootState, AppDispatch } from "../store";
 import { useLocation } from "react-router-dom";
 
@@ -118,7 +118,7 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
     }
 
     if (uid && tokenFromUrl) {
-      dispatch(resetPasswordRequest(password));
+      dispatch(resetPasswordConfirm(uid,tokenFromUrl,password));
       setTimeout(() => {
         setFormType("signin");
         setResetError("");
