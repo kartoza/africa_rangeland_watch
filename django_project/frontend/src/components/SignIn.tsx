@@ -68,10 +68,8 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
   useEffect(() => {
     if (uid && tokenFromUrl) {
       setFormType("resetPassword");
-      setIsOpen(true);
-      setCanSubmit(true);
     }
-  }, [uid, tokenFromUrl]);
+  }, [uid]);
 
   useEffect(() => {
     setStatusMessage(null);
@@ -79,7 +77,7 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
     setEmail("");
     setPassword("");
     setConfirmPassword("");
-    setIsOpen(false);
+    formType === "resetPassword" ? setIsOpen(true):setIsOpen(false);
     setCanSubmit(true);
   }, [formType]);
 
@@ -111,6 +109,10 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
     dispatch(loginUser(email, password));
   };
 
+  const closeModal = () => {
+    setIsOpen(false)
+  }
+
   const handleResetPassword = () => {
     if (password !== confirmPassword) {
       setResetError("Passwords do not match.");
@@ -119,10 +121,6 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
 
     if (uid && tokenFromUrl) {
       dispatch(resetPasswordConfirm(uid,tokenFromUrl,password));
-      setTimeout(() => {
-        setFormType("signin");
-        setResetError("");
-      }, 3000)
     } else {
       setResetError("Invalid reset link.");
     }
@@ -307,8 +305,8 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
                         formType === "signin" || formType === "signup"
                           ? !isValidEmail(email) || loading
                           : formType === "resetPassword"
-                          ? canSubmit
-                          : !canSubmit || loading
+                          ? !canSubmit
+                          : canSubmit || loading
                       }
                     >
                       {formType === "signin"
