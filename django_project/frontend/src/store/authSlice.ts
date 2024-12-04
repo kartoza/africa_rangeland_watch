@@ -151,13 +151,12 @@ export const resetPasswordConfirm = (uid: string, token: string, newPassword: st
     });
 
     if (response.data?.message) {
-      dispatch(loginSuccess({ user: null, token: null }));
+      dispatch(loginFailure(response.data.message));
     }
     else {
-      dispatch(loginFailure(response.data.error));
+      dispatch(loginFailure(response.data?.error));
     }
   } catch (error) {
-    console.log(error)
     dispatch(loginFailure(error.response?.data?.error || 'Error resetting password'));
   }
 };
