@@ -186,7 +186,7 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
 
                 {statusMessage && <Text color="green.500">{statusMessage}</Text>}
                 {resetError && (
-                  <Text color={resetError === "Verification email sent." ? "green.500" : "red.500"}>
+                  <Text color={resetError === "Verification email sent." ? "green.500" : resetError === "Password has been successfully reset."? "green.500": "red.500"}>
                     {resetError}
                   </Text>
                 )}
