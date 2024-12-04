@@ -212,8 +212,8 @@ class ForgotPasswordView(APIView):
         uid = urlsafe_base64_encode(str(user.pk).encode())
 
         reset_password_link = (
-            f"{settings.DJANGO_BACKEND_URL}/password-reset/"
-            f"{uid}/{token}/"
+            f"{settings.DJANGO_BACKEND_URL}/#/"
+            f"?uid={uid}&token={token}/"
         )
 
         # Send the password reset email
