@@ -90,7 +90,7 @@ class CustomRegistrationView(APIView):
             token = default_token_generator.make_token(user)
             uid = urlsafe_base64_encode(str(user.pk).encode())
             activation_link = f"{
-                settings.DJANGO_BACKEND_URL}/auth/activate/{uid}/{token}/"
+                settings.DJANGO_BACKEND_URL}/activate/{uid}/{token}/"
 
             # Send email with activation link
             subject = "Activate Your Account"
@@ -189,7 +189,7 @@ class ForgotPasswordView(APIView):
         uid = urlsafe_base64_encode(str(user.pk).encode())
 
         reset_password_link = (
-            f"{settings.DJANGO_BACKEND_URL}/auth/password-reset/"
+            f"{settings.DJANGO_BACKEND_URL}/password-reset/"
             f"{uid}/{token}/"
         )
 
