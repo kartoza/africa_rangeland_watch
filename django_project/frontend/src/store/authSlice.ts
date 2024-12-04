@@ -114,7 +114,7 @@ export const UserInfo = () => async (dispatch: AppDispatch) => {
 }
 
 // Logout action
-export const logoutUser = () => (dispatch: AppDispatch) => {
+export const logoutUser = () => async (dispatch: AppDispatch) => {
   localStorage.removeItem('auth_token');
   axios.defaults.headers['Authorization'] = '';
   await axios.post('/api/logout/', {}, { withCredentials: true });
