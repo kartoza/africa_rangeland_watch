@@ -96,10 +96,28 @@ export const checkLoginStatus = () => async (dispatch: AppDispatch) => {
   }
 };
 
+
+export const UserInfo = () => async (dispatch: AppDispatch) => {
+  setCSRFToken();
+    const response = await axios.post("/api/user-info/", {
+          credentials: "include",
+      })
+      if (response.data.is_authenticated) {
+          localStorage.setItem('auth_token', 'social');
+          dispatch(loginSuccess({
+            user: response.data.user,
+            token: 'social',
+          }));
+        } else {
+          dispatch(logout());
+      } 
+}
+
 // Logout action
 export const logoutUser = () => (dispatch: AppDispatch) => {
   localStorage.removeItem('auth_token');
   axios.defaults.headers['Authorization'] = '';
+  await axios.post('/api/logout/', {}, { withCredentials: true });
   dispatch(logout());
   window.location.href = '/';
 };
