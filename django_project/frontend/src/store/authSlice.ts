@@ -144,9 +144,9 @@ export const resetPasswordConfirm = (uid: string, token: string, newPassword: st
 
   try {
     setCSRFToken();
-    const response = await axios.post('/password-reset/confirm/', {
-      uid,
-      token,
+    const url = `/password-reset/confirm/${uid}/${token}/`;
+
+    const response = await axios.post(url, {
       new_password: newPassword,
     });
 
@@ -158,6 +158,7 @@ export const resetPasswordConfirm = (uid: string, token: string, newPassword: st
     dispatch(loginFailure(error.response?.data?.non_field_errors[0] || 'Error resetting password'));
   }
 };
+
 
 
 export const registerUser = (email: string, password: string, repeatPassword: string) => async (dispatch: AppDispatch) => {
