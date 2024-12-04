@@ -37,6 +37,7 @@ urlpatterns = [
         include('invitations.urls', namespace='invitations')),
     path('', include('base.urls')),
     path('', include('frontend.urls')),
+    path('accounts/', include('allauth.urls')),
     path('auth/', include('dj_rest_auth.urls')),
     path('auth/activation/', include('allauth.account.urls')),
     path(
