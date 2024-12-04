@@ -23,7 +23,9 @@ from .custom_auth_view import (
     CustomRegistrationView,
     AccountActivationView,
     ForgotPasswordView,
-    ResetPasswordConfirmView
+    ResetPasswordConfirmView,
+    user_info,
+    logout_view
 )
 
 urlpatterns = [
@@ -37,6 +39,9 @@ urlpatterns = [
         include('invitations.urls', namespace='invitations')),
     path('', include('base.urls')),
     path('', include('frontend.urls')),
+    path('api/user-info/', user_info, name='user-info'),
+    path('api/logout/', logout_view, name='logout'),
+    path('accounts/', include('allauth.urls')),
     path('auth/', include('dj_rest_auth.urls')),
     path('auth/activation/', include('allauth.account.urls')),
     path(
