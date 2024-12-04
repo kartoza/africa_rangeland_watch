@@ -150,12 +150,15 @@ export const resetPasswordConfirm = (uid: string, token: string, newPassword: st
       new_password: newPassword,
     });
 
-    dispatch(loginSuccess({ user: null, token: response.data.key }));
     if (response.data?.message) {
-      dispatch(loginFailure(response.data.message));
+      dispatch(loginSuccess({ user: null, token: null }));
+    }
+    else {
+      dispatch(loginFailure(response.data.error));
     }
   } catch (error) {
-    dispatch(loginFailure(error.response?.data?.non_field_errors[0] || 'Error resetting password'));
+    console.log(error)
+    dispatch(loginFailure(error.response?.data?.error || 'Error resetting password'));
   }
 };
 
