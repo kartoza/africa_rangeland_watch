@@ -2,7 +2,7 @@ import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import axios from 'axios';
 import { DataState } from './common';
 
-interface Layer {
+export interface Layer {
   id: string;
   uuid: string;
   name: string;
@@ -54,7 +54,7 @@ export const fetchLayers = createAsyncThunk(
   }
 );
 
-const layerSlice = createSlice({
+export const layerSlice = createSlice({
   name: 'layer',
   initialState: initialLayerState,
   reducers: {
