@@ -1,11 +1,17 @@
 from django.contrib import admin
 from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from .models import Organisation, UserProfile, OrganisationInvitation
+from .models import (
+    Organisation,
+    UserProfile,
+    OrganisationInvitation,
+    UserOrganisations
+)
 from django.conf import settings
 from django.template.loader import render_to_string
 import json
 from django.core.mail import EmailMultiAlternatives
+
 
 
 @admin.action(description="Approve selected join/add requests")
@@ -20,19 +26,22 @@ def approve_join_request(modeladmin, request, queryset):
             metadata = json.loads(invitation.metadata or "{}")
             organisation_name = metadata.get("organisationName", "")
 
+            # Create the organisation
             organisation = Organisation.objects.create(name=organisation_name)
 
             # Assign the inviter as the organisation manager
-            profile = invitation.inviter.profile
-            profile.organisation = organisation
-            profile.user_type = "organisation_manager"
-            profile.save()
+            inviter = invitation.inviter
+            UserOrganisations.objects.create(
+                user=inviter,
+                organisation=organisation,
+                user_type='manager'
+            )
 
             # Notify the inviter
             email_body = render_to_string(
                 "organization_manager_notification.html",
                 {
-                    "user": invitation.inviter,
+                    "user": inviter,
                     "organisation": organisation,
                     "support_email": "support@kartoza.com",
                     "platform_url": settings.DJANGO_BACKEND_URL,
@@ -41,9 +50,9 @@ def approve_join_request(modeladmin, request, queryset):
             try:
                 email = EmailMultiAlternatives(
                     subject="Your Role as Organisation Manager",
-                    body="",  # Plain text content (empty)
+                    body="", 
                     from_email=settings.NO_REPLY_EMAIL,
-                    to=[invitation.inviter.email],
+                    to=[inviter.email],
                 )
                 email.attach_alternative(email_body, "text/html")
                 email.send()
@@ -53,6 +62,7 @@ def approve_join_request(modeladmin, request, queryset):
                     f"Failed to send email: {str(e)}",
                     level="error",
                 )
+
 
             modeladmin.message_user(
                 request,
@@ -63,16 +73,19 @@ def approve_join_request(modeladmin, request, queryset):
 
         elif invitation.request_type == "join_organisation":
             # Process join requests
-            profile = invitation.inviter.profile
+            inviter = invitation.inviter
             organisation = invitation.organisation
-            profile.organisation = organisation
-            profile.user_type = "organisation_member"
-            profile.save()
+
+            UserOrganisations.objects.create(
+                user=inviter,
+                organisation=organisation,
+                user_type='member'
+            )
 
             email_body = render_to_string(
                 "accepted_organization_request.html",
                 {
-                    "user": invitation.inviter,
+                    "user": inviter,
                     "organisation": organisation,
                     "link": settings.DJANGO_BACKEND_URL,
                 },
@@ -82,7 +95,7 @@ def approve_join_request(modeladmin, request, queryset):
                     subject="Your join request has been approved",
                     body="",  # Plain text content (empty)
                     from_email=settings.NO_REPLY_EMAIL,
-                    to=[invitation.inviter.email],
+                    to=[inviter.email],
                 )
                 email.attach_alternative(email_body, "text/html")
                 email.send()
@@ -93,10 +106,12 @@ def approve_join_request(modeladmin, request, queryset):
                     level="error",
                 )
 
+
             modeladmin.message_user(
                 request, "Individual has been added."
             )
             return
+
 
 
 
@@ -108,38 +123,42 @@ class OrganisationInvitationAdmin(admin.ModelAdmin):
     search_fields = ('email', 'organisation__name', 'inviter__username')
 
 
-@admin.register(Organisation)
-class OrganisationAdmin(admin.ModelAdmin):
-    list_display = ('name', 'created_at', 'updated_at')
-    search_fields = ('name',)
-    ordering = ('name',)
-    readonly_fields = ('created_at', 'updated_at')
-
-
 class UserProfileInline(admin.StackedInline):
     model = UserProfile
     can_delete = False
     verbose_name_plural = "User Profile"
     fk_name = "user"
     fields = (
-        'organisation', 'country', 'user_type',
-        'user_role', 'is_support_staff', 'created_at', 'updated_at')
-    readonly_fields = ('created_at', 'updated_at')
+        'country',
+        'user_role', 'created_at', 'updated_at', 'organisations_list'
+    )
+    readonly_fields = ('created_at', 'updated_at', 'organisations_list')
+
+    def organisations_list(self, obj):
+        """
+        Custom method to display the organisations and roles associated with
+        the user.
+        """
+        orgs_with_roles = UserOrganisations.objects.filter(user=obj.user)
+        return ", ".join(
+            [
+                f"{org.organisation.name} - {org.user_type}"  # Fix this line
+                for org in orgs_with_roles
+            ]
+        )
+
+    organisations_list.short_description = "Organisations & Roles"
+
+
 
 
 class UserAdmin(BaseUserAdmin):
     inlines = (UserProfileInline,)
 
     list_display = ('username', 'email', 'first_name', 'last_name',
-                    'is_staff', 'get_user_type', 'get_user_role')
+                    'is_staff', 'get_user_role')
     list_select_related = ('profile',)
     search_fields = ('username', 'email', 'first_name', 'last_name')
-
-    def get_user_type(self, instance):
-        """Return user type."""
-        return instance.profile.user_type
-
-    get_user_type.short_description = 'User Type'
 
     def get_user_role(self, instance):
         """Return user role."""
@@ -153,6 +172,32 @@ class UserAdmin(BaseUserAdmin):
             return []
         return super(UserAdmin, self).get_inline_instances(request, obj)
 
+
+
+class UserOrganisationsAdmin(admin.ModelAdmin):
+    # Display fields in the list view
+    list_display = ('user', 'organisation', 'user_type')
+    search_fields = ('user__username', 'organisation__name')
+    list_filter = ('user_type', 'organisation')
+    raw_id_fields = ('user', 'organisation')
+    autocomplete_fields = ('user', 'organisation')
+
+
+    def get_queryset(self, request):
+        queryset = super().get_queryset(request)
+        return queryset
+
+
+@admin.register(Organisation)
+class OrganisationAdmin(admin.ModelAdmin):
+    list_display = ('name', 'created_at', 'updated_at')
+    search_fields = ('name',)
+    ordering = ('name',)
+    readonly_fields = ('created_at', 'updated_at')
+
+
+
+admin.site.register(UserOrganisations, UserOrganisationsAdmin)
 
 admin.site.unregister(User)
 admin.site.register(User, UserAdmin)
