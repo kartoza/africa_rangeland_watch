@@ -3,7 +3,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.contrib.auth.models import User
 from rest_framework.test import APIClient
-from base.models import Organisation, OrganisationInvitation, UserProfile
+from base.models import Organisation, OrganisationInvitation, UserOrganisations, UserProfile
 import json
 from invitations.models import Invitation
 from unittest.mock import patch
@@ -21,23 +21,37 @@ class OrganisationViewsTestCase(TestCase):
         self.unrelated_user = User.objects.create_user(
             username="unrelated", email="unrelated@example.com", password="password"
         )
-
-        self.org_manager_profile = UserProfile.objects.get(user=self.org_manager)
-        self.org_manager_profile.user_type = "organisation_manager"
-        self.org_manager_profile.save()
-
-        self.member_profile = UserProfile.objects.get(user=self.member)
-        self.member_profile.user_type = "organisation_member"
-        self.member_profile.save()
+        self.no_org_user = User.objects.create_user(
+            username="no_org_user", email="no_org_user@example.com", password="password"
+        )
 
         # Create organisation
         self.organisation = Organisation.objects.create(name="Test Organisation")
+        self.organisation_dummy = Organisation.objects.create(name="Test Organisation 2")
 
-        self.org_manager_profile.organisation = self.organisation 
-        self.org_manager_profile.save()
+        # Create UserProfile for each user
+        self.org_manager_profile = UserProfile.objects.get_or_create(user=self.org_manager)
+        self.member_profile = UserProfile.objects.get_or_create(user=self.member)
+        self.unrelated_user_profile = UserProfile.objects.get_or_create(user=self.unrelated_user)
 
-        self.member_profile.organisation = self.organisation 
-        self.member_profile.save()
+        # Create UserOrganisations relationships
+        self.org_manager_relation = UserOrganisations.objects.create(
+            user=self.org_manager,
+            organisation=self.organisation,
+            user_type="manager"
+        )
+
+        self.member_relation = UserOrganisations.objects.create(
+            user=self.member,
+            organisation=self.organisation,
+            user_type="member"  # setting this user as member
+        )
+
+        self.unrelated_user_relation = UserOrganisations.objects.create(
+            user=self.unrelated_user,
+            organisation=self.organisation_dummy,
+            user_type="member"
+        )
 
         # APIClient for testing
         self.client = APIClient()
@@ -55,8 +69,8 @@ class OrganisationViewsTestCase(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json(), {"message": "Member removed successfully."})
 
-        self.member_profile.refresh_from_db()
-        self.assertIsNone(self.member_profile.organisation)
+        # Ensure the UserOrganisations relation is deleted
+        self.assertFalse(UserOrganisations.objects.filter(user=self.member, organisation=self.organisation).exists())
 
     def test_delete_organisation_member_invalid_method(self):
         self.client.login(username="org_manager", password="password")
@@ -96,6 +110,19 @@ class OrganisationViewsTestCase(TestCase):
         self.assertEqual(response.status_code, 403)
         self.assertEqual(response.json(), {"error": "You don't have permission to remove members."})
 
+    def test_delete_organisation_member_user_not_in_org(self):
+        self.client.login(username="org_manager", password="password")
+
+        url = reverse("delete_member")
+        response = self.client.delete(
+            url,
+            data=json.dumps({"organisation_id": self.organisation.id, "user_email": "unrelated@example.com"}),
+            content_type="application/json",
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json(), {"error": "User is not a member of this organisation."})
+
     def test_fetch_organisation_data_success(self):
         self.client.login(username="org_manager", password="password")
 
@@ -114,7 +141,7 @@ class OrganisationViewsTestCase(TestCase):
         self.assertEqual(response.status_code, 302)
 
     def test_fetch_organisation_data_no_membership(self):
-        self.client.login(username="unrelated", password="password")
+        self.client.login(username="no_org_user", password="password")
 
         url = reverse("fetch_organisation_data")
         response = self.client.get(url)
@@ -138,11 +165,18 @@ class InviteToOrganisationTestCase(TestCase):
         # Create organisation
         self.organisation = Organisation.objects.create(name="Test Organisation")
 
-        # attach user to org and make manager
-        self.org_manager_profile = UserProfile.objects.get(user=self.org_manager)
-        self.org_manager_profile.user_type = "organisation_manager"
-        self.org_manager_profile.organisation = self.organisation 
-        self.org_manager_profile.save()
+        # Attach user to org and make manager using UserOrganisations model
+        self.user_org_relation = UserOrganisations.objects.create(
+            user=self.org_manager,
+            organisation=self.organisation,
+            user_type="manager"  # setting this user as manager
+        )
+
+        self.unrelated_user_org_relation = UserOrganisations.objects.create(
+            user=self.unrelated_user,
+            organisation=self.organisation,
+            user_type="member"  # unrelated user is not a manager
+        )
 
         self.client.login(username="org_manager", password="password")
 
@@ -174,7 +208,7 @@ class InviteToOrganisationTestCase(TestCase):
 
     def test_invite_invalid_http_method(self):
         """Test handling of invalid HTTP methods."""
-        response = self.client.get(self.url)  # Sending GET request instead of POST
+        response = self.client.get(self.url)
 
         self.assertEqual(response.status_code, 405)
         self.assertEqual(response.json(), {"error": "Invalid HTTP method. Use POST."})
@@ -188,7 +222,7 @@ class InviteToOrganisationTestCase(TestCase):
         data = {"email": "new_user@example.com"}
         response = self.client.post(self.url, data=data, content_type="application/json")
 
-        self.assertEqual(response.status_code, 403)  # Access denied
+        self.assertEqual(response.status_code, 403)
 
 
 
@@ -225,22 +259,20 @@ class JoinOrganisationTests(TestCase):
         self.manager_user = User.objects.create_user(
             username="manager", email="manager@example.com", password="password"
         )
-        # Link the manager to the organisation
-        # Check if the UserProfile for the manager_user already exists
-        user_profile, created = UserProfile.objects.get_or_create(
-            user=self.manager_user
+
+        # Create UserProfile for the manager_user
+        user_profile, created = UserProfile.objects.get_or_create(user=self.manager_user)
+
+        # Create UserOrganisations for the manager_user and link to the organisation
+        self.manager_relation, created = UserOrganisations.objects.get_or_create(
+            user=self.manager_user,
+            organisation=self.org,
         )
 
-        # If the profile is created, we assign the organisation manager role
+        # Assign the role of 'organisation_manager' in UserOrganisations if it's newly created
         if created:
-            user_profile.organisation = self.org
-            user_profile.user_type = "organisation_manager"
-            user_profile.save()
-        else:
-            # Update the existing profile to set the organisation and role
-            user_profile.organisation = self.org
-            user_profile.user_type = "organisation_manager"
-            user_profile.save()
+            self.manager_relation.user_type = "manager"
+            self.manager_relation.save()
 
     @patch('django.core.mail.send_mail')
     def test_join_organisation_valid(self, mock_send_mail):
