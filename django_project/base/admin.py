@@ -50,7 +50,7 @@ def approve_join_request(modeladmin, request, queryset):
             try:
                 email = EmailMultiAlternatives(
                     subject="Your Role as Organisation Manager",
-                    body="", 
+                    body="",
                     from_email=settings.NO_REPLY_EMAIL,
                     to=[inviter.email],
                 )
