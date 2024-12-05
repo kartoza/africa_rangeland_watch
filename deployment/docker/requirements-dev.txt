@@ -17,3 +17,5 @@ responses
 mock==4.0.3
 
 pytest-django
+# mock requests
+requests-mock

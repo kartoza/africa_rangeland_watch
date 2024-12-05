@@ -20,6 +20,8 @@ INSTALLED_APPS = INSTALLED_APPS + (
     'dj_rest_auth.registration',
 
     'invitations',
+    'drf_yasg',
+    'cloud_native_gis'
 )
 
 MIDDLEWARE += (

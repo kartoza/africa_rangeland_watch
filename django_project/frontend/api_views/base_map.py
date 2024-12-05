@@ -5,7 +5,7 @@ Africa Rangeland Watch (ARW).
 .. note:: BaseMap APIs
 """
 
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -17,7 +17,7 @@ from frontend.serializers.base_map import BaseMapSerializer
 class BaseMapAPI(APIView):
     """API to return list of base map."""
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get(self, request, *args, **kwargs):
         """Fetch list of BaseMap."""
@@ -33,7 +33,7 @@ class BaseMapAPI(APIView):
 class MapConfigAPI(APIView):
     """API to fetch map config."""
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def get(self, request, *args, **kwargs):
         """Fetch map config."""

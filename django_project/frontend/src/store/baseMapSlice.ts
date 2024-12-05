@@ -25,7 +25,7 @@ const initialBaseMapState: BaseMapState = {
 export const fetchBaseMaps = createAsyncThunk(
     'map/fetchBaseMaps',
     async () => {
-      const response = await axios.get('/frontend-api/base_map/');
+      const response = await axios.get('/frontend-api/base-map/');
       return response.data;
     }
 );

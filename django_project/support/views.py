@@ -1,4 +1,5 @@
 from alerts.models import AlertSetting
+from base.models import UserProfile
 from rest_framework import viewsets
 from rest_framework.response import Response
 from rest_framework.decorators import action
@@ -7,6 +8,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.parsers import MultiPartParser, FormParser, JSONParser
 from rest_framework.exceptions import ValidationError
 from django.core.exceptions import ObjectDoesNotExist
+from django.shortcuts import get_object_or_404
 
 from support.models import Ticket, IssueType
 from support.serializers import TicketSerializer, IssueTypeSerializer
@@ -24,9 +26,15 @@ class TicketViewSet(viewsets.ModelViewSet):
     parser_classes = [MultiPartParser, FormParser, JSONParser]
 
     def get_queryset(self):
-        if self.request.user.is_staff:
-            return Ticket.objects.all()
-        return Ticket.objects.filter(user=self.request.user)
+        user_profile = get_object_or_404(UserProfile, user=self.request.user)
+        if user_profile.is_support_staff:
+            return Ticket.objects.all().order_by('-created_at')
+        elif self.request.user.is_staff:
+            return Ticket.objects.all().order_by('-created_at')
+        else:
+            return Ticket.objects.filter(
+                user=self.request.user
+            ).order_by('-created_at')
 
     def perform_create(self, serializer):
         """Create a new ticket and send an email to the admin."""

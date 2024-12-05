@@ -24,24 +24,34 @@ import { useDispatch, useSelector } from "react-redux";
 import { fetchTickets, createTicket, fetchIssueTypes } from "../../store/ticketSlice";
 import { AppDispatch, RootState } from "../../store";
 import { selectUserEmail } from "../../store/authSlice";
+import Pagination from "../../components/Pagination";
 
 
 export default function SupportPage() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [showAll, setShowAll] = useState(false);
   const [creatingTicket, setCreatingTicket] = useState(false);
   const [issueType, setIssueType] = useState<number | string>('');
   const [issueTitle, setIssueTitle] = useState("");
   const [additionalDetails, setAdditionalDetails] = useState("");
   const [screenshot, setScreenshot] = useState<File | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const dispatch = useDispatch<AppDispatch>();
   const toast = useToast();
+  
 
  
   const { tickets, loading, error } = useSelector((state: RootState) => state.ticket);
   const issueTypes = useSelector((state: RootState) => state.ticket.issueTypes);
   const userEmail = useSelector(selectUserEmail); 
+  
+
+  const itemsPerPage = 5;
+  const totalItems = tickets.length
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+  const currentTickets = tickets.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
 
 
   useEffect(() => {
@@ -64,7 +74,7 @@ export default function SupportPage() {
 
       dispatch(fetchTickets());
   
-      if (!error) {
+      if (error == null) {
         toast({
           title: "Ticket Created",
           description: "Your support ticket has been submitted.",
@@ -108,6 +118,12 @@ export default function SupportPage() {
 
   const handleRemoveScreenshot = () => {
     setScreenshot(null);
+  };
+  
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
   };
 
   return (
@@ -206,7 +222,7 @@ export default function SupportPage() {
                 flexDirection="column"
                 gap={4}
               >
-                {(showAll ? tickets : tickets.slice(0, 7)).map((ticket, index) => (
+                {currentTickets.map((ticket, index) => (
                 <Box key={index} boxShadow="md" borderRadius="md" p={4} border="1px" borderColor="gray.300">
                     <Flex direction="column" gap={2} position="relative">
                     {/* Badge (Status) */}
@@ -247,20 +263,12 @@ export default function SupportPage() {
                     </Flex>
                 </Box>
                 ))}
-
-                {/* View All Button */}
-                {!showAll && tickets.length > 7 && (
-                  <Flex justify="flex-end" width="100%" mt={4}>
-                    <Button
-                      colorScheme="green"
-                      variant="outline"
-                      onClick={() => setShowAll(true)}
-                      width="auto"
-                      borderRadius="0px"
-                      h={10}
-                    >
-                      View All
-                    </Button>
+                {tickets.length > 5 && (
+                  <Flex justifyContent="center" mb={5}>
+                      <Pagination
+                          currentPage={currentPage}
+                          totalPages={totalPages}
+                          handlePageChange={handlePageChange} />
                   </Flex>
                 )}
               </Box>
