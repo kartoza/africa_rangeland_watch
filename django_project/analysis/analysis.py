@@ -7,6 +7,9 @@ import os
 SERVICE_ACCOUNT_KEY = os.environ.get('SERVICE_ACCOUNT_KEY', '')
 SERVICE_ACCOUNT = os.environ.get('SERVICE_ACCOUNT', '')
 
+SERVICE_ACCOUNT_KEY = '/home/web/django_project/analysis/management/commands/private_key.json'
+SERVICE_ACCOUNT = 'earth-engine-service-account@inspired-vault-412007.iam.gserviceaccount.com'
+
 TRAINING_DATA_ASSET_PATH = os.environ.get(
     'TRAINING_DATA_ASSET_PATH',
     ''
@@ -108,8 +111,8 @@ class InputLayer:
         """
         Get default selcted geometry.
         """
-        selectedGeos = ee.FeatureCollection([])
-        return selectedGeos
+        selected_geos = ee.FeatureCollection([])
+        return selected_geos
 
     def get_communities(self):
         """
@@ -406,74 +409,73 @@ def get_rel_diff(spatial_layer_dict: dict, analysis_dict: dict, reference_layer:
     return rel_diff
 
 
-def run_analysis(lat: float, lon: float, analysisDict: dict, *args, **kwargs):
+def run_analysis(lat: float, lon: float, analysis_dict: dict, *args, **kwargs):
     """
     Run baseline, spatial, and temporal analysis
 
     :param lat: Latitude
     :param lon: Longitude
-    :param analysisDict: Analysis Dictionary
+    :param analysis_dict: Analysis Dictionary
     """
 
     input_layers = InputLayer()
-    selectedGeos = input_layers.get_selected_geos()
+    selected_geos = input_layers.get_selected_geos()
     communities = input_layers.get_communities()
-    baselineTable = input_layers.get_baseline_table()
+    baseline_table = input_layers.get_baseline_table()
 
     geo = ee.Geometry.Point([lon, lat])
-    selectedGeos = selectedGeos.merge(ee.FeatureCollection([ee.Feature(geo)]))
-    selectNames = communities.filterBounds(selectedGeos).distinct(['Name']).reduceColumns(ee.Reducer.toList(), ['Name'])
+    selected_geos = selected_geos.merge(ee.FeatureCollection([ee.Feature(geo)]))
+    select_names = communities.filterBounds(selected_geos).distinct(['Name']).reduceColumns(ee.Reducer.toList(), ['Name'])
 
-    if analysisDict['analysisType'] == "Spatial":
+    if analysis_dict['analysisType'] == "Spatial":
         reference_layer = kwargs.get('reference_layer', None)
         if not reference_layer:
             raise ValueError("Reference layer not provided")
-        relDiff = get_rel_diff(input_layers.get_spatial_layer_dict(), analysisDict, reference_layer)
-        reduced = relDiff.reduceRegions(
-            collection=communities.filterBounds(selectedGeos),
+        rel_diff = get_rel_diff(input_layers.get_spatial_layer_dict(), analysis_dict, reference_layer)
+        reduced = rel_diff.reduceRegions(
+            collection=communities.filterBounds(selected_geos),
             reducer=ee.Reducer.mean(),
             scale=60,
             tileScale=4
         )
         return reduced.getInfo()
 
-    if analysisDict['analysisType'] == "Baseline":
-        select = baselineTable.filterBounds(selectedGeos)
+    if analysis_dict['analysisType'] == "Baseline":
+        select = baseline_table.filterBounds(selected_geos)
         return select.getInfo()
 
-    if analysisDict['analysisType'] == "Temporal":
-        res = analysisDict['t_resolution']
-        baselineYr = int(analysisDict['Temporal']['Annual']['ref'])
-        testYr = int(analysisDict['Temporal']['Annual']['test'])
+    if analysis_dict['analysisType'] == "Temporal":
+        res = analysis_dict['t_resolution']
+        baseline_yr = int(analysis_dict['Temporal']['Annual']['ref'])
+        test_yr = int(analysis_dict['Temporal']['Annual']['test'])
 
         if res == "Quarterly":
-            landscapesDict = input_layers.get_landscape_dict()
-            temporalTable, temporalTableYr = input_layers.get_temporal_table()
-            if analysisDict['Temporal']['Annual']['ref'] == "2023" or analysisDict['Temporal']['Annual'][
-                'test'] == "2023":
-                newStats = get_latest_stats(landscapesDict[analysisDict['landscape']],
-                                          communities.filterBounds(selectedGeos))
-                newStats = newStats.select(['Name', 'ndvi', 'evi', 'bare', 'year', 'month'],
-                                           ['Name', 'NDVI', 'EVI', 'Bare ground', 'year', 'month'])
-                newStats = newStats.map(lambda ft: ft.set('date', ee.Date.parse('yyyy-mm-dd',
-                                                                                ee.String(ft.get('year')).cat(
-                                                                                    ee.String('-01-01'))).advance(
+            landscapes_dict = input_layers.get_landscape_dict()
+            temporal_table, temporal_table_yr = input_layers.get_temporal_table()
+            if analysis_dict['Temporal']['Annual']['ref'] == "2023" or analysis_dict['Temporal']['Annual']['test'] == "2023":
+                new_stats = get_latest_stats(landscapes_dict[analysis_dict['landscape']],
+                                             communities.filterBounds(selected_geos))
+                new_stats = new_stats.select(['Name', 'ndvi', 'evi', 'bare', 'year', 'month'],
+                                             ['Name', 'NDVI', 'EVI', 'Bare ground', 'year', 'month'])
+                new_stats = new_stats.map(lambda ft: ft.set('date', ee.Date.parse('yyyy-mm-dd',
+                                                                                  ee.String(ft.get('year')).cat(
+                                                                                      ee.String('-01-01'))).advance(
                     ee.Number(ft.get('month')), 'months').millis()))
-                temporalTable = temporalTable.merge(newStats)
-                print('updated Temporal table', temporalTable)
+                temporal_table = temporal_table.merge(new_stats)
+                print('updated Temporal table', temporal_table)
 
-            baselineQuart = quarter_dict[analysisDict['Temporal']['Quarterly']['ref']]
-            testQuart = quarter_dict[analysisDict['Temporal']['Quarterly']['test']]
+            baseline_quart = quarter_dict[analysis_dict['Temporal']['Quarterly']['ref']]
+            test_quart = quarter_dict[analysis_dict['Temporal']['Quarterly']['test']]
 
-            toPlot = temporalTable.filter(ee.Filter.inList('Name', selectNames)).filter(ee.Filter.Or(
-                    ee.Filter.And(ee.Filter.eq('year', baselineYr), ee.Filter.eq('month', baselineQuart)),
-                ee.Filter.And(ee.Filter.eq('year', testYr), ee.Filter.eq('month', testQuart))
+            to_plot = temporal_table.filter(ee.Filter.inList('Name', select_names)).filter(ee.Filter.Or(
+                ee.Filter.And(ee.Filter.eq('year', baseline_yr), ee.Filter.eq('month', baseline_quart)),
+                ee.Filter.And(ee.Filter.eq('year', test_yr), ee.Filter.eq('month', test_quart))
             ))
         else:
-            toPlot = temporalTableYr.filter(ee.Filter.inList('Name', selectNames)).filter(
-                ee.Filter.inList('year', [baselineYr, testYr]))
+            to_plot = temporal_table_yr.filter(ee.Filter.inList('Name', select_names)).filter(
+                ee.Filter.inList('year', [baseline_yr, test_yr]))
 
-        toPlot = toPlot.sort('Name').sort('date')
+        to_plot = to_plot.sort('Name').sort('date')
 
 
 def initialize_engine_analysis():
