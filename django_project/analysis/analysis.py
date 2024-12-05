@@ -8,9 +8,6 @@ import os
 SERVICE_ACCOUNT_KEY = os.environ.get('SERVICE_ACCOUNT_KEY', '')
 SERVICE_ACCOUNT = os.environ.get('SERVICE_ACCOUNT', '')
 
-SERVICE_ACCOUNT_KEY = '/home/web/django_project/analysis/management/commands/private_key.json'
-SERVICE_ACCOUNT = 'earth-engine-service-account@inspired-vault-412007.iam.gserviceaccount.com'
-
 TRAINING_DATA_ASSET_PATH = os.environ.get(
     'TRAINING_DATA_ASSET_PATH',
     ''
