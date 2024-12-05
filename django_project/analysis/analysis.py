@@ -41,15 +41,16 @@ class InputLayer:
 
     # Get pre-exported baseline statistics for project areas
     def get_baseline_table(self):
+        """
+        Get baseline feature collection for GEE analysis
+        """
         baselineTable = ee.FeatureCollection('projects/ee-yekelaso1818/assets/CSA/Baseline_pre_export_20241007')
         return baselineTable
 
     def get_temporal_table(self):
-        import ee
-
-        # Initialize the Earth Engine library
-        ee.Initialize()
-
+        """
+        Get temporal table for GEE analysis
+        """
         # Get the pre-exported time series statistics for project areas
         temporal_table = ee.FeatureCollection('projects/ee-yekelaso1818/assets/CSA/Temporal_pre_export_20241007')
 
@@ -107,24 +108,33 @@ class InputLayer:
         return temporal_table, temporal_table_yr
 
     def get_selected_geos(self):
+        """
+        Get default selcted geometry.
+        """
         selectedGeos = ee.FeatureCollection([])
         return selectedGeos
 
-    # Import master shapefile database (feature collection) with project areas
     def get_communities(self):
+        """
+        Get community feature collection for GEE analysis.
+        """
         communities = ee.FeatureCollection('projects/ee-yekelaso1818/assets/CSA/CSA_master_20241007')
         communities = communities.map(lambda ft: ft.set('area', ft.geometry().area().divide(ee.Number(10000))))
         communities = communities.select(['Name', 'Project', 'area'])
         return communities
 
     def get_countries(self):
-        # Get countries for clipping images to var
+        """
+        Get countries for clipping images
+        """
         names = ['SOUTH AFRICA', 'LESOTHO', 'SWAZILAND', 'NAMIBIA', 'ZIMBABWE', 'BOTSWANA', 'MOZAMBIQUE', 'ZAMBIA']
         countries = ee.FeatureCollection('USDOS/LSIB/2013').filter(ee.Filter.inList('name', names))
         return countries
 
     def get_cropland_urban_mask(self):
-        # Cropland and urban mask
+        """
+        Get Cropland and urban mask
+        """
         glc_coll = ee.ImageCollection('users/cgmorton/GlobeLand30')
         glc_img = glc_coll.mosaic()
 
@@ -136,6 +146,9 @@ class InputLayer:
         return masked
 
     def _process_cgls(self, col):
+        """
+        Process Copernicus Glocal Land Service.
+        """
         bg = col.select('bare-coverfraction').add(col.select('urban-coverfraction'))
         t = col.select('tree-coverfraction').add(col.select('shrub-coverfraction'))
         g = col.select('grass-coverfraction')
@@ -146,6 +159,9 @@ class InputLayer:
                 .set('year', ee.Number.parse(col.get('system:index'))))
 
     def get_soil_carbon(self):
+        """
+        Get image for soil carbon mean.
+        """
         # Coast fragment fraction 0-1
         cfvo = (ee.Image('users/zandersamuel/SA_misc/Soilgrids_CFVO')
                 .selfMask()
@@ -193,6 +209,9 @@ class InputLayer:
         return soc_lt_mean
 
     def get_grazing_capacity(self):
+        """
+        Get grazing capacity image, clipped by country.
+        """
         masked = self.get_cropland_urban_mask()
 
         # Import pre-exported grazing capacity map
@@ -205,6 +224,9 @@ class InputLayer:
         return grazing_capacity
 
     def get_soc_col(self):
+        """
+        Get soil organic carbon data.
+        """
         # Import soil organic carbon data from Venter et al. 2021
         # https://www.sciencedirect.com/science/article/pii/S0048969721004526
         soc_col = ee.ImageCollection("users/grazingresearch/Collaboration/Soil_C/predictions2")
@@ -218,6 +240,9 @@ class InputLayer:
         return soc_col
 
     def get_soil_carbon_change(self):
+        """
+        Get soil carbon change, clipped by countries.
+        """
         # SOC mean
         soc_col = self.get_soc_col()
 
@@ -229,6 +254,9 @@ class InputLayer:
         return soc_lt_trend
 
     def get_spatial_layer_dict(self):
+        """
+        Get spatial layer dictionary.
+        """
         # Get MODIS vegetation data
         modis_veg = (ee.ImageCollection("MODIS/061/MOD13Q1")
                      .filterDate('2016-01-01', '2020-01-01')
@@ -268,11 +296,9 @@ class InputLayer:
         return spatial_layer_dict
 
     def get_landscape_dict(self):
-        import ee
-
-        # Initialize the Earth Engine library
-        ee.Initialize()
-
+        """
+        Get grazing capacity image, clipped by country.
+        """
         # Define the geometries
         geometry = ee.Geometry.Polygon(
             [[[31.23125396489256, -22.2108383566201],
@@ -352,7 +378,11 @@ class InputLayer:
         }
         return landscapesDict
 
-def get_rel_diff(spatial_layer_dict, analysis_dict, reference_layer):
+
+def get_rel_diff(spatial_layer_dict: dict, analysis_dict: dict, reference_layer: dict):
+    """
+    Get relative difference between reference layer and
+    """
     # Select the image layer from the spatial layer dictionary based on the variable in analysisDict
     img_select = spatial_layer_dict[analysis_dict['variable']]
     img_select = img_select.rename('val')
@@ -379,7 +409,15 @@ def get_rel_diff(spatial_layer_dict, analysis_dict, reference_layer):
     return rel_diff
 
 
-def run_analysis(lat, lon, analysisDict, *args, **kwargs):
+def run_analysis(lat: float, lon: float, analysisDict: dict, *args, **kwargs):
+    """
+    Run baseline, spatial, and temporal analysis
+
+    :param lat: Latitude
+    :param lon: Longitude
+    :param analysisDict: Analysis Dictionary
+    """
+
     input_layers = InputLayer()
     selectedGeos = input_layers.get_selected_geos()
     communities = input_layers.get_communities()
@@ -388,7 +426,6 @@ def run_analysis(lat, lon, analysisDict, *args, **kwargs):
     geo = ee.Geometry.Point([lon, lat])
     selectedGeos = selectedGeos.merge(ee.FeatureCollection([ee.Feature(geo)]))
     selectNames = communities.filterBounds(selectedGeos).distinct(['Name']).reduceColumns(ee.Reducer.toList(), ['Name'])
-    print(selectNames.get('list'))
 
     if analysisDict['analysisType'] == "Spatial":
         reference_layer = kwargs.get('reference_layer', None)
@@ -431,16 +468,15 @@ def run_analysis(lat, lon, analysisDict, *args, **kwargs):
             baselineQuart = quarter_dict[analysisDict['Temporal']['Quarterly']['ref']]
             testQuart = quarter_dict[analysisDict['Temporal']['Quarterly']['test']]
 
-            toPlot = temporalTable.filter(ee.Filter.inList('Name', selectNames)).filter(ee.Filter.or(
-                ee.Filter.and(ee.Filter.eq('year', baselineYr), ee.Filter.eq('month', baselineQuart)),
-                ee.Filter.and(ee.Filter.eq('year', testYr), ee.Filter.eq('month', testQuart))
+            toPlot = temporalTable.filter(ee.Filter.inList('Name', selectNames)).filter(ee.Filter.Or(
+                    ee.Filter.And(ee.Filter.eq('year', baselineYr), ee.Filter.eq('month', baselineQuart)),
+                ee.Filter.And(ee.Filter.eq('year', testYr), ee.Filter.eq('month', testQuart))
             ))
         else:
             toPlot = temporalTableYr.filter(ee.Filter.inList('Name', selectNames)).filter(
                 ee.Filter.inList('year', [baselineYr, testYr]))
 
         toPlot = toPlot.sort('Name').sort('date')
-        breakpoint()
 
 
 def initialize_engine_analysis():
