@@ -394,11 +394,9 @@ def get_rel_diff(spatial_layer_dict: dict, analysis_dict: dict, reference_layer:
         scale=60,
         bestEffort=True
     )
-    print("Reduced Region:", red.getInfo())
 
     # Extract the mean value
     mean = ee.Number(red.get('val'))
-    print("Mean Value:", mean.getInfo())
 
     # Calculate relative difference
     rel_diff = (img_select.subtract(ee.Image(mean))

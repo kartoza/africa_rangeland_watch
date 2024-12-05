@@ -1,6 +1,6 @@
-from django.core.management.base import BaseCommand
-import logging
 import ee
+import logging
+from django.core.management.base import BaseCommand
 from analysis.analysis import (
     initialize_engine_analysis,
     get_s2_cloud_masked,
@@ -63,13 +63,15 @@ class Command(BaseCommand):
             }
         }
 
-        lat: -22.843383205972945
-        lon: 31.64049468754881
-        run_analysis(
-            lon=31.64049468754881,
-            lat=-22.843383205972945,
-            analysisDict=analysis_dict
+        lat = -22.843383205972945
+        lon = 31.64049468754881
+        baseline = run_analysis(
+            lon=lon,
+            lat=lat,
+            analysis_dict=analysis_dict
         )
+        print(baseline)
+
 
     def run_spatial(self):
         analysis_dict = {
@@ -105,19 +107,19 @@ class Command(BaseCommand):
               ]
             ]
           }
-        run_analysis(
+        spatial = run_analysis(
             lon=reference_layer_geojson['coordinates'][0][0][0],
             lat=reference_layer_geojson['coordinates'][0][0][1],
-            analysisDict=analysis_dict,
+            analysis_dict=analysis_dict,
             **{'reference_layer': reference_layer_geojson}
         )
-
+        print(spatial)
 
     def handle(self, *args, **options):
         logging.basicConfig(level=logging.DEBUG)
 
         initialize_engine_analysis()
 
-        self.export_image()
+        # self.export_image()
         self.run_baseline()
         self.run_spatial()
