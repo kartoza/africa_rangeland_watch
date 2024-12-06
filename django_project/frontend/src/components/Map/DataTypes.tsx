@@ -21,3 +21,4 @@ export const GroupName = {
   NearRealtimeGroup: 'near-real-time',
   UserDefinedGroup: 'user-defined'
 }
+export const COMMUNITY_ID = 'Communities'
