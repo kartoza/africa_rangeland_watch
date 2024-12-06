@@ -39,6 +39,7 @@ urlpatterns = [
         include('invitations.urls', namespace='invitations')),
     path('', include('base.urls')),
     path('', include('frontend.urls')),
+    path('', include('layers.urls')),
     path('api/user-info/', user_info, name='user-info'),
     path('api/logout/', logout_view, name='logout'),
     path('accounts/', include('allauth.urls')),

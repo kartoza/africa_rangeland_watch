@@ -1,61 +1,56 @@
-import React, { useState, useEffect } from "react";
-import Helmet from "react-helmet";
-import {
-  Box,
-  Heading,
-  Flex,
-  Input,
-  Button,
-  Divider,
-  Text,
-  Card,
-  CardBody,
-  Image,
-  Stack,
-  Tag,
-  TagLabel,
-  useDisclosure,
-} from "@chakra-ui/react";
+import React, { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { Box, Heading, Flex, Button, Text, Divider, Tag, TagLabel, Card, CardBody, Image, Input } from "@chakra-ui/react";
 import { FaFilter, FaPlus } from "react-icons/fa";
+import { fetchUserDefinedLayers } from "../../store/layerSlice";
+import { AppDispatch } from "../../store";
+import Helmet from "react-helmet";
 import Header from "../../components/Header";
 import Sidebar from "../../components/SideBar";
 import "../../styles/index.css";
+import Pagination from "../../components/Pagination";
+
+
+interface Layer {
+  uuid: string;
+  name: string;
+  description?: string;
+  image?: string;
+  data_provider: string;
+}
 
 export default function UploadedResults() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [uploadedData, setUploadedData] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [showAll, setShowAll] = useState(false);
-  const [selectedAnalysis, setSelectedAnalysis] = useState(null);
-  const { isOpen, onOpen, onClose } = useDisclosure();
+  const dispatch = useDispatch<AppDispatch>();
+  const [currentPage, setCurrentPage] = useState(1);
+  
+  const { layers, loading, error } = useSelector((state: any) => state.layer);
 
   // Filtering based on search term
-  const filteredData = uploadedData.filter((analysis) =>
-    analysis.heading.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredData = layers.filter((layer: any) =>
+    layer.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleViewClick = () => {
-    
-  };
-
+  // Fetch user-defined layers on component mount
   useEffect(() => {
-    const fetchUploadedData = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        // Simulating successful data fetch TODO call api
-        setUploadedData([]);
-      } catch (err: any) {
-        setError("No data available.");
-        setUploadedData([]);
-      } finally {
-        setLoading(false);
-      }
-    };
+    dispatch(fetchUserDefinedLayers());
+  }, [dispatch]);
 
-    fetchUploadedData();
-  }, []);
+  const itemsPerPage = 4;
+  const totalItems = filteredData.length
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+
+  const currentLayers = filteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+
+
+
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
 
   return (
     <>
@@ -84,7 +79,7 @@ export default function UploadedResults() {
 
             {/* Search & Action Row */}
             <Flex justify="space-between" align="center" mb={6} direction={{ base: "column", md: "row" }}>
-              <Box width={{ base: "100%", md: "50%" }} mb={{ base: 4, md: 0 }} ml={{ md: "0px" }}>
+             <Box width={{ base: "100%", md: "50%" }} mb={{ base: 4, md: 0 }} ml={{ md: "0px" }}>
                   <Flex direction={{ base: "column", md: "row" }} gap={4} align="center">
                     {/* Filter Button */}
                     <Button
@@ -104,7 +99,7 @@ export default function UploadedResults() {
 
                     {/* Search Input */}
                     <Input
-                      placeholder="Search tickets"
+                      placeholder="Search results"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                       borderColor="gray.400"
@@ -136,7 +131,7 @@ export default function UploadedResults() {
             {loading && <Text>Loading...</Text>}
             {error && <Text>{error}</Text>}
 
-            {/* Uploaded Data Cards Section */}
+            {/* Display user-defined layers */}
             <Box
               maxHeight="calc(100vh - 250px)"
               overflowY="hidden"
@@ -145,7 +140,7 @@ export default function UploadedResults() {
               flexDirection="column"
               gap={4}
             >
-              {(showAll ? filteredData : filteredData.slice(0, 5)).map((analysis, index) => (
+               {currentLayers.map((layer: Layer, index: number) => (
                 <Card key={index} boxShadow="md" borderRadius="md">
                   <CardBody>
                     <Flex
@@ -156,8 +151,8 @@ export default function UploadedResults() {
                     >
                       {/* Image */}
                       <Image
-                        src={analysis.image}
-                        alt={analysis.heading}
+                        src={layer.image || "https://via.placeholder.com/150"}
+                        alt={layer.name}
                         borderRadius="md"
                         boxSize={{ base: "100%", md: "150px" }}
                         mb={{ base: 4, md: 0 }}
@@ -166,27 +161,21 @@ export default function UploadedResults() {
                       {/* Content */}
                       <Box flex="1" display="flex" flexDirection="column" justifyContent="space-between">
                         <Heading size="md" fontWeight="bold" color="black" mb={2}>
-                          {analysis.heading}
+                          {layer.name || "No Name"}
                         </Heading>
                         
                         <Text mt={2} color="black" mb={4}>
-                          {analysis.description}
+                          {layer.description || "No Description Available"}
                         </Text>
                         
                         <Box mt={4} display="flex" flexWrap="wrap" gap={2}>
                           <Tag colorScheme="green" mr={2}>
-                            <TagLabel>{analysis.owner}</TagLabel>
-                          </Tag>
-                          <Tag colorScheme="blue" mr={2}>
-                            <TagLabel>{analysis.publication}</TagLabel>
-                          </Tag>
-                          <Tag colorScheme="teal">
-                            <TagLabel>{analysis.source}</TagLabel>
+                            <TagLabel>{layer.data_provider || "Unknown"}</TagLabel>
                           </Tag>
                         </Box>
                       </Box>
                 
-                      {/* View Button - Positioned at the bottom */}
+                      {/* View Button */}
                       <Flex justify="flex-end" mt="auto">
                         <Button
                           colorScheme="green"
@@ -197,7 +186,6 @@ export default function UploadedResults() {
                           width="auto"
                           borderRadius="0px"
                           h={10}
-                          onClick={() => handleViewClick()} 
                         >
                           View
                         </Button>
@@ -207,22 +195,18 @@ export default function UploadedResults() {
                 </Card>
               ))}
 
-              {/* View All Button */}
-              {!showAll && filteredData.length > 5 && (
-                <Flex justify="flex-end" width="100%" mt={4}>
-                  <Button
-                    colorScheme="green"
-                    variant="outline"
-                    onClick={() => setShowAll(true)}
-                    width="auto"
-                    borderRadius="0px"
-                    h={10}
-                  >
-                    View All
-                  </Button>
-                </Flex>
-              )}
+
+              
+              
             </Box>
+            {filteredData.length >= 3 && (
+                  <Flex justifyContent="center" mb={5}>
+                      <Pagination
+                          currentPage={currentPage}
+                          totalPages={totalPages}
+                          handlePageChange={handlePageChange} />
+                  </Flex>
+                )}
           </Box>
         </Flex>
       </Box>
