@@ -26,18 +26,6 @@ INSTALLED_APPS = INSTALLED_APPS + (
     'cloud_native_gis'
 )
 
-SOCIALACCOUNT_PROVIDERS = {
-    "google": {
-        "SCOPE": [
-            "profile",
-            "email"
-        ],
-        "AUTH_PARAMS": {
-            "access_type": "online"
-        }
-    }
-}
-
 MIDDLEWARE += (
     "allauth.account.middleware.AccountMiddleware",
 )
@@ -125,6 +113,15 @@ ACCOUNT_AUTHENTICATED_REMEMBER = True
 ACCOUNT_USERNAME_REQUIRED = False
 
 SOCIALACCOUNT_PROVIDERS = {
+    "google": {
+        "SCOPE": [
+            "profile",
+            "email"
+        ],
+        "AUTH_PARAMS": {
+            "access_type": "online"
+        }
+    },
     'github': {
         'SCOPE': [
             'user',
