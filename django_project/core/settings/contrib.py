@@ -15,6 +15,7 @@ INSTALLED_APPS = INSTALLED_APPS + (
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
     'rest_framework.authtoken',
     'allauth.socialaccount.providers.github',
     'dj_rest_auth',
@@ -110,8 +111,20 @@ ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 ACCOUNT_AUTHENTICATED_REMEMBER = True
 ACCOUNT_USERNAME_REQUIRED = False
+SOCIALACCOUNT_EMAIL_VERIFICATION = False
+# Skip intermediate page for social accounts
+SOCIALACCOUNT_LOGIN_ON_GET = True
 
 SOCIALACCOUNT_PROVIDERS = {
+    "google": {
+        "SCOPE": [
+            "profile",
+            "email"
+        ],
+        "AUTH_PARAMS": {
+            "access_type": "online"
+        }
+    },
     'github': {
         'SCOPE': [
             'user',

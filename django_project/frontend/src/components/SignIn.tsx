@@ -331,8 +331,15 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
                       </Text>
                    </Flex>
                     
-                    <Flex mt="22px" justifyContent="center" gap="20px">
-                      <Image src="static/images/google_icon.svg" alt="Google Icon" h="40px" w="40px" />
+                      <Flex mt="22px" justifyContent="center" gap="20px">
+                      <a href="/accounts/google/login/">
+                        <Image
+                          src="static/images/google_icon.svg"
+                          alt="Google Icon"
+                          h="40px"
+                          w="40px"
+                        />
+                      </a>
                       <a href="/accounts/github/login/">
                         <Image
                           src="static/images/github_icon.svg"
