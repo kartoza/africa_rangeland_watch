@@ -139,12 +139,9 @@ export const logoutUser = () => async (dispatch: AppDispatch) => {
 
 // Action to request password reset
 export const resetPasswordRequest = (email: string) => async (dispatch: AppDispatch) => {
-  dispatch(loginStart());
-
   try {
     setCSRFToken();
     await axios.post('/password-reset/', { email });
-    dispatch(loginSuccess({ user: null, token: null }));
   } catch (error) {
     const errorMessage = error.response?.data?.error || 'Error sending password reset email';
     dispatch(loginFailure(errorMessage));
