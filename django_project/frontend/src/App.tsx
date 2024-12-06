@@ -18,6 +18,13 @@ Sentry.init({
 });
 
 
+/** Global declarations **/
+declare global {
+  interface Window {
+    map: any;
+  }
+}
+
 function App() {
 
   // Initialize maplibre pmtiles protocol

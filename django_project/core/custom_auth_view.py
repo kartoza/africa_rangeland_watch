@@ -19,8 +19,31 @@ from django.core.validators import EmailValidator
 from django.contrib.auth.password_validation import validate_password
 from rest_framework.throttling import AnonRateThrottle
 from django.core.mail import EmailMultiAlternatives
+from rest_framework.decorators import api_view
+from django.contrib.auth import logout
 from allauth.account.models import EmailAddress
 
+
+@api_view(["POST"])
+def logout_view(request):
+    """
+    Logs out the user and clears the session.
+    """
+    logout(request)
+    return Response({"message": "Successfully logged out"}, status=200)
+
+
+@api_view(["POST"])
+def user_info(request):
+    if request.user.is_authenticated:
+        return Response({
+            "user": {
+                "username": request.user.username,
+                "email": request.user.email,
+            },
+            "is_authenticated": True
+        })
+    return Response({"is_authenticated": False}, status=401)
 
 
 class CheckTokenView(APIView):
@@ -204,8 +227,8 @@ class ForgotPasswordView(APIView):
         uid = urlsafe_base64_encode(str(user.pk).encode())
 
         reset_password_link = (
-            f"{settings.DJANGO_BACKEND_URL}/password-reset/"
-            f"{uid}/{token}/"
+            f"{settings.DJANGO_BACKEND_URL}/#/"
+            f"?uid={uid}&token={token}/"
         )
 
         # Send the password reset email
