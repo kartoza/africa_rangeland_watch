@@ -1,8 +1,8 @@
 import { Box, Text, Link, Flex } from "@chakra-ui/react";
 import React, { useEffect, useState } from "react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
-import { logoutUser } from "../../store/authSlice";
-import { useDispatch } from "react-redux";
+import { logoutUser, selectIsLoggedIn } from "../../store/authSlice";
+import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "../../store";
 
 type MenuItem = {
@@ -17,7 +17,7 @@ type MegaMenuProps = {
 };
 
 export default function MegaMenu({ hoveredSection, isUserAvatarHovered }: MegaMenuProps) {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const isAuthenticated = useSelector(selectIsLoggedIn);
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
 
