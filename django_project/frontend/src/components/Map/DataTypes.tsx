@@ -14,6 +14,7 @@ export interface AnalysisData {
   variable?: string;
   period?: AnalysisDataPeriod;
   comparisonPeriod?: AnalysisDataPeriod;
+  community?: string;
 }
 
 export const GroupName = {
@@ -21,3 +22,4 @@ export const GroupName = {
   NearRealtimeGroup: 'near-real-time',
   UserDefinedGroup: 'user-defined'
 }
+export const COMMUNITY_ID = 'Communities'
