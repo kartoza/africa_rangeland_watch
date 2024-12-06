@@ -22,13 +22,12 @@ S2_NAMES = [
 select_bands = [
     'blue', 'green', 'red', 'R2', 'nir', 'swir1', 'ndvi', 'nbr', 'evi']
 
-
 # Dictionary converting quarter strings to start months
 quarter_dict = {
-  '01': 1,
-  '02': 4,
-  '03': 7,
-  '04': 10
+    '01': 1,
+    '02': 4,
+    '03': 7,
+    '04': 10
 }
 
 
