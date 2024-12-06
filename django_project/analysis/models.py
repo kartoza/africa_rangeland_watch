@@ -1,6 +1,10 @@
+import json
 import uuid
-from django.contrib.gis.db import models
+
+import ee
 from django.contrib.auth.models import User
+from django.contrib.gis.db import models
+from django.contrib.gis.geos import GEOSGeometry
 
 from alerts.models import Indicator
 
@@ -164,6 +168,13 @@ class Landscape(models.Model):
         help_text="The name of the landscape."
     )
 
+    project_name = models.CharField(
+        max_length=255,
+        help_text="The name of the project.",
+        blank=True,
+        null=True,
+    )
+
     bbox = models.PolygonField(
         srid=4326,
         blank=True,
@@ -177,3 +188,58 @@ class Landscape(models.Model):
 
     def __str__(self):
         return self.name
+
+    class Meta:  # noqa: D106
+        ordering = ('name',)
+
+    def fetch_areas(self):
+        """Fetch area from ee."""
+        from analysis.analysis import initialize_engine_analysis
+
+        # initialize engine
+        initialize_engine_analysis()
+
+        # Get communities
+        communities = ee.FeatureCollection(
+            'projects/ee-yekelaso1818/assets/CSA/CSA_master_20241202'
+        )
+        communities = communities.filter(
+            ee.Filter.eq('Project', self.project_name)
+        )
+        communities = communities.getInfo()['features']
+        for community in communities:
+            geometry = GEOSGeometry(json.dumps(community['geometry']))
+            LandscapeCommunity.objects.get_or_create(
+                landscape=self,
+                community_id=community['id'],
+                defaults={
+                    "community_name": community['properties']['Name'],
+                    "geometry": geometry
+                }
+            )
+
+
+class LandscapeCommunity(models.Model):
+    """Model that represents the Community of landscape."""
+
+    landscape = models.ForeignKey(Landscape, on_delete=models.CASCADE)
+    community_id = models.CharField(
+        max_length=256,
+        help_text="The id of the community that coming from GEE.",
+        unique=True
+    )
+    community_name = models.CharField(
+        max_length=256,
+        help_text="The name of the community.",
+        null=True, blank=True
+    )
+    geometry = models.GeometryField(
+        srid=4326, help_text="Geometry of community."
+    )
+
+    class Meta:
+        verbose_name_plural = "Landscape Communities"
+
+    def __str__(self):
+        """Return string representation of LandscapeArea."""
+        return self.community_name
