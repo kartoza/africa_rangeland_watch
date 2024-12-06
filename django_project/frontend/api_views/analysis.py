@@ -83,11 +83,12 @@ class AnalysisAPI(APIView):
         """Fetch list of Landscape."""
         data = request.data
         try:
-            results = None
             if data['analysisType'] == 'Baseline':
                 results = self.run_baseline_analysis(data)
             elif data['analysisType'] == 'Temporal':
                 results = self.run_temporal_analysis(data)
+            else:
+                raise ValueError('Invalid analysis type')
             return Response({
                 'data': data,
                 'results': results
