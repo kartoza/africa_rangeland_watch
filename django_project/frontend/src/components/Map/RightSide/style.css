@@ -1,0 +1,10 @@
+.BaselineAnalysisResultTable {
+  margin-bottom: 1rem;
+  margin-top: 1rem;
+}
+
+.BaselineAnalysisResultTable th,
+.BaselineAnalysisResultTable td {
+  border: 1px solid #aaa;
+  font-size: 13px !important;
+}

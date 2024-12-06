@@ -5,6 +5,7 @@ import { Box } from "@chakra-ui/react";
 import { LeftSide } from "../../components/Map/LeftSide";
 import { MapLibre } from "../../components/Map/MapLibre";
 import TopSide from "../../components/Map/TopSide";
+import RightSide from "../../components/Map/RightSide";
 
 /** Map page **/
 export default function MapPage() {
@@ -27,7 +28,7 @@ export default function MapPage() {
       >
         {/* Header */}
         <Header/>
-        <Box flexGrow={1} display='flex' minHeight={0}>
+        <Box flexGrow={1} display='flex' minHeight={0} position={'relative'}>
           <LeftSide
             ref={leftSideRef}
             onLayerChecked={layer => {
@@ -49,6 +50,7 @@ export default function MapPage() {
             />
             <MapLibre ref={mapLibreRef}/>
           </Box>
+          <RightSide/>
         </Box>
       </Box>
     </>

@@ -12,7 +12,7 @@ import { AppDispatch, RootState } from "../../store";
 import { BasemapControl, LegendControl } from "./control";
 import { hasSource, removeLayer, removeSource } from "./utils";
 import { fetchBaseMaps } from '../../store/baseMapSlice';
-import { fetchMapConfig } from '../../store/mapConfigSlice';
+import { fetchMapConfig, mapInitated } from '../../store/mapConfigSlice';
 import { Layer, setSelectedNrtLayer } from '../../store/layerSlice';
 import { COMMUNITY_ID } from "./DataTypes";
 
@@ -163,6 +163,7 @@ export const MapLibre = forwardRef(
 
           // render default base map
           baseMapRef?.current?.setBaseMapLayer(baseMaps[0])
+          dispatch(mapInitated());
         })
         _map.addControl(new BasemapControl(baseMaps, baseMapRef), 'bottom-left');
         _map.addControl(new LegendControl(legendRef), 'top-left');
