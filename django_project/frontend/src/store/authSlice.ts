@@ -79,9 +79,7 @@ export const loginUser = (email: string, password: string) => async (dispatch: A
     axios.defaults.headers['Authorization'] = `Token ${token}`;
 
     dispatch(loginSuccess({ user: response.data.user, token }));
-    dispatch(authSlice.actions.setAuthenticationStatus(true));
   } catch (error) {
-    dispatch(authSlice.actions.setAuthenticationStatus(false));
     dispatch(loginFailure(error.response?.data?.non_field_errors[0] || 'Error logging in'));
   }
 };
@@ -96,7 +94,6 @@ export const checkLoginStatus = () => async (dispatch: AppDispatch) => {
 
     try {
       const response = await axios.get('/api/auth/check-token/');
-      dispatch(authSlice.actions.setAuthenticationStatus(true));
       dispatch(loginSuccess({
         user: response.data.user,
         token: token,
@@ -119,14 +116,11 @@ export const checkLoginStatus = () => async (dispatch: AppDispatch) => {
         user: response.data.user,
         token: null,
       }));
-      dispatch(authSlice.actions.setAuthenticationStatus(true));
     } else {
-      dispatch(authSlice.actions.setAuthenticationStatus(false));
       dispatch(logout());
     }
   } catch (error) {
     console.error("User info validation failed:", error);
-    dispatch(authSlice.actions.setAuthenticationStatus(false));
     dispatch(logout());
   }
 };
