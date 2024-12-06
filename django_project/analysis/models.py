@@ -220,7 +220,14 @@ class Landscape(models.Model):
 
 
 class LandscapeCommunity(models.Model):
-    """Model that represents the Community of landscape."""
+    """Model that represents the Community of landscape.
+
+    To fetch this
+    1. Go to django admin
+    2. List of landscape
+    3. Select landscape that needs to be fetched
+    4. Run the action "Fetch landscape area"
+    """
 
     landscape = models.ForeignKey(Landscape, on_delete=models.CASCADE)
     community_id = models.CharField(
