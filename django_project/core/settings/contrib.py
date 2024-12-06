@@ -57,6 +57,10 @@ REST_FRAMEWORK = {
     'DEFAULT_THROTTLE_RATES': {
         'anon': '30/minute',  # This limits to 30 requests per minute for anonymous users.
     },
+    'DEFAULT_PAGINATION_CLASS': (
+        'core.pagination.Pagination'
+    ),
+    'PAGE_SIZE': 100
 }
 AUTH_PASSWORD_VALIDATORS = [
     {

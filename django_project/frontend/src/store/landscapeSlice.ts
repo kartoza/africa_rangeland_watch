@@ -30,8 +30,8 @@ const initialLandscapeState: LandscapeState = {
 export const fetchLandscapes = createAsyncThunk(
     'landscape/fetchLandscapes',
     async () => {
-      const response = await axios.get('/frontend-api/landscape/');
-      return response.data;
+      const response = await axios.get('/frontend-api/landscapes/?page_size=1000');
+      return response.data.results;
     }
 );
 

@@ -7,9 +7,9 @@ Africa Rangeland Watch (ARW).
 
 from django.urls import reverse
 
-from core.tests.common import BaseAPIViewTest
 from analysis.models import Landscape
-from frontend.api_views.landscape import LandscapeAPI
+from core.tests.common import BaseAPIViewTest
+from frontend.api_views.landscape import LandscapeViewSet
 
 
 class LandscapeAPITest(BaseAPIViewTest):
@@ -21,18 +21,19 @@ class LandscapeAPITest(BaseAPIViewTest):
 
     def test_get_landscape_list(self):
         """Test get landscape list."""
-        view = LandscapeAPI.as_view()
+        view = LandscapeViewSet.as_view({'get': 'list'})
         request = self.factory.get(
-            reverse('frontend-api:landscape')
+            reverse('frontend-api:landscapes-list')
         )
         request.user = self.superuser
         response = view(request)
         self.assertEqual(response.status_code, 200)
+        results = response.data['results']
         self.assertEqual(
             Landscape.objects.count(),
-            len(response.data)
+            len(results)
         )
-        item = response.data[0]
+        item = results[0]
         self._assert_keys_in_dict(
             item,
             ['name', 'bbox', 'zoom', 'urls']

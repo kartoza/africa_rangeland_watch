@@ -239,6 +239,7 @@ class LandscapeCommunity(models.Model):
 
     class Meta:
         verbose_name_plural = "Landscape Communities"
+        db_table = 'analysis_landscape_community'
 
     def __str__(self):
         """Return string representation of LandscapeArea."""
