@@ -21,15 +21,6 @@ export default function MegaMenu({ hoveredSection, isUserAvatarHovered }: MegaMe
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
 
-  useEffect(() => {
-    const token = localStorage.getItem("auth_token");
-    if (token) {
-      setIsAuthenticated(true);
-    } else {
-      setIsAuthenticated(false);
-    }
-  }, []);
-
   const handleClick = () => {
     navigate('/about');
   };
