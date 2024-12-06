@@ -306,7 +306,8 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
                           ? !isValidEmail(email) || loading
                           : formType === "resetPassword"
                           ? !canSubmit
-                          : canSubmit || loading
+                          : formType === "forgotPassword"
+                          ? !canSubmit : canSubmit || loading
                       }
                     >
                       {formType === "signin"
