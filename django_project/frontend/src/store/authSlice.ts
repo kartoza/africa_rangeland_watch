@@ -1,7 +1,6 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import axios from 'axios';
 import { AppDispatch, RootState } from '.';
-import { setCSRFToken } from '../utils/csrfUtils';
 
 interface User {
   username: string;
@@ -13,6 +12,7 @@ interface AuthState {
   token: string | null;
   loading: boolean;
   error: string | null;
+  isAuthenticated: boolean;
 }
 
 const initialState: AuthState = {
@@ -20,8 +20,20 @@ const initialState: AuthState = {
   token: null,
   loading: false,
   error: null,
+  isAuthenticated: false,
 };
 
+
+
+const setCSRFToken = () => {
+  const csrfToken = document.cookie.split(';').find((cookie) => cookie.trim().startsWith('csrftoken='));
+  if (csrfToken) {
+    const token = csrfToken.split('=')[1];
+    axios.defaults.headers['X-CSRFToken'] = token;
+  } else {
+    console.warn('CSRF token not found.');
+  }
+};
 
 const authSlice = createSlice({
   name: 'auth',
@@ -35,22 +47,29 @@ const authSlice = createSlice({
       state.loading = false;
       state.user = action.payload.user;
       state.token = action.payload.token;
+      state.isAuthenticated = true;
     },
     loginFailure: (state, action: PayloadAction<string>) => {
       state.loading = false;
       state.error = action.payload;
+      state.isAuthenticated = false;
     },
     logout: (state) => {
       state.user = null;
       state.token = null;
       state.loading = false;
       state.error = null;
+      state.isAuthenticated = false;
+    },
+    setAuthenticationStatus: (state, action: PayloadAction<boolean>) => {
+      state.isAuthenticated = action.payload;
     },
     setUser: (state, action: PayloadAction<User>) => {
       state.user = action.payload;
     },
   },
 });
+
 
 export const { loginStart, loginSuccess, loginFailure, logout, setUser } = authSlice.actions;
 
@@ -76,9 +95,11 @@ export const loginUser = (email: string, password: string) => async (dispatch: A
   }
 };
 
-// Check if the user is logged in by checking the token in localStorage
+
 export const checkLoginStatus = () => async (dispatch: AppDispatch) => {
   const token = localStorage.getItem('auth_token');
+
+  // First, try to authenticate using the token
   if (token) {
     axios.defaults.headers['Authorization'] = `Token ${token}`;
 
@@ -88,30 +109,35 @@ export const checkLoginStatus = () => async (dispatch: AppDispatch) => {
         user: response.data.user,
         token: token,
       }));
+      return;
     } catch (error) {
+      console.warn("Token validation failed, falling back to user info check.");
+    }
+  }
+
+  // Fallback: Check user info if the token validation fails
+  try {
+    setCSRFToken();
+    const response = await axios.post("/api/user-info/", {
+      credentials: "include",
+    });
+
+    if (response.data.is_authenticated) {
+      dispatch(authSlice.actions.setAuthenticationStatus(true));
+
+    } else {
+      dispatch(authSlice.actions.setAuthenticationStatus(false));
       dispatch(logout());
     }
-  } else {
+  } catch (error) {
+    console.error("User info validation failed:", error);
+    dispatch(authSlice.actions.setAuthenticationStatus(false));
     dispatch(logout());
   }
 };
 
 
-export const UserInfo = () => async (dispatch: AppDispatch) => {
-  setCSRFToken();
-    const response = await axios.post("/api/user-info/", {
-          credentials: "include",
-      })
-      if (response.data.is_authenticated) {
-          localStorage.setItem('auth_token', 'social');
-          dispatch(loginSuccess({
-            user: response.data.user,
-            token: 'social',
-          }));
-        } else {
-          dispatch(logout());
-      } 
-}
+
 
 // Logout action
 export const logoutUser = () => async (dispatch: AppDispatch) => {
@@ -157,6 +183,7 @@ export const resetPasswordConfirm = (uid: string, token: string, newPassword: st
       dispatch(loginFailure(response.data?.error));
     }
   } catch (error) {
+    console.log(error)
     dispatch(loginFailure(error.response?.data?.error || 'Error resetting password'));
   }
 };
@@ -218,7 +245,8 @@ export const registerUser = (email: string, password: string, repeatPassword: st
 
 
 
-export const selectIsLoggedIn = (state: RootState) => !!state.auth.token;
+export const selectIsLoggedIn = (state: RootState) =>
+  !!state.auth.token || state.auth.isAuthenticated;
 export const selectAuthLoading = (state: RootState) => state.auth.loading;
 export const selectUserEmail = (state: RootState) => state.auth.user?.email;
 
