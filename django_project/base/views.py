@@ -425,7 +425,7 @@ def accept_invite(request, invitation_id):
 
     # Optionally, update the user's profile if necessary
     user_profile = UserProfile.objects.get(user=user)
-    user_profile.organisation = invitation.organisation
+    user_profile.organisations.add(invitation.organisation)
     user_profile.save()
 
     return redirect(f"{reverse('home')}?invitation_accepted=true")
