@@ -58,7 +58,7 @@ export default function AnalysisTypeSelector({ data, onSelected }: Props) {
             <Radio value={Types.SPATIAL}>
               <Box fontSize="13px">{Types.SPATIAL}</Box>
             </Radio>
-            <Radio value={Types.BACI}>
+            <Radio value={Types.BACI} disabled={true}>
               <Box fontSize="13px">{Types.BACI}</Box>
             </Radio>
           </Flex>

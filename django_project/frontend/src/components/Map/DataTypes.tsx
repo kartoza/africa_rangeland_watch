@@ -8,6 +8,8 @@ export interface AnalysisDataPeriod {
 }
 
 export interface AnalysisData {
+  latitude?: number;
+  longitude?: number;
   landscape?: string;
   analysisType?: string;
   temporalResolution?: string;
