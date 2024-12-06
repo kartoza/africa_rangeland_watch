@@ -194,7 +194,7 @@ def create_user_profile(sender, instance, created, **kwargs):
 
         if invitation:
             organisation = invitation.organisation
-            user_profile.organisation = organisation
+            user_profile.organisations.add(organisation)
             user_profile.save()
 
             # Mark invitation as accepted
