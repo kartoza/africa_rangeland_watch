@@ -103,6 +103,7 @@ export const UserInfo = () => async (dispatch: AppDispatch) => {
           credentials: "include",
       })
       if (response.data.is_authenticated) {
+          localStorage.setItem('auth_token', 'social');
           dispatch(loginSuccess({
             user: response.data.user,
             token: 'social',
