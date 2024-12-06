@@ -4,6 +4,11 @@ import axios from 'axios';
 
 import { DataState } from './common';
 
+export interface Community {
+  id: number;
+  name: string;
+}
+
 export interface Landscape {
   id: number;
   name: string;

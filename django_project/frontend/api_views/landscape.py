@@ -53,7 +53,9 @@ class LandscapeViewSet(
         """Return vector tile of landscape."""
         tiles = querying_vector_tile(
             LandscapeCommunity._meta.db_table,
-            field_names=['landscape_id', 'community_id', 'community_name'],
+            field_names=[
+                'id', 'landscape_id', 'community_id', 'community_name'
+            ],
             z=z, x=x, y=y
         )
 

@@ -14,10 +14,10 @@ import { hasSource, removeLayer, removeSource } from "./utils";
 import { fetchBaseMaps } from '../../store/baseMapSlice';
 import { fetchMapConfig } from '../../store/mapConfigSlice';
 import { Layer, setSelectedNrtLayer } from '../../store/layerSlice';
+import { COMMUNITY_ID } from "./DataTypes";
 
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './style.css';
-import { COMMUNITY_ID } from "./DataTypes";
 
 interface Props {
 
@@ -147,6 +147,10 @@ export const MapLibre = forwardRef(
           center: [0, 0],
           zoom: 1
         });
+
+        // Save as global variable
+        window.map = _map;
+
         _map.once("load", () => {
           setMap(_map)
 
@@ -159,26 +163,6 @@ export const MapLibre = forwardRef(
 
           // render default base map
           baseMapRef?.current?.setBaseMapLayer(baseMaps[0])
-
-          // render community layer
-          _map.addSource(
-            COMMUNITY_ID, {
-              type: 'vector',
-              tiles: [
-                document.location.origin + '/frontend-api/landscapes/vector_tile/{z}/{x}/{y}/'
-              ]
-            }
-          );
-          _map.addLayer({
-            'id': COMMUNITY_ID,
-            'type': 'line',
-            'source': COMMUNITY_ID,
-            'source-layer': 'default',
-            'paint': {
-              'line-color': '#333333',
-              'line-width': 1
-            }
-          });
         })
         _map.addControl(new BasemapControl(baseMaps, baseMapRef), 'bottom-left');
         _map.addControl(new LegendControl(legendRef), 'top-left');
