@@ -13,6 +13,10 @@ class Command(BaseCommand):
     help = 'Test Earth Engine API initialization with a service account.'
 
     def export_image(self):
+        """
+        Export GEE image to Google Drive
+        """
+        print("Running export image")
         aoi = ee.Geometry.Rectangle([
             [30.0, -1.0],
             [30.01, -0.99]
@@ -40,7 +44,11 @@ class Command(BaseCommand):
             vis_params=vis_params
         )
 
-    def run_baseline(self):
+    def run_baseline_analysis(self):
+        """
+        Run baseline analysis
+        """
+        print("Running baseline analysis")
         analysis_dict = {
             'landscape': '',
             'analysisType': 'Baseline',
@@ -72,8 +80,11 @@ class Command(BaseCommand):
         )
         print(baseline)
 
-
-    def run_spatial(self):
+    def run_spatial_analysis(self):
+        """
+        Run spatial analysis
+        """
+        print("Running spatial analysis")
         analysis_dict = {
             'landscape': 'Limpopo NP',
             'analysisType': 'Spatial',
@@ -115,11 +126,86 @@ class Command(BaseCommand):
         )
         print(spatial)
 
+    def run_annual_temporal_analysis(self):
+        """
+        Run annual analysis
+        """
+        print("Running annual temporal analysis")
+        analysis_dict = {
+            'landscape': 'Limpopo NP',
+            'analysisType': 'Temporal',
+            'variable': 'EVI',
+            't_resolution': 'Annual',
+            'Temporal': {
+                'Annual': {
+                    'ref': '2017',
+                    'test': '2023'
+                },
+                'Quarterly': {
+                    'ref': '',
+                    'test': ''
+                }
+            },
+            'Spatial': {
+                'Annual': '',
+                'Quarterly': ''
+            }
+        }
+        lat = -22.843383205972945
+        lon = 31.64049468754881
+        temporal_output, temporal_output_plot = run_analysis(
+            lon=lon,
+            lat=lat,
+            analysis_dict=analysis_dict
+        )
+        print('Temporal Output: \n', temporal_output)
+        print('\n')
+        print('Temporal Output Plot: \n', temporal_output_plot)
+
+    def run_quarterly_temporal_analysis(self):
+        """
+        Run quarterly temporal analysis
+        """
+        print("Running quarterly temporal analysis")
+
+        analysis_dict = {
+            'landscape': 'Limpopo NP',
+            'analysisType': 'Temporal',
+            'variable': 'EVI',
+            't_resolution': 'Qurterly',
+            'Temporal': {
+                'Annual': {
+                    'ref': '2017',
+                    'test': '2023'
+                },
+                'Quarterly': {
+                    'ref': '02',
+                    'test': '01'
+                }
+            },
+            'Spatial': {
+                'Annual': '',
+                'Quarterly': ''
+            }
+        }
+        lat = -22.843383205972945
+        lon = 31.64049468754881
+        temporal_output, temporal_output_plot = run_analysis(
+            lon=lon,
+            lat=lat,
+            analysis_dict=analysis_dict
+        )
+        print('Temporal Output: \n', temporal_output)
+        print('\n')
+        print('Temporal Output Plot: \n', temporal_output_plot)
+
     def handle(self, *args, **options):
         logging.basicConfig(level=logging.DEBUG)
 
         initialize_engine_analysis()
 
-        # self.export_image()
-        self.run_baseline()
-        self.run_spatial()
+        self.export_image()
+        self.run_baseline_analysis()
+        self.run_spatial_analysis()
+        self.run_annual_temporal_analysis()
+        self.run_quarterly_temporal_analysis()
