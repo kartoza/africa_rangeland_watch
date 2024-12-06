@@ -83,11 +83,15 @@ class AnalysisAPI(APIView):
         """Fetch list of Landscape."""
         data = request.data
         try:
+            results = None
             if data['analysisType'] == 'Baseline':
-                return Response(self.run_baseline_analysis(data))
+                results = self.run_baseline_analysis(data)
             elif data['analysisType'] == 'Temporal':
-                return Response(self.run_temporal_analysis(data))
-            return Response(self.run_baseline_analysis(data))
+                results = self.run_temporal_analysis(data)
+            return Response({
+                'data': data,
+                'results': results
+            })
         except Exception as e:
             return Response(
                 {'error': str(e)}, status=status.HTTP_400_BAD_REQUEST

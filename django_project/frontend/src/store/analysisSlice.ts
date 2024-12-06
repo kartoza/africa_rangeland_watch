@@ -12,13 +12,8 @@ import { setCSRFToken } from "../utils/csrfUtils";
 
 
 export interface Analysis {
-  id: number;
-  name: string;
-  bbox: number[];
-  zoom: number;
-  urls: {
-    [key: string]: string;
-  };
+  data: AnalysisData;
+  results: any;
 }
 
 interface AnalysisState extends DataState {
@@ -52,6 +47,7 @@ export const analysisSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(doAnalysis.pending, (state) => {
+        state.error = null;
         state.loading = true;
       })
       .addCase(doAnalysis.fulfilled, (state, action: PayloadAction<Analysis>) => {
