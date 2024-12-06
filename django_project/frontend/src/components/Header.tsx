@@ -131,7 +131,7 @@ export default function Header(props: any) {
                     display={{ base: "flex", sm: "flex" }}
                     gap="20px"
                 >
-                    {(token || isAuthenticated) && (
+                    {isAuthenticated && (
                         <>
                             <Link href="#">
                                 <Image src="static/images/search_icon.svg" alt="search" h="24px" w="24px" />
@@ -143,7 +143,7 @@ export default function Header(props: any) {
                     )}
 
                     {/* User Avatar - Conditionally rendered based on login status */}
-                    {token || isAuthenticated ? (
+                    {isAuthenticated ? (
                         <Link
                             onMouseEnter={() => handleHoverEnter('userAvatar')}
                             onMouseLeave={handleHoverLeave}
