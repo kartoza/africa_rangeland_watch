@@ -6,7 +6,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import MegaMenu from './MegaMenu';
 import SignIn from './SignIn';
 import { AppDispatch, RootState } from '../store';
-import { checkLoginStatus, logoutUser, UserInfo } from '../store/authSlice';
+import { checkLoginStatus, logoutUser } from '../store/authSlice';
 import { selectIsLoggedIn } from "../store/authSlice";
 
 export default function Header(props: any) {
@@ -37,7 +37,6 @@ export default function Header(props: any) {
 
     useEffect(() => {
         dispatch(checkLoginStatus());
-        dispatch(UserInfo());
     }, [dispatch]);
 
     const isDashboard = location.pathname === '/dashboard';
@@ -132,7 +131,7 @@ export default function Header(props: any) {
                     display={{ base: "flex", sm: "flex" }}
                     gap="20px"
                 >
-                    {token && (
+                    {isAuthenticated && (
                         <>
                             <Link href="#">
                                 <Image src="static/images/search_icon.svg" alt="search" h="24px" w="24px" />
@@ -144,7 +143,7 @@ export default function Header(props: any) {
                     )}
 
                     {/* User Avatar - Conditionally rendered based on login status */}
-                    {token || isAuthenticated ? (
+                    {isAuthenticated ? (
                         <Link
                             onMouseEnter={() => handleHoverEnter('userAvatar')}
                             onMouseLeave={handleHoverLeave}
