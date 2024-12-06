@@ -112,8 +112,11 @@ export const checkLoginStatus = () => async (dispatch: AppDispatch) => {
     });
 
     if (response.data.is_authenticated) {
+      dispatch(loginSuccess({
+        user: response.data.user,
+        token: null,
+      }));
       dispatch(authSlice.actions.setAuthenticationStatus(true));
-
     } else {
       dispatch(authSlice.actions.setAuthenticationStatus(false));
       dispatch(logout());
