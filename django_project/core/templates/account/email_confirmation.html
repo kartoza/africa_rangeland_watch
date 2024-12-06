@@ -10,12 +10,10 @@
         <tr>
             <!-- Left Column: Logo -->
             <td align="left" width="50%" style="padding: 10px;">
-                <img src="https://arw.sta.do.kartoza.com/static/images/main_logo.svg" alt="Logo" width="200" style="display: block;">
+                <img src="https://arw.dev.do.kartoza.com/static/images/main_logo.svg" alt="Logo" width="200" style="display: block;">
             </td>
-            <!-- Right Column: Title or Navigation Links -->
             <td align="right" width="50%" style="padding: 10px; color: #ffffff; font-family: Helvetica,sans-serif;">
                 <h2 style="margin: 0; font-size: 24px;">Africa Rangeland Watch</h2>
-                <!-- Optional: Add links or other content here -->
             </td>
         </tr>
     </table> 
@@ -30,7 +28,7 @@
                 <table width="100%" cellspacing="0" cellpadding="0">
                     <tr>
                         <td align="center" style="padding: 20px 0;">
-                            <a href="{{ activate_url }}" style="background-color: #FFA500; color: #ffffff; padding: 15px 50px; text-decoration: none; font-size: 16px; border-radius: 5px;">Verify Email</a>
+                            <a href="{{ activation_url }}" style="background-color: #FFA500; color: #ffffff; padding: 15px 50px; text-decoration: none; font-size: 16px; border-radius: 5px;">Verify Email</a>
                         </td>
                     </tr>
                 </table>
@@ -38,7 +36,7 @@
                     If the button doesn’t work, you can also verify by copying and pasting the link below into your browser:
                 </p>
                 <p style="font-size: 16px; color: #333333; font-weight: regular;">
-                    <a href="{{ activate_url }}" style="color: #FFA500;">{{ activate_url }}</a>
+                    <a href="{{ activation_url }}" style="color: #FFA500;">{{ activation_url }}</a>
                 </p>
                 
                 <p style="font-size: 16px; color: #333333;">
@@ -52,7 +50,7 @@
         </tr>
         <tr>
             <td style="padding: 10px; text-align: center; font-size: 14px; color: #999999;">
-                <p>Find the platform here <a href="https://africarangelandwatch.com" style="color: #FFA500;">Africa Rangeland Watch</a>. Not interested in emails from us? <a href="[Unsubscribe Link]" style="color: #FFA500;">Unsubscribe here</a>.</p>
+                <p>Find the platform here <a href="{{django_backend_url}}" style="color: #FFA500;">Africa Rangeland Watch</a>. Not interested in emails from us? <a href="[Unsubscribe Link]" style="color: #FFA500;">Unsubscribe here</a>.</p>
             </td>
         </tr>
     </table>

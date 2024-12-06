@@ -53,5 +53,6 @@ drf-nested-routers==0.93.5
 drf-yasg==1.21.7
 git+https://github.com/kartoza/CloudNativeGIS.git
 
+
 pyjwt
 cryptography

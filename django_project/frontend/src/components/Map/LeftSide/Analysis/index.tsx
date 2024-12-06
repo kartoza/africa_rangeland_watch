@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Accordion, Box, Button, HStack } from "@chakra-ui/react";
 import { Layer } from '../../../../store/layerSlice';
-import { Landscape } from '../../../../store/landscapeSlice';
+import { Community, Landscape } from '../../../../store/landscapeSlice';
 import { AnalysisData } from "../../DataTypes";
 import LeftSideLoading from "../Loading";
 import AnalysisLandscapeSelector from "./AnalysisLandscapeSelector";
@@ -13,6 +13,8 @@ import AnalysisVariableSelector from "./AnalysisVariableSelector";
 import AnalysisReferencePeriod from "./AnalysisReferencePeriod";
 import AnalysisVariableBySpatialSelector
   from "./AnalysisVariableBySpatialSelector";
+import AnalysisLandscapeGeometrySelector
+  from "./AnalysisLandscapeGeometrySelector";
 
 
 interface Props {
@@ -25,11 +27,19 @@ export default function Analysis({ landscapes, layers }: Props) {
   const [data, setData] = useState<AnalysisData>(
     { analysisType: Types.BASELINE }
   );
+  const [communitySelected, setCommunitySelected] = useState<Community | null>(null);
 
   /** When data changed */
   useEffect(() => {
     console.log(data)
   }, [data]);
+
+  useEffect(() => {
+    setData({
+      ...data,
+      community: communitySelected?.id ? '' + communitySelected?.id : null
+    })
+  }, [communitySelected]);
 
   if (!landscapes || !layers) {
     return <LeftSideLoading/>
@@ -47,6 +57,9 @@ export default function Analysis({ landscapes, layers }: Props) {
   ) {
     disableSubmit = false
   }
+  if (data.community) {
+    disableSubmit = false
+  }
 
   return (
     <Box fontSize='13px'>
@@ -59,6 +72,10 @@ export default function Analysis({ landscapes, layers }: Props) {
             ...data,
             landscape: value
           })}
+        />
+        <AnalysisLandscapeGeometrySelector
+          landscape={landscapes.find(landscape => landscape.name === data.landscape)}
+          onSelected={(value) => setCommunitySelected(value)}
         />
 
         {/* 2) Analysis type */}
@@ -156,7 +173,11 @@ export default function Analysis({ landscapes, layers }: Props) {
       <Box mt={4} mb={4}>
         {
           !disableSubmit ?
-            <Box mb={4} color={'red'}>Click polygons on the map</Box> :
+            <Box mb={4} color={'red'}>
+              Click polygons on the
+              map {communitySelected ?
+              <Box>{communitySelected.name}</Box> : null}
+            </Box> :
             null
         }
         <HStack
@@ -169,7 +190,10 @@ export default function Analysis({ landscapes, layers }: Props) {
             color="dark_green.800"
             _hover={{ bg: "dark_green.800", color: "white" }}
             variant="outline"
-            onClick={() => setData({ analysisType: Types.BASELINE })}
+            onClick={() => {
+              setData({ analysisType: Types.BASELINE });
+              setCommunitySelected(null);
+            }}
           >
             Reset Form
           </Button>

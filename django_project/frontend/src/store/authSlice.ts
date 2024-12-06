@@ -96,10 +96,28 @@ export const checkLoginStatus = () => async (dispatch: AppDispatch) => {
   }
 };
 
+
+export const UserInfo = () => async (dispatch: AppDispatch) => {
+  setCSRFToken();
+    const response = await axios.post("/api/user-info/", {
+          credentials: "include",
+      })
+      if (response.data.is_authenticated) {
+          localStorage.setItem('auth_token', 'social');
+          dispatch(loginSuccess({
+            user: response.data.user,
+            token: 'social',
+          }));
+        } else {
+          dispatch(logout());
+      } 
+}
+
 // Logout action
-export const logoutUser = () => (dispatch: AppDispatch) => {
+export const logoutUser = () => async (dispatch: AppDispatch) => {
   localStorage.removeItem('auth_token');
   axios.defaults.headers['Authorization'] = '';
+  await axios.post('/api/logout/', {}, { withCredentials: true });
   dispatch(logout());
   window.location.href = '/';
 };
@@ -126,20 +144,23 @@ export const resetPasswordConfirm = (uid: string, token: string, newPassword: st
 
   try {
     setCSRFToken();
-    const response = await axios.post('/password-reset/confirm/', {
-      uid,
-      token,
+    const url = `/password-reset/confirm/${uid}/${token}/`;
+
+    const response = await axios.post(url, {
       new_password: newPassword,
     });
 
-    dispatch(loginSuccess({ user: null, token: response.data.key }));
     if (response.data?.message) {
       dispatch(loginFailure(response.data.message));
     }
+    else {
+      dispatch(loginFailure(response.data?.error));
+    }
   } catch (error) {
-    dispatch(loginFailure(error.response?.data?.non_field_errors[0] || 'Error resetting password'));
+    dispatch(loginFailure(error.response?.data?.error || 'Error resetting password'));
   }
 };
+
 
 
 export const registerUser = (email: string, password: string, repeatPassword: string) => async (dispatch: AppDispatch) => {

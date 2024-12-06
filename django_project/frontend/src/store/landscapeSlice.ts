@@ -4,6 +4,11 @@ import axios from 'axios';
 
 import { DataState } from './common';
 
+export interface Community {
+  id: number;
+  name: string;
+}
+
 export interface Landscape {
   id: number;
   name: string;
@@ -30,8 +35,8 @@ const initialLandscapeState: LandscapeState = {
 export const fetchLandscapes = createAsyncThunk(
     'landscape/fetchLandscapes',
     async () => {
-      const response = await axios.get('/frontend-api/landscape/');
-      return response.data;
+      const response = await axios.get('/frontend-api/landscapes/?page_size=1000');
+      return response.data.results;
     }
 );
 
