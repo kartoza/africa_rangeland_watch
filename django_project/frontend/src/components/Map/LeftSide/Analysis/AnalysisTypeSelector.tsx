@@ -52,10 +52,10 @@ export default function AnalysisTypeSelector({ data, onSelected }: Props) {
             <Radio value={Types.BASELINE}>
               <Box fontSize="13px">{Types.BASELINE}</Box>
             </Radio>
-            <Radio value={Types.TEMPORAL}>
+            <Radio value={Types.TEMPORAL} disabled={true}>
               <Box fontSize="13px">{Types.TEMPORAL}</Box>
             </Radio>
-            <Radio value={Types.SPATIAL}>
+            <Radio value={Types.SPATIAL} disabled={true}>
               <Box fontSize="13px">{Types.SPATIAL}</Box>
             </Radio>
             <Radio value={Types.BACI} disabled={true}>
