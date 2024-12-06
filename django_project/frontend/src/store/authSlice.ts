@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import axios from 'axios';
 import { AppDispatch, RootState } from '.';
+import { setCSRFToken } from '../utils/csrfUtils';
 
 interface User {
   username: string;
@@ -21,18 +22,6 @@ const initialState: AuthState = {
   loading: false,
   error: null,
   isAuthenticated: false,
-};
-
-
-
-const setCSRFToken = () => {
-  const csrfToken = document.cookie.split(';').find((cookie) => cookie.trim().startsWith('csrftoken='));
-  if (csrfToken) {
-    const token = csrfToken.split('=')[1];
-    axios.defaults.headers['X-CSRFToken'] = token;
-  } else {
-    console.warn('CSRF token not found.');
-  }
 };
 
 const authSlice = createSlice({
