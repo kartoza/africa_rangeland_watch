@@ -19,7 +19,7 @@ from django.core.validators import EmailValidator
 from django.contrib.auth.password_validation import validate_password
 from rest_framework.throttling import AnonRateThrottle
 from django.core.mail import EmailMultiAlternatives
-
+from allauth.account.models import EmailAddress
 
 
 
@@ -131,26 +131,41 @@ class AccountActivationView(APIView):
 
     def get(self, request, uidb64, token, *args, **kwargs):
         try:
+            # Decode the user ID from the activation link
             uid = urlsafe_base64_decode(uidb64).decode()
             user = get_user_model().objects.get(pk=uid)
         except (
-            TypeError, ValueError,
-            OverflowError, get_user_model().DoesNotExist
+            TypeError,
+            ValueError,
+            OverflowError,
+            get_user_model().DoesNotExist
         ):
             return JsonResponse(
                 {'error': 'Invalid activation link'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        # Check the validity of the activation token
         if default_token_generator.check_token(user, token):
             user.is_active = True
             user.save()
+
+            email_address, created = EmailAddress.objects.get_or_create(
+                user=user,
+                email=user.email,
+                defaults={'verified': True, 'primary': True}
+            )
+
+            if not created:
+                email_address.verified = True
+                email_address.primary = True
+                email_address.save()
+
+            # Redirect after successful activation
             redirect_url = (
                 f"{settings.DJANGO_BACKEND_URL}/#/?"
                 "registration_complete=true"
             )
-
-
             return redirect(redirect_url)
 
         return JsonResponse(
