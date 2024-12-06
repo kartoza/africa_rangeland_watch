@@ -16,6 +16,7 @@ INSTALLED_APPS = INSTALLED_APPS + (
     'allauth.account',
     'allauth.socialaccount',
     'rest_framework.authtoken',
+    'allauth.socialaccount.providers.github',
     'dj_rest_auth',
     'dj_rest_auth.registration',
 
@@ -38,6 +39,7 @@ WEBPACK_LOADER = {
         'LOADER_CLASS': 'webpack_loader.loader.WebpackLoader',
     }
 }
+
 REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
     'DEFAULT_AUTHENTICATION_CLASSES': [
@@ -57,6 +59,10 @@ REST_FRAMEWORK = {
     'DEFAULT_THROTTLE_RATES': {
         'anon': '30/minute',  # This limits to 30 requests per minute for anonymous users.
     },
+    'DEFAULT_PAGINATION_CLASS': (
+        'core.pagination.Pagination'
+    ),
+    'PAGE_SIZE': 100
 }
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -104,3 +110,13 @@ ACCOUNT_EMAIL_REQUIRED = True
 ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
 ACCOUNT_AUTHENTICATED_REMEMBER = True
 ACCOUNT_USERNAME_REQUIRED = False
+
+SOCIALACCOUNT_PROVIDERS = {
+    'github': {
+        'SCOPE': [
+            'user',
+            'repo',
+            'read:org',
+        ],
+    }
+}

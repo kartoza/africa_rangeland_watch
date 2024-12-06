@@ -36,6 +36,14 @@ serve:
 	@echo "------------------------------------------------------------------"
 	@docker compose ${ARGS} exec -T dev npm --prefix /home/web/django_project/frontend run serve
 
+dev-shell:
+	@echo
+	@echo "------------------------------------------------------------------"
+	@echo "Execute webpack serve command"
+	@echo "------------------------------------------------------------------"
+	@docker compose ${ARGS} exec -ti dev /bin/bash
+
+
 down:
 	@echo
 	@echo "------------------------------------------------------------------"
