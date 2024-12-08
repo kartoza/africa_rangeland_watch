@@ -97,6 +97,9 @@ const organizationsSlice = createSlice({
         email,
         accepted: false,
       };
+      if (!state.organizations[orgKey].invitations) {
+        state.organizations[orgKey].invitations = [];
+      }
       state.organizations[orgKey].invitations.push(newInvitation);
     },
     resetRefetch: (state) => {
@@ -124,6 +127,9 @@ const organizationsSlice = createSlice({
       })
       .addCase(inviteMemberThunk.fulfilled, (state, action) => {
         const { orgKey, email } = action.payload;
+        if (!state.organizations[orgKey].invitations) {
+          state.organizations[orgKey].invitations = [];
+        }
         const invitation: Invitation = { email, accepted: false };
         state.organizations[orgKey]?.invitations.push(invitation);
         state.loading = false;
