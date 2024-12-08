@@ -1,15 +1,17 @@
 import { Helmet } from "react-helmet";
 import Header from "../../components/Header";
 import Footer from "../../components/Footer";
-import { Flex, Text, Heading, Box, Image, Button, Input, Textarea, Center } from "@chakra-ui/react";
+import { Flex, Text, Heading, Box, Image, Button, Input, Textarea, Center, Link } from "@chakra-ui/react";
 import React from "react";
 
+
 export default function AboutPage() {
-  
+ 
+
   return (
     <>
       <Helmet>
-        <title>Home | Africa Rangeland Watch | Sustainable Management</title>
+        <title>About | Africa Rangeland Watch</title>
         <meta
           name="description"
           content="Explore the Africa Rangeland Watch to understand and monitor the impact of sustainable rangeland management. Access maps, dashboards, and more."
@@ -19,7 +21,7 @@ export default function AboutPage() {
       {/* Main container with background image */}
       <Box
         h={{ md: "60vh", base: "70vh" }}
-        bgImage="url('/static/dashboard/dashboard_image2.svg')"
+        bgImage="url('/static/dashboard/dashboard_image5.svg')"
         bgSize="cover"
         bgPosition="center"
         bgRepeat="no-repeat"
@@ -46,17 +48,8 @@ export default function AboutPage() {
             mb={{ base: "30px", md: "50px" }}
           >
             <Heading as="h1" fontSize={{ base: "24px", md: "48px" }} color="white" mb="30px">
-              Africa Rangeland Watch
+              About Africa Rangeland Watch
             </Heading>
-            <Text
-              fontSize={{ base: "16px", md: "24px" }}
-              lineHeight="1.5"
-              color="white"
-              mb="32px"
-              fontWeight="bold"
-            >
-              Understand and monitor the impact of sustainable <br /> rangeland management in Africa.
-            </Text>
           </Flex>
         </Flex>
       </Box>
@@ -71,13 +64,6 @@ export default function AboutPage() {
         overflowY="auto"
       >
         <Text fontSize="18px" maxW="60%" mx="auto" color="gray.700">
-          Rangeland Explorer is designed to be a rangeland monitoring and decision support tool for
-          managers and conservation planners in southern Africa. It originated out of work with Meat
-          Naturally in the Uzimbuvu Catchment, Eastern Cape, to gather satellite data on baseline
-          rangeland condition variables. Deploying the satellite data in a web application stimulates
-          interaction with the data and enhances the insight that can be gained.
-          <br />
-          <br />
           Rangeland Explorer is designed to be a rangeland monitoring and decision support tool for
           managers and conservation planners in southern Africa. It originated out of work with Meat
           Naturally in the Uzimbuvu Catchment, Eastern Cape, to gather satellite data on baseline
@@ -134,7 +120,7 @@ export default function AboutPage() {
             </Text>
           </Box>
           <Box textAlign="center" mb="20px" width={{ base: "100%", md: "23%" }}>
-            <Image ml={{base: "100px", md:"130px"}} src="static/images/analytics_icon.svg" boxSize="219px" mb="15px"/>
+            <Image ml={{base: "100px", md:"130px"}} src="static/images/satelite_icon.svg" boxSize="219px" mb="15px"/>
             <Text fontSize="18px" fontWeight="bold" color="black">
               Gather satellite data on baseline rangeland conditions
             </Text>
@@ -155,44 +141,43 @@ export default function AboutPage() {
       </Box>
 
 
-      {/* YouTube Video Section */}
+      {/* Impact Reports Section */}
       <Box py="50px" px="20px">
-        <Heading as="h2" fontSize="36px" color="black" fontWeight="bold" mb="30px" textAlign="center">
-          Watch Our Videos
-        </Heading>
-        <Flex justify="space-evenly" wrap="wrap">
-          <Box width={{ base: "100%", md: "30%" }} mb="20px">
-            <iframe
-              width="100%"
-              height="315"
-              src="https://www.youtube.com/embed/example1"
-              frameBorder="0"
-              allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            ></iframe>
-          </Box>
-          <Box width={{ base: "100%", md: "30%" }} mb="20px">
-            <iframe
-              width="100%"
-              height="315"
-              src="https://www.youtube.com/embed/example2"
-              frameBorder="0"
-              allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            ></iframe>
-          </Box>
-          <Box width={{ base: "100%", md: "30%" }} mb="20px">
-            <iframe
-              width="100%"
-              height="315"
-              src="https://www.youtube.com/embed/example3"
-              frameBorder="0"
-              allow="accelerometer; autoplay; encrypted-media; gyroscope; picture-in-picture"
-              allowFullScreen
-            ></iframe>
-          </Box>
-        </Flex>
-      </Box>
+      <Heading as="h2" fontSize="36px" color="black" fontWeight="bold" mb="30px" textAlign="center">
+        Impact Reports
+      </Heading>
+
+      {/* Flex container centered horizontally */}
+      <Flex justify="center">
+        <Box width={{ base: "100%", md: "470px" }} mb="20px">
+          <Image
+            src="/static/images/impact_reports_cover.svg"
+            alt="Herding for Health"
+            maxWidth="100%"
+            height={{ base: "auto", md: "332px" }}
+            objectFit="cover"
+            display="block"
+            margin="0 auto"
+          />
+        </Box>
+      </Flex>
+
+      {/* PDF Link below the image */}
+      <Flex justify="center">
+        <Box textAlign="center" mt="20px">
+          <Link 
+            href="/static/CSA-Impact-report-11-04-23_hi-res.pdf" 
+            color="black" 
+            fontSize="16px" 
+            fontWeight="bold" 
+            isExternal>
+            Conservation South Africa Impact Report 2020-2022
+          </Link>
+        </Box>
+      </Flex>
+    </Box>
+
+
 
       {/* Contact Us Section */}
       <Box bg="gray.100" py="50px" px="20px">
