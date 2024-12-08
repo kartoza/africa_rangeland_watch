@@ -30,12 +30,16 @@ export default function MegaMenu({ hoveredSection, isUserAvatarHovered }: MegaMe
     navigate('/');
   };
 
+  const navToLearn = () => {
+    navigate('/learn-more');
+  };
+
   // Menu items based on hover
   const menuItems: Record<string, MenuItem[]> = {
     about: [
       { label: "Africa RangeWatch", to: "/about" },
       { label: "Conversation", to: "/about" },
-      { label: "Learn More", to: "/about" },
+      { label: "Learn More", to: "", onClick: navToLearn },
     ],
     userAvatar: !isAuthenticated
       ? [{ label: "Login", to: "/login" }]
