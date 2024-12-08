@@ -17,6 +17,7 @@ import AboutPage from "./pages/About";
 import ResourcesPage from "./pages/Resources";
 const DashboardPage = React.lazy(() => import("./pages/Dashboard"));
 const MapPage  = React.lazy(() => import("./pages/Map"));
+const LearnMorePage  = React.lazy(() => import("./pages/About/LearnMore"));
 
 
 const ProjectRoutes = () => {
@@ -26,6 +27,7 @@ const ProjectRoutes = () => {
     { path: "/about", element: <AboutPage /> },
     { path: "/resources", element: <ResourcesPage /> },
     { path: "/dashboard", element: <DashboardPage /> },
+    { path: "/learn-more", element: <LearnMorePage /> },
     // Use PrivateRoute for protected routes
     {
       path: "/profile",
