@@ -8,64 +8,99 @@ interface Props extends ChakraProps {
 export default function Footer(props: Props) {
   return (
     <Box bg="dark_green.800" padding="20px" color="white">
-      <Flex
+       {/* Container for columns */}
+       <Flex
         flexDirection={{ base: "column", md: "row" }}
         alignItems="center"
-        mb="20px"
         justifyContent="center"
+        gap="20px"
+        maxWidth="90%"
+        mx="auto"
+        mb="20px"
       >
-        {/* First Row */}
-        <Flex
-          flex="1"
-          justifyContent="center"
-          gap={{ base: "5px", md: "8px" }} // Reduced gap between columns
-          flexDirection={{ base: "column", md: "row" }}
+        {/* Column 1: Help */}
+        <Box
+          flexBasis={{ base: "100%", md: "25%" }}
+          textAlign="center"
+          minH="120px"
         >
-          {/* Column 1: Help */}
-          <Box flex="1" textAlign={{ base: "center", md: "right" }}>
-            <Heading size="lg" mb="2" fontWeight="bold" color="white">Help</Heading>
-            <UnorderedList styleType="none" spacing={1}>
-              <ListItem>
-                <Link href="#" fontSize="13px" fontWeight="bold" color="white">Dummy Link 1</Link>
-              </ListItem>
-              <ListItem>
-                <Link href="#" fontSize="13px" fontWeight="bold" color="white">Dummy Link 2</Link>
-              </ListItem>
-            </UnorderedList>
-          </Box>
-
-          {/* Column 2: About Us */}
-          <Box flex="1" textAlign="center">
-            <Heading size="lg" mb="2" fontWeight="bold" color="white">About Us</Heading>
-            <UnorderedList styleType="none" spacing={1}>
-              <ListItem>
-                <Link href="#/about" fontSize="13px" fontWeight="bold" color="white">Africa Rangeland Watch</Link>
-              </ListItem>
-              <ListItem>
-                <Link href="#" fontSize="13px" fontWeight="bold" color="white">Conservation South Africa</Link>
-              </ListItem>
-            </UnorderedList>
-          </Box>
-
-          {/* Column 3: Resources */}
-          <Box flex="1" textAlign={{ base: "center", md: "left" }}>
-            <Heading size="lg" mb="2" fontWeight="bold" color="white">Resources</Heading>
-            <UnorderedList styleType="none" spacing={1}>
+          <Heading size="lg" mb="2" fontWeight="bold" color="white">
+            HELP
+          </Heading>
+          <UnorderedList styleType="none" spacing={1}>
             <ListItem>
-                <Link href="#" fontSize="13px" fontWeight="bold">ARW Documentation</Link>
-              </ListItem>
-              <ListItem>
-                <Link href="#" fontSize="13px" fontWeight="bold">Policy Briefs</Link>
-              </ListItem>
-              <ListItem>
-                <Link href="#" fontSize="13px" fontWeight="bold">Case Studies</Link>
-              </ListItem>
-              <ListItem>
-                <Link href="#" fontSize="13px" fontWeight="bold">Conservation News</Link>
-              </ListItem>
-            </UnorderedList>
-          </Box>
-        </Flex>
+              <Link href="#" fontSize="14px" fontWeight="bold" color="white">
+                Dummy Link 1
+              </Link>
+            </ListItem>
+            <ListItem>
+              <Link href="#" fontSize="14px" fontWeight="bold" color="white">
+                Dummy Link 2
+              </Link>
+            </ListItem>
+          </UnorderedList>
+        </Box>
+
+        {/* Column 2: About Us */}
+        <Box
+          flexBasis={{ base: "100%", md: "25%" }}
+          textAlign="center"
+          minH="120px"
+        >
+          <Heading size="lg" mb="2" fontWeight="bold" color="white">
+            ABOUT US
+          </Heading>
+          <UnorderedList styleType="none" spacing={1}>
+            <ListItem>
+              <Link
+                href="#/about"
+                fontSize="14px"
+                fontWeight="bold"
+                color="white"
+              >
+                Africa Rangeland Watch
+              </Link>
+            </ListItem>
+            <ListItem>
+              <Link href="#" fontSize="14px" fontWeight="bold" color="white">
+                Conservation South Africa
+              </Link>
+            </ListItem>
+          </UnorderedList>
+        </Box>
+
+        {/* Column 3: Resources */}
+        <Box
+          flexBasis={{ base: "100%", md: "25%" }}
+          textAlign="center"
+          minH="100px"
+        >
+          <Heading size="lg" mb="2" fontWeight="bold" color="white">
+            RESOURCES
+          </Heading>
+          <UnorderedList styleType="none" spacing={1}>
+            <ListItem>
+              <Link href="#" fontSize="14px" fontWeight="bold" color="white">
+                ARW Documentation
+              </Link>
+            </ListItem>
+            <ListItem>
+              <Link href="#" fontSize="14px" fontWeight="bold" color="white">
+                Policy Briefs
+              </Link>
+            </ListItem>
+            <ListItem>
+              <Link href="#" fontSize="14px" fontWeight="bold" color="white">
+                Case Studies
+              </Link>
+            </ListItem>
+            <ListItem>
+              <Link href="#" fontSize="14px" fontWeight="bold" color="white">
+                Conservation News
+              </Link>
+            </ListItem>
+          </UnorderedList>
+        </Box>
       </Flex>
 
       {/* Second Row */}
@@ -79,17 +114,17 @@ export default function Footer(props: Props) {
 
         <UnorderedList styleType="none" display="flex" justifyContent="center" flexWrap="wrap" gap="20px">
           <ListItem>
-            <Link href="#" fontSize="13px">Contact Us</Link>
+            <Link href="#" fontSize="14px">Contact Us</Link>
           </ListItem>
           <ListItem>
-            <Link href="#" fontSize="13px">Terms of Use</Link>
+            <Link href="#" fontSize="14px">Terms of Use</Link>
           </ListItem>
           <ListItem>
-            <Link href="#" fontSize="13px">Privacy Policy</Link>
+            <Link href="#" fontSize="14px">Privacy Policy</Link>
           </ListItem>
         </UnorderedList>
 
-        <Text fontSize="13px">© 2024 Africa Rangeland Watch</Text>
+        <Text fontSize="14px">© 2024 Africa Rangeland Watch</Text>
       </Flex>
     </Box>
   );
