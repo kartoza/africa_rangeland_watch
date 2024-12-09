@@ -47,3 +47,12 @@ django-allauth==65.1.0
 django-invitations==2.1.0
 
 earthengine-api==1.4.0
+
+# clound_native_gis
+drf-nested-routers==0.93.5
+drf-yasg==1.21.7
+git+https://github.com/kartoza/CloudNativeGIS.git
+
+
+pyjwt
+cryptography

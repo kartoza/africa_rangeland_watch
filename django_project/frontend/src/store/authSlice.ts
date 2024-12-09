@@ -1,6 +1,7 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
 import axios from 'axios';
 import { AppDispatch, RootState } from '.';
+import { setCSRFToken } from '../utils/csrfUtils';
 
 interface User {
   username: string;
@@ -12,6 +13,7 @@ interface AuthState {
   token: string | null;
   loading: boolean;
   error: string | null;
+  isAuthenticated: boolean;
 }
 
 const initialState: AuthState = {
@@ -19,17 +21,7 @@ const initialState: AuthState = {
   token: null,
   loading: false,
   error: null,
-};
-
-
-const setCSRFToken = () => {
-  const csrfToken = document.cookie.split(';').find((cookie) => cookie.trim().startsWith('csrftoken='));
-  if (csrfToken) {
-    const token = csrfToken.split('=')[1];
-    axios.defaults.headers['X-CSRFToken'] = token;
-  } else {
-    console.warn('CSRF token not found.');
-  }
+  isAuthenticated: false,
 };
 
 const authSlice = createSlice({
@@ -44,22 +36,29 @@ const authSlice = createSlice({
       state.loading = false;
       state.user = action.payload.user;
       state.token = action.payload.token;
+      state.isAuthenticated = true;
     },
     loginFailure: (state, action: PayloadAction<string>) => {
       state.loading = false;
       state.error = action.payload;
+      state.isAuthenticated = false;
     },
     logout: (state) => {
       state.user = null;
       state.token = null;
       state.loading = false;
       state.error = null;
+      state.isAuthenticated = false;
+    },
+    setAuthenticationStatus: (state, action: PayloadAction<boolean>) => {
+      state.isAuthenticated = action.payload;
     },
     setUser: (state, action: PayloadAction<User>) => {
       state.user = action.payload;
     },
   },
 });
+
 
 export const { loginStart, loginSuccess, loginFailure, logout, setUser } = authSlice.actions;
 
@@ -85,9 +84,11 @@ export const loginUser = (email: string, password: string) => async (dispatch: A
   }
 };
 
-// Check if the user is logged in by checking the token in localStorage
+
 export const checkLoginStatus = () => async (dispatch: AppDispatch) => {
   const token = localStorage.getItem('auth_token');
+
+  // First, try to authenticate using the token
   if (token) {
     axios.defaults.headers['Authorization'] = `Token ${token}`;
 
@@ -97,30 +98,50 @@ export const checkLoginStatus = () => async (dispatch: AppDispatch) => {
         user: response.data.user,
         token: token,
       }));
+      return;
     } catch (error) {
+      console.warn("Token validation failed, falling back to user info check.");
+    }
+  }
+
+  // Fallback: Check user info if the token validation fails
+  try {
+    setCSRFToken();
+    const response = await axios.post("/api/user-info/", {
+      credentials: "include",
+    });
+
+    if (response.data.is_authenticated) {
+      dispatch(loginSuccess({
+        user: response.data.user,
+        token: null,
+      }));
+    } else {
       dispatch(logout());
     }
-  } else {
+  } catch (error) {
+    console.error("User info validation failed:", error);
     dispatch(logout());
   }
 };
 
+
+
+
 // Logout action
-export const logoutUser = () => (dispatch: AppDispatch) => {
+export const logoutUser = () => async (dispatch: AppDispatch) => {
   localStorage.removeItem('auth_token');
   axios.defaults.headers['Authorization'] = '';
+  await axios.post('/api/logout/', {}, { withCredentials: true });
   dispatch(logout());
   window.location.href = '/';
 };
 
 // Action to request password reset
 export const resetPasswordRequest = (email: string) => async (dispatch: AppDispatch) => {
-  dispatch(loginStart());
-
   try {
     setCSRFToken();
     await axios.post('/password-reset/', { email });
-    dispatch(loginSuccess({ user: null, token: null }));
   } catch (error) {
     const errorMessage = error.response?.data?.error || 'Error sending password reset email';
     dispatch(loginFailure(errorMessage));
@@ -135,20 +156,24 @@ export const resetPasswordConfirm = (uid: string, token: string, newPassword: st
 
   try {
     setCSRFToken();
-    const response = await axios.post('/password-reset/confirm/', {
-      uid,
-      token,
+    const url = `/password-reset/confirm/${uid}/${token}/`;
+
+    const response = await axios.post(url, {
       new_password: newPassword,
     });
 
-    dispatch(loginSuccess({ user: null, token: response.data.key }));
     if (response.data?.message) {
       dispatch(loginFailure(response.data.message));
     }
+    else {
+      dispatch(loginFailure(response.data?.error));
+    }
   } catch (error) {
-    dispatch(loginFailure(error.response?.data?.non_field_errors[0] || 'Error resetting password'));
+    console.log(error)
+    dispatch(loginFailure(error.response?.data?.error || 'Error resetting password'));
   }
 };
+
 
 
 export const registerUser = (email: string, password: string, repeatPassword: string) => async (dispatch: AppDispatch) => {
@@ -206,7 +231,8 @@ export const registerUser = (email: string, password: string, repeatPassword: st
 
 
 
-export const selectIsLoggedIn = (state: RootState) => !!state.auth.token;
+export const selectIsLoggedIn = (state: RootState) =>
+  !!state.auth.token || state.auth.isAuthenticated;
 export const selectAuthLoading = (state: RootState) => state.auth.loading;
 export const selectUserEmail = (state: RootState) => state.auth.user?.email;
 

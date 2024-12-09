@@ -21,7 +21,7 @@ import {
   useBreakpointValue,
 } from "@chakra-ui/react";
 import { useDispatch, useSelector } from "react-redux";
-import { loginUser, registerUser, resetPasswordRequest } from "../store/authSlice";
+import { loginUser, registerUser, resetPasswordRequest, resetPasswordConfirm } from "../store/authSlice";
 import { RootState, AppDispatch } from "../store";
 import { useLocation } from "react-router-dom";
 
@@ -68,15 +68,17 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
   useEffect(() => {
     if (uid && tokenFromUrl) {
       setFormType("resetPassword");
-      setIsOpen(true);
-      setCanSubmit(false);
     }
-  }, [uid, tokenFromUrl]);
+  }, [uid]);
 
   useEffect(() => {
-    setStatusMessage("");
-    setResetError("");
-    setIsOpen(false)
+    setStatusMessage(null);
+    setResetError(null);
+    setEmail("");
+    setPassword("");
+    setConfirmPassword("");
+    formType === "resetPassword" ? setIsOpen(true):setIsOpen(false);
+    setCanSubmit(true);
   }, [formType]);
 
   const togglePasswordVisibility = () => {
@@ -86,9 +88,11 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
   const isValidEmail = (email: string) =>
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 
-  const handleSendResetLink = () => {
-    setStatusMessage("Reset link sent to your email.");
-    dispatch(resetPasswordRequest(email));
+  const handleSendResetLink = async () => {
+    setStatusMessage(null)
+    await dispatch(resetPasswordRequest(email));
+    if(error ==  null)
+      setStatusMessage("Reset link sent to your email.");
   };
 
   const handleSignUp = () => {
@@ -96,15 +100,18 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
       setResetError("Passwords do not match!");
       return;
     }
-    setStatusMessage("");
-    setResetError("");
+    setStatusMessage(null);
+    setResetError(null);
     dispatch(registerUser(email, password, confirmPassword));
   };
 
   const handleSignIn = () => {
     dispatch(loginUser(email, password));
-    setCanSubmit(true)
   };
+
+  const closeModal = () => {
+    setIsOpen(false)
+  }
 
   const handleResetPassword = () => {
     if (password !== confirmPassword) {
@@ -113,12 +120,7 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
     }
 
     if (uid && tokenFromUrl) {
-      dispatch(resetPasswordRequest(password));
-      // setStatusMessage("Password has been successfully reset.");
-      setTimeout(() => {
-        setFormType("signin");
-        setResetError("");
-      }, 3000)
+      dispatch(resetPasswordConfirm(uid,tokenFromUrl,password));
     } else {
       setResetError("Invalid reset link.");
     }
@@ -126,14 +128,24 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
   };
 
   useEffect(() => {
-    if (token) {
       setEmail("");
       setPassword("");
       setConfirmPassword("");
       setRememberMe(false);
-      onClose();
-    }
+      if(token)
+        onClose()
+      setIsOpen(false)
   }, [token, onClose]);
+
+  useEffect(() => {
+    if (error) {
+      setResetError(error);
+      setStatusMessage(null)
+    } else
+    if (statusMessage) {
+      setResetError(null);
+    }
+  }, [error, statusMessage]); 
 
   return (
     <Modal isOpen={isOpen || isOpenReset} onClose={onClose} isCentered={modalPosition === "absolute"}>
@@ -174,14 +186,8 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
 
                 {statusMessage && <Text color="green.500">{statusMessage}</Text>}
                 {resetError && (
-                  <Text color={resetError === "Verification email sent." ? "green.500" : "red.500"}>
+                  <Text color={resetError === "Verification email sent." ? "green.500" : resetError === "Password has been successfully reset."? "green.500": "red.500"}>
                     {resetError}
-                  </Text>
-                )}
-
-                {error && (
-                  <Text color={error === "Verification email sent." ? "green.500" : "red.500"}>
-                    {error}
                   </Text>
                 )}
 
@@ -299,8 +305,9 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
                         formType === "signin" || formType === "signup"
                           ? !isValidEmail(email) || loading
                           : formType === "resetPassword"
-                          ? canSubmit
-                          : !canSubmit || loading
+                          ? !canSubmit
+                          : formType === "forgotPassword"
+                          ? !canSubmit : canSubmit || loading
                       }
                     >
                       {formType === "signin"
@@ -324,9 +331,23 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
                       </Text>
                    </Flex>
                     
-                    <Flex mt="22px" justifyContent="center" gap="20px">
-                      <Image src="static/images/google_icon.svg" alt="Google Icon" h="40px" w="40px" />
-                      <Image src="static/images/github_icon.svg" alt="GitHub Icon" h="40px" w="40px" />
+                      <Flex mt="22px" justifyContent="center" gap="20px">
+                      <a href="/accounts/google/login/">
+                        <Image
+                          src="static/images/google_icon.svg"
+                          alt="Google Icon"
+                          h="40px"
+                          w="40px"
+                        />
+                      </a>
+                      <a href="/accounts/github/login/">
+                        <Image
+                          src="static/images/github_icon.svg"
+                          alt="GitHub Icon"
+                          h="40px"
+                          w="40px"
+                        />
+                      </a>
                       <Image src="static/images/apple_icon.svg" alt="Apple Icon" h="40px" w="40px" />
                     </Flex>
                   </>

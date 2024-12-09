@@ -21,6 +21,8 @@ import {
 } from "@chakra-ui/react";
 import React, { useState, useEffect } from "react";
 import axios from "axios";
+import { setCSRFToken } from "../../utils/csrfUtils";
+
 
 interface Props {
   isOpen: boolean;
@@ -28,6 +30,7 @@ interface Props {
 }
 
 type ModalPosition = "absolute" | "fixed";
+
 
 export default function RequestOrganisation({ isOpen, onClose }: Props) {
   const modalPosition = useBreakpointValue<ModalPosition>({
@@ -61,6 +64,7 @@ export default function RequestOrganisation({ isOpen, onClose }: Props) {
   }, [action]);
 
   const handleSubmit = () => {
+    setCSRFToken();
     const data =
       action === "join"
         ? { firstName, lastName, selectedOrganisationId }

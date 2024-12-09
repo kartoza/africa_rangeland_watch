@@ -1,6 +1,9 @@
 import uuid
 from django.db import models
 from django.contrib.auth.models import User
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
+from cloud_native_gis.models.layer import Layer
 
 
 class DataProvider(models.Model):
@@ -215,3 +218,14 @@ class DataFeedSetting(models.Model):
 
     def __str__(self):
         return f"{self.provider.name} Feed - {self.frequency}"
+
+
+@receiver(post_delete, sender=InputLayer)
+def input_layer_on_delete(sender, instance: InputLayer, using, **kwargs):
+    """Delete layer in cloud_native_gis."""
+    layer = Layer.objects.filter(
+        unique_id=instance.uuid
+    ).first()
+    if layer is None:
+        return
+    layer.delete()

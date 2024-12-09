@@ -7,6 +7,7 @@ import MegaMenu from './MegaMenu';
 import SignIn from './SignIn';
 import { AppDispatch, RootState } from '../store';
 import { checkLoginStatus, logoutUser } from '../store/authSlice';
+import { selectIsLoggedIn } from "../store/authSlice";
 
 export default function Header(props: any) {
     const dispatch = useDispatch<AppDispatch>();
@@ -16,6 +17,7 @@ export default function Header(props: any) {
     const { isOpen, onOpen, onClose } = useDisclosure();
     const location = useLocation();
     const navigate = useNavigate();
+    const isAuthenticated = useSelector(selectIsLoggedIn);
 
     // Handle logout
     const handleLogout = () => {
@@ -75,7 +77,7 @@ export default function Header(props: any) {
                 {/* Centered Menu Items (Desktop only) */}
                 <UnorderedList
                     styleType="none"
-                    gap="44px"
+                    gap="65px"
                     display={{ base: "none", sm: "flex" }}
                     flexDirection="row"
                     alignItems="center"
@@ -83,7 +85,7 @@ export default function Header(props: any) {
                 >
                     <ListItem>
                         <Link href="/#/map" _hover={{ textDecoration: 'underline', textDecorationColor: 'white' }}>
-                            <Text color="white">MAP</Text>
+                            <Text color="white" fontWeight={400} fontSize={16}>MAP</Text>
                         </Link>
                     </ListItem>
                     <ListItem>
@@ -93,12 +95,12 @@ export default function Header(props: any) {
                             _focus={{ textDecoration: 'underline', textDecorationColor: 'white' }}
                             style={{ textDecoration: isDashboard ? 'underline' : 'none', textDecorationColor: 'white' }}
                         >
-                            <Text color="white">DASHBOARD</Text>
+                            <Text color="white" fontWeight={400} fontSize={16}>DASHBOARD</Text>
                         </Link>
                     </ListItem>
                     <ListItem>
                         <Link href="#" _hover={{ textDecoration: 'underline', textDecorationColor: 'white' }}>
-                            <Text color="white">HELP</Text>
+                            <Text color="white" fontWeight={400} fontSize={16}>HELP</Text>
                         </Link>
                     </ListItem>
                     <ListItem
@@ -106,7 +108,7 @@ export default function Header(props: any) {
                         onMouseLeave={handleHoverLeave}
                     >
                         <Flex gap="4px" alignItems="center" cursor="pointer">
-                            <Text color="white">ABOUT</Text>
+                            <Text color="white" fontWeight={400} fontSize={16}>ABOUT</Text>
                             <Image src="static/images/arrow_down.svg" alt="Dropdown Arrow" h="8px" w="16px" />
                         </Flex>
                         {hoveredSection === 'about' && <MegaMenu hoveredSection="about" isUserAvatarHovered={false} />}
@@ -116,7 +118,7 @@ export default function Header(props: any) {
                         onMouseLeave={handleHoverLeave}
                     >
                         <Flex gap="4px" alignItems="center" cursor="pointer">
-                            <Text color="white">RESOURCES</Text>
+                            <Text color="white" fontWeight={400} fontSize={16}>RESOURCES</Text>
                             <Image src="static/images/arrow_down.svg" alt="Dropdown Arrow" h="8px" w="16px" />
                         </Flex>
                         {hoveredSection === 'resources' && <MegaMenu hoveredSection="resources" isUserAvatarHovered={false} />}
@@ -129,7 +131,7 @@ export default function Header(props: any) {
                     display={{ base: "flex", sm: "flex" }}
                     gap="20px"
                 >
-                    {token && (
+                    {isAuthenticated && (
                         <>
                             <Link href="#">
                                 <Image src="static/images/search_icon.svg" alt="search" h="24px" w="24px" />
@@ -141,7 +143,7 @@ export default function Header(props: any) {
                     )}
 
                     {/* User Avatar - Conditionally rendered based on login status */}
-                    {token ? (
+                    {isAuthenticated ? (
                         <Link
                             onMouseEnter={() => handleHoverEnter('userAvatar')}
                             onMouseLeave={handleHoverLeave}

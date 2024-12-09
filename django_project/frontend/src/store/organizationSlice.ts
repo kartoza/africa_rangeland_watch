@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { RootState } from ".";
 import axios from "axios";
+import { setCSRFToken } from '../utils/csrfUtils';
 
 // Define types for the state
 interface Member {
@@ -33,18 +34,6 @@ const initialState: OrganizationsState = {
   refetch: false,
 };
 
-// Utility to set the CSRF token globally in Axios
-const setCSRFToken = () => {
-  const csrfToken = document.cookie
-    .split(";")
-    .find((cookie) => cookie.trim().startsWith("csrftoken="));
-  if (csrfToken) {
-    const token = csrfToken.split("=")[1];
-    axios.defaults.headers.common["X-CSRFToken"] = token;
-  } else {
-    console.warn("CSRF token not found.");
-  }
-};
 
 // Configure Axios globally for JSON requests
 axios.defaults.headers.common["Content-Type"] = "application/json";
@@ -108,6 +97,9 @@ const organizationsSlice = createSlice({
         email,
         accepted: false,
       };
+      if (!state.organizations[orgKey].invitations) {
+        state.organizations[orgKey].invitations = [];
+      }
       state.organizations[orgKey].invitations.push(newInvitation);
     },
     resetRefetch: (state) => {
@@ -135,6 +127,9 @@ const organizationsSlice = createSlice({
       })
       .addCase(inviteMemberThunk.fulfilled, (state, action) => {
         const { orgKey, email } = action.payload;
+        if (!state.organizations[orgKey].invitations) {
+          state.organizations[orgKey].invitations = [];
+        }
         const invitation: Invitation = { email, accepted: false };
         state.organizations[orgKey]?.invitations.push(invitation);
         state.loading = false;

@@ -14,6 +14,7 @@ import { hasSource, removeLayer, removeSource } from "./utils";
 import { fetchBaseMaps } from '../../store/baseMapSlice';
 import { fetchMapConfig } from '../../store/mapConfigSlice';
 import { Layer, setSelectedNrtLayer } from '../../store/layerSlice';
+import { COMMUNITY_ID } from "./DataTypes";
 
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './style.css';
@@ -41,7 +42,47 @@ export const MapLibre = forwardRef(
       if (map) {
         const ID = `layer-${layer.id}`
         removeLayer(map, ID)
-        if (layer.type == "raster") {
+        if (layer.type === 'vector') {
+          if (!hasSource(map, ID)) {
+            if (layer.url.startsWith('pmtiles://')) {
+              map.addSource(ID, {
+                  type: "vector",
+                  url: `${layer.url}`
+                }
+              )
+            } else {
+              map.addSource(ID, {
+                  type: "vector",
+                  tiles: [
+                    `${layer.url}`
+                  ]
+                }
+              )
+            }
+          }
+          let layerStyle = {
+            "source": ID,
+            "id": ID,
+            "type": "fill",
+            "paint": {
+              "fill-color": "#ff7800",
+              "fill-opacity": 0.8
+            },
+            "filter": [
+              "==",
+              "$type",
+              "Polygon"
+            ],
+            "source-layer": "default"
+          }
+          if (layer.style) {
+            // @ts-ignore
+            layerStyle = { ...layer.style['layers'][0] }
+            layerStyle['source'] = ID
+            layerStyle['id'] = ID
+          }
+          map.addLayer(layerStyle, COMMUNITY_ID)
+        } else if (layer.type === "raster") {
           if (!hasSource(map, ID)) {
             map.addSource(ID, {
                 type: "raster",
@@ -55,13 +96,14 @@ export const MapLibre = forwardRef(
               id: ID,
               source: ID,
               type: "raster"
-            }
+            },
+            COMMUNITY_ID
           )
           legendRef?.current?.renderLayer(layer)
         }
       }
     }
-  
+
     const doRemoveLayer = (layer: Layer) => {
       if (map) {
         const ID = `layer-${layer.id}`
@@ -105,6 +147,10 @@ export const MapLibre = forwardRef(
           center: [0, 0],
           zoom: 1
         });
+
+        // Save as global variable
+        window.map = _map;
+
         _map.once("load", () => {
           setMap(_map)
 
@@ -153,7 +199,7 @@ export const MapLibre = forwardRef(
 
       if (selectedNrt && selectedLandscape.urls[selectedNrt.id] !== undefined) {
         // render NRT layer from landscape url
-        let _copyLayer = {...selectedNrt}
+        let _copyLayer = { ...selectedNrt }
         _copyLayer.url = selectedLandscape.urls[selectedNrt.id]
         doRenderLayer(_copyLayer)
       }

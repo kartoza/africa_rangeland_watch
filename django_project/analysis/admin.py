@@ -1,6 +1,7 @@
 from django.contrib import admin
 from django.contrib.gis.admin import OSMGeoAdmin
-from .models import Analysis, InterventionArea, Landscape
+
+from .models import Analysis, InterventionArea, Landscape, LandscapeCommunity
 
 
 @admin.register(Analysis)
@@ -66,11 +67,29 @@ class InterventionAreaAdmin(OSMGeoAdmin):
     default_zoom = 2
 
 
+def fetch_landscape_area(modeladmin, request, queryset):
+    """Fetch all Landscape Area objects for a given queryset."""
+    for landscape in queryset:
+        landscape.fetch_areas()
+
+
 @admin.register(Landscape)
 class LandscapeAdmin(OSMGeoAdmin):
     """Admin for landscape model."""
 
-    list_display = ('name',)
+    list_display = ('name', 'project_name')
     search_fields = ('name',)
+
+    map_template = 'gis/admin/osm.html'
+    actions = [fetch_landscape_area]
+
+
+@admin.register(LandscapeCommunity)
+class LandscapeCommunityAdmin(OSMGeoAdmin):
+    """Admin for LandscapeCommunity model."""
+
+    list_display = ('landscape', 'community_id', 'community_name',)
+    search_fields = ('community_name',)
+    list_filter = ('landscape',)
 
     map_template = 'gis/admin/osm.html'
