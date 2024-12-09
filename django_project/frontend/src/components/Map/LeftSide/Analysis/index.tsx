@@ -15,6 +15,9 @@ import AnalysisVariableBySpatialSelector
   from "./AnalysisVariableBySpatialSelector";
 import AnalysisLandscapeGeometrySelector
   from "./AnalysisLandscapeGeometrySelector";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch, RootState } from "../../../../store";
+import { doAnalysis } from "../../../../store/analysisSlice";
 
 
 interface Props {
@@ -24,20 +27,24 @@ interface Props {
 
 /** Layer Checkbox component of map. */
 export default function Analysis({ landscapes, layers }: Props) {
+  const dispatch = useDispatch<AppDispatch>();
   const [data, setData] = useState<AnalysisData>(
     { analysisType: Types.BASELINE }
   );
   const [communitySelected, setCommunitySelected] = useState<Community | null>(null);
+  const { loading } = useSelector((state: RootState) => state.analysis);
 
   /** When data changed */
-  useEffect(() => {
-    console.log(data)
-  }, [data]);
+  const triggerAnalysis = () => {
+    dispatch(doAnalysis(data))
+  }
 
   useEffect(() => {
     setData({
       ...data,
-      community: communitySelected?.id ? '' + communitySelected?.id : null
+      community: communitySelected?.id ? '' + communitySelected?.id : null,
+      latitude: communitySelected?.latitude ? communitySelected?.latitude : null,
+      longitude: communitySelected?.longitude ? communitySelected?.longitude : null
     })
   }, [communitySelected]);
 
@@ -45,20 +52,24 @@ export default function Analysis({ landscapes, layers }: Props) {
     return <LeftSideLoading/>
   }
 
-  let disableSubmit = true;
+  let dataError = true;
   if (data.landscape && data.analysisType === Types.BASELINE) {
-    disableSubmit = false
+    dataError = false
   } else if (
     data.landscape && data.analysisType === Types.TEMPORAL && data.variable && data.temporalResolution === TemporalResolution.ANNUAL && data.period?.year && data.comparisonPeriod?.year
   ) {
-    disableSubmit = false
+    dataError = false
   } else if (
     data.landscape && data.analysisType === Types.SPATIAL && data.variable
   ) {
-    disableSubmit = false
+    dataError = false
   }
-  if (data.community) {
-    disableSubmit = false
+  let disableSubmit = !!dataError;
+  if (!data.community) {
+    disableSubmit = true
+  }
+  if (loading) {
+    disableSubmit = true;
   }
 
   return (
@@ -172,7 +183,7 @@ export default function Analysis({ landscapes, layers }: Props) {
       </Accordion>
       <Box mt={4} mb={4}>
         {
-          !disableSubmit ?
+          !dataError ?
             <Box mb={4} color={'red'}>
               Click polygons on the
               map {communitySelected ?
@@ -190,6 +201,7 @@ export default function Analysis({ landscapes, layers }: Props) {
             color="dark_green.800"
             _hover={{ bg: "dark_green.800", color: "white" }}
             variant="outline"
+            disabled={loading}
             onClick={() => {
               setData({ analysisType: Types.BASELINE });
               setCommunitySelected(null);
@@ -205,6 +217,7 @@ export default function Analysis({ landscapes, layers }: Props) {
             color="white"
             _hover={{ opacity: 0.8 }}
             disabled={disableSubmit}
+            onClick={triggerAnalysis}
           >
             Run Analysis
           </Button>
