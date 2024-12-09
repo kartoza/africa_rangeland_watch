@@ -144,7 +144,7 @@ CACHES = {
 }
 
 SITE_ID = 1
-LOGIN_URL = '/account/login/'
+LOGIN_URL = '/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 
