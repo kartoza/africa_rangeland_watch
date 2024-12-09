@@ -7,6 +7,8 @@ import { DataState } from './common';
 export interface Community {
   id: number;
   name: string;
+  latitude: number;
+  longitude: number;
 }
 
 export interface Landscape {
@@ -18,7 +20,7 @@ export interface Landscape {
     [key: string]: string;
   };
 }
-  
+
 interface LandscapeState extends DataState {
     landscapes: Landscape[];
     selected: Landscape;
@@ -67,10 +69,10 @@ export const landscapeSlice = createSlice({
           state.loading = false;
           state.error = action.error.message || 'An error occurred while fetching landscapes';
         })
-    }  
+    }
 });
-  
-export const { 
+
+export const {
   clearError,
   setSelectedLandscape,
   clearSelectedLandscape

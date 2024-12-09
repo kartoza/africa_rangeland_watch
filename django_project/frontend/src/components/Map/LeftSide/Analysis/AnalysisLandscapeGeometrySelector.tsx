@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import maplibregl from "maplibre-gl";
 import { COMMUNITY_ID } from "../../DataTypes";
 import { Community, Landscape } from "../../../../store/landscapeSlice";
+import { useSelector } from "react-redux";
+import { RootState } from "../../../../store";
 
 const COMMUNITY_FILL_ID = COMMUNITY_ID + '-fill';
 
@@ -22,6 +24,7 @@ export default function AnalysisLandscapeGeometrySelector(
   { landscape, onSelected }: Props
 ) {
   const [map, setMap] = useState<maplibregl.Map>(null);
+  const { mapInitiated } = useSelector((state: RootState) => state.mapConfig);
 
   useEffect(() => {
     try {
@@ -83,7 +86,7 @@ export default function AnalysisLandscapeGeometrySelector(
     } catch (err) {
       console.log(err)
     }
-  }, [window.map])
+  }, [window.map, mapInitiated])
 
   useEffect(() => {
     if (!map) {
@@ -125,7 +128,9 @@ export default function AnalysisLandscapeGeometrySelector(
         onSelected(
           {
             id: hit.properties['community_id'],
-            name: hit.properties['community_name']
+            name: hit.properties['community_name'],
+            latitude: e.lngLat.lat,
+            longitude: e.lngLat.lng,
           }
         )
         map.setFilter(

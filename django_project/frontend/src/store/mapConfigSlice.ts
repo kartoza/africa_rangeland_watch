@@ -10,10 +10,12 @@ interface MapConfig {
 
 interface MapConfigState extends DataState {
     mapConfig: MapConfig;
+    mapInitiated: boolean;
 }
 
 const initialMapConfigState: MapConfigState = {
     mapConfig: null,
+    mapInitiated:false,
     loading: false,
     error: null,
 };
@@ -33,6 +35,9 @@ const mapConfigSlice = createSlice({
       clearError(state) {
         state.error = null;
       },
+      mapInitated(state) {
+        state.mapInitiated = true;
+      },
     },
     extraReducers: (builder) => {
       builder
@@ -47,9 +52,9 @@ const mapConfigSlice = createSlice({
           state.loading = false;
           state.error = action.error.message || 'An error occurred while fetching map config';
         })
-    }  
+    }
 });
-  
-export const { clearError } = mapConfigSlice.actions;
+
+export const { clearError, mapInitated } = mapConfigSlice.actions;
 
 export default mapConfigSlice.reducer;

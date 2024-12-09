@@ -4,6 +4,7 @@ Africa Rangeland Watch (ARW).
 
 .. note:: Landscape APIs
 """
+from cloud_native_gis.utils.vector_tile import querying_vector_tile
 from django.http import Http404, HttpResponse
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny
@@ -13,7 +14,6 @@ from analysis.models import Landscape, LandscapeCommunity
 from core.pagination import Pagination
 from frontend.serializers.landscape import LandscapeSerializer
 from layers.models import InputLayer
-from layers.utils import querying_vector_tile
 
 
 class LandscapeViewSet(
