@@ -35,7 +35,7 @@ export default function MegaMenu({ hoveredSection, isUserAvatarHovered }: MegaMe
     about: [
       { label: "Africa RangeWatch", to: "/about" },
       { label: "Conversation", to: "/about" },
-      { label: "Learn More", to: "/about" },
+      { label: "Learn More", to: "/learn-more" },
     ],
     userAvatar: !isAuthenticated
       ? [{ label: "Login", to: "/login" }]
@@ -49,8 +49,10 @@ export default function MegaMenu({ hoveredSection, isUserAvatarHovered }: MegaMe
     ],
   };
 
-  const handleNavigation = (to: string | undefined) => {
-    if (to) {
+  const handleNavigation = (to: string | undefined, onClick?: () => void) => {
+    if (onClick) {
+      onClick();
+    } else if (to) {
       navigate(to);
     }
   };
