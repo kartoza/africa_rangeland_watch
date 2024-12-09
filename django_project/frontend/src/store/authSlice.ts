@@ -132,6 +132,7 @@ export const checkLoginStatus = () => async (dispatch: AppDispatch) => {
 export const logoutUser = () => async (dispatch: AppDispatch) => {
   localStorage.removeItem('auth_token');
   axios.defaults.headers['Authorization'] = '';
+  setCSRFToken();
   await axios.post('/api/logout/', {}, { withCredentials: true });
   dispatch(logout());
   window.location.href = '/';
