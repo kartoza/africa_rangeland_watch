@@ -1,5 +1,5 @@
 from django.urls import path
-from . import views
+from . import views, user_profile_views
 
 
 urlpatterns = [
@@ -36,5 +36,20 @@ urlpatterns = [
         'api/fetch-organizations/',
         views.fetch_organisations,
         name='fetch_organization'
+    ),
+    path(
+        'api/profile/',
+        user_profile_views.get_user_profile,
+        name='get_user_profile'
+    ),
+    path(
+        'api/profile/update/',
+        user_profile_views.update_user_profile,
+        name='update_user_profile'
+    ),
+    path(
+        'api/profile/image/',
+        user_profile_views.ProfileImageUploadView.as_view(),
+        name='profile-image-upload'
     ),
 ]
