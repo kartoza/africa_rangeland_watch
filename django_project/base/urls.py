@@ -52,4 +52,9 @@ urlpatterns = [
         user_profile_views.ProfileImageUploadView.as_view(),
         name='profile-image-upload'
     ),
+    path(
+        'api/profile/password/',
+        user_profile_views.update_password,
+        name='update_password'
+    ),
 ]
