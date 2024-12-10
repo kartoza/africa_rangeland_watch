@@ -9,6 +9,11 @@ from invitations.models import Invitation
 from unittest.mock import patch
 
 
+from rest_framework.test import APIClient
+from django.test import TestCase
+from django.contrib.auth.models import User
+from base.models import Organisation, UserProfile, UserOrganisations
+
 class OrganisationViewsTestCase(TestCase):
     def setUp(self):
         # Create users
@@ -30,31 +35,32 @@ class OrganisationViewsTestCase(TestCase):
         self.organisation_dummy = Organisation.objects.create(name="Test Organisation 2")
 
         # Create UserProfile for each user
-        self.org_manager_profile = UserProfile.objects.get_or_create(user=self.org_manager)
-        self.member_profile = UserProfile.objects.get_or_create(user=self.member)
-        self.unrelated_user_profile = UserProfile.objects.get_or_create(user=self.unrelated_user)
+        self.org_manager_profile, _ = UserProfile.objects.get_or_create(user=self.org_manager)
+        self.member_profile, _ = UserProfile.objects.get_or_create(user=self.member)
+        self.unrelated_user_profile, _ = UserProfile.objects.get_or_create(user=self.unrelated_user)
 
-        # Create UserOrganisations relationships
+        # Create UserOrganisations relationships using user_profile
         self.org_manager_relation = UserOrganisations.objects.create(
-            user=self.org_manager,
+            user_profile=self.org_manager_profile,
             organisation=self.organisation,
             user_type="manager"
         )
 
         self.member_relation = UserOrganisations.objects.create(
-            user=self.member,
+            user_profile=self.member_profile,
             organisation=self.organisation,
             user_type="member"  # setting this user as member
         )
 
         self.unrelated_user_relation = UserOrganisations.objects.create(
-            user=self.unrelated_user,
+            user_profile=self.unrelated_user_profile,
             organisation=self.organisation_dummy,
             user_type="member"
         )
 
         # APIClient for testing
         self.client = APIClient()
+
 
     def test_delete_organisation_member_success(self):
         self.client.login(username="org_manager", password="password")
@@ -70,7 +76,7 @@ class OrganisationViewsTestCase(TestCase):
         self.assertEqual(response.json(), {"message": "Member removed successfully."})
 
         # Ensure the UserOrganisations relation is deleted
-        self.assertFalse(UserOrganisations.objects.filter(user=self.member, organisation=self.organisation).exists())
+        self.assertFalse(UserOrganisations.objects.filter(user_profile=self.member_profile, organisation=self.organisation).exists())
 
     def test_delete_organisation_member_invalid_method(self):
         self.client.login(username="org_manager", password="password")
@@ -165,21 +171,27 @@ class InviteToOrganisationTestCase(TestCase):
         # Create organisation
         self.organisation = Organisation.objects.create(name="Test Organisation")
 
+        # Create UserProfile for each user
+        self.org_manager_profile, _ = UserProfile.objects.get_or_create(user=self.org_manager)
+        self.unrelated_user_profile, _ = UserProfile.objects.get_or_create(user=self.unrelated_user)
+
         # Attach user to org and make manager using UserOrganisations model
         self.user_org_relation = UserOrganisations.objects.create(
-            user=self.org_manager,
+            user_profile=self.org_manager_profile,
             organisation=self.organisation,
             user_type="manager"  # setting this user as manager
         )
 
         self.unrelated_user_org_relation = UserOrganisations.objects.create(
-            user=self.unrelated_user,
+            user_profile=self.unrelated_user_profile,
             organisation=self.organisation,
             user_type="member"  # unrelated user is not a manager
         )
 
+        # Client setup and login
         self.client.login(username="org_manager", password="password")
 
+        # URL for inviting user to organisation
         self.url = reverse("invite_to_organisation", args=[self.organisation.id])
 
     def test_invite_success(self):
@@ -247,6 +259,7 @@ class OrganisationViewsTests(TestCase):
 
 class JoinOrganisationTests(TestCase):
     def setUp(self):
+        # Create test user and log in
         self.user = User.objects.create_user(
             username="testuser", email="user@example.com", password="password"
         )
@@ -260,19 +273,18 @@ class JoinOrganisationTests(TestCase):
             username="manager", email="manager@example.com", password="password"
         )
 
-        # Create UserProfile for the manager_user
         user_profile, created = UserProfile.objects.get_or_create(user=self.manager_user)
 
-        # Create UserOrganisations for the manager_user and link to the organisation
+
         self.manager_relation, created = UserOrganisations.objects.get_or_create(
-            user=self.manager_user,
+            user_profile=user_profile,
             organisation=self.org,
         )
 
-        # Assign the role of 'organisation_manager' in UserOrganisations if it's newly created
         if created:
             self.manager_relation.user_type = "manager"
             self.manager_relation.save()
+
 
     @patch('django.core.mail.send_mail')
     def test_join_organisation_valid(self, mock_send_mail):
