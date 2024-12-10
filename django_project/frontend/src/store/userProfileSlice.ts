@@ -27,6 +27,13 @@ const initialState: UserProfileState = {
   updateSuccess: false,
 };
 
+
+interface PasswordData {
+  oldPassword: string;
+  newPassword: string;
+}
+
+
 // Fetch user profile from the backend
 export const fetchUserProfile = async () => {
   try {
@@ -70,6 +77,24 @@ export const updateProfileImage = createAsyncThunk(
       return response.data.image;
     } catch (error) {
       return rejectWithValue('Error updating profile image');
+    }
+  }
+);
+
+
+// Define the async thunk with proper typing
+export const updatePassword = createAsyncThunk<
+  any,
+  PasswordData
+>(
+  'user/updatePassword',
+  async (passwordData: PasswordData, { rejectWithValue }) => {
+    try {
+      setCSRFToken();
+      const response = await axios.put('/api/profile/password/', passwordData);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || 'Error updating password');
     }
   }
 );
