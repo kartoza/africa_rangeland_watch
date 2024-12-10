@@ -115,11 +115,6 @@ class UserProfile(models.Model):
     Extends the built-in User model to add additional information.
     """
 
-    USER_TYPES = [
-        ('organisation_member', 'Organisation Member'),
-        ('organisation_manager', 'Organisation Manager'),
-    ]
-
     USER_ROLES = [
         ('viewer', 'Viewer'),
         ('analyst', 'Analyst'),
@@ -149,13 +144,6 @@ class UserProfile(models.Model):
         blank=True,
         null=True,
         help_text="The country of the user."
-    )
-
-    user_type = models.CharField(
-        max_length=20,
-        choices=USER_TYPES,
-        default='member',
-        help_text="The type of the user."
     )
 
     user_role = models.CharField(
@@ -220,12 +208,6 @@ class UserOrganisations(models.Model):
         ('member', 'Member'),
     ]
 
-    user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE,
-        related_name="user_organisations",
-    )
-
     user_profile = models.ForeignKey(
         UserProfile,
         on_delete=models.CASCADE,
@@ -249,8 +231,8 @@ class UserOrganisations(models.Model):
     )
 
     class Meta:
-        unique_together = ('user', 'organisation')
+        unique_together = ('user_profile', 'organisation')
 
     def __str__(self):
-        return f"{self.user.username} - {self.organisation.name} " \
-            f"({self.user_type})"
+        return f"{self.user_profile.user.username} - " \
+            f"{self.organisation.name} ({self.user_type})"
