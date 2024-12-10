@@ -7,6 +7,7 @@ from .serializers import UserProfileSerializer
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.views import APIView
 from rest_framework.parsers import MultiPartParser, FormParser
+from allauth.account.models import EmailAddress
 
 
 @api_view(['GET'])
@@ -36,15 +37,40 @@ def update_user_profile(request):
             status=status.HTTP_404_NOT_FOUND
         )
 
+    current_email = request.user.email
+    new_email = request.data.get('email')
+
+    if new_email and new_email != current_email:
+        # Handle email update with Allauth
+        try:
+            # Delete the old email entry
+            EmailAddress.objects.filter(
+                user=request.user, email=current_email).delete()
+
+            # Add the new email entry
+            EmailAddress.objects.create(
+                user=request.user,
+                email=new_email,
+                verified=True,
+                primary=True
+            )
+        except Exception as e:
+            return Response(
+                {"detail": f"Error updating email: {str(e)}"},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
     serializer = UserProfileSerializer(
         profile,
         data=request.data,
         partial=True,
         context={'request': request}
     )
+
     if serializer.is_valid():
         serializer.save()
         return Response(serializer.data)
+
     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 
