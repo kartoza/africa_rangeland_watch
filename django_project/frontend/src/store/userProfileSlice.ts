@@ -144,9 +144,9 @@ const userProfileSlice = createSlice({
       .addCase(updateProfileImage.fulfilled, (state, action) => {
         state.loading = false;
         // Update the profile image in the state
-        if (state.profile) {
-          state.profile.profile_image = action.payload;
-        }
+        // if (state.profile) {
+        //   state.profile.profile_image = action.payload;
+        // }
         state.error = null;
       })
       .addCase(updateProfileImage.rejected, (state, action) => {
