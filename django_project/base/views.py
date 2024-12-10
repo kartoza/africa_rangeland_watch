@@ -54,7 +54,7 @@ def join_organisation(request):
         user_organisation = UserOrganisations.objects.get(
             organisation=selected_org, user_type="manager"
         )
-        manager_user = user_organisation.user
+        manager_user = user_organisation.user_profile.user
     except UserOrganisations.DoesNotExist:
         return JsonResponse(
             {"error": "No manager found for this organisation."}, status=400
@@ -200,8 +200,11 @@ def delete_organisation_member(request):
         user_profile = get_object_or_404(UserProfile, user__email=user_email)
 
         # Check if the request user has permission
+        user = request.user
+        user_profile_manager = user.profile
+
         user_organisation_relation = UserOrganisations.objects.filter(
-            user=request.user, organisation=organisation
+            user_profile=user_profile_manager, organisation=organisation
         ).first()
 
         if (
@@ -215,7 +218,7 @@ def delete_organisation_member(request):
 
         # Find the UserOrganisations relation for the user to be removed
         user_relation = UserOrganisations.objects.filter(
-            user=user_profile.user, organisation=organisation
+            user_profile=user_profile, organisation=organisation
         ).first()
 
         if not user_relation:
@@ -248,8 +251,9 @@ def fetch_organisation_data(request):
     Includes members and invitations at the organization level.
     """
     try:
+        user_profile = get_object_or_404(UserProfile, user=request.user)
         user_organisations = UserOrganisations.objects.filter(
-            user=request.user
+            user_profile=user_profile
         )
 
         if not user_organisations.exists():
@@ -263,8 +267,8 @@ def fetch_organisation_data(request):
             org = user_org.organisation
             members = list(
                 UserOrganisations.objects.filter(organisation=org)
-                .exclude(user=request.user)
-                .values("user__email", "user_type")
+                .exclude(user_profile=user_profile)
+                .values("user_profile__user__email", "user_type")
             )
 
 
@@ -332,9 +336,9 @@ def invite_to_organisation(request, organisation_id):
         message = data.get("message", "")
 
         # Check if the user has permission to invite (using UserOrganisations)
-        # user_profile = get_object_or_404(UserProfile, user=request.user)
+        user_profile = get_object_or_404(UserProfile, user=request.user)
         user_organisation = UserOrganisations.objects.filter(
-            user=request.user,
+            user_profile=user_profile,
             organisation=organisation
         ).first()
 
@@ -400,11 +404,12 @@ def accept_invite(request, invitation_id):
 
     try:
         user = User.objects.get(email=invitation.email)
+        user_profile = get_object_or_404(UserProfile, user=user)
     except User.DoesNotExist:
         return redirect(f"{reverse('home')}?register_first=true")
 
     user_org = UserOrganisations.objects.filter(
-        user=user,
+        user_profile=user_profile,
         organisation=invitation.organisation
     ).first()
 
@@ -418,13 +423,12 @@ def accept_invite(request, invitation_id):
 
     # Create a new membership for the user in the organisation
     UserOrganisations.objects.create(
-        user=user,
+        user_profile=user_profile,
         organisation=invitation.organisation,
         user_type='member'
     )
 
-    # Optionally, update the user's profile if necessary
-    user_profile = UserProfile.objects.get(user=user)
+
     user_profile.organisations.add(invitation.organisation)
     user_profile.save()
 
