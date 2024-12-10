@@ -205,7 +205,7 @@ export default function OrganisationInformation() {
                           {filteredMembers(organization.members).slice(0, 5).map((member: any, idx: number) => (
                             <Tr key={idx}>
                               <Td color={"black"}>{member.user__email}</Td>
-                              <Td color={"black"}>{member.user_role}</Td>
+                              <Td color={"black"}>{member.user_type}</Td>
                               {organization.is_manager && (
                               <>
                                 <Td textAlign="center" display="flex" justifyContent="center">

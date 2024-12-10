@@ -115,11 +115,6 @@ class UserProfile(models.Model):
     Extends the built-in User model to add additional information.
     """
 
-    USER_TYPES = [
-        ('organisation_member', 'Organisation Member'),
-        ('organisation_manager', 'Organisation Manager'),
-    ]
-
     USER_ROLES = [
         ('viewer', 'Viewer'),
         ('analyst', 'Analyst'),
@@ -135,13 +130,13 @@ class UserProfile(models.Model):
         help_text="The user associated with this profile."
     )
 
-    organisation = models.ForeignKey(
+    # Establish many-to-many relationship with UserOrganisations
+    organisations = models.ManyToManyField(
         Organisation,
-        on_delete=models.SET_NULL,
-        null=True,
+        through='UserOrganisations',
+        related_name='user_profiles',
         blank=True,
-        related_name="members",
-        help_text="The organization that this user belongs to."
+        help_text="The organisations this user belongs to."
     )
 
     country = models.CharField(
@@ -149,13 +144,6 @@ class UserProfile(models.Model):
         blank=True,
         null=True,
         help_text="The country of the user."
-    )
-
-    user_type = models.CharField(
-        max_length=20,
-        choices=USER_TYPES,
-        default='member',
-        help_text="The type of the user."
     )
 
     user_role = models.CharField(
@@ -194,7 +182,7 @@ def create_user_profile(sender, instance, created, **kwargs):
 
         if invitation:
             organisation = invitation.organisation
-            user_profile.organisation = organisation
+            user_profile.organisations.add(organisation)
             user_profile.save()
 
             # Mark invitation as accepted
@@ -208,3 +196,43 @@ def save_user_profile(sender, instance, **kwargs):
     Signal to save the UserProfile whenever the User is saved.
     """
     instance.profile.save()
+
+
+class UserOrganisations(models.Model):
+    """
+    Model to represent the relationship between a user and
+    an organisation with their respective role.
+    """
+    USER_TYPES = [
+        ('manager', 'Manager'),
+        ('member', 'Member'),
+    ]
+
+    user_profile = models.ForeignKey(
+        UserProfile,
+        on_delete=models.CASCADE,
+        related_name="user_organisations",
+        blank=True,
+        null=True,
+    )
+
+    organisation = models.ForeignKey(
+        Organisation,
+        on_delete=models.CASCADE,
+        related_name="user_organisations",
+    )
+
+    user_type = models.CharField(
+        max_length=20,
+        choices=USER_TYPES,
+        default='member',
+        help_text="The type of the user within the organisation"
+        "(manager/member)."
+    )
+
+    class Meta:
+        unique_together = ('user_profile', 'organisation')
+
+    def __str__(self):
+        return f"{self.user_profile.user.username} - " \
+            f"{self.organisation.name} ({self.user_type})"
