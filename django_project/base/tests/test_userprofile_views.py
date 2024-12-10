@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 from base.models import UserProfile
 from rest_framework.exceptions import ErrorDetail
 import os
+from rest_framework.authtoken.models import Token
 
 
 class UserProfileViewsTestCase(APITestCase):
@@ -93,3 +94,56 @@ class UserProfileViewsTestCase(APITestCase):
         # Assert that a 400 Bad Request is returned
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data['detail'], 'Invalid file type. Only image files are allowed.')
+
+
+
+class UpdatePasswordViewTests(APITestCase):
+
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="testuser",
+            password="old_password"
+        )
+        self.client = APIClient()
+        self.client.force_authenticate(user=self.user) 
+        self.url = '/api/profile/password/'  # Adjust to match the actual endpoint.
+
+    def test_successful_password_update(self):
+        data = {
+            'oldPassword': 'old_password',
+            'newPassword': 'new_password123'
+        }
+        response = self.client.put(self.url, data)
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['detail'], 'Password updated successfully')
+
+        # Verify that the new password is set
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.check_password('new_password123'))
+
+    def test_incorrect_old_password(self):
+        data = {
+            'oldPassword': 'wrong_password',
+            'newPassword': 'new_password123'
+        }
+        response = self.client.put(self.url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['detail'], 'Old password is incorrect')
+
+    def test_missing_old_password(self):
+        data = {
+            'newPassword': 'new_password123'
+        }
+        response = self.client.put(self.url, data)
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data['detail'], 'Old password is incorrect')
+
+    def test_unauthenticated_user(self):
+        unauthenticated_client = APIClient()
+    
+        data = {
+            'oldPassword': 'old_password',
+            'newPassword': 'new_password123'
+        }
+        response = unauthenticated_client.put(self.url, data)
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
