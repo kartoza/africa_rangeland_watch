@@ -11,6 +11,7 @@ from django.conf import settings
 from django.template.loader import render_to_string
 import json
 from django.core.mail import EmailMultiAlternatives
+from django.shortcuts import get_object_or_404
 
 
 
@@ -31,8 +32,9 @@ def approve_join_request(modeladmin, request, queryset):
 
             # Assign the inviter as the organisation manager
             inviter = invitation.inviter
+            user_profile = get_object_or_404(UserProfile, user=inviter)
             UserOrganisations.objects.create(
-                user=inviter,
+                user_profile=user_profile,
                 organisation=organisation,
                 user_type='manager'
             )
@@ -74,10 +76,11 @@ def approve_join_request(modeladmin, request, queryset):
         elif invitation.request_type == "join_organisation":
             # Process join requests
             inviter = invitation.inviter
+            user_profile = get_object_or_404(UserProfile, user=inviter)
             organisation = invitation.organisation
 
             UserOrganisations.objects.create(
-                user=inviter,
+                user_profile=user_profile,
                 organisation=organisation,
                 user_type='member'
             )
@@ -93,7 +96,7 @@ def approve_join_request(modeladmin, request, queryset):
             try:
                 email = EmailMultiAlternatives(
                     subject="Your join request has been approved",
-                    body="",  # Plain text content (empty)
+                    body="",
                     from_email=settings.NO_REPLY_EMAIL,
                     to=[inviter.email],
                 )
@@ -142,7 +145,7 @@ class UserProfileInline(admin.StackedInline):
         orgs_with_roles = UserOrganisations.objects.filter(user=obj.user)
         return ", ".join(
             [
-                f"{org.organisation.name} - {org.user_type}"  # Fix this line
+                f"{org.organisation.name} - {org.user_type}"
                 for org in orgs_with_roles
             ]
         )
@@ -175,17 +178,16 @@ class UserAdmin(BaseUserAdmin):
 
 
 class UserOrganisationsAdmin(admin.ModelAdmin):
-    # Display fields in the list view
-    list_display = ('user', 'organisation', 'user_type')
-    search_fields = ('user__username', 'organisation__name')
+    list_display = ('user_profile', 'organisation', 'user_type')
+    search_fields = ('user_profile__user__username', 'organisation__name')
     list_filter = ('user_type', 'organisation')
-    raw_id_fields = ('user', 'organisation')
-    autocomplete_fields = ('user', 'organisation')
-
+    raw_id_fields = ('organisation',)
+    # autocomplete_fields = ('organisation',)
 
     def get_queryset(self, request):
-        queryset = super().get_queryset(request)
-        return queryset
+        return super().get_queryset(request)
+
+
 
 
 @admin.register(Organisation)
