@@ -17,9 +17,10 @@ import {
 } from "@chakra-ui/react";
 import React, { ChangeEvent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { getUserProfile, updateProfile, updateProfileImage } from '../../store/userProfileSlice';
+import { getUserProfile, updateProfile, updateProfileImage, updatePassword } from '../../store/userProfileSlice';
 import { AppDispatch, RootState } from '../../store';
 import RequestOrganisation from "../../components/RequestOrganisation";
+import ChangePasswordModal from "../../components/ChangePassword";
 
 
 export default function ProfileInformationPage() {
@@ -29,6 +30,7 @@ export default function ProfileInformationPage() {
   const dispatch = useDispatch<AppDispatch>();
   const { profile, updateSuccess, loading, error } = useSelector((state: RootState) => state.userProfile);
   const toast = useToast();
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = React.useState(false);
 
   const [country, setCountry] = useState('');
   const [user_role, setUserRole] = useState('');
@@ -38,6 +40,7 @@ export default function ProfileInformationPage() {
   const [email, setEmail] = useState('');
   const [organisations, setOrganisations] = useState<string[]>([]);
   const [isEmailEditable, setIsEmailEditable] = useState(false);
+  const [updatePicture, setUpdatePicture] = useState(false);
 
   const [isChanged, setIsChanged] = useState(false);
 
@@ -48,6 +51,42 @@ export default function ProfileInformationPage() {
   const toggleEmailEditable = () => {
     setIsEmailEditable(!isEmailEditable);
   };
+
+  const handlePasswordChange = async (oldPassword: string, newPassword: string) => {
+    console.log('Initiating password update');
+    try {
+      await dispatch(updatePassword({ oldPassword, newPassword })).unwrap();
+      toast({
+        title: "Password updated successfully",
+        description: "Your password has been updated.",
+        status: "success",
+        duration: 5000,
+        isClosable: true,
+        position: "top-right",
+        containerStyle: {
+          backgroundColor: "#00634b",
+          color: "white",
+        },
+      });
+    } catch (error) {
+      const errorMessage =
+        error.detail || "An unexpected error occurred while updating the password.";
+      toast({
+        title: "Error updating password",
+        description: errorMessage,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+        position: "top-right",
+        containerStyle: {
+          backgroundColor: "red",
+          color: "white",
+        },
+      });
+      console.error('Error updating password:', error);
+    }
+  };
+  
 
   useEffect(() => {
     if (profileImage) {
@@ -180,7 +219,8 @@ export default function ProfileInformationPage() {
                     if (e.target.files) {
                       const file = e.target.files[0];
                       setImage(URL.createObjectURL(file));
-                    }
+                      setUpdatePicture(true)
+                    }else setUpdatePicture(false)
                   }}
                   style={{ display: "none" }}
                 />
@@ -345,9 +385,11 @@ export default function ProfileInformationPage() {
                 <Button
                   size="sm"
                   fontWeight={700}
-                  color="darkgreen"
+                  w="100%"
+                  color={`${updatePicture ? 'white' : 'darkgreen'}`}
                   borderBottom="2px solid darkgreen"
                   borderRadius={0}
+                  backgroundColor={`${updatePicture ? 'darkgreen' : 'transparent'}`}
                   p={4}
                   onClick={() => {
                     const fileInput = document.getElementById("fileInput") as HTMLInputElement;
@@ -415,10 +457,12 @@ export default function ProfileInformationPage() {
                   size="sm"
                   fontWeight={700}
                   w="100%"
-                  color="darkgreen"
+                  color={`${isPasswordModalOpen ? 'white' : 'darkgreen'}`}
                   borderBottom="2px solid darkgreen"
                   borderRadius={0}
+                  backgroundColor={`${isPasswordModalOpen ? 'darkgreen' : 'transparent'}`}
                   p={4}
+                  onClick={() => setIsPasswordModalOpen(true)}
                 >
                   Change Password
                 </Button>
@@ -457,6 +501,13 @@ export default function ProfileInformationPage() {
         <RequestOrganisation
           isOpen={isRequestModalOpen}
           onClose={closeRequestModal}
+        />
+
+        {/* change password */}
+        <ChangePasswordModal
+          isOpen={isPasswordModalOpen}
+          onClose={() => setIsPasswordModalOpen(false)}
+          onSubmit={handlePasswordChange}
         />
       </Box>
     </>
