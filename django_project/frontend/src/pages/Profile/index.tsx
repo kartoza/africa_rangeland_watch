@@ -363,6 +363,11 @@ export default function ProfileInformationPage() {
                             status: "success",
                             duration: 5000,
                             isClosable: true,
+                            position: "top-right",
+                            containerStyle: {
+                              backgroundColor: "#00634b",
+                              color: "white",
+                            },
                           });
                         })
                         .catch(() => {
@@ -372,6 +377,11 @@ export default function ProfileInformationPage() {
                             status: "error",
                             duration: 5000,
                             isClosable: true,
+                            position: "top-right",
+                            containerStyle: {
+                              backgroundColor: "red",
+                              color: "white",
+                            },
                           });
                         });
                     } else {
@@ -381,6 +391,7 @@ export default function ProfileInformationPage() {
                         status: "warning",
                         duration: 5000,
                         isClosable: true,
+                        position: "top-right",
                       });
                     }
 
