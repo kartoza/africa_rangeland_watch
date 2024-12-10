@@ -7,6 +7,7 @@ import landscapeReducer from './landscapeSlice';
 import layerReducer from './layerSlice';
 import mapConfigReducer from './mapConfigSlice';
 import analysisReducer from './analysisSlice';
+import uploadReducer from './uploadSlice';
 
 
 const store = configureStore({
@@ -18,7 +19,8 @@ const store = configureStore({
     landscape: landscapeReducer,
     layer: layerReducer,
     mapConfig: mapConfigReducer,
-    analysis: analysisReducer
+    analysis: analysisReducer,
+    upload: uploadReducer
   },
 });
 
