@@ -120,3 +120,25 @@ class ProfileImageUploadView(APIView):
             context={'request': request}
         )
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(['PUT'])
+@permission_classes([IsAuthenticated])
+def update_password(request):
+    user = request.user
+    old_password = request.data.get('oldPassword')
+    new_password = request.data.get('newPassword')
+
+    if not user.check_password(old_password):
+        return Response(
+            {'detail': 'Old password is incorrect'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+    user.set_password(new_password)
+    user.save()
+
+    return Response(
+        {'detail': 'Password updated successfully'},
+        status=status.HTTP_200_OK
+    )
