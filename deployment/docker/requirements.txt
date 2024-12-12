@@ -56,3 +56,5 @@ git+https://github.com/kartoza/CloudNativeGIS.git
 
 pyjwt
 cryptography
+
+Pillow
