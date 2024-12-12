@@ -88,7 +88,18 @@ export default function RequestOrganisation({ isOpen, onClose }: Props) {
         onClose();
       })
       .catch((error) => {
-        console.error("Error submitting request:", error);
+        toast({
+          title: "Failed to submit request",
+          description: error.response.data.message,
+          status: "error",
+          duration: 5000,
+          isClosable: true,
+          position: "top-right",
+          containerStyle: {
+            backgroundColor: "red",
+            color: "white",
+          },
+        });
       });
   };
 

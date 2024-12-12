@@ -120,6 +120,7 @@ const organizationsSlice = createSlice({
       .addCase(fetchOrganizations.rejected, (state, action) => {
         state.error = action.error.message || "Failed to fetch data.";
         state.loading = false;
+        state.organizations = {};
       })
       .addCase(inviteMemberThunk.pending, (state) => {
         state.loading = true;
