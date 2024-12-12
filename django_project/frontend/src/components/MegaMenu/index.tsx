@@ -1,7 +1,7 @@
 import { Box, Text, Link, Flex } from "@chakra-ui/react";
 import React, { useEffect, useState } from "react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
-import { logoutUser, selectIsLoggedIn } from "../../store/authSlice";
+import { logoutUser, selectIsLoggedIn, isAdmin } from "../../store/authSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "../../store";
 
@@ -30,6 +30,14 @@ export default function MegaMenu({ hoveredSection, isUserAvatarHovered }: MegaMe
     navigate('/');
   };
 
+  const navToAdmin = () => {
+    if (window.location.hash) {
+      window.location.href = '/admin';
+    } else {
+      navigate('/admin');
+    }
+  };
+  
   // Menu items based on hover
   const menuItems: Record<string, MenuItem[]> = {
     about: [
@@ -38,10 +46,11 @@ export default function MegaMenu({ hoveredSection, isUserAvatarHovered }: MegaMe
       { label: "Learn More", to: "/learn-more" },
     ],
     userAvatar: !isAuthenticated
-      ? [{ label: "Login", to: "/login" }]
+      ? []
       : [
-          { label: "Admin", to: "/profile" },
-          { label: "Logout", to: "", onClick: handleLogout }
+          ...(isAdmin ? [{ label: "Admin", to: "", onClick: navToAdmin }] : []),
+          { label: "Profile Area", to: "/profile" },
+          { label: "Logout", to: "", onClick: handleLogout },
       ],
     resources: [
       { label: "ARW Documentation", to: "/resources" },
@@ -63,7 +72,7 @@ export default function MegaMenu({ hoveredSection, isUserAvatarHovered }: MegaMe
       top="auto"
       pt="12px"
       zIndex={99}
-      left={{base: isUserAvatarHovered ? "80%" : undefined, md: isUserAvatarHovered? "94%" : undefined}}
+      left={{base: isUserAvatarHovered ? "80%" : undefined, md: isUserAvatarHovered? "93.5%" : undefined}}
     >
       <Box bg="whiteAlpha.900" boxShadow="xs" w="100%" p="20px" borderRadius="8px">
         <Flex gap="30px">

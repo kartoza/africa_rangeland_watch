@@ -14,6 +14,7 @@ interface AuthState {
   loading: boolean;
   error: string | null;
   isAuthenticated: boolean;
+  isAdmin: boolean;
 }
 
 const initialState: AuthState = {
@@ -22,6 +23,7 @@ const initialState: AuthState = {
   loading: false,
   error: null,
   isAuthenticated: false,
+  isAdmin: false
 };
 
 const authSlice = createSlice({
@@ -32,11 +34,14 @@ const authSlice = createSlice({
       state.loading = true;
       state.error = null;
     },
-    loginSuccess: (state, action: PayloadAction<{ user: User; token: string }>) => {
+    loginSuccess: (state, action: PayloadAction<{
+      is_admin: boolean; user: User; token: string 
+}>) => {
       state.loading = false;
       state.user = action.payload.user;
       state.token = action.payload.token;
       state.isAuthenticated = true;
+      state.isAdmin = action.payload.is_admin
     },
     loginFailure: (state, action: PayloadAction<string>) => {
       state.loading = false;
@@ -78,7 +83,10 @@ export const loginUser = (email: string, password: string) => async (dispatch: A
     localStorage.setItem('auth_token', token);
     axios.defaults.headers['Authorization'] = `Token ${token}`;
 
-    dispatch(loginSuccess({ user: response.data.user, token }));
+    dispatch(loginSuccess({
+      user: response.data.user, token,
+      is_admin: response.data.is_admin
+    }));
   } catch (error) {
     dispatch(loginFailure(error.response?.data?.non_field_errors[0] || 'Error logging in'));
   }
@@ -97,6 +105,7 @@ export const checkLoginStatus = () => async (dispatch: AppDispatch) => {
       dispatch(loginSuccess({
         user: response.data.user,
         token: token,
+        is_admin:  response.data.is_admin
       }));
       return;
     } catch (error) {
@@ -115,6 +124,7 @@ export const checkLoginStatus = () => async (dispatch: AppDispatch) => {
       dispatch(loginSuccess({
         user: response.data.user,
         token: null,
+        is_admin: response.data.is_admin
       }));
     } else {
       dispatch(logout());
@@ -207,7 +217,10 @@ export const registerUser = (email: string, password: string, repeatPassword: st
     if (response.data?.errors) {
       dispatch(loginFailure(response.data.errors.join(' ')));
     }else if (response.data?.message) {
-      dispatch(loginSuccess({ user: null, token: null }));
+      dispatch(loginSuccess({
+        user: null, token: null,
+        is_admin: false
+      }));
       errorMessages.push("Verification email sent.")
       dispatch(loginFailure(errorMessages.join(' ')));
     }
@@ -234,6 +247,7 @@ export const registerUser = (email: string, password: string, repeatPassword: st
 
 export const selectIsLoggedIn = (state: RootState) =>
   !!state.auth.token || state.auth.isAuthenticated;
+export const isAdmin = (state: RootState) => state.auth.isAdmin;
 export const selectAuthLoading = (state: RootState) => state.auth.loading;
 export const selectUserEmail = (state: RootState) => state.auth.user?.email;
 
