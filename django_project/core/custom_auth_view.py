@@ -231,12 +231,15 @@ class ForgotPasswordView(APIView):
             f"?uid={uid}&token={token}/"
         )
 
+        logo_url = f"{settings.DJANGO_BACKEND_URL}/static/images/main_logo.svg"
+
         # Send the password reset email
         subject = "Password Reset"
         html_message = render_to_string('account/password_reset_email.html', {
             'user': user,
             'reset_password_url': reset_password_link,
             'django_backend_url': settings.DJANGO_BACKEND_URL,
+            'logo_url': logo_url
         })
 
         email_message = EmailMultiAlternatives(
