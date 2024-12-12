@@ -66,12 +66,14 @@ def join_organisation(request):
         f"{settings.DJANGO_BACKEND_URL}/admin/base/organisationinvitation/"
         f"{selected_org.id}/change/"
     )
+    logo_url = f"{settings.DJANGO_BACKEND_URL}/static/images/main_logo.svg"
     email_body = render_to_string(
         "join_organization_request.html",
         {
             "user": request.user,
             "organisation": selected_org.name,
             "link": link,
+            "logo_url": logo_url
         },
     )
 
