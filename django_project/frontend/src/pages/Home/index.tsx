@@ -152,6 +152,7 @@ export default function HomePage() {
               w="100%"
               color="white.a700"
               borderRadius="28px"
+              onClick={() => {navigate("/map")}}
             >
               View Map
             </Button>
