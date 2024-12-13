@@ -34,7 +34,6 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen, onClo
       return;
     }
 
-    console.log('submitting passwrods')
     onSubmit(oldPassword, newPassword);
     setOldPassword("");
     setNewPassword("");
@@ -47,7 +46,7 @@ const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen, onClo
     md: "fixed",
   });
   const modalTop = useBreakpointValue({ base: "20%", md: "7%" });
-  const modalRight = useBreakpointValue({ base: "5%", md: "25%" });
+  const modalRight = useBreakpointValue({ base: "5%", md: "35%" });
   const modalTransform = useBreakpointValue({
     base: "translate(-50%, -50%)",
     md: "none",
