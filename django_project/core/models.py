@@ -49,3 +49,11 @@ class Preferences(SingletonModel):
         blank=True,
         help_text="Map initial bound"
     )
+
+    worker_layer_api_key = models.TextField(
+        null=True,
+        blank=True,
+        help_text=(
+            "API Key that is used by worker to upload pmtiles to Django."
+        )
+    )
