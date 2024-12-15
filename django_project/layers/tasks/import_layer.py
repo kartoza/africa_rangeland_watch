@@ -15,6 +15,7 @@ from celery.utils.log import get_task_logger
 from cloud_native_gis.models import Layer, LayerUpload, UploadStatus
 
 from core.celery import app
+from core.models import Preferences
 from layers.models import InputLayer, InputLayerType
 
 
@@ -24,19 +25,28 @@ logger = get_task_logger(__name__)
 def get_link_from_gdrive(file_url):
     """Get downloadable link from gdrive."""
     file_id = file_url.split('/d/')[1].split('/')[0]
+    # this is only for large file that skip the virus scans
     return (
         "https://drive.usercontent.google.com/download?"
         f"export=download&id={file_id}&confirm=1"
     )
 
 
-def download_file_from_url(file_url, download_dir, progress_callback=None):
+def download_file_from_url(
+    file_url, download_dir, progress_callback=None, auth_header=None
+):
     """Download file from url to download_dir."""
     try:
         if 'drive.google' in file_url:
             file_url = get_link_from_gdrive(file_url)
 
-        response = requests.get(file_url, stream=True)
+        headers = None
+        if auth_header:
+            headers = {
+                'Authorization': auth_header
+            }
+
+        response = requests.get(file_url, stream=True, headers=headers)
 
         # Check if the request was successful
         if response.status_code == 200:
@@ -97,6 +107,31 @@ def download_file_from_url(file_url, download_dir, progress_callback=None):
         return None
 
 
+def upload_file(url, file_path, field_name="file", auth_header=None):
+    """
+    Upload a file to the given URL.
+
+    :param url: The URL to send the POST request to.
+    :param file_path: The path to the file to be uploaded.
+    :param field_name: The form field name for the file (default: 'file').
+    :return: The response from the server.
+    """
+    headers = None
+    if auth_header:
+        headers = {
+            'Authorization': auth_header
+        }
+    # Open the file in binary mode
+    with open(file_path, 'rb') as f:
+        # Pass the file as a file-like object to the `files` parameter
+        files = {field_name: (file_path, f)}
+
+        # Send the POST request with the file
+        response = requests.post(url, files=files, headers=headers)
+
+    return response.status_code == 200
+
+
 def detect_file_type_by_extension(file_path):
     """Detect file type by extension."""
     raster_extensions = ['.tif', '.tiff', '.img', '.nc']
@@ -128,34 +163,49 @@ def import_layer(layer_id, upload_id, file_url):
         input_layer = InputLayer.objects.get(uuid=layer_id)
         layer_upload = LayerUpload.objects.get(id=upload_id)
 
+        # load preferences
+        preferences = Preferences.load()
+        base_url = settings.DJANGO_BACKEND_URL
+        if base_url.endswith('/'):
+            base_url = base_url[:-1]
+
         # Download file
-        if file_url:
-            filename = download_file_from_url(
-                file_url,
-                layer_upload.folder,
-                progress_callback=(
-                    lambda progress: update_layer_upload_progress(
-                        layer_upload, progress)
-                )
+        auth = None
+        if file_url is None:
+            file_url = (
+                base_url + reverse('frontend-api:pmtile-layer', kwargs={
+                    'upload_id': upload_id,
+                })
             )
-            if filename:
-                input_layer.name = filename
-                input_layer.layer_type = detect_file_type_by_extension(
-                    filename
-                )
-                input_layer.save()
-                # reset the status of layer_upload
-                layer_upload.update_status(
-                    status=UploadStatus.START,
-                    progress=0,
-                    note='Processing file'
-                )
-            else:
-                layer_upload.update_status(
-                    status=UploadStatus.FAILED,
-                    note='Failed to download the file!'
-                )
-                return
+            auth = f'Token {preferences.worker_layer_api_key}'
+
+        filename = download_file_from_url(
+            file_url,
+            layer_upload.folder,
+            progress_callback=(
+                lambda progress: update_layer_upload_progress(
+                    layer_upload, progress)
+            ),
+            auth_header=auth
+        )
+        if filename:
+            input_layer.name = filename
+            input_layer.layer_type = detect_file_type_by_extension(
+                filename
+            )
+            input_layer.save()
+            # reset the status of layer_upload
+            layer_upload.update_status(
+                status=UploadStatus.START,
+                progress=0,
+                note='Processing file'
+            )
+        else:
+            layer_upload.update_status(
+                status=UploadStatus.FAILED,
+                note='Failed to download the file!'
+            )
+            return
 
         # trigger task
         layer_upload.import_data()
@@ -165,20 +215,35 @@ def import_layer(layer_id, upload_id, file_url):
         if not layer.is_ready:
             return
 
-        # update url in InputLayer
-        base_url = settings.DJANGO_BACKEND_URL
-        if base_url.endswith('/'):
-            base_url = base_url[:-1]
+        # upload pmtiles to Django
         if layer.pmtile:
-            input_layer.url = (
-                f'pmtiles://{base_url}' + reverse('serve-pmtiles', kwargs={
-                    'layer_uuid': layer.unique_id,
+            auth = f'Token {preferences.worker_layer_api_key}'
+            upload_path = (
+                base_url + reverse('frontend-api:pmtile-layer', kwargs={
+                    'upload_id': upload_id,
                 })
             )
-        else:
-            input_layer.url = base_url + layer.tile_url
+            is_success = upload_file(
+                upload_path,
+                os.path.join(settings.MEDIA_ROOT, layer.pmtile.name),
+                auth_header=auth
+            )
+            if not is_success:
+                logger.warning(
+                    f'PMTile upload for layer {layer_id} failed!')
+                layer.is_ready = False
+                layer.pmtile.delete(save=True)
 
-        input_layer.save()
+                # fallback to use vector tile
+                input_layer.url = base_url + layer.tile_url
+                input_layer.save()
+            layer_upload.emptying_folder()
+        else:
+            logger.warning(
+                f'PMTile generation for layer {layer_id} is failed!')
+            # fallback to use vector tile
+            input_layer.url = base_url + layer.tile_url
+            input_layer.save()
     except Layer.DoesNotExist:
         logger.error(f'Layer {layer_id} does not exist')
     except InputLayer.DoesNotExist:
