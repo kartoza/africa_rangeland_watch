@@ -92,6 +92,7 @@ def join_organisation(request):
             {"error": f"Failed to send email: {str(e)}"}, status=500
         )
 
+
     # Check for existing invitations
     existing_invitation = OrganisationInvitation.objects.filter(
         email=request.user.email, organisation=selected_org
