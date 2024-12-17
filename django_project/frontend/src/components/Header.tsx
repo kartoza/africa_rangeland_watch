@@ -99,7 +99,7 @@ export default function Header(props: any) {
                         </Link>
                     </ListItem>
                     <ListItem>
-                        <Link href="#" _hover={{ textDecoration: 'underline', textDecorationColor: 'white' }}>
+                        <Link href="https://www.herding4health.net/contact" _hover={{ textDecoration: 'underline', textDecorationColor: 'white' }}>
                             <Text color="white" fontWeight={400} fontSize={16}>HELP</Text>
                         </Link>
                     </ListItem>

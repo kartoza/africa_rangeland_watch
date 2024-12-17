@@ -133,7 +133,8 @@ class UserProfileInline(admin.StackedInline):
     fk_name = "user"
     fields = (
         'country',
-        'user_role', 'created_at', 'updated_at', 'organisations_list'
+        'created_at', 'updated_at', 'organisations_list',
+        'profile_image'
     )
     readonly_fields = ('created_at', 'updated_at', 'organisations_list')
 
@@ -142,7 +143,8 @@ class UserProfileInline(admin.StackedInline):
         Custom method to display the organisations and roles associated with
         the user.
         """
-        orgs_with_roles = UserOrganisations.objects.filter(user=obj.user)
+        orgs_with_roles = UserOrganisations.objects.filter(
+            user_profile=obj.user)
         return ", ".join(
             [
                 f"{org.organisation.name} - {org.user_type}"

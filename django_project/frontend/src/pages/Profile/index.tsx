@@ -8,16 +8,91 @@ import {
   Input,
   Box,
   useBreakpointValue,
-  Image
+  Image,
+  Table,
+  Tbody,
+  Tr,
+  Td,
+  useToast
 } from "@chakra-ui/react";
-import React, { useState } from "react";
+import React, { ChangeEvent, useEffect, useState } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
+import { getUserProfile, updateProfile, updateProfileImage, updatePassword } from '../../store/userProfileSlice';
+import { AppDispatch, RootState } from '../../store';
 import RequestOrganisation from "../../components/RequestOrganisation";
+import ChangePasswordModal from "../../components/ChangePassword";
 
 
 export default function ProfileInformationPage() {
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const isMobile = useBreakpointValue({ base: true, md: false });
   const [isRequestModalOpen, setRequestModalOpen] = useState(false);
+  const dispatch = useDispatch<AppDispatch>();
+  const { profile, updateSuccess, loading, error } = useSelector((state: RootState) => state.userProfile);
+  const toast = useToast();
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = React.useState(false);
+
+  const [country, setCountry] = useState('');
+  const [user_role, setUserRole] = useState('');
+  const [is_support_staff, setIsSupportStaff] = useState(false);
+  const [first_name, setFirstName] = useState('');
+  const [last_name, setLastName] = useState('');
+  const [email, setEmail] = useState('');
+  const [organisations, setOrganisations] = useState<string[]>([]);
+  const [isEmailEditable, setIsEmailEditable] = useState(false);
+  const [updatePicture, setUpdatePicture] = useState(false);
+
+  const [isChanged, setIsChanged] = useState(false);
+
+  const [image, setImage] = useState(null);
+
+  const profileImage = profile?.profile_image || 'static/images/profile_user_avatar.svg';
+
+  const toggleEmailEditable = () => {
+    setIsEmailEditable(!isEmailEditable);
+  };
+
+  const handlePasswordChange = async (oldPassword: string, newPassword: string) => {
+    console.log('Initiating password update');
+    try {
+      await dispatch(updatePassword({ oldPassword, newPassword })).unwrap();
+      toast({
+        title: "Password updated successfully",
+        description: "Your password has been updated.",
+        status: "success",
+        duration: 5000,
+        isClosable: true,
+        position: "top-right",
+        containerStyle: {
+          backgroundColor: "#00634b",
+          color: "white",
+        },
+      });
+    } catch (error) {
+      const errorMessage =
+        error.detail || "An unexpected error occurred while updating the password.";
+      toast({
+        title: "Error updating password",
+        description: errorMessage,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+        position: "top-right",
+        containerStyle: {
+          backgroundColor: "red",
+          color: "white",
+        },
+      });
+      console.error('Error updating password:', error);
+    }
+  };
+  
+
+  useEffect(() => {
+    if (profileImage) {
+      setImage(profileImage);
+    }
+  }, [profileImage]);
 
   const openRequestModal = () => {
     setRequestModalOpen(true);
@@ -25,6 +100,70 @@ export default function ProfileInformationPage() {
 
   const closeRequestModal = () => {
     setRequestModalOpen(false);
+  };
+
+  useEffect(() => {
+    dispatch(getUserProfile());
+  }, [dispatch]);
+
+  useEffect(() => {
+    
+    if(updateSuccess != false){
+      toast({
+        title: "Profile Updated",
+        description: "Your profile information has been updated successfully.",
+        status: "success",
+        duration: 5000,
+        isClosable: true,
+        position: "top-right",
+        containerStyle: {
+          backgroundColor: "#00634b",
+          color: "white",
+        },
+      });
+    } else if (error != null &&  error !='Failed to fetch profile'){
+      toast({
+        title: "Error occurred",
+        description: error,
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+        position: "top-right",
+        containerStyle: {
+          backgroundColor: "red",
+          color: "white",
+        },
+      });
+    }
+  }, [updateSuccess]);
+
+  useEffect(() => {
+    if (profile) {
+      setFirstName(profile.first_name);
+      setLastName(profile.last_name);
+      setEmail(profile.email);
+      setCountry(profile.country);
+      setUserRole(profile.user_role);
+      setIsSupportStaff(profile.is_support_staff);
+      setOrganisations(profile.organisations);
+    }
+  }, [profile]);
+
+  const handleUpdate = async () => {
+    const updatedData = {
+      first_name,
+      last_name,
+      email,
+      country,
+      user_role: user_role,
+      is_support_staff: is_support_staff,
+    };
+    dispatch(updateProfile(updatedData));
+    setIsChanged(false);
+  };
+
+  const handleInputChange = () => {
+    setIsChanged(true);
   };
 
   return (
@@ -37,14 +176,12 @@ export default function ProfileInformationPage() {
         />
       </Helmet>
       <Header />
-      
-      <Box bg="white" w="100%" p={{ base: "50px", md: "0px" }} >
-        
 
-        <Flex mr={{ md: "62px", base: "0px" }} gap="30px" alignItems="start" mt={{base: "-20%" ,md: "0%"}}>
-        <Sidebar1 display={isSidebarOpen || !isMobile ? "flex" : "none"} />
+      <Box bg="white" w="100%" p={{ base: "50px", md: "0px" }}>
+        <Flex mr={{ md: "62px", base: "0px" }} gap="30px" alignItems="start" mt={{ base: "-20%", md: "0%" }}>
+          <Sidebar1 display={isSidebarOpen || !isMobile ? "flex" : "none"} />
           <Flex mt="24px" gap="14px" flex={1} flexDirection="column" alignItems="start">
-            <Heading size="lg" as="h1" mb={6} color={{base: "black"}}>Basic Information</Heading>
+            <Heading size="lg" as="h1" mb={6} color={{ base: "black" }}>Basic Information</Heading>
             <Flex
               gap="30px"
               alignSelf="stretch"
@@ -64,13 +201,28 @@ export default function ProfileInformationPage() {
                 display="flex"
                 justifyContent="center"
                 alignItems="center"
+                cursor="pointer"
               >
-                <Image
-                  src="static/images/profile_user_avatar.svg"
-                  alt="User Profile Avatar"
-                  w="80%"
-                  h="80%"
-                  objectFit="contain"
+                <label htmlFor="fileInput" style={{ width: "100%", height: "100%", cursor: "pointer" }}>
+                  <Image
+                    src={image}
+                    alt="User Profile Avatar"
+                    w="100%"
+                    h="100%"
+                    objectFit="cover"
+                  />
+                </label>
+                <Input
+                  id="fileInput"
+                  type="file"
+                  onChange={(e) => {
+                    if (e.target.files) {
+                      const file = e.target.files[0];
+                      setImage(URL.createObjectURL(file));
+                      setUpdatePicture(true)
+                    }else setUpdatePicture(false)
+                  }}
+                  style={{ display: "none" }}
                 />
               </Box>
 
@@ -95,6 +247,8 @@ export default function ProfileInformationPage() {
                       First Name
                     </Heading>
                     <Input
+                      value={first_name}
+                      onChange={(e) => { setFirstName(e.target.value); handleInputChange(); }}
                       placeholder="Jackson"
                       borderRadius="5px"
                       borderWidth="1px"
@@ -106,6 +260,8 @@ export default function ProfileInformationPage() {
                       Last Name
                     </Heading>
                     <Input
+                      value={last_name}
+                      onChange={(e) => { setLastName(e.target.value); handleInputChange(); }}
                       placeholder="Hendriks"
                       borderRadius="5px"
                       borderWidth="1px"
@@ -126,6 +282,9 @@ export default function ProfileInformationPage() {
                       Email Address
                     </Heading>
                     <Input
+                      value={email}
+                      onChange={(e) => { setEmail(e.target.value); handleInputChange(); }}
+                      isDisabled={!isEmailEditable}
                       placeholder="jackson@gmail.com"
                       borderRadius="5px"
                       borderWidth="1px"
@@ -138,6 +297,7 @@ export default function ProfileInformationPage() {
                     </Heading>
                     <Input
                       placeholder="******"
+                      isDisabled
                       type="password"
                       borderRadius="5px"
                       borderWidth="1px"
@@ -146,42 +306,48 @@ export default function ProfileInformationPage() {
                   </Flex>
                 </Flex>
 
-                {/* Row 3: Purpose (Full Width) */}
+                {/* Row 3: Purpose */}
                 <Flex flexDirection="column" w="100%" mb="4">
                   <Heading as="h6" size="xs" color="black" mb="2">
                     Purpose
                   </Heading>
                   <Input
                     placeholder="What will you be using the platform for?"
+                    onChange={(e) => { setUserRole(e.target.value); handleInputChange(); }}
                     borderRadius="5px"
                     borderWidth="1px"
                     borderColor="gray.500"
                   />
                 </Flex>
 
-                {/* Row 4: Organisation Name and Occupation */}
+                {/* Row 4: Organisation and Occupation */}
                 <Flex
                   gap="4"
                   flexDirection={{ base: "column", md: "row" }}
                   w="100%"
                   mb="4"
                 >
-                  <Flex flexDirection="column" flex={1} mb="4">
-                    <Heading as="h6" size="xs" color="black" mb="2">
-                      Organisation Name
-                    </Heading>
-                    <Input
-                      placeholder="Name of Organisation"
-                      borderRadius="5px"
-                      borderWidth="1px"
-                      borderColor="gray.500"
-                    />
+                  <Flex flexDirection="column" flex={1}>
+                    <Heading as="h6" size="xs" mb="2" color="black">Organisations</Heading>
+                    <Box p="2">
+                      <Table variant="striped" colorScheme="gray" size="sm" width="100%">
+                        <Tbody>
+                          {organisations.map((org, index) => (
+                            <Tr key={index}>
+                              <Td>{org}</Td>
+                            </Tr>
+                          ))}
+                        </Tbody>
+                      </Table>
+                    </Box>
                   </Flex>
                   <Flex flexDirection="column" flex={1}>
                     <Heading as="h6" size="xs" color="black" mb="2">
                       Occupation
                     </Heading>
                     <Input
+                      value={user_role}
+                      isDisabled
                       placeholder="Researcher"
                       borderRadius="5px"
                       borderWidth="1px"
@@ -191,11 +357,13 @@ export default function ProfileInformationPage() {
                 </Flex>
 
                 {/* Row 5: Country */}
-                <Flex flexDirection="column"  w= {{ base: "100%", md: "50%" }}>
+                <Flex flexDirection="column" w={{ base: "100%", md: "50%" }}>
                   <Heading as="h6" size="xs" color="black" mb="2">
                     Country
                   </Heading>
                   <Input
+                    value={country}
+                    onChange={(e) => { setCountry(e.target.value); handleInputChange(); }}
                     placeholder="South Africa"
                     borderRadius="5px"
                     borderWidth="1px"
@@ -218,12 +386,60 @@ export default function ProfileInformationPage() {
                   size="sm"
                   fontWeight={700}
                   w="100%"
-                  color="darkgreen"
+                  color={`${updatePicture ? 'white' : 'darkgreen'}`}
                   borderBottom="2px solid darkgreen"
                   borderRadius={0}
+                  backgroundColor={`${updatePicture ? 'darkgreen' : 'transparent'}`}
                   p={4}
+                  onClick={() => {
+                    const fileInput = document.getElementById("fileInput") as HTMLInputElement;
+                    if (fileInput?.files?.[0]) {
+                      const formData = new FormData();
+                      formData.append("profile_image", fileInput.files[0]);
+
+                      dispatch(updateProfileImage(formData))
+                        .then(() => {
+                          toast({
+                            title: "Profile image updated.",
+                            description: "Your profile image has been updated successfully.",
+                            status: "success",
+                            duration: 5000,
+                            isClosable: true,
+                            position: "top-right",
+                            containerStyle: {
+                              backgroundColor: "#00634b",
+                              color: "white",
+                            },
+                          });
+                        })
+                        .catch(() => {
+                          toast({
+                            title: "Error updating image.",
+                            description: "There was an error updating your profile image.",
+                            status: "error",
+                            duration: 5000,
+                            isClosable: true,
+                            position: "top-right",
+                            containerStyle: {
+                              backgroundColor: "red",
+                              color: "white",
+                            },
+                          });
+                        });
+                    } else {
+                      toast({
+                        title: "No image selected.",
+                        description: "Please choose an image to upload.",
+                        status: "warning",
+                        duration: 5000,
+                        isClosable: true,
+                        position: "top-right",
+                      });
+                    }
+
+                  }}
                 >
-                  Add Profile Image
+                  Update Profile Image
                 </Button>
                 <Button
                   size="sm"
@@ -233,6 +449,7 @@ export default function ProfileInformationPage() {
                   borderBottom="2px solid darkgreen"
                   borderRadius={0}
                   p={4}
+                  onClick={toggleEmailEditable}
                 >
                   Change Associated Email
                 </Button>
@@ -240,10 +457,12 @@ export default function ProfileInformationPage() {
                   size="sm"
                   fontWeight={700}
                   w="100%"
-                  color="darkgreen"
+                  color={`${isPasswordModalOpen ? 'white' : 'darkgreen'}`}
                   borderBottom="2px solid darkgreen"
                   borderRadius={0}
+                  backgroundColor={`${isPasswordModalOpen ? 'darkgreen' : 'transparent'}`}
                   p={4}
+                  onClick={() => setIsPasswordModalOpen(true)}
                 >
                   Change Password
                 </Button>
@@ -258,14 +477,37 @@ export default function ProfileInformationPage() {
                 >
                   Request Organisation
                 </Button>
+                {isChanged && (
+                  <Button
+                    size="sm"
+                    fontWeight={700}
+                    w="100%"
+                    color={`${isChanged ? 'white' : 'darkgreen'}`}
+                    borderBottom="2px solid darkgreen"
+                    borderRadius={0}
+                    backgroundColor={`${isChanged ? 'darkgreen' : 'transparent'}`}
+                    p={4}
+                    onClick={handleUpdate}
+                  >
+                    Update Info
+                  </Button>
+                )}
               </Flex>
             </Flex>
           </Flex>
         </Flex>
-        {/* Add the RequestOrganisation modal */}
-        <RequestOrganisation 
-          isOpen={isRequestModalOpen} 
+
+        {/* Request Organization Modal */}
+        <RequestOrganisation
+          isOpen={isRequestModalOpen}
           onClose={closeRequestModal}
+        />
+
+        {/* change password */}
+        <ChangePasswordModal
+          isOpen={isPasswordModalOpen}
+          onClose={() => setIsPasswordModalOpen(false)}
+          onSubmit={handlePasswordChange}
         />
       </Box>
     </>

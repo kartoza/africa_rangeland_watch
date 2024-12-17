@@ -1,40 +1,60 @@
 from django.urls import path
-from . import organisation_views
+from . import organisation_views, user_profile_views
 
 
 urlpatterns = [
     path('organisation/<int:organisation_id>/',
-         views.organisation_detail,
+         organisation_views.organisation_detail,
          name='organisation_detail'),
     path('api/organizations',
-         views.fetch_organisation_data,
+         organisation_views.fetch_organisation_data,
          name='fetch_organisation_data'),
     path(
         'api/organizations/member/delete/',
-        views.delete_organisation_member,
+        organisation_views.delete_organisation_member,
         name='delete_member'),
     path(
         'api/organization/<int:organisation_id>/invite/',
-        views.invite_to_organisation,
+        organisation_views.invite_to_organisation,
         name='invite_to_organisation'),
     path(
         'organisation/invite/accept/<int:invitation_id>/',
-        views.accept_invite,
+        organisation_views.accept_invite,
         name='organisation-invite-accept'
     ),
     path(
         'api/join-organization/',
-        views.join_organisation,
+        organisation_views.join_organisation,
         name='join_organization'
     ),
     path(
         'api/add-organization/',
-        views.add_organisation,
+        organisation_views.add_organisation,
         name='add_organization'
     ),
     path(
         'api/fetch-organizations/',
-        views.fetch_organisations,
+        organisation_views.fetch_organisations,
         name='fetch_organization'
+    ),
+    path(
+        'api/profile/',
+        user_profile_views.get_user_profile,
+        name='get_user_profile'
+    ),
+    path(
+        'api/profile/update/',
+        user_profile_views.update_user_profile,
+        name='update_user_profile'
+    ),
+    path(
+        'api/profile/image/',
+        user_profile_views.ProfileImageUploadView.as_view(),
+        name='profile-image-upload'
+    ),
+    path(
+        'api/profile/password/',
+        user_profile_views.update_password,
+        name='update_password'
     ),
 ]

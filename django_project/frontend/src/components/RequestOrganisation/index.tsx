@@ -38,7 +38,7 @@ export default function RequestOrganisation({ isOpen, onClose }: Props) {
     md: "fixed",
   });
   const modalTop = useBreakpointValue({ base: "20%", md: "7%" });
-  const modalRight = useBreakpointValue({ base: "5%", md: "7%" });
+  const modalRight = useBreakpointValue({ base: "5%", md: "25%" });
   const modalTransform = useBreakpointValue({
     base: "translate(-50%, -50%)",
     md: "none",
