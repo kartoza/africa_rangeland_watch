@@ -158,6 +158,12 @@ class UserProfile(models.Model):
         help_text="Indicates if the user is a support staff member."
     )
 
+    profile_image = models.ImageField(
+        upload_to='profile_images/',
+        null=True,
+        blank=True
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

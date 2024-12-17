@@ -43,11 +43,11 @@ def join_organisation(request):
         selected_org = Organisation.objects.get(id=selected_org_id)
     except ValueError:
         return JsonResponse(
-            {"error": "Invalid organisation ID format."}, status=400
+            {"message": "Invalid organisation ID format."}, status=400
         )
     except Organisation.DoesNotExist:
         return JsonResponse(
-            {"error": "Organisation does not exist."}, status=400
+            {"message": "Organisation does not exist."}, status=400
         )
 
     try:
@@ -57,7 +57,7 @@ def join_organisation(request):
         manager_user = user_organisation.user_profile.user
     except UserOrganisations.DoesNotExist:
         return JsonResponse(
-            {"error": "No manager found for this organisation."}, status=400
+            {"message": "No manager found for this organisation."}, status=400
         )
 
     manager_email = manager_user.email
@@ -92,6 +92,21 @@ def join_organisation(request):
             {"error": f"Failed to send email: {str(e)}"}, status=500
         )
 
+
+    # Check for existing invitations
+    existing_invitation = OrganisationInvitation.objects.filter(
+        email=request.user.email, organisation=selected_org
+    ).first()
+
+    if existing_invitation:
+        return JsonResponse(
+            {
+                "message": "You have already requested to join this "
+                "organisation."
+            },
+            status=400,
+        )
+
     try:
         OrganisationInvitation.objects.create(
             inviter=request.user,
@@ -105,7 +120,6 @@ def join_organisation(request):
         )
 
     return JsonResponse({"message": "Request sent successfully!"})
-
 
 
 

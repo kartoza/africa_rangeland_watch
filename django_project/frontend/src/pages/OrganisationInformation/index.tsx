@@ -69,10 +69,12 @@ export default function OrganisationInformation() {
 
   // Filter members based on search term
   const filteredMembers = (members: any[]) => {
+    if (!Array.isArray(members) || members.length === 0) return [];
     if (!searchTerm) return members;
     return members.filter(
       (member) =>
-        member.user__email && member.user__email.toLowerCase().includes(searchTerm.toLowerCase())
+        member.user__email &&
+        member.user__email.toLowerCase().includes(searchTerm.toLowerCase())
     );
   };
   
@@ -225,13 +227,6 @@ export default function OrganisationInformation() {
                       </Table>
                     </Box>
 
-                    {organization.members.length > 4 && (
-                      <Flex justify="flex-end" mt={2}>
-                        <Button variant="link" color="black">
-                          View All
-                        </Button>
-                      </Flex>
-                    )}
 
                   {organization.is_manager && (
                     <>

@@ -333,4 +333,3 @@ class AddOrganisationTests(TestCase):
         response = self.client.post(reverse('add_organization'), json.dumps(data), content_type="application/json")
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Request sent successfully!")
-
