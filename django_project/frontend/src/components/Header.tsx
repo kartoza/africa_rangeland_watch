@@ -8,6 +8,7 @@ import SignIn from './SignIn';
 import { AppDispatch, RootState } from '../store';
 import { checkLoginStatus, logoutUser } from '../store/authSlice';
 import { selectIsLoggedIn } from "../store/authSlice";
+import { useSession } from '../sessionProvider';
 
 export default function Header(props: any) {
     const dispatch = useDispatch<AppDispatch>();
@@ -18,6 +19,13 @@ export default function Header(props: any) {
     const location = useLocation();
     const navigate = useNavigate();
     const isAuthenticated = useSelector(selectIsLoggedIn);
+    const { session, loadSession, saveSession } = useSession();
+
+    useEffect(() => {
+        if (isAuthenticated && location.pathname !== '/') {
+            saveSession(location.pathname, { activity: "Visited Page" });
+        }
+    }, [isAuthenticated, location.pathname, saveSession]);
 
     // Handle logout
     const handleLogout = () => {
