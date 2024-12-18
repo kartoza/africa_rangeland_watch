@@ -10,6 +10,7 @@ import { Protocol } from "pmtiles";
 import theme from "./theme";
 import store from "./store";
 import ProjectRoutes from "./Routes";
+import { SessionProvider } from "./sessionProvider";
 
 Sentry.init({
     dsn: (window as any).sentryDsn,
@@ -40,9 +41,11 @@ function App() {
     <ErrorBoundary>
       <ChakraProvider theme={theme}>
         <Provider store={store}>
-          <Router>
-            <ProjectRoutes />
-          </Router>
+          <SessionProvider>
+            <Router>
+              <ProjectRoutes />
+            </Router>
+          </SessionProvider>
         </Provider>
       </ChakraProvider>
     </ErrorBoundary>
