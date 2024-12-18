@@ -24,6 +24,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { loginUser, registerUser, resetPasswordRequest, resetPasswordConfirm } from "../store/authSlice";
 import { RootState, AppDispatch } from "../store";
 import { useLocation } from "react-router-dom";
+import SessionPrompt from "./SessionPrompt";
 
 interface SignInProps {
   isOpen: boolean;
@@ -148,6 +149,7 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
   }, [error, statusMessage]); 
 
   return (
+    <>
     <Modal isOpen={isOpen || isOpenReset} onClose={onClose} isCentered={modalPosition === "absolute"}>
       <ModalOverlay />
       <ModalContent
@@ -378,5 +380,7 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
         </ModalBody>
       </ModalContent>
     </Modal>
+    <SessionPrompt />
+    </>
   );
 }

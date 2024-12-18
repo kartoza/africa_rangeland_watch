@@ -7,6 +7,7 @@ Africa Rangeland Watch (ARW).
 """
 
 from django.db import models
+from django.contrib.auth.models import User
 
 
 class SingletonModel(models.Model):
@@ -49,3 +50,10 @@ class Preferences(SingletonModel):
         blank=True,
         help_text="Map initial bound"
     )
+
+
+class UserSession(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    last_page = models.CharField(max_length=255, null=True, blank=True)
+    activity_data = models.JSONField(default=dict)
+    last_updated = models.DateTimeField(auto_now=True)
