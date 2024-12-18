@@ -8,6 +8,15 @@ Africa Rangeland Watch (ARW).
 from django.contrib import admin
 
 from core.models import Preferences
+from core.models import UserSession
+
+
+@admin.register(UserSession)
+class UserSessionAdmin(admin.ModelAdmin):
+    list_display = ('user', 'last_page', 'last_updated')
+    list_filter = ('last_updated',)
+    search_fields = ('user__username', 'last_page')
+    readonly_fields = ('last_updated',)
 
 
 @admin.register(Preferences)
