@@ -17,8 +17,8 @@ from django.contrib import admin
 from django.urls import path, include, re_path
 from django.conf import settings
 from django.conf.urls.static import static
-from core.views import PreferencesRedirectView
-from .custom_auth_view import (
+from core.views.views import PreferencesRedirectView
+from core.views.custom_auth_view import (
     CheckTokenView,
     CustomRegistrationView,
     AccountActivationView,
@@ -27,6 +27,8 @@ from .custom_auth_view import (
     user_info,
     logout_view
 )
+from core.views.session_view import UserSessionViewSet
+
 
 urlpatterns = [
     re_path(
@@ -48,6 +50,12 @@ urlpatterns = [
     path(
         'api/auth/check-token/',
         CheckTokenView.as_view(), name='check-token'
+    ),
+    path(
+        'api/session/',
+        UserSessionViewSet.as_view(
+            {'get': 'retrieve', 'put': 'update'}
+        )
     ),
     path(
         'registration/',
