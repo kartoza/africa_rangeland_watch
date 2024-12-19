@@ -38,7 +38,19 @@ Here is the sign-up form.
 - **Password:** Enter your password.
 - **Confirm Password:** Re-enter your password to confirm.
 
-After filling the 1️⃣ `form` click on the 2️⃣ `sign-up` button.
+* After filling the 1️⃣ `form`, click on the 2️⃣ `sign-up` button this will send a verification link to the associated email address.
+
+* You can verify your account by clicking on the 1️⃣ `Verify Email` button. If the button is not functioning, you can use the 2️⃣ `link  `provided to complete the verification process. After clicking on the verify button or link you will be redirected to the `ARW` home page. You can also click on the 3️⃣ `support link` if you have any issue.
+
+    [![Verification Email](./img/guide-signup-img-6.png)](./img/guide-signup-img-6.png)
+
+* After clicking on the support link, a message window will open. You will need to fill in the subject and description of the issue, then click the 1️⃣ `Send` button to submit the message or you can click on the `X` mark to close the window.
+
+    [![Support Window](./img/guide-signup-img-8.png)](./img/guide-signup-img-8.png)
+
+* A toast notification will confirm your registration with the message: 1️⃣ `Registration completed`.
+
+    [![Notification Toast](./img/guide-signup-img-7.png)](./img/guide-signup-img-7.png)
 
 #### Method 2: Sign-up using other accounts like google, github and apple.
 
