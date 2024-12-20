@@ -6,11 +6,15 @@ Africa Rangeland Watch (ARW).
 """
 
 from django.urls import path
+from rest_framework.routers import DefaultRouter
 
+from frontend.api_views.analysis import AnalysisAPI
 from frontend.api_views.base_map import BaseMapAPI, MapConfigAPI
-from frontend.api_views.landscape import LandscapeAPI
+from frontend.api_views.landscape import LandscapeViewSet
 from frontend.api_views.layers import LayerAPI, UploadLayerAPI
 
+router = DefaultRouter()
+router.register(r'landscapes', LandscapeViewSet, basename='landscapes')
 
 # BaseMap APIs
 base_map_urls = [
@@ -23,15 +27,6 @@ base_map_urls = [
         'map-config/',
         MapConfigAPI.as_view(),
         name='map-config'
-    )
-]
-
-# Landscape APIs
-landscape_urls = [
-    path(
-        'landscape/',
-        LandscapeAPI.as_view(),
-        name='landscape'
     )
 ]
 
@@ -49,5 +44,16 @@ layers_urls = [
     )
 ]
 
-
-urlpatterns = base_map_urls + landscape_urls + layers_urls
+urlpatterns = base_map_urls + layers_urls + router.urls + [
+    # Custom route for vector tiles
+    path(
+        'landscapes/vector_tile/<int:z>/<int:x>/<int:y>/',
+        LandscapeViewSet.as_view({'get': 'vector_tile'}),
+        name='landscape-vector-tile'
+    ),
+    path(
+        'analysis/',
+        AnalysisAPI.as_view(),
+        name='analysis'
+    ),
+]

@@ -7,6 +7,7 @@ import MegaMenu from './MegaMenu';
 import SignIn from './SignIn';
 import { AppDispatch, RootState } from '../store';
 import { checkLoginStatus, logoutUser } from '../store/authSlice';
+import { selectIsLoggedIn } from "../store/authSlice";
 
 export default function Header(props: any) {
     const dispatch = useDispatch<AppDispatch>();
@@ -16,6 +17,7 @@ export default function Header(props: any) {
     const { isOpen, onOpen, onClose } = useDisclosure();
     const location = useLocation();
     const navigate = useNavigate();
+    const isAuthenticated = useSelector(selectIsLoggedIn);
 
     // Handle logout
     const handleLogout = () => {
@@ -97,7 +99,7 @@ export default function Header(props: any) {
                         </Link>
                     </ListItem>
                     <ListItem>
-                        <Link href="#" _hover={{ textDecoration: 'underline', textDecorationColor: 'white' }}>
+                        <Link href="https://www.herding4health.net/contact" _hover={{ textDecoration: 'underline', textDecorationColor: 'white' }}>
                             <Text color="white" fontWeight={400} fontSize={16}>HELP</Text>
                         </Link>
                     </ListItem>
@@ -129,7 +131,7 @@ export default function Header(props: any) {
                     display={{ base: "flex", sm: "flex" }}
                     gap="20px"
                 >
-                    {token && (
+                    {isAuthenticated && (
                         <>
                             <Link href="#">
                                 <Image src="static/images/search_icon.svg" alt="search" h="24px" w="24px" />
@@ -141,7 +143,7 @@ export default function Header(props: any) {
                     )}
 
                     {/* User Avatar - Conditionally rendered based on login status */}
-                    {token ? (
+                    {isAuthenticated ? (
                         <Link
                             onMouseEnter={() => handleHoverEnter('userAvatar')}
                             onMouseLeave={handleHoverLeave}

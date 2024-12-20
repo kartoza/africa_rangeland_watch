@@ -5,15 +5,16 @@ import React, {
   useRef,
   useState
 } from 'react';
-import maplibregl, { Style } from 'maplibre-gl';
+import maplibregl from 'maplibre-gl';
 import { Box } from "@chakra-ui/react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../store";
 import { BasemapControl, LegendControl } from "./control";
 import { hasSource, removeLayer, removeSource } from "./utils";
 import { fetchBaseMaps } from '../../store/baseMapSlice';
-import { fetchMapConfig } from '../../store/mapConfigSlice';
+import { fetchMapConfig, mapInitated } from '../../store/mapConfigSlice';
 import { Layer, setSelectedNrtLayer } from '../../store/layerSlice';
+import { COMMUNITY_ID } from "./DataTypes";
 
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './style.css';
@@ -80,8 +81,8 @@ export const MapLibre = forwardRef(
             layerStyle['source'] = ID
             layerStyle['id'] = ID
           }
-          map.addLayer(layerStyle)
-        } else if (layer.type == "raster") {
+          map.addLayer(layerStyle, COMMUNITY_ID)
+        } else if (layer.type === "raster") {
           if (!hasSource(map, ID)) {
             map.addSource(ID, {
                 type: "raster",
@@ -95,13 +96,14 @@ export const MapLibre = forwardRef(
               id: ID,
               source: ID,
               type: "raster"
-            }
+            },
+            COMMUNITY_ID
           )
           legendRef?.current?.renderLayer(layer)
         }
       }
     }
-  
+
     const doRemoveLayer = (layer: Layer) => {
       if (map) {
         const ID = `layer-${layer.id}`
@@ -145,6 +147,10 @@ export const MapLibre = forwardRef(
           center: [0, 0],
           zoom: 1
         });
+
+        // Save as global variable
+        window.map = _map;
+
         _map.once("load", () => {
           setMap(_map)
 
@@ -157,6 +163,7 @@ export const MapLibre = forwardRef(
 
           // render default base map
           baseMapRef?.current?.setBaseMapLayer(baseMaps[0])
+          dispatch(mapInitated());
         })
         _map.addControl(new BasemapControl(baseMaps, baseMapRef), 'bottom-left');
         _map.addControl(new LegendControl(legendRef), 'top-left');
@@ -193,7 +200,7 @@ export const MapLibre = forwardRef(
 
       if (selectedNrt && selectedLandscape.urls[selectedNrt.id] !== undefined) {
         // render NRT layer from landscape url
-        let _copyLayer = {...selectedNrt}
+        let _copyLayer = { ...selectedNrt }
         _copyLayer.url = selectedLandscape.urls[selectedNrt.id]
         doRenderLayer(_copyLayer)
       }

@@ -129,7 +129,6 @@ INSTALLED_APPS = (
     'django.contrib.messages',
 )
 
-SITE_ID = 1
 STATICFILES_STORAGE = (
     'django.contrib.staticfiles.storage.ManifestStaticFilesStorage'
 )
@@ -144,8 +143,10 @@ CACHES = {
     }
 }
 
-LOGIN_URL = '/account/login/'
+SITE_ID = 1
+LOGIN_URL = '/'
 LOGIN_REDIRECT_URL = '/'
+LOGOUT_REDIRECT_URL = '/'
 
 RESEND_API_KEY = os.environ.get(
     'RESEND_API_KEY', ''

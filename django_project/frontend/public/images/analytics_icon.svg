@@ -1,11 +1,11 @@
 <svg width="220" height="167" viewBox="0 0 220 167" fill="none" xmlns="http://www.w3.org/2000/svg">
-<rect x="80.5164" y="72.937" width="33.5485" height="87.226" fill="#212121"/>
-<rect y="0.472412" width="195.923" height="123.458" rx="5" fill="#212121"/>
-<rect x="10.7356" y="11.2079" width="174.452" height="103.329" rx="5" fill="white"/>
-<rect x="60.3872" y="153.453" width="73.8066" height="13.4194" rx="5" fill="#212121"/>
-<circle cx="158.334" cy="87.6837" r="25.6404" transform="rotate(-49.4847 158.334 87.6837)" fill="#212121" stroke="white" stroke-width="2"/>
-<circle cx="157.8" cy="87.1205" r="19.5988" transform="rotate(-49.4847 157.8 87.1205)" fill="white"/>
-<rect x="178.774" y="113.284" width="11.3202" height="42.4006" rx="4" transform="rotate(-49.4847 178.774 113.284)" fill="#212121" stroke="white" stroke-width="2"/>
-<rect x="172.202" y="103.534" width="4.44006" height="19.4423" rx="2.22003" transform="rotate(-49.4847 172.202 103.534)" fill="#212121"/>
-<path d="M26.8386 80.3177H60.3871L71.7936 52.8079L87.2258 97.0919L110.039 31.3369L123.458 80.3177L144.258 48.1111" stroke="#212121" stroke-width="4" stroke-linecap="round"/>
+<rect x="80.5164" y="72.4646" width="33.5485" height="87.226" fill="#275749"/>
+<rect width="195.923" height="123.458" rx="5" fill="#275749"/>
+<rect x="10.7356" y="10.7355" width="174.452" height="103.329" rx="5" fill="white"/>
+<rect x="60.3872" y="152.981" width="73.8066" height="13.4194" rx="5" fill="#275749"/>
+<circle cx="158.334" cy="87.2113" r="25.6404" transform="rotate(-49.4847 158.334 87.2113)" fill="#275749" stroke="white" stroke-width="2"/>
+<circle cx="157.8" cy="86.648" r="19.5988" transform="rotate(-49.4847 157.8 86.648)" fill="white"/>
+<rect x="178.774" y="112.812" width="11.3202" height="42.4006" rx="4" transform="rotate(-49.4847 178.774 112.812)" fill="#275749" stroke="white" stroke-width="2"/>
+<rect x="172.202" y="103.062" width="4.44006" height="19.4423" rx="2.22003" transform="rotate(-49.4847 172.202 103.062)" fill="#275749"/>
+<path d="M26.8386 79.8452H60.3871L71.7936 52.3355L87.2258 96.6195L110.039 30.8645L123.458 79.8452L144.258 47.6387" stroke="#275749" stroke-width="4" stroke-linecap="round"/>
 </svg>

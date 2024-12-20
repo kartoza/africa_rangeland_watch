@@ -35,6 +35,7 @@ export default function SupportPage() {
   const [additionalDetails, setAdditionalDetails] = useState("");
   const [screenshot, setScreenshot] = useState<File | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
+  const [filteredTickets, setFilteredTickets] = useState([]);
 
   const dispatch = useDispatch<AppDispatch>();
   const toast = useToast();
@@ -125,6 +126,15 @@ export default function SupportPage() {
       setCurrentPage(page);
     }
   };
+
+  useEffect(() => {
+    setFilteredTickets(
+      tickets.filter((ticket) =>
+        ticket.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        ticket.description.toLowerCase().includes(searchTerm.toLowerCase())
+      )
+    );
+  }, [searchTerm, tickets]);
 
   return (
     <>
@@ -222,7 +232,7 @@ export default function SupportPage() {
                 flexDirection="column"
                 gap={4}
               >
-                {currentTickets.map((ticket, index) => (
+                {(searchTerm !== '' ? filteredTickets : currentTickets).map((ticket, index) => (
                 <Box key={index} boxShadow="md" borderRadius="md" p={4} border="1px" borderColor="gray.300">
                     <Flex direction="column" gap={2} position="relative">
                     {/* Badge (Status) */}

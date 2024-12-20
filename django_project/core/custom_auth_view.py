@@ -19,8 +19,32 @@ from django.core.validators import EmailValidator
 from django.contrib.auth.password_validation import validate_password
 from rest_framework.throttling import AnonRateThrottle
 from django.core.mail import EmailMultiAlternatives
+from rest_framework.decorators import api_view
+from django.contrib.auth import logout
+from allauth.account.models import EmailAddress
 
 
+@api_view(["POST"])
+def logout_view(request):
+    """
+    Logs out the user and clears the session.
+    """
+    logout(request)
+    return Response({"message": "Successfully logged out"}, status=200)
+
+
+@api_view(["POST"])
+def user_info(request):
+    if request.user.is_authenticated:
+        return Response({
+            "user": {
+                "username": request.user.username,
+                "email": request.user.email,
+            },
+            "is_authenticated": True,
+            "is_admin": request.user.is_staff
+        })
+    return Response({"is_authenticated": False}, status=401)
 
 
 class CheckTokenView(APIView):
@@ -34,7 +58,8 @@ class CheckTokenView(APIView):
                 "email": user.email,
                 "first_name": user.first_name,
                 "last_name": user.last_name
-            }
+            },
+            "is_admin": request.user.is_staff
         }, status=status.HTTP_200_OK)
 
 
@@ -131,26 +156,41 @@ class AccountActivationView(APIView):
 
     def get(self, request, uidb64, token, *args, **kwargs):
         try:
+            # Decode the user ID from the activation link
             uid = urlsafe_base64_decode(uidb64).decode()
             user = get_user_model().objects.get(pk=uid)
         except (
-            TypeError, ValueError,
-            OverflowError, get_user_model().DoesNotExist
+            TypeError,
+            ValueError,
+            OverflowError,
+            get_user_model().DoesNotExist
         ):
             return JsonResponse(
                 {'error': 'Invalid activation link'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
+        # Check the validity of the activation token
         if default_token_generator.check_token(user, token):
             user.is_active = True
             user.save()
+
+            email_address, created = EmailAddress.objects.get_or_create(
+                user=user,
+                email=user.email,
+                defaults={'verified': True, 'primary': True}
+            )
+
+            if not created:
+                email_address.verified = True
+                email_address.primary = True
+                email_address.save()
+
+            # Redirect after successful activation
             redirect_url = (
                 f"{settings.DJANGO_BACKEND_URL}/#/?"
                 "registration_complete=true"
             )
-
-
             return redirect(redirect_url)
 
         return JsonResponse(
@@ -189,8 +229,8 @@ class ForgotPasswordView(APIView):
         uid = urlsafe_base64_encode(str(user.pk).encode())
 
         reset_password_link = (
-            f"{settings.DJANGO_BACKEND_URL}/password-reset/"
-            f"{uid}/{token}/"
+            f"{settings.DJANGO_BACKEND_URL}/#/"
+            f"?uid={uid}&token={token}/"
         )
 
         # Send the password reset email

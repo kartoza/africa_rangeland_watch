@@ -43,7 +43,7 @@ export const fetchTickets = createAsyncThunk(
   'tickets/fetchTickets',
   async () => {
     const response = await axios.get('/tickets-api/tickets/');
-    return response.data;
+    return response.data.results;
   }
 );
 
@@ -99,7 +99,7 @@ export const fetchIssueTypes = createAsyncThunk(
     'tickets/fetchIssueTypes',
     async () => {
       const response = await axios.get('/tickets-api/issue_types/');
-      return response.data;
+      return response.data.results;
     }
   );
 

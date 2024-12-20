@@ -1,8 +1,8 @@
 import { Box, Text, Link, Flex } from "@chakra-ui/react";
 import React, { useEffect, useState } from "react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
-import { logoutUser } from "../../store/authSlice";
-import { useDispatch } from "react-redux";
+import { logoutUser, selectIsLoggedIn, isAdmin } from "../../store/authSlice";
+import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "../../store";
 
 type MenuItem = {
@@ -17,18 +17,9 @@ type MegaMenuProps = {
 };
 
 export default function MegaMenu({ hoveredSection, isUserAvatarHovered }: MegaMenuProps) {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
+  const isAuthenticated = useSelector(selectIsLoggedIn);
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
-
-  useEffect(() => {
-    const token = localStorage.getItem("auth_token");
-    if (token) {
-      setIsAuthenticated(true);
-    } else {
-      setIsAuthenticated(false);
-    }
-  }, []);
 
   const handleClick = () => {
     navigate('/about');
@@ -39,18 +30,27 @@ export default function MegaMenu({ hoveredSection, isUserAvatarHovered }: MegaMe
     navigate('/');
   };
 
+  const navToAdmin = () => {
+    if (window.location.hash) {
+      window.location.href = '/admin';
+    } else {
+      navigate('/admin');
+    }
+  };
+  
   // Menu items based on hover
   const menuItems: Record<string, MenuItem[]> = {
     about: [
       { label: "Africa RangeWatch", to: "/about" },
       { label: "Conversation", to: "/about" },
-      { label: "Learn More", to: "/about" },
+      { label: "Learn More", to: "/learn-more" },
     ],
     userAvatar: !isAuthenticated
-      ? [{ label: "Login", to: "/login" }]
+      ? []
       : [
-          { label: "Admin", to: "/profile" },
-          { label: "Logout", to: "", onClick: handleLogout }
+          ...(isAdmin ? [{ label: "Admin", to: "", onClick: navToAdmin }] : []),
+          { label: "Profile Area", to: "/profile" },
+          { label: "Logout", to: "", onClick: handleLogout },
       ],
     resources: [
       { label: "ARW Documentation", to: "/resources" },
@@ -58,8 +58,10 @@ export default function MegaMenu({ hoveredSection, isUserAvatarHovered }: MegaMe
     ],
   };
 
-  const handleNavigation = (to: string | undefined) => {
-    if (to) {
+  const handleNavigation = (to: string | undefined, onClick?: () => void) => {
+    if (onClick) {
+      onClick();
+    } else if (to) {
       navigate(to);
     }
   };
@@ -70,7 +72,7 @@ export default function MegaMenu({ hoveredSection, isUserAvatarHovered }: MegaMe
       top="auto"
       pt="12px"
       zIndex={99}
-      left={{base: isUserAvatarHovered ? "80%" : undefined, md: isUserAvatarHovered? "94%" : undefined}}
+      left={{base: isUserAvatarHovered ? "80%" : undefined, md: isUserAvatarHovered? "93.5%" : undefined}}
     >
       <Box bg="whiteAlpha.900" boxShadow="xs" w="100%" p="20px" borderRadius="8px">
         <Flex gap="30px">

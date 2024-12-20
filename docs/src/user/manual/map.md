@@ -24,20 +24,50 @@ license: This program is free software; you can redistribute it and/or modify it
     [![Layer Section](./img/manual-map-img-3.png)](./img/manual-map-img-3.png)
     
     **1. Baseline(Average):** Baseline describes a 5-year (and in some cases longer) average of each variable. Baseline variables are visible at the whole extent of southern Africa. Users have the option to select multiple baseline years from the dropdown menu by simply checking the corresponding boxes. This allows them to include data from different years for the analysis, providing a comprehensive view of changes over time.
-    
+
+    * Apply Baseline(Average) layer by clicking on the checkbox next to Baseline(Average) in the Layers section.
+
+    * Before applying the Baseline(Average) layer.
+
+        [![Before Any Layer](./img/manual-map-img-14.png)](./img/manual-map-img-14.png)
+
+    * After applying the Baseline(Average) layer.
+
+        [![After Baseline Layer 1](./img/manual-map-img-15.png)](./img/manual-map-img-15.png)
+
+        [![After Baseline Layer 2](./img/manual-map-img-16.png)](./img/manual-map-img-16.png)
+
+    * Apply multiple Baseline(Average) layers simultaneously.
+
+        [![Apply Multiple Baseline](./img/manual-map-img-17.png)](./img/manual-map-img-17.png)
+
+        > Note: Users can apply multiple baseline layers, the map shows data for all selected layers. However, the most recently applied layer is displayed more clearly for better visibility.
+
     **2. Near-real time:** Near-real-time data provides users with the average of the last 30 days, offering insights into recent changes and trends for effective monitoring.
 
     [![Near Real Time Menu](./img/manual-map-img-4.png)](./img/manual-map-img-4.png)
 
     **1. Zoom to landscape:** Allows users to select a specific landscape from the dropdown menu. This feature enables users to focus on specific regions of interest, making it easier to analyse.
 
-    **2. Variables:** Variables are those that are used to compute temporal and spatial statistics for different areas within the app. 
+    * For example: Zooming on the `Limpopo NP` landscape.
+
+        [![Zoom to Landscape Limpopo](./img/manual-map-img-18.png)](./img/manual-map-img-18.png)
+
+    **2. Variables:** Variables are those that are used to compute temporal and spatial statistics for different areas within the app. Users can apply the variable of their choice by checking the corresponding checkbox.
+
+    > Note: Users can select multiple variables simultaneously, and the map will display data for all selected variables. However, the most recently applied variable will be highlighted for improved visibility. 
 
     * **EVI:** The enhanced vegetation index (EVI) is a spectral index calculated from satellite data in the near-infrared, red and blue wavelengths (Liu and Huete, 1995). EVI is a good proxy for vegetation vigour, greenness, biomass and cover. Relative to NDVI (see below), EVI simultaneously corrects for atmospheric and soil effects and does not saturate over high vegetation biomass. It has been used to map rangeland restoration and degradation trends over South Africa in Venter et al., 2020. We calculate baseline EVI at 250m resolution from the MOD13Q1 dataset derived from the MODIS satellites. For NRT and analysis EVI at the landscape scale, we calculate EVI from cloud-masked mosaics of Sentinel-2 imagery at 10m resolution.
 
+        [![EVI](./img/manual-map-img-19.png)](./img/manual-map-img-19.png)
+
     * **NDVI:** The normalised difference vegetation index (NDVI) is very similar to the EVI however it is more sensitive to sparse vegetation (Tucker 1979). It is therefore good for use in arid areas where one does not expect high levels of vegetation greenness. We calculate baseline EVI at 250m resolution from the MOD13Q1 dataset derived from the MODIS satellites. For NRT and analysis of EVI at the landscape scale, we calculate EVI from cloud-masked mosaics of Sentinel-2 imagery at 10m resolution.
 
+        [![NDVI](./img/manual-map-img-20.png)](./img/manual-map-img-20.png)
+
     * **Bare ground cover:** Bare ground cover refers to the proportion of the landscape where the surface is exposed without significant vegetation, such as grass or woody plants. These areas may consist of soil, sand, or rock and are important in ecological assessments as they affect processes like erosion, water infiltration, and habitat stability.
+        
+        [![Bare Ground Cover](./img/manual-map-img-21.png)](./img/manual-map-img-21.png)
 
 2. **Analysis:** This section allows users to perform analyses based on various conditions and run the analysis on the map to visualise the results.
 
@@ -94,6 +124,3 @@ license: This program is free software; you can redistribute it and/or modify it
     **4. ➕ and ➖ buttons:** These buttons allow users to zoom in and out of the map.
 
     [![Zooming Buttons](./img/manual-map-img-13.png)](./img/manual-map-img-13.png)
-
-
-            

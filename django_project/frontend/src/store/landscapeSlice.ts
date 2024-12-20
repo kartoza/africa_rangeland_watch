@@ -4,6 +4,13 @@ import axios from 'axios';
 
 import { DataState } from './common';
 
+export interface Community {
+  id: number;
+  name: string;
+  latitude: number;
+  longitude: number;
+}
+
 export interface Landscape {
   id: number;
   name: string;
@@ -13,7 +20,7 @@ export interface Landscape {
     [key: string]: string;
   };
 }
-  
+
 interface LandscapeState extends DataState {
     landscapes: Landscape[];
     selected: Landscape;
@@ -30,8 +37,8 @@ const initialLandscapeState: LandscapeState = {
 export const fetchLandscapes = createAsyncThunk(
     'landscape/fetchLandscapes',
     async () => {
-      const response = await axios.get('/frontend-api/landscape/');
-      return response.data;
+      const response = await axios.get('/frontend-api/landscapes/?page_size=1000');
+      return response.data.results;
     }
 );
 
@@ -62,10 +69,10 @@ export const landscapeSlice = createSlice({
           state.loading = false;
           state.error = action.error.message || 'An error occurred while fetching landscapes';
         })
-    }  
+    }
 });
-  
-export const { 
+
+export const {
   clearError,
   setSelectedLandscape,
   clearSelectedLandscape

@@ -8,12 +8,15 @@ export interface AnalysisDataPeriod {
 }
 
 export interface AnalysisData {
+  latitude?: number;
+  longitude?: number;
   landscape?: string;
   analysisType?: string;
   temporalResolution?: string;
   variable?: string;
   period?: AnalysisDataPeriod;
   comparisonPeriod?: AnalysisDataPeriod;
+  community?: string;
 }
 
 export const GroupName = {
@@ -21,3 +24,4 @@ export const GroupName = {
   NearRealtimeGroup: 'near-real-time',
   UserDefinedGroup: 'user-defined'
 }
+export const COMMUNITY_ID = 'Communities'

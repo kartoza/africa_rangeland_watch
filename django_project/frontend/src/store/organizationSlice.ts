@@ -97,6 +97,9 @@ const organizationsSlice = createSlice({
         email,
         accepted: false,
       };
+      if (!state.organizations[orgKey]) {
+          state.organizations[orgKey] = { members: [], invitations: [] };
+      }
       state.organizations[orgKey].invitations.push(newInvitation);
     },
     resetRefetch: (state) => {
@@ -117,6 +120,7 @@ const organizationsSlice = createSlice({
       .addCase(fetchOrganizations.rejected, (state, action) => {
         state.error = action.error.message || "Failed to fetch data.";
         state.loading = false;
+        state.organizations = {};
       })
       .addCase(inviteMemberThunk.pending, (state) => {
         state.loading = true;
@@ -124,6 +128,9 @@ const organizationsSlice = createSlice({
       })
       .addCase(inviteMemberThunk.fulfilled, (state, action) => {
         const { orgKey, email } = action.payload;
+        if (!state.organizations[orgKey]) {
+          state.organizations[orgKey] = { members: [], invitations: [] };
+        }
         const invitation: Invitation = { email, accepted: false };
         state.organizations[orgKey]?.invitations.push(invitation);
         state.loading = false;

@@ -15,7 +15,9 @@ INSTALLED_APPS = INSTALLED_APPS + (
     'allauth',
     'allauth.account',
     'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
     'rest_framework.authtoken',
+    'allauth.socialaccount.providers.github',
     'dj_rest_auth',
     'dj_rest_auth.registration',
 
@@ -38,6 +40,7 @@ WEBPACK_LOADER = {
         'LOADER_CLASS': 'webpack_loader.loader.WebpackLoader',
     }
 }
+
 REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'rest_framework.schemas.coreapi.AutoSchema',
     'DEFAULT_AUTHENTICATION_CLASSES': [
@@ -57,6 +60,10 @@ REST_FRAMEWORK = {
     'DEFAULT_THROTTLE_RATES': {
         'anon': '30/minute',  # This limits to 30 requests per minute for anonymous users.
     },
+    'DEFAULT_PAGINATION_CLASS': (
+        'core.pagination.Pagination'
+    ),
+    'PAGE_SIZE': 100
 }
 AUTH_PASSWORD_VALIDATORS = [
     {
@@ -101,6 +108,32 @@ INVITATIONS_ACCEPT_INVITE_AFTER_SIGNUP = True
 ACCOUNT_AUTHENTICATION_METHOD = 'email'
 ACCOUNT_AUTHENTICATED_LOGIN_REDIRECTS = False
 ACCOUNT_EMAIL_REQUIRED = True
-ACCOUNT_EMAIL_VERIFICATION = 'mandatory'
+ACCOUNT_EMAIL_VERIFICATION = False
+ACCOUNT_CONFIRM_EMAIL_ON_GET = True
 ACCOUNT_AUTHENTICATED_REMEMBER = True
 ACCOUNT_USERNAME_REQUIRED = False
+ACCOUNT_EMAIL_CONFIRMATION_EXPIRE_DAYS = 3
+SOCIALACCOUNT_LOGIN_ON_GET = True
+SOCIALACCOUNT_EMAIL_VERIFICATION = True
+SOCIALACCOUNT_AUTO_SIGNUP = True
+
+SOCIALACCOUNT_PROVIDERS = {
+    "google": {
+        "SCOPE": [
+            "profile",
+            "email"
+        ],
+        'EMAIL_AUTHENTICATION': True,
+        'OAUTH_PKCE_ENABLED': True,
+        "AUTH_PARAMS": {
+            "access_type": "online"
+        }
+    },
+    'github': {
+        'SCOPE': [
+            'user',
+        ],
+        'EMAIL_AUTHENTICATION': True,
+        'OAUTH_PKCE_ENABLED': True, 
+    }
+}
