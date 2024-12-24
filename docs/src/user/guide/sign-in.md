@@ -40,11 +40,31 @@ User can also use 1️⃣ other accounts like google, github and apple to sign-i
 
 [![Sign in Other Accounts](./img/guide-signin-img-4.png)](./img/guide-signin-img-4.png)
 
-## Forgot Password
+### How to sign in using google
+
+Click on this 1️⃣ `Google` button to sign in using your google account.
+
+[![Sign-in Form](./img/guide-signin-img-10.png)](./img/guide-signin-img-10.png)
+
+### How to sign in using github
+
+>Note: For the first time you have to authorise the app to access your github account.
+
+Click on the 1️⃣ `Github` icon to sign-in using your github account.
+
+[![Sign-in Form](./img/guide-signin-img-7.png)](./img/guide-signin-img-7.png)
+
+Click on the 1️⃣ `Cancel` button to cancel the process, or click on the 2️⃣ `Authorise` button to complete the process.
+
+[![Github Login](./img/guide-signin-img-8.png)](./img/guide-signin-img-8.png)
+
+Enter your 1️⃣`Password` and click on the 3️⃣`Confirm` button to complete the process. In case you forgot your password, click on the 2️⃣`Forgot Password` link to reset it.
+
+[![Confirm Access](./img/guide-signin-img-9.png)](./img/guide-signin-img-9.png)
 
 ### How to reset password:
 
-If you forgot your password, you can reset it by clicking on the 1️⃣ `forgot Password`.This will open a new form.
+If you forgot your password, you can reset it by clicking on the 1️⃣ `forgot Password`. This will open a new form.
 
 [![Forgot Password](./img/guide-signin-img-5.png)](./img/guide-signin-img-5.png)
 
