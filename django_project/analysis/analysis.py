@@ -24,10 +24,10 @@ select_bands = [
 
 # Dictionary converting quarter strings to start months
 quarter_dict = {
-    '01': 1,
-    '02': 4,
-    '03': 7,
-    '04': 10
+    1: 1,
+    2: 4,
+    3: 7,
+    4: 10
 }
 
 
@@ -513,8 +513,8 @@ def run_analysis(lat: float, lon: float, analysis_dict: dict, *args, **kwargs):
         if res == "Quarterly":
             landscapes_dict = input_layers.get_landscape_dict()
             if (
-                    analysis_dict['Temporal']['Annual']['ref'] == "2023" or
-                    analysis_dict['Temporal']['Annual']['test'] == "2023"
+                    analysis_dict['Temporal']['Annual']['ref'] == 2023 or
+                    analysis_dict['Temporal']['Annual']['test'] == 2023
             ):
                 new_stats = get_latest_stats(
                     landscapes_dict[analysis_dict['landscape']],
@@ -537,7 +537,6 @@ def run_analysis(lat: float, lon: float, analysis_dict: dict, *args, **kwargs):
                     ).millis()
                 ))
                 temporal_table = temporal_table.merge(new_stats)
-                print('updated Temporal table', temporal_table)
 
             baseline_quart = quarter_dict[
                 analysis_dict['Temporal']['Quarterly']['ref']

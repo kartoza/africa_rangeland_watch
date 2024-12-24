@@ -9,5 +9,6 @@ export const Types = {
 }
 export const TemporalResolution = {
   ANNUAL: 'Annual',
-  QUARTERLY: 'Quarterly'
+  QUARTERLY: 'Quarterly',
+  MONTHLY: 'Monthly'
 }

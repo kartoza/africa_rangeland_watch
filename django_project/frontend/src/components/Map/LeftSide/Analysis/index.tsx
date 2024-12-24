@@ -56,9 +56,14 @@ export default function Analysis({ landscapes, layers }: Props) {
   if (data.landscape && data.analysisType === Types.BASELINE) {
     dataError = false
   } else if (
-    data.landscape && data.analysisType === Types.TEMPORAL && data.variable && data.temporalResolution === TemporalResolution.ANNUAL && data.period?.year && data.comparisonPeriod?.year
+    data.landscape && data.analysisType === Types.TEMPORAL && data.variable
   ) {
-    dataError = false
+    if (data.temporalResolution === TemporalResolution.ANNUAL && data.period?.year && data.comparisonPeriod?.year) {
+      dataError = false
+    } else if (data.temporalResolution === TemporalResolution.QUARTERLY && data.period?.year 
+      && data.period?.quarter && data.comparisonPeriod?.year && data.comparisonPeriod?.quarter) {
+      dataError = false
+    }
   } else if (
     data.landscape && data.analysisType === Types.SPATIAL && data.variable
   ) {

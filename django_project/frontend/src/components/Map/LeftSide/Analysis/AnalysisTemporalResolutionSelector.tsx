@@ -57,6 +57,10 @@ export default function AnalysisTemporalResolutionSelector(
             <Radio value={TemporalResolution.QUARTERLY}>
               <Box fontSize="13px">{TemporalResolution.QUARTERLY}</Box>
             </Radio>
+            {/* Uncomment this when we add monthly analysis */}
+            {/* <Radio value={TemporalResolution.MONTHLY}>
+              <Box fontSize="13px">{TemporalResolution.MONTHLY}</Box>
+            </Radio> */}
           </Flex>
         </RadioGroup>
       </AccordionPanel>

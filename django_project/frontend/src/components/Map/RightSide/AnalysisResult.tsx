@@ -3,10 +3,11 @@ import { Box, Center, Spinner, Table, Text } from "@chakra-ui/react";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../store";
 import { Analysis } from "../../../store/analysisSlice";
-import { Bar } from "react-chartjs-2";
+import { Bar, Line } from "react-chartjs-2";
 import { CategoryScale } from "chart.js";
 import Chart from "chart.js/auto";
 import ChartDataLabels from "chartjs-plugin-datalabels";
+import 'chartjs-adapter-date-fns';
 
 import './style.css';
 
@@ -21,32 +22,36 @@ export function BarChart({ analysis }: Props) {
 
   const jsonData = analysis.results[0];
 
-  const labels: number[] = [jsonData.features[0].properties.year, jsonData.features[2].properties.year];
+  const labels: number[] = [jsonData.features[0].properties.year, jsonData.features[jsonData.features.length -1].properties.year];
   const name1 = jsonData.features[0].properties.Name;
   const name2 = jsonData.features[1].properties.Name;
 
-  const data1 = jsonData.features
+  const dataBar1 = jsonData.features
     .filter((feature:any) => feature.properties.Name === name1)
     .map((feature:any) => feature.properties[analysis.data.variable]);
-  const data2 = jsonData.features
-    .filter((feature:any) => feature.properties.Name === name2)
-    .map((feature:any) => feature.properties[analysis.data.variable]);
 
-  const chartData:any = {
+  let chartData:any = {
     labels,
     datasets: [
       {
         label: name1,
-        data: data1,
-        backgroundColor: "blue",
-      },
-      {
-        label: name2,
-        data: data2,
-        backgroundColor: "red",
-      },
+        data: dataBar1,
+        backgroundColor: "blue"
+      }
     ],
   };
+
+  if (name1 != name2) {
+    const dataBar2 = jsonData.features
+    .filter((feature:any) => feature.properties.Name === name2)
+    .map((feature:any) => feature.properties[analysis.data.variable]);
+
+    chartData.datasets.push({
+      label: name2,
+      data: dataBar2,
+      backgroundColor: "red"
+    });
+  }
 
   const options:any = {
     responsive: true,
@@ -62,11 +67,84 @@ export function BarChart({ analysis }: Props) {
       y: {
         beginAtZero: true,
       },
-    },
+    }
   };
 
   return <Box maxWidth={400} overflowX={"auto"}>
     <Bar options={options} data={chartData} />
+  </Box>
+}
+
+export function LineChart({ analysis }: Props) {
+  // Extracting data for the chart
+
+  const jsonData = analysis.results[1];
+
+  const name1 = jsonData.features[0].properties.Name;
+  const name2 = jsonData.features[1].properties.Name;
+  const labels: number[] = jsonData.features
+    .filter((feature:any) => feature.properties.Name === name1)
+    .map((feature:any) => feature.properties.date);
+
+  const data1 = jsonData.features
+    .filter((feature:any) => feature.properties.Name === name1)
+    .map((feature:any) => feature.properties[analysis.data.variable]);
+
+  let chartData:any = {
+    labels,
+    datasets: [
+      {
+        label: name1,
+        data: data1,
+        backgroundColor: "blue"
+      }
+    ],
+  };
+
+  if (name1 != name2) {
+    const data2 = jsonData.features
+    .filter((feature:any) => feature.properties.Name === name2)
+    .map((feature:any) => feature.properties[analysis.data.variable]);
+
+    chartData.datasets.push({
+      label: name2,
+      data: data2,
+      backgroundColor: "red"
+    });
+  }
+
+  const options:any = {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      x: {
+        type: 'timeseries',
+        title: {
+          display: false
+        },
+        ticks: {
+          callback: function (value: any, index: number, ticks: any) {
+            const currentLabel = new Date(value).getFullYear();
+            const previousLabel = index > 0 ? new Date(ticks[index - 1].value).getFullYear() : null;
+            return currentLabel !== previousLabel ? currentLabel : '';
+          },
+        }
+      },
+      y: {
+        title: {
+          display: false
+        },
+      },
+    },
+    plugins: {
+      legend: {
+        position: 'top',
+      },
+    },
+  };
+
+  return <Box maxWidth={400} overflowX={"auto"}>
+    <Line options={options} data={chartData}/>
   </Box>
 }
 
@@ -102,7 +180,10 @@ export function RenderBaseline({ analysis }: Props) {
 }
 
 export function RenderTemporal({ analysis }: Props) {
-  return <BarChart analysis={analysis}></BarChart>
+  return <Box maxWidth={400} overflowX={"auto"}>
+    <BarChart analysis={analysis}></BarChart>
+    <LineChart analysis={analysis}></LineChart>
+  </Box>
 }
 
 export function RenderResult({ analysis }: Props) {
