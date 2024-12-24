@@ -67,7 +67,9 @@ class LayerAPITest(BaseAPIViewTest):
         response = view(request)
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
-            InputLayer.objects.count(),
+            InputLayer.objects.exclude(
+                url__isnull=True
+            ).count(),
             len(response.data)
         )
         self._assert_keys_in_dict(
