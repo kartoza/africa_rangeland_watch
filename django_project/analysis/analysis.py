@@ -510,7 +510,7 @@ def run_analysis(lat: float, lon: float, analysis_dict: dict, *args, **kwargs):
         test_yr = int(analysis_dict['Temporal']['Annual']['test'])
         temporal_table, temporal_table_yr = input_layers.get_temporal_table()
 
-        if res == "Quarterly":
+        if res in ["Quarterly", "Monthly"]:
             landscapes_dict = input_layers.get_landscape_dict()
             if (
                     analysis_dict['Temporal']['Annual']['ref'] == 2023 or
@@ -538,12 +538,12 @@ def run_analysis(lat: float, lon: float, analysis_dict: dict, *args, **kwargs):
                 ))
                 temporal_table = temporal_table.merge(new_stats)
 
-            baseline_quart = quarter_dict[
-                analysis_dict['Temporal']['Quarterly']['ref']
-            ]
-            test_quart = quarter_dict[
-                analysis_dict['Temporal']['Quarterly']['test']
-            ]
+            baseline_month = quarter_dict[
+                analysis_dict['Temporal'][res]['ref']
+            ] if res == 'Quarterly' else analysis_dict['Temporal'][res]['ref']
+            test_month = quarter_dict[
+                analysis_dict['Temporal'][res]['test']
+            ] if res == 'Quarterly' else analysis_dict['Temporal'][res]['test']
 
             to_plot = temporal_table.filter(
                 ee.Filter.inList('Name', select_names)
@@ -551,11 +551,11 @@ def run_analysis(lat: float, lon: float, analysis_dict: dict, *args, **kwargs):
                 ee.Filter.Or(
                     ee.Filter.And(
                         ee.Filter.eq('year', baseline_yr),
-                        ee.Filter.eq('month', baseline_quart)
+                        ee.Filter.eq('month', baseline_month)
                     ),
                     ee.Filter.And(
                         ee.Filter.eq('year', test_yr),
-                        ee.Filter.eq('month', test_quart)
+                        ee.Filter.eq('month', test_month)
                     )
                 )
             )
@@ -825,6 +825,76 @@ def quarterly_medians(collection, date_start, unit, step, reducer):
     return new_collection
 
 
+def monthly_medians(collection, date_start, reducer):
+    """
+    Calculates monthly median images from an image collection.
+
+    Parameters
+    ----------
+    collection : ee.ImageCollection
+        The input image collection to aggregate.
+    date_start : str
+        The start date (inclusive) in 'YYYY-MM-DD' format for aggregation.
+    reducer : ee.Reducer
+        The reducer to apply over each interval (e.g., ee.Reducer.median()).
+
+    Returns
+    -------
+    ee.ImageCollection
+        An image collection where each image represents the
+        aggregated result over a month.
+
+    Example
+    -------
+    >>> # Assume 'sc' is an ee.ImageCollection of Sentinel-2 images.
+    >>> # Calculate monthly median images starting from '2021-01-01'.
+    >>> monthly_images = monthly_medians(
+    ...     collection=sc,
+    ...     date_start='2021-01-01',
+    ...     reducer=ee.Reducer.median()
+    ... )
+    >>> print('Number of monthly images:', monthly_images.size().getInfo())
+    """
+    start_date = ee.Date(date_start)
+    end_date = ee.Date(collection.sort(
+        'system:time_start', False).first().get('system:time_start'))
+
+    # Generate a list of months between start and end dates
+    date_ranges = ee.List.sequence(
+        0, end_date.difference(start_date, 'month').round())
+
+    def make_time_slice(num):
+        """
+        Creates an aggregated image for a specific month.
+
+        Parameters
+        ----------
+        num : ee.Number
+            The interval number.
+
+        Returns
+        -------
+        ee.Image
+            The aggregated image for the month.
+        """
+        start = start_date.advance(num, 'month')
+        start_date_num = start.millis()
+        end = start.advance(1, 'month').advance(-1, 'second')
+        # Filter to the date range
+        filtered = collection.filterDate(start, end)
+        # Get the median
+        monthly_median = filtered.reduce(reducer) \
+            .set('system:time_start', start_date_num,
+                 'date', start,
+                 'month', start.get('month'),
+                 'year', start.get('year'))
+        return monthly_median
+
+    # Map over each month and aggregate
+    new_collection = ee.ImageCollection(date_ranges.map(make_time_slice))
+
+    return new_collection
+
 def get_sent_quarterly(aoi):
     """
     Generates quarterly median Sentinel-2 images for
@@ -859,6 +929,43 @@ def get_sent_quarterly(aoi):
     sent_quarterly = sent_quarterly.map(lambda i: i.rename(select_bands))
     return sent_quarterly
 
+def get_sent_monthly(aoi):
+    """
+    Generates monthly median Sentinel-2 images for
+    the specified area of interest.
+
+    Parameters
+    ----------
+    aoi : ee.Geometry
+        The area of interest over which to retrieve and process the images.
+
+    Returns
+    -------
+    ee.ImageCollection
+        An image collection of monthly median Sentinel-2 images,
+        with bands renamed.
+
+    Example
+    -------
+    >>> # Define an area of interest
+    >>> aoi = ee.Geometry.Rectangle([30.0, -1.0, 30.1, -0.9])
+    >>> # Get monthly median Sentinel-2 images
+    >>> monthly_images = get_sent_monthly(aoi)
+    >>> print('Number of monthly images:', monthly_images.size().getInfo())
+    """
+    # Get Sentinel-2 images, cloud-masked
+    sentinel_2 = get_s2_cloud_masked(
+        aoi, '2021-01-01', '2025-01-01')
+    
+    # Generate monthly medians
+    sent_monthly = monthly_medians(
+        sentinel_2, '2021-01-01', ee.Reducer.median()
+    )
+    
+    # Rename bands
+    sent_monthly = sent_monthly.map(lambda i: i.rename(select_bands))
+    
+    return sent_monthly
 
 def train_bgt(aoi, training_path=TRAINING_DATA_ASSET_PATH):
     """
@@ -939,7 +1046,7 @@ def classify_bgt(image, classifier):
     return perc_gc
 
 
-def get_latest_stats(geo, communities_select):
+def get_latest_stats(geo, communities_select, temp_res: str = None):
     """
     Calculates mean values of EVI, NDVI, and bare ground cover
      for specified regions.
@@ -951,6 +1058,8 @@ def get_latest_stats(geo, communities_select):
     communities_select : ee.FeatureCollection
         The collection of regions (e.g., communities) over which
         to compute the statistics.
+    temp_res : str
+        The temporal resolution e.g. quarterly or monthly.
 
     Returns
     -------
