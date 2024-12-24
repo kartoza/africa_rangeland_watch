@@ -188,11 +188,10 @@ def import_layer(layer_id, upload_id, file_url):
             ),
             auth_header=auth
         )
+
         if filename:
             input_layer.name = filename
-            input_layer.layer_type = detect_file_type_by_extension(
-                filename
-            )
+            input_layer.layer_type = detect_file_type_by_extension(filename)
             input_layer.save()
             # reset the status of layer_upload
             layer_upload.update_status(

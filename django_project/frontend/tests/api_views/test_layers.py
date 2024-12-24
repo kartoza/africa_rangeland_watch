@@ -7,12 +7,19 @@ Africa Rangeland Watch (ARW).
 
 import mock
 from django.urls import reverse
+from django.core.files.storage import FileSystemStorage
 from django.core.files.uploadedfile import SimpleUploadedFile
+from cloud_native_gis.models.layer import Layer
+from cloud_native_gis.models.layer_upload import LayerUpload
 
 from core.settings.utils import absolute_path
+from core.factories import UserF
 from core.tests.common import BaseAPIViewTest
-from layers.models import InputLayer, InputLayerType
-from frontend.api_views.layers import LayerAPI, UploadLayerAPI
+from layers.models import (
+    InputLayer, InputLayerType,
+    DataProvider, LayerGroupType
+)
+from frontend.api_views.layers import LayerAPI, UploadLayerAPI, PMTileLayerAPI
 
 
 class LayerAPITest(BaseAPIViewTest):
@@ -23,6 +30,32 @@ class LayerAPITest(BaseAPIViewTest):
         '2.data_provider.json',
         '3.input_layer.json'
     ]
+
+    def setUp(self):
+        """Setup for tests."""
+        super().setUp()
+        # create layer
+        self.layer = Layer.objects.create(
+            created_by=self.user,
+            is_ready=True
+        )
+        # create InputLayer
+        self.input_layer = InputLayer.objects.create(
+            uuid=self.layer.unique_id,
+            name=str(self.layer.unique_id),
+            data_provider=DataProvider.objects.get(name='User defined'),
+            group=LayerGroupType.objects.get(name='user-defined'),
+            created_by=self.user,
+            updated_by=self.user
+        )
+        # create LayerUpload
+        self.layer_upload = LayerUpload.objects.create(
+            created_by=self.user, layer=self.layer
+        )
+
+    def tearDown(self):
+        """Clean up after tests."""
+        self.layer_upload.delete_folder()
 
     def test_get_layer_list(self):
         """Test get layer list."""
@@ -84,3 +117,57 @@ class LayerAPITest(BaseAPIViewTest):
         self.assertEqual(input_layer.group.name, 'user-defined')
         self.assertEqual(input_layer.name, 'polygons.zip')
         mock_import_layer.assert_called_once()
+
+    def test_fetch_shp_for_pmtile(self):
+        """Test GET for PMTileLayerAPI."""
+        view = PMTileLayerAPI.as_view()
+        self.layer_upload.emptying_folder()
+        file_path = absolute_path(
+            'frontend', 'tests', 'data', 'polygons.zip'
+        )
+        with open(file_path, 'rb') as data:
+            FileSystemStorage(
+                location=self.layer_upload.folder
+            ).save('polygons.zip', data)
+
+        request = self.factory.get(
+            reverse('frontend-api:pmtile-layer', kwargs={
+                'upload_id': self.layer_upload.id
+            })
+        )
+        request.user = self.superuser
+        response = view(request, **{
+            'upload_id': self.layer_upload.id
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('Content-Disposition', response.headers)
+
+    def test_upload_pmtile(self):
+        """Test GET for PMTileLayerAPI."""
+        view = PMTileLayerAPI.as_view()
+        file_path = absolute_path(
+            'frontend', 'tests', 'data', 'polygons.zip'
+        )
+        with open(file_path, 'rb') as data:
+            file = SimpleUploadedFile(
+                content=data.read(),
+                name=data.name,
+                content_type='multipart/form-data'
+            )
+        request = self.factory.post(
+            reverse('frontend-api:pmtile-layer', kwargs={
+                'upload_id': self.layer_upload.id
+            }),
+            data={
+                'file': file
+            }
+        )
+        request.user = self.superuser
+        response = view(request, **{
+            'upload_id': self.layer_upload.id
+        })
+        self.assertEqual(response.status_code, 200)
+        self.input_layer.refresh_from_db()
+        self.assertIsNotNone(self.input_layer.url)
+        self.layer.refresh_from_db()
+        self.assertIsNotNone(self.layer.pmtile)
