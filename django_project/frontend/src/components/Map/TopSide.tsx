@@ -1,7 +1,9 @@
 import React, {useState} from 'react';
 import { Box, IconButton, Button, Flex, Spacer } from "@chakra-ui/react";
+import { useSelector } from 'react-redux';
 import { HamburgerIcon } from "@chakra-ui/icons";
 import DatasetUploader from '../DatasetUploader';
+import { selectIsLoggedIn } from "../../store/authSlice";
 
 interface Props {
   toggleClicked: () => void;
@@ -9,6 +11,7 @@ interface Props {
 
 /** Top side component of map. */
 export default function TopSide({ toggleClicked }: Props) {
+  const isAuthenticated = useSelector(selectIsLoggedIn);
   return (
     <Box
       paddingX={4}
@@ -33,7 +36,7 @@ export default function TopSide({ toggleClicked }: Props) {
           }}
         />
         <Spacer />
-        <DatasetUploader />
+        { isAuthenticated && <DatasetUploader /> }
       </Flex>
     </Box>
   )
