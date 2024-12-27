@@ -7,12 +7,13 @@ Africa Rangeland Watch (ARW).
 
 import os
 import requests_mock
-from io import BytesIO
 from unittest.mock import patch
 from django.test import TestCase
+from django.core.files.storage import FileSystemStorage
 from cloud_native_gis.models.layer import Layer
 from cloud_native_gis.models.layer_upload import LayerUpload
 
+from core.settings.utils import absolute_path
 from core.factories import UserF
 from layers.models import InputLayer, DataProvider, LayerGroupType
 from layers.tasks.import_layer import download_file_from_url, import_layer
@@ -33,9 +34,14 @@ class TestImportLayer(TestCase):
         self.download_dir = "./test_downloads"
         self.test_content = b"This is test file content"
         self.filename = "testfile.txt"
+        self.test_headers = {
+            "Content-Length": str(len(self.test_content)),
+            "Content-Disposition": f'attachment; filename="{self.filename}"',
+        }
 
         # Ensure the download directory exists
         os.makedirs(self.download_dir, exist_ok=True)
+        self.user = UserF.create()
 
     def tearDown(self):
         """Clean up after tests."""
@@ -48,11 +54,10 @@ class TestImportLayer(TestCase):
     def test_download_file(self, mock):
         """Test file download file from url."""
         # Mock HTTP response
-        headers = {
-            "Content-Length": str(len(self.test_content)),
-            "Content-Disposition": f'attachment; filename="{self.filename}"',
-        }
-        mock.get(self.test_url, content=self.test_content, headers=headers)
+        mock.get(
+            self.test_url, content=self.test_content,
+            headers=self.test_headers
+        )
 
         # Call the function
         downloaded_file = download_file_from_url(
@@ -70,12 +75,9 @@ class TestImportLayer(TestCase):
     @patch.object(LayerUpload, 'import_data')
     def test_import_layer(self, mock_import_data):
         """Test import layer."""
-        user = UserF.create(
-            is_active=True
-        )
         # create layer
         layer = Layer.objects.create(
-            created_by=user,
+            created_by=self.user,
             is_ready=True
         )
         # create InputLayer
@@ -84,17 +86,35 @@ class TestImportLayer(TestCase):
             name=str(layer.unique_id),
             data_provider=DataProvider.objects.get(name='User defined'),
             group=LayerGroupType.objects.get(name='user-defined'),
-            created_by=user,
-            updated_by=user
+            created_by=self.user,
+            updated_by=self.user
         )
         # create LayerUpload
         layer_upload = LayerUpload.objects.create(
-            created_by=user, layer=layer
+            created_by=self.user, layer=layer
         )
-        mock_import_data.return_value = "OK"
-        
-        import_layer(layer.unique_id, layer_upload.id, None)
-        
+        layer_upload.emptying_folder()
+        file_path = absolute_path(
+            'frontend', 'tests', 'data', 'polygons.zip'
+        )
+        with open(file_path, 'rb') as data:
+            FileSystemStorage(
+                location=layer_upload.folder
+            ).save('polygons.zip', data)
+
+        with requests_mock.Mocker() as mock_request:
+            # Mock HTTP response
+            mock_request.get(
+                self.test_url,
+                content=self.test_content,
+                headers=self.test_headers
+            )
+
+            mock_import_data.return_value = 'OK'
+
+            import_layer(layer.unique_id, layer_upload.id, self.test_url)
+
         mock_import_data.assert_called_once()
         input_layer.refresh_from_db()
         self.assertTrue(input_layer.url)
+        layer_upload.delete_folder()
