@@ -163,6 +163,10 @@ def import_layer(layer_id, upload_id, file_url):
         input_layer = InputLayer.objects.get(uuid=layer_id)
         layer_upload = LayerUpload.objects.get(id=upload_id)
 
+        # initialize directory in layer_upload
+        if not os.path.exists(layer_upload.folder):
+            os.makedirs(layer_upload.folder)
+
         # load preferences
         preferences = Preferences.load()
         base_url = settings.DJANGO_BACKEND_URL
@@ -202,7 +206,7 @@ def import_layer(layer_id, upload_id, file_url):
         else:
             layer_upload.update_status(
                 status=UploadStatus.FAILED,
-                note='Failed to download the file!'
+                note='Failed to process the file!'
             )
             return
 
