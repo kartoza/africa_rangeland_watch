@@ -120,6 +120,7 @@ const uploadSlice = createSlice({
           state.status = 'success';
         } else if (action.payload.status === 'Failed') {
             state.status = 'failed';
+            state.error = action.payload.note;
         }
         state.processingNote = action.payload.note;
       })
