@@ -150,7 +150,9 @@ class UploadLayerAPI(APIView):
         if not is_valid_crs:
             collection.close()
             self._on_validation_error(
-                f'Incorrect CRS type: {crs}!', tmp_file_obj_list)
+                f'Incorrect CRS type: {crs}! Please use epsg:4326 (WGS84)!',
+                tmp_file_obj_list
+            )
 
         # close collection
         collection.close()

@@ -224,6 +224,6 @@ class LayerAPITest(BaseAPIViewTest):
         response = view(request)
         self._check_error(
             response,
-            'Incorrect CRS type: epsg:3857!',
+            'Incorrect CRS type: epsg:3857! Please use epsg:4326 (WGS84)!',
             400
         )
