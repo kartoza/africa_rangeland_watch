@@ -10,9 +10,11 @@ from django.core.files.storage import FileSystemStorage
 from django.http import FileResponse
 from django.conf import settings
 from django.urls import reverse
+from django.core.files.uploadedfile import TemporaryUploadedFile
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework.exceptions import ValidationError
 from cloud_native_gis.models import Layer, LayerUpload
 from cloud_native_gis.utils.main import id_generator
 from django.shortcuts import get_object_or_404
@@ -22,6 +24,13 @@ from frontend.serializers.layers import LayerSerializer
 from layers.tasks.import_layer import (
     import_layer,
     detect_file_type_by_extension
+)
+from core.utils.fiona import (
+    FileType,
+    validate_shapefile_zip,
+    validate_collection_crs,
+    delete_tmp_shapefile,
+    open_fiona_collection
 )
 
 
@@ -58,8 +67,97 @@ class UploadLayerAPI(APIView):
 
     permission_classes = [IsAuthenticated]
 
+    def _check_file_type(self, filename: str) -> str:
+        """Check file type from upload filename.
+
+        :param filename: filename of uploaded file
+        :type filename: str
+        :return: file type
+        :rtype: str
+        """
+        if filename.lower().endswith('.zip'):
+            return FileType.SHAPEFILE
+        return ''
+
+    def _check_shapefile_zip(self, file_obj: any) -> str:
+        """Validate if zip shapefile has complete files.
+
+        :param file_obj: file object
+        :type file_obj: file
+        :return: list of error
+        :rtype: str
+        """
+        _, error = validate_shapefile_zip(file_obj)
+        if error:
+            return (
+                'Missing required file(s) inside zip file: \n- ' +
+                '\n- '.join(error)
+            )
+        return ''
+
+    def _remove_temp_files(self, file_obj_list: list) -> None:
+        """Remove temporary files.
+
+        :param file_obj: list temporary files
+        :type file_obj: list
+        """
+        for file_obj in file_obj_list:
+            if isinstance(file_obj, TemporaryUploadedFile):
+                if os.path.exists(file_obj.temporary_file_path()):
+                    os.remove(file_obj.temporary_file_path())
+            elif isinstance(file_obj, str):
+                delete_tmp_shapefile(file_obj)
+
+    def _on_validation_error(self, error: str, file_obj_list: list):
+        """Handle when there is error on validation."""
+        self._remove_temp_files(file_obj_list)
+        raise ValidationError({
+            'Invalid uploaded file': error
+        })
+
     def post(self, request):
         """Post file."""
+        file = None
+        file_url = request.data.get('file_url', None)
+        if request.FILES:
+            file = request.FILES['file']
+        elif file_url is None:
+            raise ValidationError({
+                'Invalid uploaded file': 'Missing required file!'
+            })
+
+        tmp_file_obj_list = [file]
+
+        # validate uploaded file
+        file_type = self._check_file_type(file.name)
+        if file_type == '':
+            self._on_validation_error(
+                'Unrecognized file type! Please upload the zip of shapefile!',
+                tmp_file_obj_list
+            )
+
+        if file_type == FileType.SHAPEFILE:
+            validate_shp_file = self._check_shapefile_zip(file)
+            if validate_shp_file != '':
+                self._on_validation_error(
+                    validate_shp_file, tmp_file_obj_list)
+
+        # open fiona collection
+        collection = open_fiona_collection(file, file_type)
+        tmp_file_obj_list.append(collection.path)
+
+        is_valid_crs, crs = validate_collection_crs(collection)
+        if not is_valid_crs:
+            collection.close()
+            self._on_validation_error(
+                f'Incorrect CRS type: {crs}!', tmp_file_obj_list)
+
+        # close collection
+        collection.close()
+
+        # remove temporary uploaded file if any
+        self._remove_temp_files(tmp_file_obj_list)
+
         # create layer
         layer = Layer.objects.create(
             created_by=request.user
@@ -74,16 +172,13 @@ class UploadLayerAPI(APIView):
             updated_by=request.user
         )
 
-        file_url = request.data.get('file_url', None)
-
         instance = LayerUpload(
             created_by=request.user, layer=layer
         )
         instance.emptying_folder()
 
         # Save files
-        if request.FILES:
-            file = request.FILES['file']
+        if file:
             FileSystemStorage(
                 location=instance.folder
             ).save(file.name, file)
