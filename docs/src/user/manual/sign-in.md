@@ -48,3 +48,33 @@ Welcome to the ARW sign-in user manual. This guide provides step-by-step instruc
 7. **x:** Click on the `x` button to close the sign-in form.
 
 * To see how to create an account click on the [Sign-up](./sign-up.md)
+
+## Sign-in using Google
+
+[![Sign-in Form](./img/signin-img-4.png)](./img/signin-img-4.png)
+
+1. **Google:** Click on the `Google` icon to sign in with the `Google` account.
+
+## Sign-in using Github
+
+>Note: For the first time users are required to follow these steps.
+
+[![Sign-in Form](./img/signin-img-5.png)](./img/signin-img-5.png)
+
+1. **Github:** Click on the `Github` icon to sign in with the `Github` account.
+
+[![Github Access](./img/signin-img-6.png)](./img/signin-img-6.png)
+
+1. **Cancel:** Click on the `Cancel` button to cancel the sign-in process.
+
+2. **Authorize:** Click on the `Authorize` button to authorize the `Github` account.
+
+[![Confirm Access](./img/signin-img-7.png)](./img/signin-img-7.png)
+
+1. **Password:** Users are required to enter their github password to confirm the access.
+
+2. **Forgot Password:** If the user forgets their password, click on the `Forgot Password` link to reset it.
+
+3. **Confirm:** Click on the `Confirm` button to confirm the access.
+
+After confirming the access, the user will be redirected to the ARW home page.
