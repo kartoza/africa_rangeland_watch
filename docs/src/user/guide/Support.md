@@ -63,10 +63,14 @@ This is the interface of the `Create Ticket` page. To create a new ticket, start
 
     [![Updated Attachment](./img/guide-support-img-12.png)](./img/guide-support-img-12.png)
 
-
-
-
 ## How to Filter Tickets?
 
 ## How to use Search?
 
+To search the ticket click on the 1️⃣ `Search` field and the keyword you want to search.
+
+[![Search](./img/guide-support-img-13.png)](./img/guide-support-img-13.png)
+
+For example, if you want to search for `bug`, this is how it will look.
+
+[![Search Result](./img/guide-support-img-14.png)](./img/guide-support-img-14.png)

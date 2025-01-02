@@ -8,6 +8,10 @@
 
 3. **Search:** Allows users to search tickets.
 
+    * For example, searching for `bug`.
+
+        [![Search Result](./img/support-img-12.png)](./img/support-img-12.png)
+
 4. **Create Ticket:** This button enables users to create a new ticket. By clicking on the `Create Ticket` button, a new form will appear.
 
     [![UI Create New Ticket](./img/support-img-2.png)](./img/support-img-2.png)
@@ -20,7 +24,6 @@
 
     **3. Upload Attachments (Optional):** If user wants to provide any attachments about the issue, they can upload them here.
 
-    
     **4. Additional Details:** This input field enables users to provide additional details about the issue.
 
     **5. Cancel:** Cancels the ticket creation process.
@@ -34,7 +37,6 @@
     1. **Ticket Created:** User will see a `Toast` notification with confirmation message `Your support ticket has been submitted`.
 
     * The newly created ticket will be added on the support page
-
 
 ## Upload Attachments
 
@@ -89,5 +91,3 @@
 * After completing the process attached file will be updated.
 
     [![Uploaded Attachments](./img/support-img-10.png)](./img/support-img-10.png)
-
-
