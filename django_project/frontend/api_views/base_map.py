@@ -42,6 +42,9 @@ class MapConfigAPI(APIView):
         return Response(
             status=200,
             data={
-                'initial_bound': preferences.map_initial_bound
+                'initial_bound': preferences.map_initial_bound,
+                'spatial_reference_layer_max_area': (
+                    preferences.spatial_reference_layer_max_area
+                )
             }
         )

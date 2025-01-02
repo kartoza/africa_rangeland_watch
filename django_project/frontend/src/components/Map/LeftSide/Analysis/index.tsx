@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { Accordion, Box, Button, HStack } from "@chakra-ui/react";
+import { useDispatch, useSelector } from "react-redux";
 import { Layer } from '../../../../store/layerSlice';
 import { Community, Landscape } from '../../../../store/landscapeSlice';
 import { AnalysisData } from "../../DataTypes";
@@ -15,7 +16,6 @@ import AnalysisVariableBySpatialSelector
   from "./AnalysisVariableBySpatialSelector";
 import AnalysisLandscapeGeometrySelector
   from "./AnalysisLandscapeGeometrySelector";
-import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../../../store";
 import { doAnalysis } from "../../../../store/analysisSlice";
 import AnalysisCustomGeometrySelector from "./AnalysisCustomGeometrySelector";
@@ -40,8 +40,10 @@ export default function Analysis({ landscapes, layers }: Props) {
   );
   const [communitySelected, setCommunitySelected] = useState<Community | null>(null);
   const { loading } = useSelector((state: RootState) => state.analysis);
+  const { mapConfig } = useSelector((state: RootState) => state.mapConfig);
   const [mapInteraction, setMapInteraction] = useState(MapAnalysisInteraction.NO_INTERACTION);
   const [geom, setGeom] = useState(null);
+  const [isGeomError, setGeomError] = useState(false);
 
   /** When data changed */
   const triggerAnalysis = () => {
@@ -93,7 +95,7 @@ export default function Analysis({ landscapes, layers }: Props) {
       dataError = false
     }
   } else if (
-    data.landscape && data.analysisType === Types.SPATIAL && data.variable && geom
+    data.landscape && data.analysisType === Types.SPATIAL && data.variable && geom !== null
   ) {
     dataError = false
   }
@@ -124,7 +126,17 @@ export default function Analysis({ landscapes, layers }: Props) {
         />
         <AnalysisCustomGeometrySelector
           isDrawing={mapInteraction === MapAnalysisInteraction.CUSTOM_GEOMETRY_DRAWING}
-          onSelected={(geometry) => setGeom(geometry)}
+          onSelected={(geometry, area) => {
+            if (area > mapConfig.spatial_reference_layer_max_area) {
+              // reset the geom selector
+              setMapInteraction(MapAnalysisInteraction.CUSTOM_GEOMETRY_DRAWING)
+              setGeomError(true)
+            } else {
+              setGeomError(false)
+              setGeom(geometry)
+              // trigger geom stats
+            }
+          }}
         />
 
         {/* 2) Analysis type */}
@@ -179,6 +191,7 @@ export default function Analysis({ landscapes, layers }: Props) {
                 color="white"
                 _hover={{ opacity: 0.8 }}
                 onClick={() => {
+                  setGeom(null)
                   setMapInteraction(MapAnalysisInteraction.CUSTOM_GEOMETRY_DRAWING)
                 }}
                 minWidth={120}
@@ -221,6 +234,11 @@ export default function Analysis({ landscapes, layers }: Props) {
               >
                 Finish Drawing
               </Button>
+              { isGeomError && 
+                <Box mb={4} color={'red'}>
+                  Area too big - smaller please
+                </Box>
+              }
             </HStack>
           )
         }

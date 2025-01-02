@@ -1,16 +1,19 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useSelector } from "react-redux";
 import {FeatureCollection} from "geojson";
+import { combine } from "@turf/combine";
+import { area } from "@turf/area";
 import MapboxDraw from "@mapbox/mapbox-gl-draw";
 import '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css';
 import { RootState } from "../../../../store";
 import {CUSTOM_GEOM_ID} from "../../DataTypes";
+import { removeSource } from '../../utils';
 
 export const CUSTOM_GEOM_FILL_ID = CUSTOM_GEOM_ID + "-fill";
 
 interface Props {
   isDrawing: boolean;
-  onSelected: (geometry: FeatureCollection) => void;
+  onSelected: (geometry: FeatureCollection, area: number) => void;
 }
 
 const styles = [
@@ -97,6 +100,15 @@ export default function AnalysisCustomGeometrySelector(
     const { mapInitiated } = useSelector((state: RootState) => state.mapConfig);
     const drawingRef = useRef(null);
 
+    const checkArea = (geom: FeatureCollection) => {
+      try {
+        return area(geom)
+      } catch(err) {
+        console.log(err) 
+      }
+      return 0
+    }
+
     useEffect(() => {
         try {
             window.map.getStyle()
@@ -109,6 +121,8 @@ export default function AnalysisCustomGeometrySelector(
 
     useEffect(() => {
         if (isDrawing) {
+            removeSource(map, CUSTOM_GEOM_ID);
+
             // workaround for control issue
             // https://github.com/maplibre/maplibre-gl-js/issues/2601#issuecomment-1564747778
             // MapboxDraw requires the canvas's class order to have the class 
@@ -139,38 +153,44 @@ export default function AnalysisCustomGeometrySelector(
             map.addControl(drawingRef.current, 'bottom-left');
         } else if (drawingRef.current) {
             // get geometry
-            let geom = drawingRef.current.getAll();
-            // add geom to map
-            map.addSource(
-              CUSTOM_GEOM_ID, {
-                type: 'geojson',
-                data: geom
-              }
-            );
-            map.addLayer({
-              'id': CUSTOM_GEOM_ID,
-              'type': 'line',
-              'source': CUSTOM_GEOM_ID,
-              'paint': {
-                "line-color": "#D20C0C",
-                "line-width": 2
-              }
-            });
-            map.addLayer({
-              'id': CUSTOM_GEOM_FILL_ID,
-              'type': 'fill',
-              'source': CUSTOM_GEOM_ID,
-              'paint': {
-                "fill-color": "#D20C0C",
-                "fill-outline-color": "#D20C0C",
-                "fill-opacity": 0.1
-              }
-            });
-            
-            onSelected(geom);
+            let geom = combine(drawingRef.current.getAll())
+            let area = checkArea(geom)
 
+            // remove control
             map.removeControl(drawingRef.current)
             drawingRef.current = null
+
+            if (area === 0) {
+              onSelected(null, 0)
+            } else {
+              // add geom to map
+              map.addSource(
+                CUSTOM_GEOM_ID, {
+                  type: 'geojson',
+                  data: geom
+                }
+              );
+              map.addLayer({
+                'id': CUSTOM_GEOM_ID,
+                'type': 'line',
+                'source': CUSTOM_GEOM_ID,
+                'paint': {
+                  "line-color": "#D20C0C",
+                  "line-width": 2
+                }
+              });
+              map.addLayer({
+                'id': CUSTOM_GEOM_FILL_ID,
+                'type': 'fill',
+                'source': CUSTOM_GEOM_ID,
+                'paint': {
+                  "fill-color": "#D20C0C",
+                  "fill-outline-color": "#D20C0C",
+                  "fill-opacity": 0.1
+                }
+              });
+              onSelected(geom, area);
+            }
         }
     }, [map, isDrawing])
 
