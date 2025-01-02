@@ -25,3 +25,4 @@ export const GroupName = {
   UserDefinedGroup: 'user-defined'
 }
 export const COMMUNITY_ID = 'Communities'
+export const CUSTOM_GEOM_ID = 'CustomGeom'

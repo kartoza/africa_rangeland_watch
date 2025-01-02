@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { Accordion, Box, Button, HStack } from "@chakra-ui/react";
 import { Layer } from '../../../../store/layerSlice';
 import { Community, Landscape } from '../../../../store/landscapeSlice';
@@ -18,11 +18,18 @@ import AnalysisLandscapeGeometrySelector
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../../../store";
 import { doAnalysis } from "../../../../store/analysisSlice";
+import AnalysisCustomGeometrySelector from "./AnalysisCustomGeometrySelector";
 
 
 interface Props {
   landscapes?: Landscape[];
   layers?: Layer[];
+}
+
+enum MapAnalysisInteraction {
+  NO_INTERACTION,
+  LANDSCAPE_SELECTOR,
+  CUSTOM_GEOMETRY_DRAWING
 }
 
 /** Layer Checkbox component of map. */
@@ -33,6 +40,8 @@ export default function Analysis({ landscapes, layers }: Props) {
   );
   const [communitySelected, setCommunitySelected] = useState<Community | null>(null);
   const { loading } = useSelector((state: RootState) => state.analysis);
+  const [mapInteraction, setMapInteraction] = useState(MapAnalysisInteraction.NO_INTERACTION);
+  const [geom, setGeom] = useState(null);
 
   /** When data changed */
   const triggerAnalysis = () => {
@@ -47,6 +56,25 @@ export default function Analysis({ landscapes, layers }: Props) {
       longitude: communitySelected?.longitude ? communitySelected?.longitude : null
     })
   }, [communitySelected]);
+
+  useEffect(() => {
+    if (data.landscape && data.analysisType === Types.BASELINE) {
+      setMapInteraction(MapAnalysisInteraction.LANDSCAPE_SELECTOR)
+    } else if (data.landscape && data.analysisType === Types.TEMPORAL) {
+      if (data.temporalResolution === TemporalResolution.ANNUAL && data.period?.year && data.comparisonPeriod?.year) {
+        setMapInteraction(MapAnalysisInteraction.LANDSCAPE_SELECTOR)
+      } else if (data.temporalResolution === TemporalResolution.QUARTERLY && data.period?.year 
+        && data.period?.quarter && data.comparisonPeriod?.year && data.comparisonPeriod?.quarter) {
+          setMapInteraction(MapAnalysisInteraction.LANDSCAPE_SELECTOR)
+      } else {
+        setMapInteraction(MapAnalysisInteraction.NO_INTERACTION)
+      }
+    } else if (data.landscape && data.analysisType === Types.SPATIAL) {
+      if (mapInteraction === MapAnalysisInteraction.LANDSCAPE_SELECTOR && (geom === null || data.variable === null)) {
+        setMapInteraction(MapAnalysisInteraction.NO_INTERACTION)
+      }
+    }
+  }, [data])
 
   if (!landscapes || !layers) {
     return <LeftSideLoading/>
@@ -65,7 +93,7 @@ export default function Analysis({ landscapes, layers }: Props) {
       dataError = false
     }
   } else if (
-    data.landscape && data.analysisType === Types.SPATIAL && data.variable
+    data.landscape && data.analysisType === Types.SPATIAL && data.variable && geom
   ) {
     dataError = false
   }
@@ -91,7 +119,12 @@ export default function Analysis({ landscapes, layers }: Props) {
         />
         <AnalysisLandscapeGeometrySelector
           landscape={landscapes.find(landscape => landscape.name === data.landscape)}
+          enableSelection={mapInteraction === MapAnalysisInteraction.LANDSCAPE_SELECTOR}
           onSelected={(value) => setCommunitySelected(value)}
+        />
+        <AnalysisCustomGeometrySelector
+          isDrawing={mapInteraction === MapAnalysisInteraction.CUSTOM_GEOMETRY_DRAWING}
+          onSelected={(geometry) => setGeom(geometry)}
         />
 
         {/* 2) Analysis type */}
@@ -126,6 +159,70 @@ export default function Analysis({ landscapes, layers }: Props) {
               variable: value
             })}
           />
+        }
+        {/* Draw buttons for spatial */}
+        {
+          data.analysisType === Types.SPATIAL && data.variable &&
+          <Box mb={4} color={'red'}>
+            Draw a reference area
+          </Box>
+        }
+        {
+          data.analysisType === Types.SPATIAL && data.variable && mapInteraction !== MapAnalysisInteraction.CUSTOM_GEOMETRY_DRAWING && (
+            <HStack
+              wrap="wrap" gap={8} alignItems='center' justifyContent='center'>
+              <Button
+                size="xs"
+                borderRadius={4}
+                paddingX={4}
+                bg='dark_green.800'
+                color="white"
+                _hover={{ opacity: 0.8 }}
+                onClick={() => {
+                  setMapInteraction(MapAnalysisInteraction.CUSTOM_GEOMETRY_DRAWING)
+                }}
+                minWidth={120}
+              >
+                Draw
+              </Button>
+            </HStack>       
+          )
+        }
+        {
+          data.analysisType === Types.SPATIAL && data.variable && mapInteraction === MapAnalysisInteraction.CUSTOM_GEOMETRY_DRAWING && (
+            <HStack
+              wrap="wrap" gap={8} alignItems='center' justifyContent='center'>
+              <Button
+                size="xs"
+                borderRadius={4}
+                paddingX={4}
+                borderColor='dark_green.800'
+                color="dark_green.800"
+                _hover={{ bg: "dark_green.800", color: "white" }}
+                variant="outline"
+                onClick={() => {
+                  setMapInteraction(MapAnalysisInteraction.NO_INTERACTION)
+                }}
+                minWidth={120}
+              >
+                Cancel
+              </Button>
+              <Button
+                size="xs"
+                borderRadius={4}
+                paddingX={4}
+                bg='dark_green.800'
+                color="white"
+                _hover={{ opacity: 0.8 }}
+                onClick={() => {
+                  setMapInteraction(MapAnalysisInteraction.LANDSCAPE_SELECTOR)
+                }}
+                minWidth={120}
+              >
+                Finish Drawing
+              </Button>
+            </HStack>
+          )
         }
         {/* 4) Select variable for temporal */}
         {
@@ -186,7 +283,7 @@ export default function Analysis({ landscapes, layers }: Props) {
           />
         }
       </Accordion>
-      <Box mt={4} mb={4}>
+      <Box mt={4} mb={4} marginTop={10}>
         {
           !dataError ?
             <Box mb={4} color={'red'}>
@@ -210,6 +307,7 @@ export default function Analysis({ landscapes, layers }: Props) {
             onClick={() => {
               setData({ analysisType: Types.BASELINE });
               setCommunitySelected(null);
+              setMapInteraction(MapAnalysisInteraction.NO_INTERACTION);
             }}
           >
             Reset Form
