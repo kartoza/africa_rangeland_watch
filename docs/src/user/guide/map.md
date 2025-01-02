@@ -122,3 +122,13 @@ Available options in `Select analysis type` are:
     [![Spatial Analysis Type](./img/guide-map-img-8.png)](./img/guide-map-img-8.png)
 
 After filling in the necessary details, you can proceed with the analysis by clicking on the 3️⃣ `Run Analysis` button. If you wish to reset the form, simply click on the 2️⃣ `Reset Form` button.
+
+### How to Upload Shape File
+
+Click on the 1️⃣ `Upload` button and then click on the 2️⃣ `Select File` button to upload your shape file.
+
+[![Upload Shape File](./img/guide-map-img-17.png)](./img/guide-map-img-17.png)
+
+Select the desired 1️⃣ `File` then click on the 2️⃣ `Select` button to upload the file or can click on the 3️⃣ `Cancel` button to close the file explorer.
+
+[![File Explorer](./img/guide-map-img-18.png)](./img/guide-map-img-18.png)
