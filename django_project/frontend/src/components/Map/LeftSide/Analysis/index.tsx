@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Accordion, Box, Button, HStack } from "@chakra-ui/react";
+import { Accordion, Box, Button, HStack, Spinner, Text } from "@chakra-ui/react";
 import { useDispatch, useSelector } from "react-redux";
 import { Layer } from '../../../../store/layerSlice';
 import { Community, Landscape } from '../../../../store/landscapeSlice';
@@ -17,7 +17,7 @@ import AnalysisVariableBySpatialSelector
 import AnalysisLandscapeGeometrySelector
   from "./AnalysisLandscapeGeometrySelector";
 import { AppDispatch, RootState } from "../../../../store";
-import { doAnalysis, REFERENCE_LAYER_DIFF_ID, removeReferenceLayerDiff } from "../../../../store/analysisSlice";
+import { doAnalysis, REFERENCE_LAYER_DIFF_ID, resetAnalysisResult } from "../../../../store/analysisSlice";
 import AnalysisCustomGeometrySelector from "./AnalysisCustomGeometrySelector";
 
 
@@ -215,10 +215,14 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
                 onClick={() => {
                   setData({
                     ...data,
-                    reference_layer: null
+                    reference_layer: null,
+                    community: null,
+                    latitude: null,
+                    longitude: null
                   })
+                  setCommunitySelected(null)
                   setMapInteraction(MapAnalysisInteraction.CUSTOM_GEOMETRY_DRAWING)
-                  dispatch(removeReferenceLayerDiff())
+                  dispatch(resetAnalysisResult())
                 }}
                 disabled={loading}
                 minWidth={120}
@@ -268,6 +272,14 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
               }
             </HStack>
           )
+        }
+        {
+          data.analysisType === Types.SPATIAL && data.variable && data.reference_layer && loading && data.latitude === null && data.longitude === null &&
+          <HStack mt={4} color={'red'}
+            wrap="wrap" gap={2} alignItems='center' justifyContent='center'>
+            <Spinner size="xs"/>
+            <Text color={'red'}>Generating % difference in {data.variable}</Text>
+          </HStack>
         }
         {/* 4) Select variable for temporal */}
         {
@@ -353,7 +365,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
               setData({ analysisType: Types.BASELINE });
               setCommunitySelected(null);
               setMapInteraction(MapAnalysisInteraction.NO_INTERACTION);
-              dispatch(removeReferenceLayerDiff());
+              dispatch(resetAnalysisResult());
             }}
           >
             Reset Form

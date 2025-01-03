@@ -47,7 +47,8 @@ export const analysisSlice = createSlice({
     clearError(state) {
       state.error = null;
     },
-    removeReferenceLayerDiff(state) {
+    resetAnalysisResult(state) {
+      state.analysis = null;
       state.referenceLayerDiff = null;
     }
   },
@@ -62,7 +63,6 @@ export const analysisSlice = createSlice({
         // check if result is from spatial reference layer diff
         const data = action.payload.data;
         if (data.analysisType === 'Spatial' && data.latitude === null && data.longitude === null) {
-          console.log('response spatial rel_diff ', action.payload)
           state.referenceLayerDiff = {
             ...action.payload.results,
             id: REFERENCE_LAYER_DIFF_ID
@@ -79,7 +79,7 @@ export const analysisSlice = createSlice({
 });
 
 export const {
-  clearError, removeReferenceLayerDiff
+  clearError, resetAnalysisResult
 } = analysisSlice.actions;
 
 export default analysisSlice.reducer;
