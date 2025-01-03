@@ -156,7 +156,7 @@ class InputLayer:
             'NAMIBIA', 'ZIMBABWE', 'BOTSWANA',
             'MOZAMBIQUE', 'ZAMBIA'
         ]
-        countries = (ee.FeatureCollection('USDOS/LSIB/2017').
+        countries = (ee.FeatureCollection('USDOS/LSIB/2013').
                      filter(ee.Filter.inList('name', names)))
         return countries
 
@@ -299,7 +299,7 @@ class InputLayer:
         Get spatial layer dictionary.
         """
         # Get MODIS vegetation data
-        modis_veg = (ee.ImageCollection("MODIS/061/MOD13Q1")
+        modis_veg = (ee.ImageCollection("MODIS/006/MOD13Q1")
                      .filterDate('2016-01-01', '2020-01-01')
                      .select(['NDVI', 'EVI'])
                      .map(lambda i: i.divide(10000)))
@@ -441,7 +441,11 @@ def get_rel_diff(
     img_select = spatial_layer_dict[analysis_dict['variable']]
     img_select = img_select.rename('val')
 
-    geo_manual = ee.Geometry.Polygon(reference_layer['coordinates'])
+    geo_manual = None
+    if reference_layer['type'] == 'Polygon':
+        geo_manual = ee.Geometry.Polygon(reference_layer['coordinates'])
+    else:    
+        geo_manual = ee.Geometry.MultiPolygon(reference_layer['coordinates'])
 
     # Calculate mean using reduceRegion
     red = img_select.reduceRegion(

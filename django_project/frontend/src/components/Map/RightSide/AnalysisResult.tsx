@@ -186,6 +186,13 @@ export function RenderTemporal({ analysis }: Props) {
   </Box>
 }
 
+export function RenderSpatial({ analysis }: Props) {
+  return <Box maxWidth={400} overflowX={"auto"}>
+    <Text>Relative % difference in {analysis.data.variable} between your reference area and selected camp/s:</Text>
+  </Box>
+}
+
+
 export function RenderResult({ analysis }: Props) {
   switch (analysis.data.analysisType) {
     case "Baseline":

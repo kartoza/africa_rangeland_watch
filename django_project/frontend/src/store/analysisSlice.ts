@@ -9,7 +9,9 @@ import axios from 'axios';
 import { DataState } from './common';
 import { AnalysisData } from "../components/Map/DataTypes";
 import { setCSRFToken } from "../utils/csrfUtils";
+import { Layer } from './layerSlice';
 
+export const REFERENCE_LAYER_DIFF_ID = 'spatial_rel_diff'
 
 export interface Analysis {
   data: AnalysisData;
@@ -18,12 +20,14 @@ export interface Analysis {
 
 interface AnalysisState extends DataState {
   analysis: Analysis;
+  referenceLayerDiff?: Layer;
 }
 
 const initialAnalysisState: AnalysisState = {
   analysis: null,
   loading: false,
-  error: null
+  error: null,
+  referenceLayerDiff: null
 };
 
 
@@ -42,6 +46,9 @@ export const analysisSlice = createSlice({
   reducers: {
     clearError(state) {
       state.error = null;
+    },
+    removeReferenceLayerDiff(state) {
+      state.referenceLayerDiff = null;
     }
   },
   extraReducers: (builder) => {
@@ -52,7 +59,17 @@ export const analysisSlice = createSlice({
       })
       .addCase(doAnalysis.fulfilled, (state, action: PayloadAction<Analysis>) => {
         state.loading = false;
-        state.analysis = action.payload;
+        // check if result is from spatial reference layer diff
+        const data = action.payload.data;
+        if (data.analysisType === 'Spatial' && data.latitude === null && data.longitude === null) {
+          console.log('response spatial rel_diff ', action.payload)
+          state.referenceLayerDiff = {
+            ...action.payload.results,
+            id: REFERENCE_LAYER_DIFF_ID
+          }
+        } else {
+          state.analysis = action.payload;
+        }
       })
       .addCase(doAnalysis.rejected, (state, action) => {
         state.loading = false;
@@ -62,7 +79,7 @@ export const analysisSlice = createSlice({
 });
 
 export const {
-  clearError
+  clearError, removeReferenceLayerDiff
 } = analysisSlice.actions;
 
 export default analysisSlice.reducer;

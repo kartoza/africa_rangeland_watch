@@ -17,13 +17,15 @@ import AnalysisVariableBySpatialSelector
 import AnalysisLandscapeGeometrySelector
   from "./AnalysisLandscapeGeometrySelector";
 import { AppDispatch, RootState } from "../../../../store";
-import { doAnalysis } from "../../../../store/analysisSlice";
+import { doAnalysis, REFERENCE_LAYER_DIFF_ID, removeReferenceLayerDiff } from "../../../../store/analysisSlice";
 import AnalysisCustomGeometrySelector from "./AnalysisCustomGeometrySelector";
 
 
 interface Props {
   landscapes?: Landscape[];
   layers?: Layer[];
+  onLayerChecked: (layer: Layer) => void;
+  onLayerUnchecked: (layer: Layer) => void;
 }
 
 enum MapAnalysisInteraction {
@@ -33,16 +35,15 @@ enum MapAnalysisInteraction {
 }
 
 /** Layer Checkbox component of map. */
-export default function Analysis({ landscapes, layers }: Props) {
+export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUnchecked }: Props) {
   const dispatch = useDispatch<AppDispatch>();
   const [data, setData] = useState<AnalysisData>(
     { analysisType: Types.BASELINE }
   );
   const [communitySelected, setCommunitySelected] = useState<Community | null>(null);
-  const { loading } = useSelector((state: RootState) => state.analysis);
+  const { loading, referenceLayerDiff } = useSelector((state: RootState) => state.analysis);
   const { mapConfig } = useSelector((state: RootState) => state.mapConfig);
   const [mapInteraction, setMapInteraction] = useState(MapAnalysisInteraction.NO_INTERACTION);
-  const [geom, setGeom] = useState(null);
   const [isGeomError, setGeomError] = useState(false);
 
   /** When data changed */
@@ -72,11 +73,29 @@ export default function Analysis({ landscapes, layers }: Props) {
         setMapInteraction(MapAnalysisInteraction.NO_INTERACTION)
       }
     } else if (data.landscape && data.analysisType === Types.SPATIAL) {
-      if (mapInteraction === MapAnalysisInteraction.LANDSCAPE_SELECTOR && (geom === null || data.variable === null)) {
-        setMapInteraction(MapAnalysisInteraction.NO_INTERACTION)
+      if (mapInteraction === MapAnalysisInteraction.NO_INTERACTION && data.reference_layer && data.variable) {
+        // trigger relative layer diff
+        dispatch(doAnalysis(data))
       }
     }
-  }, [data])
+  }, [mapInteraction, data])
+
+  useEffect(() => {
+    if (referenceLayerDiff !== null) {
+      onLayerChecked(referenceLayerDiff)
+      setMapInteraction(MapAnalysisInteraction.LANDSCAPE_SELECTOR)
+    } else {
+      const _layer: Layer = {
+        'id': REFERENCE_LAYER_DIFF_ID,
+        'uuid': REFERENCE_LAYER_DIFF_ID,
+        'name': REFERENCE_LAYER_DIFF_ID,
+        'group': 'spatial_analysis',
+        'type': 'raster',
+        'url': null
+      }
+      onLayerUnchecked(_layer)
+    }
+  }, [referenceLayerDiff])
 
   if (!landscapes || !layers) {
     return <LeftSideLoading/>
@@ -95,7 +114,7 @@ export default function Analysis({ landscapes, layers }: Props) {
       dataError = false
     }
   } else if (
-    data.landscape && data.analysisType === Types.SPATIAL && data.variable && geom !== null
+    data.landscape && data.analysisType === Types.SPATIAL && data.variable && data.reference_layer !== null
   ) {
     dataError = false
   }
@@ -128,13 +147,16 @@ export default function Analysis({ landscapes, layers }: Props) {
           isDrawing={mapInteraction === MapAnalysisInteraction.CUSTOM_GEOMETRY_DRAWING}
           onSelected={(geometry, area) => {
             if (area > mapConfig.spatial_reference_layer_max_area) {
+              console.warn('Area is bigger than configuration', area)
               // reset the geom selector
-              setMapInteraction(MapAnalysisInteraction.CUSTOM_GEOMETRY_DRAWING)
               setGeomError(true)
-            } else {
+              setMapInteraction(MapAnalysisInteraction.CUSTOM_GEOMETRY_DRAWING)
+            } else if (geometry !== null) {
               setGeomError(false)
-              setGeom(geometry)
-              // trigger geom stats
+              setData({
+                ...data,
+                reference_layer: geometry['features'][0]['geometry']
+              })
             }
           }}
         />
@@ -191,9 +213,14 @@ export default function Analysis({ landscapes, layers }: Props) {
                 color="white"
                 _hover={{ opacity: 0.8 }}
                 onClick={() => {
-                  setGeom(null)
+                  setData({
+                    ...data,
+                    reference_layer: null
+                  })
                   setMapInteraction(MapAnalysisInteraction.CUSTOM_GEOMETRY_DRAWING)
+                  dispatch(removeReferenceLayerDiff())
                 }}
+                disabled={loading}
                 minWidth={120}
               >
                 Draw
@@ -228,7 +255,7 @@ export default function Analysis({ landscapes, layers }: Props) {
                 color="white"
                 _hover={{ opacity: 0.8 }}
                 onClick={() => {
-                  setMapInteraction(MapAnalysisInteraction.LANDSCAPE_SELECTOR)
+                  setMapInteraction(MapAnalysisInteraction.NO_INTERACTION)
                 }}
                 minWidth={120}
               >
@@ -326,6 +353,7 @@ export default function Analysis({ landscapes, layers }: Props) {
               setData({ analysisType: Types.BASELINE });
               setCommunitySelected(null);
               setMapInteraction(MapAnalysisInteraction.NO_INTERACTION);
+              dispatch(removeReferenceLayerDiff());
             }}
           >
             Reset Form

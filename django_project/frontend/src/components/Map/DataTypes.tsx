@@ -17,6 +17,7 @@ export interface AnalysisData {
   period?: AnalysisDataPeriod;
   comparisonPeriod?: AnalysisDataPeriod;
   community?: string;
+  reference_layer?: object;
 }
 
 export const GroupName = {
