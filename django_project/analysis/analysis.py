@@ -444,7 +444,7 @@ def get_rel_diff(
     geo_manual = None
     if reference_layer['type'] == 'Polygon':
         geo_manual = ee.Geometry.Polygon(reference_layer['coordinates'])
-    else:    
+    else:
         geo_manual = ee.Geometry.MultiPolygon(reference_layer['coordinates'])
 
     # Calculate mean using reduceRegion
@@ -473,7 +473,6 @@ def run_analysis(lat: float, lon: float, analysis_dict: dict, *args, **kwargs):
     :param lon: Longitude
     :param analysis_dict: Analysis Dictionary
     """
-
     input_layers = InputLayer()
     selected_geos = input_layers.get_selected_geos()
     communities = input_layers.get_communities()

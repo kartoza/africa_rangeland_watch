@@ -116,7 +116,7 @@ class AnalysisAPI(APIView):
             metadata = {
                 'minValue': -25,
                 'maxValue': 25,
-                'colors': ['#f9837b','#fffcb9','#fffcb9','#32c2c8'],
+                'colors': ['#f9837b', '#fffcb9', '#fffcb9', '#32c2c8'],
                 'opacity': 0.7
             }
             return {
