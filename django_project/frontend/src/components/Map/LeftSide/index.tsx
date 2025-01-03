@@ -108,6 +108,7 @@ export const LeftSide = forwardRef(
                 <Analysis
                   landscapes={landscapes}
                   layers={layers}
+                  {...props}
                 />
               </TabPanel>}
             </TabPanels>

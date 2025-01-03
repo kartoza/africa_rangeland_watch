@@ -7,6 +7,7 @@ import { Bar, Line } from "react-chartjs-2";
 import { CategoryScale } from "chart.js";
 import Chart from "chart.js/auto";
 import ChartDataLabels from "chartjs-plugin-datalabels";
+import {FeatureCollection} from "geojson";
 import 'chartjs-adapter-date-fns';
 
 import './style.css';
@@ -148,6 +149,53 @@ export function LineChart({ analysis }: Props) {
   </Box>
 }
 
+function SpatialBarChart({ analysis }: Props) {
+  const featureCollection: FeatureCollection = analysis.results;
+
+  const labels: string[] = featureCollection.features.map((feature) => feature.properties['Name'])
+  let chartData:any = {
+    labels,
+    datasets: [
+      {
+        label: '% difference to reference area',
+        data: featureCollection.features.map((feature) => feature.properties["mean"]),
+        backgroundColor: "blue"
+      }
+    ],
+  };
+
+  const options:any = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: "top",
+      },
+      title: {
+        display: true,
+      },
+      subtitle: {
+        display: true,
+        text: 'Feature (labeled by',
+        position: 'bottom'
+      }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        title: {
+          display: true,
+          text: 'mean'
+        }
+      },
+    }
+  };
+
+  return <Box maxWidth={400} overflowX={"auto"}>
+    <Bar options={options} data={chartData} />
+  </Box>
+}
+
+
 export function RenderBaseline({ analysis }: Props) {
   const keys = Object.keys(analysis.results.columns)
   return <Box maxWidth={400} overflowX={"auto"}>
@@ -186,12 +234,22 @@ export function RenderTemporal({ analysis }: Props) {
   </Box>
 }
 
+export function RenderSpatial({ analysis }: Props) {
+  return <Box maxWidth={400} overflowX={"auto"}>
+    <Text color='black' marginTop={2}>Relative % difference in {analysis.data.variable} between your reference area and selected camp/s:</Text>
+    <SpatialBarChart analysis={analysis} />
+  </Box>
+}
+
+
 export function RenderResult({ analysis }: Props) {
   switch (analysis.data.analysisType) {
     case "Baseline":
       return <RenderBaseline analysis={analysis}/>
     case "Temporal":
       return <RenderTemporal analysis={analysis}/>
+    case "Spatial":
+      return <RenderSpatial analysis={analysis}/>
     default:
       return null
   }

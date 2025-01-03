@@ -17,6 +17,7 @@ export interface AnalysisData {
   period?: AnalysisDataPeriod;
   comparisonPeriod?: AnalysisDataPeriod;
   community?: string;
+  reference_layer?: object;
 }
 
 export const GroupName = {
@@ -25,3 +26,4 @@ export const GroupName = {
   UserDefinedGroup: 'user-defined'
 }
 export const COMMUNITY_ID = 'Communities'
+export const CUSTOM_GEOM_ID = 'CustomGeom'
