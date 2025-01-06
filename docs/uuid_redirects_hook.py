@@ -15,7 +15,7 @@ def on_page_content(html, page, config, files):
         context_id = page.meta.get("context_id")
         key = f"{context_id}.md"
         if key in redirects:
-            log_context_id_warning(page.meta.context_id, page.file.src_path, redirects[key])
+            log_context_id_warning(context_id, page.file.src_path, redirects[key])
         redirects[key] = page.file.src_path
 
     for item in page.toc.items:
