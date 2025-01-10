@@ -47,9 +47,15 @@ export const analysisSlice = createSlice({
     clearError(state) {
       state.error = null;
     },
-    resetAnalysisResult(state) {
+    resetAnalysisResult(state, action: PayloadAction<string>) {
       state.analysis = null;
-      state.referenceLayerDiff = null;
+      if (action.payload) {
+        if (action.payload !== 'Spatial') {
+          state.referenceLayerDiff = null;
+        } 
+      } else {
+        state.referenceLayerDiff = null;
+      }      
     }
   },
   extraReducers: (builder) => {

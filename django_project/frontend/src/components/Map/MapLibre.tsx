@@ -104,10 +104,14 @@ export const MapLibre = forwardRef(
       }
     }
 
-    const doRemoveLayer = (layer: Layer) => {
+    const doRemoveLayer = (layer: Layer, isRemoveSource?: boolean) => {
       if (map) {
         const ID = `layer-${layer.id}`
-        removeLayer(map, ID)
+        if (isRemoveSource) {
+          removeSource(map, ID)
+        } else {
+          removeLayer(map, ID)
+        }
         legendRef?.current?.removeLayer(layer)
       }
     }
@@ -125,8 +129,8 @@ export const MapLibre = forwardRef(
         doRenderLayer(layer)
       },
       /** Hide layer */
-      removeLayer(layer: Layer) {
-        doRemoveLayer(layer)
+      removeLayer(layer: Layer, isRemoveSource?: boolean) {
+        doRemoveLayer(layer, isRemoveSource)
       }
     }));
 

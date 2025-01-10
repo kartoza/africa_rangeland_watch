@@ -18,14 +18,13 @@ import AnalysisLandscapeGeometrySelector
   from "./AnalysisLandscapeGeometrySelector";
 import { AppDispatch, RootState } from "../../../../store";
 import { doAnalysis, REFERENCE_LAYER_DIFF_ID, resetAnalysisResult } from "../../../../store/analysisSlice";
-import AnalysisCustomGeometrySelector from "./AnalysisCustomGeometrySelector";
+import { AnalysisCustomGeometrySelector } from "./AnalysisCustomGeometrySelector";
+import { LayerCheckboxProps } from '../Layers';
 
 
-interface Props {
+interface Props extends LayerCheckboxProps {
   landscapes?: Landscape[];
   layers?: Layer[];
-  onLayerChecked: (layer: Layer) => void;
-  onLayerUnchecked: (layer: Layer) => void;
 }
 
 enum MapAnalysisInteraction {
@@ -45,9 +44,15 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
   const { mapConfig } = useSelector((state: RootState) => state.mapConfig);
   const [mapInteraction, setMapInteraction] = useState(MapAnalysisInteraction.NO_INTERACTION);
   const [isGeomError, setGeomError] = useState(false);
+  const geometrySelectorRef = useRef(null);
 
   /** When data changed */
   const triggerAnalysis = () => {
+    dispatch(resetAnalysisResult(data.analysisType))
+    if (data.analysisType !== 'Spatial') {
+      // remove polygon for reference layer diff
+      geometrySelectorRef?.current?.removeLayer();
+    }
     dispatch(doAnalysis(data))
   }
 
@@ -93,7 +98,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
         'type': 'raster',
         'url': null
       }
-      onLayerUnchecked(_layer)
+      onLayerUnchecked(_layer, true)
     }
   }, [referenceLayerDiff])
 
@@ -144,6 +149,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
           onSelected={(value) => setCommunitySelected(value)}
         />
         <AnalysisCustomGeometrySelector
+        ref={geometrySelectorRef}
           isDrawing={mapInteraction === MapAnalysisInteraction.CUSTOM_GEOMETRY_DRAWING}
           onSelected={(geometry, area) => {
             if (area > mapConfig.spatial_reference_layer_max_area) {
@@ -365,6 +371,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
               setData({ analysisType: Types.BASELINE });
               setCommunitySelected(null);
               setMapInteraction(MapAnalysisInteraction.NO_INTERACTION);
+              geometrySelectorRef?.current?.removeLayer();
               dispatch(resetAnalysisResult());
             }}
           >
