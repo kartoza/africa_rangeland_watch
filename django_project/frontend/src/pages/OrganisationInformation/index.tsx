@@ -29,6 +29,7 @@ import { deleteMember, fetchOrganizations } from "../../store/organizationSlice"
 import { AppDispatch } from "../../store";
 import InviteMember from "../../components/inviteMembers";
 import { selectRefetch }  from "../../store/organizationSlice";
+import Pagination from "../../components/Pagination";
 
 
 export default function OrganisationInformation() {
