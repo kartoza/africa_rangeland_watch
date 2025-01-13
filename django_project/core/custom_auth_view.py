@@ -22,7 +22,7 @@ from django.core.mail import EmailMultiAlternatives
 from rest_framework.decorators import api_view
 from django.contrib.auth import logout
 from allauth.account.models import EmailAddress
-from django.core.mail.mime.image import MIMEImage
+from email.mime.image import MIMEImage
 
 
 @api_view(["POST"])
