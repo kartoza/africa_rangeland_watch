@@ -23,6 +23,7 @@ from rest_framework.decorators import api_view
 from django.contrib.auth import logout
 from allauth.account.models import EmailAddress
 from email.mime.image import MIMEImage
+from django.contrib.staticfiles.finders import find
 
 
 @api_view(["POST"])
@@ -135,10 +136,12 @@ class CustomRegistrationView(APIView):
                 from_email=settings.NO_REPLY_EMAIL,
                 to=[email]
             )
-            with open('static/images/main_logo.svg', 'rb') as img_file:
-                image = MIMEImage(img_file.read())
-                image.add_header('Content-ID', '<logo_image>')
-                email_message.attach(image)
+            logo_path = find('images/main_logo.svg')
+
+            if logo_path:
+                with open(logo_path, 'rb') as img_file:
+                    image = MIMEImage(img_file.read(), _subtype="svg+xml")
+                    image.add_header('Content-ID', '<logo_image>')
             email_message.attach_alternative(html_message, "text/html")
             email_message.send()
 
