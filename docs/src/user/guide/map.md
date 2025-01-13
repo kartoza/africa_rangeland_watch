@@ -36,19 +36,49 @@ To apply layers to the map, you can choose layers from the 1️⃣ `Baseline` op
 
 [![Layer Section Parts](./img/guide-map-img-4.png)](./img/guide-map-img-4.png)
 
+#### Baseline (Average)
+
+Users can select multiple variables simultaneously, and the map will display data for all selected variables. However, the most recently applied variable will be highlighted for improved visibility.
+
+* Map before applying the `Baseline (average)` layers
+
+    [![Before Applying Any Layer](./img/guide-map-img-10.png)](./img/guide-map-img-10.png)
+
+* Map after applying the `Baseline (average)` layers
+
+    [![After Applying Layer 1](./img/guide-map-img-11.png)](./img/guide-map-img-11.png)
+
+    [![After Applying Layer 2](./img/guide-map-img-12.png)](./img/guide-map-img-12.png)
+
+* Map after applying multiple `Baseline (average)` layers
+
+    [![After Applying Multiple Layer](./img/guide-map-img-13.png)](./img/guide-map-img-13.png)
+
+    > Note: You can apply multiple baseline layers, and the map will display data for all selected layers. However, the most recently applied layer will be displayed more clearly for better visibility.
+
 ### Variables
+
+Variables are those that are used to compute temporal and spatial statistics for different areas within the app. You can apply the variable of your choice by checking the corresponding checkbox.
+
+> Note: You can select multiple variables simultaneously, and the map will display data for all selected variables. However, the most recently applied variable will be highlighted for improved visibility.
 
 #### EVI 
 
 The enhanced vegetation index (EVI) is a spectral index calculated from satellite data in the near-infrared, red and blue wavelengths (Liu and Huete, 1995). EVI is a good proxy for vegetation vigour, greenness, biomass and cover. Relative to NDVI (see below), EVI simultaneously corrects for atmospheric and soil effects and does not saturate over high vegetation biomass. It has been used to map rangeland restoration and degradation trends over South Africa in Venter et al., 2020. We calculate baseline EVI at 250m resolution from the MOD13Q1 dataset derived from the MODIS satellites. For NRT and analysis EVI at the landscape scale, we calculate EVI from cloud-masked mosaics of Sentinel-2 imagery at 10m resolution.
 
+[![EVI](./img/guide-map-img-14.png)](./img/guide-map-img-14.png)
+
 #### NDVI
 
 The normalised difference vegetation index (NDVI) is very similar to the EVI however it is more sensitive to sparse vegetation (Tucker 1979). It is therefore good for use in arid areas where one does not expect high levels of vegetation greenness. We calculate baseline EVI at 250m resolution from the MOD13Q1 dataset derived from the MODIS satellites. For NRT and analysis of EVI at the landscape scale, we calculate EVI from cloud-masked mosaics of Sentinel-2 imagery at 10m resolution.
 
-#### Bare Grounds cover 
+[![NDVI](./img/guide-map-img-15.png)](./img/guide-map-img-15.png)
+
+#### Bare grounds cover 
 
 Bare ground cover refers to the proportion of the landscape where the surface is exposed without significant vegetation, such as grass or woody plants. These areas may consist of soil, sand, or rock and are important in ecological assessments as they affect processes like erosion, water infiltration, and habitat stability.
+
+[![Bare Grounds Cover](./img/guide-map-img-16.png)](./img/guide-map-img-16.png)
 
 ### Analysis?
 
@@ -66,7 +96,7 @@ Available options in `Select analysis type` are:
 
 * **Baseline:** After selecting this option you have to select the polygons from the map and then you can go for the analysis.
 
-#### How to do Temporial Analysis?
+#### How to do Temporal Analysis?
 
 * **Temporal:** After selecting the temporal you will be able to select to the following options:
     - **Select temporal resolution:** You can choose whether to use the `Annual` or `Quarterly` option based on their preference.
@@ -92,3 +122,13 @@ Available options in `Select analysis type` are:
     [![Spatial Analysis Type](./img/guide-map-img-8.png)](./img/guide-map-img-8.png)
 
 After filling in the necessary details, you can proceed with the analysis by clicking on the 3️⃣ `Run Analysis` button. If you wish to reset the form, simply click on the 2️⃣ `Reset Form` button.
+
+### How to Upload Shape File
+
+Click on the 1️⃣ `Upload` button and then click on the 2️⃣ `Select File` button to upload your shape file.
+
+[![Upload Shape File](./img/guide-map-img-17.png)](./img/guide-map-img-17.png)
+
+Select the desired 1️⃣ `File` then click on the 2️⃣ `Select` button to upload the file or can click on the 3️⃣ `Cancel` button to close the file explorer.
+
+[![File Explorer](./img/guide-map-img-18.png)](./img/guide-map-img-18.png)

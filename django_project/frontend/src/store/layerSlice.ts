@@ -8,7 +8,7 @@ export interface Layer {
   name: string;
   url: string;
   type: 'raster' | 'vector';
-  group: 'baseline' | 'near-real-time' | 'user-defined';
+  group: 'baseline' | 'near-real-time' | 'user-defined' | 'spatial_analysis';
   metadata?: {
     minValue: number;
     maxValue: number;

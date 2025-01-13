@@ -51,6 +51,18 @@ class Preferences(SingletonModel):
         help_text="Map initial bound"
     )
 
+    spatial_reference_layer_max_area = models.IntegerField(
+        default=500000000
+    )
+
+    worker_layer_api_key = models.TextField(
+        null=True,
+        blank=True,
+        help_text=(
+            "API Key that is used by worker to upload pmtiles to Django."
+        )
+    )
+
 
 class UserSession(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)

@@ -5,11 +5,17 @@ Africa Rangeland Watch (ARW).
 .. note:: Layer APIs
 """
 
+import os
 from django.core.files.storage import FileSystemStorage
+from django.http import FileResponse
+from django.conf import settings
+from django.urls import reverse
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from cloud_native_gis.models import Layer, LayerUpload
+from cloud_native_gis.utils.main import id_generator
+from django.shortcuts import get_object_or_404
 
 from layers.models import InputLayer, DataProvider, LayerGroupType
 from frontend.serializers.layers import LayerSerializer
@@ -99,3 +105,76 @@ class UploadLayerAPI(APIView):
                 'upload_id': str(instance.id)
             }
         )
+
+
+class PMTileLayerAPI(APIView):
+    """API to fix PMTile generation."""
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        """Post PMTile file to be saved in layer directory."""
+        instance = get_object_or_404(
+            LayerUpload,
+            id=kwargs.get('upload_id')
+        )
+        layer = instance.layer
+        input_layer = get_object_or_404(
+            InputLayer,
+            uuid=layer.unique_id
+        )
+
+        # Save files
+        if request.FILES:
+            pmtiles_filename = f"{id_generator()}.pmtiles"
+            layer.is_ready = True
+            layer.pmtile.save(
+                pmtiles_filename,
+                request.FILES['file'],
+                save=True
+            )
+
+            # update url in InputLayer
+            base_url = settings.DJANGO_BACKEND_URL
+            if base_url.endswith('/'):
+                base_url = base_url[:-1]
+            if layer.pmtile:
+                input_layer.url = (
+                    f'pmtiles://{base_url}' +
+                    reverse('serve-pmtiles', kwargs={
+                        'layer_uuid': layer.unique_id,
+                    })
+                )
+            else:
+                input_layer.url = base_url + layer.tile_url
+
+            input_layer.save()
+
+        return Response('OK')
+
+    def get(self, request, *args, **kwargs):
+        """Get shapefile from LayerUpload."""
+        instance = get_object_or_404(
+            LayerUpload,
+            id=kwargs.get('upload_id')
+        )
+
+        shapefile_path = None
+        for file in instance.files:
+            if file.endswith('.zip'):
+                shapefile_path = instance.filepath(file)
+                break
+
+        if shapefile_path is None or not os.path.exists(shapefile_path):
+            return Response(
+                status=404,
+                data='Missing uploaded zip shapefile!'
+            )
+
+        response = FileResponse(
+            open(shapefile_path, 'rb'),
+            as_attachment=True,
+            filename=f'{id_generator()}.zip'
+        )
+
+        return response

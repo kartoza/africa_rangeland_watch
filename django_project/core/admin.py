@@ -29,6 +29,11 @@ class PreferencesAdmin(admin.ModelAdmin):
                 'map_initial_bound',
             )
         }),
+        ('Worker', {
+            'fields': (
+                'worker_layer_api_key',
+            )
+        }),
     )
 
     def has_add_permission(self, request, obj=None):

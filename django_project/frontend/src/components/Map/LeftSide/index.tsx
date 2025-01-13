@@ -16,6 +16,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../../store";
 import { fetchLandscapes } from '../../../store/landscapeSlice';
 import { fetchLayers } from '../../../store/layerSlice';
+import { selectIsLoggedIn } from "../../../store/authSlice";
 import Layers, { LayerCheckboxProps } from "./Layers";
 import Analysis from "./Analysis";
 
@@ -37,6 +38,7 @@ export const LeftSide = forwardRef(
     // Required data
     const { landscapes } = useSelector((state: RootState) => state.landscape);
     const { layers } = useSelector((state: RootState) => state.layer);
+    const isAuthenticated = useSelector(selectIsLoggedIn);
 
     useEffect(() => {
       dispatch(fetchLayers())
@@ -82,7 +84,7 @@ export const LeftSide = forwardRef(
             >
               Layers
             </Tab>
-            <Tab
+            {isAuthenticated && <Tab
               height='52px'
               boxSizing='border-box'
               fontSize='13px'
@@ -91,7 +93,7 @@ export const LeftSide = forwardRef(
               _selected={styles.SelectedTab}
             >
               Analysis
-            </Tab>
+            </Tab>}
           </TabList>
           <Box flexGrow={1} minHeight={0}>
             <TabPanels overflow='auto' height='100%'>
@@ -102,12 +104,13 @@ export const LeftSide = forwardRef(
                   {...props}
                 />
               </TabPanel>
-              <TabPanel padding={0} textAlign='center'>
+              {isAuthenticated && <TabPanel padding={0} textAlign='center'>
                 <Analysis
                   landscapes={landscapes}
                   layers={layers}
+                  {...props}
                 />
-              </TabPanel>
+              </TabPanel>}
             </TabPanels>
           </Box>
         </Tabs>

@@ -172,15 +172,15 @@ class Command(BaseCommand):
             'landscape': 'Limpopo NP',
             'analysisType': 'Temporal',
             'variable': 'EVI',
-            't_resolution': 'Qurterly',
+            't_resolution': 'Quarterly',
             'Temporal': {
                 'Annual': {
-                    'ref': '2017',
-                    'test': '2023'
+                    'ref': 2017,
+                    'test': 2022
                 },
                 'Quarterly': {
-                    'ref': '02',
-                    'test': '01'
+                    'ref': 1,
+                    'test': 1
                 }
             },
             'Spatial': {

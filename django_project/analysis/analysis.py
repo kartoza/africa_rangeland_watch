@@ -24,10 +24,10 @@ select_bands = [
 
 # Dictionary converting quarter strings to start months
 quarter_dict = {
-    '01': 1,
-    '02': 4,
-    '03': 7,
-    '04': 10
+    1: 1,
+    2: 4,
+    3: 7,
+    4: 10
 }
 
 
@@ -156,7 +156,7 @@ class InputLayer:
             'NAMIBIA', 'ZIMBABWE', 'BOTSWANA',
             'MOZAMBIQUE', 'ZAMBIA'
         ]
-        countries = (ee.FeatureCollection('USDOS/LSIB/2017').
+        countries = (ee.FeatureCollection('USDOS/LSIB/2013').
                      filter(ee.Filter.inList('name', names)))
         return countries
 
@@ -299,7 +299,7 @@ class InputLayer:
         Get spatial layer dictionary.
         """
         # Get MODIS vegetation data
-        modis_veg = (ee.ImageCollection("MODIS/061/MOD13Q1")
+        modis_veg = (ee.ImageCollection("MODIS/006/MOD13Q1")
                      .filterDate('2016-01-01', '2020-01-01')
                      .select(['NDVI', 'EVI'])
                      .map(lambda i: i.divide(10000)))
@@ -441,7 +441,11 @@ def get_rel_diff(
     img_select = spatial_layer_dict[analysis_dict['variable']]
     img_select = img_select.rename('val')
 
-    geo_manual = ee.Geometry.Polygon(reference_layer['coordinates'])
+    geo_manual = None
+    if reference_layer['type'] == 'Polygon':
+        geo_manual = ee.Geometry.Polygon(reference_layer['coordinates'])
+    else:
+        geo_manual = ee.Geometry.MultiPolygon(reference_layer['coordinates'])
 
     # Calculate mean using reduceRegion
     red = img_select.reduceRegion(
@@ -469,7 +473,6 @@ def run_analysis(lat: float, lon: float, analysis_dict: dict, *args, **kwargs):
     :param lon: Longitude
     :param analysis_dict: Analysis Dictionary
     """
-
     input_layers = InputLayer()
     selected_geos = input_layers.get_selected_geos()
     communities = input_layers.get_communities()
@@ -513,8 +516,8 @@ def run_analysis(lat: float, lon: float, analysis_dict: dict, *args, **kwargs):
         if res == "Quarterly":
             landscapes_dict = input_layers.get_landscape_dict()
             if (
-                    analysis_dict['Temporal']['Annual']['ref'] == "2023" or
-                    analysis_dict['Temporal']['Annual']['test'] == "2023"
+                    analysis_dict['Temporal']['Annual']['ref'] == 2023 or
+                    analysis_dict['Temporal']['Annual']['test'] == 2023
             ):
                 new_stats = get_latest_stats(
                     landscapes_dict[analysis_dict['landscape']],
@@ -537,7 +540,6 @@ def run_analysis(lat: float, lon: float, analysis_dict: dict, *args, **kwargs):
                     ).millis()
                 ))
                 temporal_table = temporal_table.merge(new_stats)
-                print('updated Temporal table', temporal_table)
 
             baseline_quart = quarter_dict[
                 analysis_dict['Temporal']['Quarterly']['ref']
