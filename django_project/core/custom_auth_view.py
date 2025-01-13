@@ -137,11 +137,16 @@ class CustomRegistrationView(APIView):
                 to=[email]
             )
             logo_path = find('images/main_logo.svg')
-
             if logo_path:
                 with open(logo_path, 'rb') as img_file:
                     image = MIMEImage(img_file.read(), _subtype="svg+xml")
                     image.add_header('Content-ID', '<logo_image>')
+                    image.add_header(
+                        'Content-Disposition',
+                        'inline',
+                        filename='main_logo.svg'
+                    )
+                    email_message.attach(image)
             email_message.attach_alternative(html_message, "text/html")
             email_message.send()
 
