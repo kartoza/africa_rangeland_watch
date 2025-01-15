@@ -181,7 +181,9 @@ def create_user_profile(sender, instance, created, **kwargs):
     Signal to create a UserProfile whenever a new User is created.
     """
     if created:
-        user_profile = UserProfile.objects.create(user=instance)
+        user_profile = UserProfile.objects.create(
+            user=instance,
+        )
 
         invitation = OrganisationInvitation.objects.filter(
             email=instance.email).last()

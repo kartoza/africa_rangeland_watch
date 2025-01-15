@@ -1,70 +1,104 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 
+interface AnalysisState {
+  analysisType?: string;
+  community?: string | null;
+  landscape?: string;
+  latitude?: number | null;
+  longitude?: number | null;
+}
+
 interface SessionData {
-    lastPage: string;
-    activityData: Record<string, any>;
+  lastPage: string;
+  activityData: Record<string, any>;
+  analysisState: AnalysisState | null;
 }
 
 interface SessionContextType {
-    session: SessionData | null;
-    saveSession: (page: string, activity: Record<string, any>) => void;
-    loadSession: () => Promise<void>;
-    loading: boolean;
-    hasPromptBeenOpened: boolean;
-    setHasPromptBeenOpened: (opened: boolean) => void;
+  session: SessionData | null;
+  saveSession: (page: string, activity: Record<string, any>, analysis?: AnalysisState) => void;
+  loadSession: () => Promise<void>;
+  loadingSession: boolean;
+  hasPromptBeenOpened: boolean;
+  setHasPromptBeenOpened: (opened: boolean) => void;
 }
 
 const SessionContext = createContext<SessionContextType | undefined>(undefined);
 
 export const useSession = () => {
-    const context = useContext(SessionContext);
-    if (!context) throw new Error("useSession must be used within SessionProvider");
-    return context;
+  const context = useContext(SessionContext);
+  if (!context) throw new Error("useSession must be used within SessionProvider");
+  return context;
 };
 
 export const SessionProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [session, setSession] = useState<SessionData | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [hasPromptBeenOpened, setHasPromptBeenOpened] = useState(false);
+  const [session, setSession] = useState<SessionData | null>(null);
+  const [loadingSession, setLoading] = useState(true);
+  const [hasPromptBeenOpened, setHasPromptBeenOpenedState] = useState(
+    () => localStorage.getItem("hasPromptBeenOpened") === "true"
+  );
 
-    const saveSession = useCallback(async (page: string, activity: Record<string, any>) => {
-        await axios.put('/api/session/', { last_page: page, activity_data: activity });
-        setSession({ lastPage: page, activityData: activity });
-    }, []);
+  const setHasPromptBeenOpened = (opened: boolean) => {
+    setHasPromptBeenOpenedState(opened);
+    localStorage.setItem("hasPromptBeenOpened", opened.toString());
+  };
 
-    const loadSession = useCallback(async () => {
-      setLoading(true);
-      try {
-          const response = await axios.get('/api/session/');
-  
-          // Transform response keys to match the SessionData interface
-          const transformedSession: SessionData = {
-              lastPage: response.data.last_page,
-              activityData: response.data.activity_data 
-          };
-  
-          setSession(transformedSession);
-      } catch (error) {
-          console.error('Failed to load session:', error);
-      } finally {
-          setLoading(false);
+  const saveSession = useCallback(
+    async (page: string, activity: Record<string, any>, analysis?: AnalysisState) => {
+      const sessionData: Record<string, any> = {
+        last_page: page,
+        activity_data: activity,
+      };
+
+      if (analysis) {
+        sessionData.analysisState = analysis;
       }
-  }, []);
-  
 
-    return (
-        <SessionContext.Provider
-            value={{
-                session,
-                saveSession,
-                loadSession,
-                loading,
-                hasPromptBeenOpened,
-                setHasPromptBeenOpened,
-            }}
-        >
-            {children}
-        </SessionContext.Provider>
-    );
+      try {
+        await axios.put('/api/session/', sessionData);
+        setSession({
+          lastPage: page,
+          activityData: activity,
+          ...(analysis && { analysisState: analysis }),
+        });
+      } catch (error) {
+        console.error('Failed to save session:', error);
+      }
+    },
+    []
+  );
+
+  const loadSession = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await axios.get('/api/session/');
+      const transformedSession: SessionData = {
+        lastPage: response.data.last_page,
+        activityData: response.data.activity_data,
+        analysisState: response.data.analysis_state || null,
+      };
+
+      setSession(transformedSession);
+    } catch (error) {
+      console.error('Failed to load session:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  return (
+    <SessionContext.Provider
+      value={{
+        session,
+        saveSession,
+        loadSession,
+        loadingSession,
+        hasPromptBeenOpened,
+        setHasPromptBeenOpened,
+      }}
+    >
+      {children}
+    </SessionContext.Provider>
+  );
 };

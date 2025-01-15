@@ -19,7 +19,7 @@ import { RootState } from "../store";
 type ModalPosition = "absolute" | "fixed";
 
 const SessionPrompt: React.FC = () => {
-  const { session, loadSession, loading, hasPromptBeenOpened, setHasPromptBeenOpened } = useSession();
+  const { session, loadSession, loadingSession, hasPromptBeenOpened, setHasPromptBeenOpened } = useSession();
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
@@ -27,42 +27,42 @@ const SessionPrompt: React.FC = () => {
 
   // Load session only once when component is mounted
   useEffect(() => {
-    if (isAuthenticated && !session && loading) {
+    if (isAuthenticated && !session && loadingSession) {
       loadSession();
     }
-  }, [isAuthenticated, session, loading, loadSession]);
+  }, [isAuthenticated, session, loadingSession, loadSession]);
 
   // Open modal when session is loaded and authenticated, and loading is false
   useEffect(() => {
-    if (isAuthenticated && !hasPromptBeenOpened && session && !loading) {
+    console.log('has resume bin opened ',hasPromptBeenOpened)
+    if (isAuthenticated && !hasPromptBeenOpened && session && !loadingSession) {
       setIsOpen(true); // Open the modal
-      setHasPromptBeenOpened(true); // Mark prompt as opened
+      setHasPromptBeenOpened(true);
     }
-  }, [isAuthenticated, session, loading, hasPromptBeenOpened, setHasPromptBeenOpened]);
+  }, [isAuthenticated, loadingSession, hasPromptBeenOpened]);
 
   // Close modal if session is not found or loading is false
   useEffect(() => {
-    if (!loading && !session && isOpen) {
+    if (!loadingSession && !session && isOpen) {
       console.log('Session not found, closing modal');
-      setIsOpen(false); // Close modal if session is not found
+      setIsOpen(false);
     }
-  }, [loading, session, isOpen]);
-
-
+  }, [loadingSession, session, isOpen]);
 
   const handleResume = () => {
     console.log('Resuming session', session?.lastPage);
     if (session?.lastPage && session?.lastPage !== '/') {
-      navigate(session.lastPage)
+      navigate(session.lastPage);
     }
-    setIsOpen(false);
     setIsOpen(false);
   };
 
   const handleNewSession = () => {
     console.log('Starting a new session');
-    navigate('/');
     setIsOpen(false);
+    setHasPromptBeenOpened(true);
+    if(location.pathname != '/')
+      navigate('/');
   };
 
   const modalPosition = useBreakpointValue<ModalPosition>({

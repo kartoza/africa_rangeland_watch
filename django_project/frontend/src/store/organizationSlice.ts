@@ -41,12 +41,66 @@ axios.defaults.headers.common["Content-Type"] = "application/json";
 // Async thunk for fetching organizations
 export const fetchOrganizations = createAsyncThunk(
   "organizations/fetchOrganizations",
-  async () => {
+  async (): Promise<{ [key: string]: Organization }> => {
     setCSRFToken();
     const response = await axios.get("/api/organizations");
-    return response.data as { [key: string]: Organization };
+
+    // Dummy organization data to append
+    const dummyOrg = {
+      Test12: {
+        org_id: 1,
+        members: [
+          { user_profile__user__email: "test@gmail.com", user_type: "member" },
+          { user_profile__user__email: "alice@example.com", user_type: "member" },
+          { user_profile__user__email: "bob@example.com", user_type: "admin" },
+          { user_profile__user__email: "charlie@example.com", user_type: "member" },
+          { user_profile__user__email: "dave@example.com", user_type: "member" },
+          { user_profile__user__email: "eve@example.com", user_type: "admin" },
+          { user_profile__user__email: "frank@example.com", user_type: "member" },
+          { user_profile__user__email: "grace@example.com", user_type: "member" },
+          { user_profile__user__email: "henry@example.com", user_type: "admin" },
+          { user_profile__user__email: "irene@example.com", user_type: "member" },
+        ],
+        invitations: [
+          { email: "test@gmail.com", accepted: true },
+          { email: "danang@kartoza.com", accepted: false },
+          { email: "test25@gmail.com", accepted: false },
+          { email: "john@example.com", accepted: false },
+          { email: "jane@example.com", accepted: true },
+          { email: "peter@example.com", accepted: false },
+          { email: "mary@example.com", accepted: true },
+          { email: "lucas@example.com", accepted: false },
+          { email: "anna@example.com", accepted: true },
+          { email: "mark@example.com", accepted: false },
+        ],
+        is_manager: false,
+      },
+    };
+
+    // Transform dummy data to match the Organization interface
+    const transformedDummyOrg = Object.fromEntries(
+      Object.entries(dummyOrg).map(([key, value]) => [
+        key,
+        {
+          members: value.members.map((m) => ({
+            user: m.user_profile__user__email,
+            role: m.user_type,
+          })),
+          invitations: value.invitations,
+        },
+      ])
+    );
+
+    // Merge the API response with the dummy organization data
+    const mergedOrganizations = {
+      ...response.data,
+      ...transformedDummyOrg,
+    };
+
+    return mergedOrganizations;
   }
 );
+
 
 // Async thunk for inviting a member to an organization
 export const inviteMemberThunk = createAsyncThunk(

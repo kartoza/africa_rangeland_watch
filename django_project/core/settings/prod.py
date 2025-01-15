@@ -12,7 +12,8 @@ USE_X_FORWARDED_HOST = True
 # ----------            EMAIL           ------------ #
 # -------------------------------------------------- #
 # See fig.yml file for postfix container definition#
-EMAIL_BACKEND = 'core.resend_email_backend.ResendBackend'
+# EMAIL_BACKEND = 'core.resend_email_backend.ResendBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
 # Host for sending e-mail.
 EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp')
 # Port for sending e-mail.

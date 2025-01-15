@@ -1,29 +1,45 @@
-from rest_framework import viewsets, status
+from rest_framework import viewsets
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
 from core.models import UserSession
 from core.serializers import UserSessionSerializer
+from rest_framework.permissions import IsAuthenticated
 
 
 class UserSessionViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
 
     def retrieve(self, request):
-        # Fetch user's last session data
-        session, _ = UserSession.objects.get_or_create(user=request.user)
+        session, created = UserSession.objects.get_or_create(
+            user=request.user
+        )
         serializer = UserSessionSerializer(session)
         return Response(serializer.data)
 
     def update(self, request):
-        # Update session data
-        session, _ = UserSession.objects.get_or_create(user=request.user)
-        serializer = UserSessionSerializer(
-            instance=session,
-            data=request.data,
-            partial=True
+        session, created = UserSession.objects.get_or_create(
+            user=request.user
         )
 
-        if serializer.is_valid():
-            serializer.save()
-            return Response({"message": "Session updated successfully."})
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        data = request.data
+
+        if 'analysisState' in data:
+            session.analysis_state = data['analysisState']
+
+        if 'last_page' in data:
+            session.last_page = data['last_page']
+
+        if 'activity_data' in data:
+            # Merge the new activity data with existing data
+            existing_activity = session.activity_data or {}
+            existing_activity.update(data['activity_data'])
+            session.activity_data = existing_activity
+
+        session.save()
+
+        serializer = UserSessionSerializer(session)
+        return Response(
+            {
+                "message": "Session updated successfully.",
+                "data": serializer.data
+            }
+        )

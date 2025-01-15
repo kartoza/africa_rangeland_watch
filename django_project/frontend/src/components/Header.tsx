@@ -19,21 +19,16 @@ export default function Header(props: any) {
     const location = useLocation();
     const navigate = useNavigate();
     const isAuthenticated = useSelector(selectIsLoggedIn);
-    const { session, loadSession, saveSession } = useSession();
+    const { saveSession } = useSession();
 
     useEffect(() => {
-        if (isAuthenticated && location.pathname !== '/') {
+        console.log('location pathname ',location.pathname)
+        if (isAuthenticated && location.pathname !== '/' && location.pathname !== '/map') {
             saveSession(location.pathname, { activity: "Visited Page" });
         }
     }, [isAuthenticated, location.pathname, saveSession]);
 
-    // Handle logout
-    const handleLogout = () => {
-        dispatch(logoutUser());
-        onClose();
-        navigate('/');
-    };
-
+    
     // Handle hover for different sections
     const handleHoverEnter = (section: string) => {
         setHoveredSection(section);
