@@ -24,26 +24,6 @@ from django.contrib.auth import logout
 from allauth.account.models import EmailAddress
 from email.mime.image import MIMEImage
 from django.contrib.staticfiles.finders import find
-from dj_rest_auth.views import LoginView
-from allauth.account import app_settings as allauth_settings
-from django.contrib.auth import login as auth_login
-
-
-
-class CustomLoginView(LoginView):
-    def login(self):
-        remember = self.request.data.get('remember', False)
-        if remember:
-            # Set session to never expire
-            self.request.session.set_expiry(0)
-        else:
-            # Set session to expire at the end of the session
-            self.request.session.set_expiry(
-                allauth_settings.SESSION_COOKIE_AGE
-            )
-
-        # Call the original login method
-        auth_login(self.request, self.user)
 
 
 @api_view(["POST"])
@@ -157,16 +137,11 @@ class CustomRegistrationView(APIView):
                 to=[email]
             )
             logo_path = find('images/main_logo.svg')
+
             if logo_path:
                 with open(logo_path, 'rb') as img_file:
                     image = MIMEImage(img_file.read(), _subtype="svg+xml")
                     image.add_header('Content-ID', '<logo_image>')
-                    image.add_header(
-                        'Content-Disposition',
-                        'inline',
-                        filename='main_logo.svg'
-                    )
-                    email_message.attach(image)
             email_message.attach_alternative(html_message, "text/html")
             email_message.send()
 
@@ -176,7 +151,6 @@ class CustomRegistrationView(APIView):
             )
 
         except Exception as e:
-            print('error ', str(e))
             return Response(
                 {'error': str(e), 'details': 'An unexpected error occurred.'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
