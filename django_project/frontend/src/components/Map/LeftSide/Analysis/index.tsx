@@ -53,7 +53,6 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
 
   useEffect(() => {
     if (session && session?.analysisState) {
-      console.log('This is the current session to be loaded on page ', session);
       setData(session.analysisState);
     }
     if(!loadingSession && session?.lastPage !== '/'){
@@ -78,9 +77,6 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
   }, [communitySelected]);
 
   useEffect(() => {
-    console.log('data' ,data)
-    console.log('data' ,session?.analysisState)
-
     if (
       data.analysisType === 'Baseline' &&
       data.community === null &&
@@ -89,11 +85,8 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
     ) {
       if(!session?.analysisState)
         loadSession()
-      // setData(session?.analysisState)
     }
 
-      
-      
 
     if (data.landscape && data.analysisType === Types.BASELINE) {
       setMapInteraction(MapAnalysisInteraction.LANDSCAPE_SELECTOR)

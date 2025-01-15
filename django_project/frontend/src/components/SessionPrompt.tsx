@@ -34,7 +34,6 @@ const SessionPrompt: React.FC = () => {
 
   // Open modal when session is loaded and authenticated, and loading is false
   useEffect(() => {
-    console.log('has resume bin opened ',hasPromptBeenOpened)
     if (isAuthenticated && !hasPromptBeenOpened && session && !loadingSession) {
       setIsOpen(true); // Open the modal
       setHasPromptBeenOpened(true);
@@ -44,13 +43,11 @@ const SessionPrompt: React.FC = () => {
   // Close modal if session is not found or loading is false
   useEffect(() => {
     if (!loadingSession && !session && isOpen) {
-      console.log('Session not found, closing modal');
       setIsOpen(false);
     }
   }, [loadingSession, session, isOpen]);
 
   const handleResume = () => {
-    console.log('Resuming session', session?.lastPage);
     if (session?.lastPage && session?.lastPage !== '/') {
       navigate(session.lastPage);
     }
@@ -58,7 +55,6 @@ const SessionPrompt: React.FC = () => {
   };
 
   const handleNewSession = () => {
-    console.log('Starting a new session');
     setIsOpen(false);
     setHasPromptBeenOpened(true);
     if(location.pathname != '/')
