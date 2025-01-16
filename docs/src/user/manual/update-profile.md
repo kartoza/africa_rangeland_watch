@@ -96,6 +96,14 @@ license: This program is free software; you can redistribute it and/or modify it
 
         [![Passwords Do Not Match](./img/profile-img-20.png)](./img/profile-img-20.png)  
 
+## Update Personnel Information
+
+Allows users to update their personal information, such as name, purpose, occupation, and country.
+
+[![Update Personnel Info](./img/profile-img-21.png)](./img/profile-img-21.png)  
+
+1. **Update Info:** After filling in the latest information users will be able to click on this button to update their information.
+
 ## Request Organisation
 
 [![Request Organisation](./img/profile-img-4.png)](./img/profile-img-4.png)
