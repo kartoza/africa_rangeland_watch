@@ -62,6 +62,11 @@ def join_organisation(request):
     ).first()
 
     if existing_invitation:
+        if not existing_invitation.organisation:
+            # Update the invitation if organisation is None
+            existing_invitation.organisation = selected_org
+            existing_invitation.save()
+
         # Check if already linked to the selected organization
         if OrganisationInvitationDetail.objects.filter(
             invitation=existing_invitation, organisation=selected_org

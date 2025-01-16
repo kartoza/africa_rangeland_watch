@@ -127,9 +127,6 @@ class OrganisationInvitationDetail(models.Model):
         unique_together = ('invitation', 'organisation')
 
     def __str__(self):
-        if self.organisation:
-            return f"{self.invitation.email} invited " \
-                f"to {self.organisation.name}"
         return f"{self.invitation.email}"
 
 

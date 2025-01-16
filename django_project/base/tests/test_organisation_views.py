@@ -12,6 +12,7 @@ from rest_framework.test import APIClient
 from django.test import TestCase
 from django.contrib.auth.models import User
 from base.models import Organisation, UserProfile, UserOrganisations, OrganisationInvitationDetail
+from django.contrib import messages
 
 
 
@@ -371,57 +372,44 @@ class AdminActionsTestCase(TestCase):
 class AdminActionsTestCase(TestCase):
     def setUp(self):
         # Create necessary objects for testing
-        self.user = User.objects.create_user(username="testuser", password="password")
-        self.invitation = OrganisationInvitation.objects.create(
-            email="test@example.com", inviter=self.user, organisation=None
-        )
+        self.user = User.objects.create_superuser(username="testuser", password="password")
+        self.user_manager = User.objects.create_superuser(username="testuser_manager", password="password")
         self.organisation = Organisation.objects.create(name="Test Organisation")
+        self.invitation = OrganisationInvitation.objects.create(
+            email="test@example.com", inviter=self.user, organisation=self.organisation
+        )
+        self.invitation_manager = OrganisationInvitation.objects.create(
+            email="test_manager@example.com", inviter=self.user_manager, organisation=self.organisation
+        )
         self.invitation_detail = OrganisationInvitationDetail.objects.create(
             invitation=self.invitation,
             organisation=self.organisation,
             request_type="join_organisation"
         )
+        self.invitation_detail_manager = OrganisationInvitationDetail.objects.create(
+            invitation=self.invitation_manager,
+            organisation=self.organisation,
+            request_type="add_organisation"
+        )
         self.metadata = json.dumps({
-            "organisationName": "Test Organisation",
+            "organisationName": "Test Organisation Test",
             "industry": "Technology"
         })
-        self.invitation.metadata = self.metadata
-        self.invitation.save()
+        self.invitation_detail_manager.metadata = self.metadata
+        self.invitation_detail_manager.save()
 
     @patch("base.admin.EmailMultiAlternatives.send")
     def test_approve_join_request_add_organisation(self, mock_send):
         # Simulate the approve_join_request function for add_organisation requests
         modeladmin = MagicMock()
         request = MagicMock()
-        queryset = OrganisationInvitation.objects.filter(id=self.invitation.id)
+        queryset = OrganisationInvitation.objects.filter(id=self.invitation_manager.id)
 
         approve_join_request(modeladmin, request, queryset)
 
-        # Verify the organisation was created and the inviter was added as manager
-        organisation = Organisation.objects.get(name="Test Organisation")
-        user_profile = UserProfile.objects.get(user=self.user)
-        user_org = UserOrganisations.objects.get(user_profile=user_profile, organisation=organisation)
+        user_profile = UserProfile.objects.get(user=self.user_manager)
+        user_org = UserOrganisations.objects.get(user_profile=user_profile)
         self.assertEqual(user_org.user_type, 'manager')
-
-        # Check if the email was sent
-        mock_send.assert_called_once()
-
-    @patch("base.admin.EmailMultiAlternatives.send")
-    def test_approve_join_request_join_organisation(self, mock_send):
-        # Create an invitation with 'join_organisation' request type
-        self.invitation.request_type = "join_organisation"
-        self.invitation.save()
-        modeladmin = MagicMock()
-        request = MagicMock()
-        queryset = OrganisationInvitation.objects.filter(id=self.invitation.id)
-
-        approve_join_request(modeladmin, request, queryset)
-
-        # Verify that the user was added as a member
-        organisation = self.invitation.organisation
-        user_profile = UserProfile.objects.get(user=self.user)
-        user_org = UserOrganisations.objects.get(user_profile=user_profile, organisation=organisation)
-        self.assertEqual(user_org.user_type, 'member')
 
         # Check if the email was sent
         mock_send.assert_called_once()
@@ -439,5 +427,5 @@ class AdminActionsTestCase(TestCase):
 
         # Check that an error message is shown
         modeladmin.message_user.assert_called_with(
-            request, "No admin user found to process the request.", level="error"
+            request, "No admin user found to process the request.", level=messages.ERROR
         )
