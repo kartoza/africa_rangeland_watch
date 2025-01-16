@@ -37,7 +37,7 @@ def updateInvite(modeladmin, request, invitation):
 
 def send_organisation_creation_email(inviter, organisation):
     """
-    Sends an email to the inviter notifying them about the 
+    Sends an email to the inviter notifying them about the
     creation of a new organisation
     and their role as the manager.
     """
