@@ -19,7 +19,7 @@ import { RootState } from "../store";
 type ModalPosition = "absolute" | "fixed";
 
 const SessionPrompt: React.FC = () => {
-  const { session, loadSession, loadingSession, hasPromptBeenOpened, setHasPromptBeenOpened } = useSession();
+  const { session, saveSession, loadSession, loadingSession, hasPromptBeenOpened, setHasPromptBeenOpened } = useSession();
   const { isAuthenticated } = useSelector((state: RootState) => state.auth);
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
@@ -57,6 +57,7 @@ const SessionPrompt: React.FC = () => {
   const handleNewSession = () => {
     setIsOpen(false);
     setHasPromptBeenOpened(true);
+    saveSession(location.pathname, { activity: "Reset session"}, {});
     if(location.pathname != '/')
       navigate('/');
   };

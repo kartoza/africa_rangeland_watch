@@ -44,7 +44,9 @@ export const LeftSide = forwardRef((props: LayerCheckboxProps, ref) => {
   // Automatically select the "Analysis" tab if session.analysisState exists
   useEffect(() => {
     if (!loadingSession && session && session?.analysisState) {
-      setTabIndex(1); // Set "Analysis" tab as active
+      setTabIndex(1);
+    }else{
+      setTabIndex(0);
     }
   }, [loadingSession]);
 
