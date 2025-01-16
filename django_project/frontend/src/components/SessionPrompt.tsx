@@ -35,7 +35,7 @@ const SessionPrompt: React.FC = () => {
   // Open modal when session is loaded and authenticated, and loading is false
   useEffect(() => {
     if (isAuthenticated && !hasPromptBeenOpened && session && !loadingSession) {
-      setIsOpen(true); // Open the modal
+      setIsOpen(true); 
       setHasPromptBeenOpened(true);
     }
   }, [isAuthenticated, loadingSession, hasPromptBeenOpened]);
@@ -60,6 +60,7 @@ const SessionPrompt: React.FC = () => {
     saveSession(location.pathname, { activity: "Reset session"}, {});
     if(location.pathname != '/')
       navigate('/');
+    window.location.reload()
   };
 
   const modalPosition = useBreakpointValue<ModalPosition>({
