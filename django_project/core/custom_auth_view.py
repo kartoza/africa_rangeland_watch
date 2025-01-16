@@ -32,13 +32,14 @@ from django.contrib.auth import login as auth_login
 
 class CustomLoginView(LoginView):
     def login(self):
-        remember = self.request.data.get('remember', False)
-        if remember:
-            # Set session to expire based on the SESSION_COOKIE_AGE
+        remember = self.request.POST.get('remember', 'False').lower() == 'true'
+
+        if remember is True:
+            # Set session to expire based on the SESSION_COOKIE_AGE (7 days)
             self.request.session.set_expiry(
                 allauth_settings.SESSION_COOKIE_AGE
             )
-        else:
+        elif remember is False:
             # Set session to expire at the end of the browser session
             self.request.session.set_expiry(0)
 
