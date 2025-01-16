@@ -7,7 +7,10 @@ from unittest.mock import patch
 from django.utils.http import urlsafe_base64_encode
 from django.contrib.auth.tokens import default_token_generator
 from django.conf import settings
-from rest_framework.test import APIClient
+from rest_framework.test import APITestCase, APIClient
+from core.models import UserSession
+
+User = get_user_model()
 
 
 class CustomRegistrationViewTest(TestCase):
@@ -157,3 +160,82 @@ class ResetPasswordConfirmViewTest(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data["error"], "Invalid reset link")
+
+
+
+
+class UserSessionViewSetTestCase(APITestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(username="testuser", password="testpassword")
+        self.client.force_authenticate(user=self.user)
+        self.url = "/api/session/"
+
+    def test_retrieve_existing_session(self):
+        # Create a UserSession manually
+        session = UserSession.objects.create(user=self.user, analysis_state="initial", last_page="dashboard")
+        
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["analysis_state"], "initial")
+        self.assertEqual(response.data["last_page"], "dashboard")
+
+    def test_retrieve_creates_new_session(self):
+        # No session exists for the user
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(UserSession.objects.filter(user=self.user).exists())
+        self.assertEqual(response.data["analysis_state"], {})  
+        self.assertIsNone(response.data["last_page"])
+
+    def test_update_session(self):
+        session = UserSession.objects.create(user=self.user)
+
+        data = {
+            "analysisState": "completed",
+            "last_page": "profile",
+            "activity_data": {"clicks": 10, "views": 5},
+        }
+        response = self.client.put(self.url, data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        session.refresh_from_db()
+        self.assertEqual(session.analysis_state, "completed")
+        self.assertEqual(session.last_page, "profile")
+        self.assertEqual(session.activity_data, {"clicks": 10, "views": 5})
+        self.assertEqual(response.data["message"], "Session updated successfully.")
+
+    def test_partial_update_session(self):
+        session = UserSession.objects.create(user=self.user)
+
+        data = {"analysisState": "in_progress"}
+        response = self.client.put(self.url, data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        session.refresh_from_db()
+        self.assertEqual(session.analysis_state, "in_progress")
+        self.assertIsNone(session.last_page)  # Not updated
+        self.assertEqual(session.activity_data, {})  # Check for an empty dictionary
+
+    def test_update_merges_activity_data(self):
+        session = UserSession.objects.create(
+            user=self.user, activity_data={"clicks": 5, "views": 3}
+        )
+
+        data = {"activity_data": {"views": 10, "shares": 2}}
+        response = self.client.put(self.url, data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        session.refresh_from_db()
+        self.assertEqual(session.activity_data, {"clicks": 5, "views": 10, "shares": 2})
+
+    def test_authentication_required(self):
+        self.client.force_authenticate(user=None)  # Unauthenticate the client
+
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+        response = self.client.put(self.url, {}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)

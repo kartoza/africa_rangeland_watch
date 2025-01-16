@@ -18,6 +18,7 @@ from django.urls import path, include, re_path
 from django.conf import settings
 from django.conf.urls.static import static
 from core.views import PreferencesRedirectView
+from core.session_views import UserSessionViewSet
 from .custom_auth_view import (
     CheckTokenView,
     CustomRegistrationView,
@@ -71,6 +72,12 @@ urlpatterns = [
     ),
     path('', include('support.urls')),
     path('', include('cloud_native_gis.urls')),
+    path(
+        'api/session/',
+        UserSessionViewSet.as_view(
+            {'get': 'retrieve', 'put': 'update'}
+        )
+    ),
 ]
 
 if settings.DEBUG:

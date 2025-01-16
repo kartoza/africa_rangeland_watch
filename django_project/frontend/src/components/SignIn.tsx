@@ -24,6 +24,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { loginUser, registerUser, resetPasswordRequest, resetPasswordConfirm } from "../store/authSlice";
 import { RootState, AppDispatch } from "../store";
 import { useLocation } from "react-router-dom";
+import SessionPrompt from "./SessionPrompt";
 
 interface SignInProps {
   isOpen: boolean;
@@ -53,6 +54,7 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
   const [rememberMe, setRememberMe] = useState(false);
   const [resetError, setResetError] = useState("");
   const [canSubmit, setCanSubmit] = useState(true);
+  
 
   const dispatch = useDispatch<AppDispatch>();
   const { loading, error, token } = useSelector((state: RootState) => state.auth);
@@ -148,7 +150,7 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
   }, [error, statusMessage]); 
 
   return (
-    <Modal isOpen={isOpen || isOpenReset} onClose={onClose} isCentered={modalPosition === "absolute"}>
+    <><Modal isOpen={isOpen || isOpenReset} onClose={onClose} isCentered={modalPosition === "absolute"}>
       <ModalOverlay />
       <ModalContent
         maxW={{ base: "90vw", md: "25vw" }}
@@ -168,25 +170,25 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
                     {formType === "signin"
                       ? "Welcome Back!"
                       : formType === "forgotPassword"
-                      ? "Forgot Password"
-                      : formType === "resetPassword"
-                      ? "Reset Password"
-                      : "Sign Up"}
+                        ? "Forgot Password"
+                        : formType === "resetPassword"
+                          ? "Reset Password"
+                          : "Sign Up"}
                   </Heading>
                   <Text color="gray.800" fontSize="16px">
                     {formType === "signin"
                       ? "Please sign into your profile."
                       : formType === "forgotPassword"
-                      ? "Enter your email to receive a reset link."
-                      : formType === "resetPassword"
-                      ? "Please set your new password."
-                      : "Create a new account."}
+                        ? "Enter your email to receive a reset link."
+                        : formType === "resetPassword"
+                          ? "Please set your new password."
+                          : "Create a new account."}
                   </Text>
                 </Flex>
 
                 {statusMessage && <Text color="green.500">{statusMessage}</Text>}
                 {resetError && (
-                  <Text color={resetError === "Verification email sent." ? "green.500" : resetError === "Password has been successfully reset."? "green.500": "red.500"}>
+                  <Text color={resetError === "Verification email sent." ? "green.500" : resetError === "Password has been successfully reset." ? "green.500" : "red.500"}>
                     {resetError}
                   </Text>
                 )}
@@ -209,8 +211,7 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
                           onChange={(e) => setEmail(e.target.value)}
                           borderRadius="md"
                           borderWidth="1px"
-                          borderColor="gray.500"
-                        />
+                          borderColor="gray.500" />
                       </InputGroup>
                     )}
 
@@ -229,16 +230,14 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
                           onChange={(e) => setPassword(e.target.value)}
                           borderRadius="md"
                           borderWidth="1px"
-                          borderColor="gray.500"
-                        />
+                          borderColor="gray.500" />
                         <InputRightElement onClick={togglePasswordVisibility} cursor="pointer">
                           <Center w="20px" h="18px">
                             <Image
                               src={isPasswordVisible ? "static/images/eye_icon_unchecked.svg" : "static/images/eye_icon.svg"}
                               alt="Toggle Password Visibility"
                               h="18px"
-                              w="20px"
-                            />
+                              w="20px" />
                           </Center>
                         </InputRightElement>
                       </InputGroup>
@@ -259,12 +258,11 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
                           onChange={(e) => setConfirmPassword(e.target.value)}
                           borderRadius="md"
                           borderWidth="1px"
-                          borderColor="gray.500"
-                        />
+                          borderColor="gray.500" />
                       </InputGroup>
                     )}
 
-                    
+
 
                     {formType === "signin" && (
                       <Flex mt="8px" justifyContent="space-between" alignItems="center" gap="20px">
@@ -292,31 +290,27 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
                       w="100%"
                       color="white.a700"
                       borderRadius="2px"
-                      onClick={
-                        formType === "signin"
-                          ? handleSignIn
-                          : formType === "forgotPassword"
+                      onClick={formType === "signin"
+                        ? handleSignIn
+                        : formType === "forgotPassword"
                           ? handleSendResetLink
                           : formType === "resetPassword"
-                          ? handleResetPassword
-                          : handleSignUp
-                      }
-                      disabled={
-                        formType === "signin" || formType === "signup"
-                          ? !isValidEmail(email) || loading
-                          : formType === "resetPassword"
+                            ? handleResetPassword
+                            : handleSignUp}
+                      disabled={formType === "signin" || formType === "signup"
+                        ? !isValidEmail(email) || loading
+                        : formType === "resetPassword"
                           ? !canSubmit
                           : formType === "forgotPassword"
-                          ? !canSubmit : canSubmit || loading
-                      }
+                            ? !canSubmit : canSubmit || loading}
                     >
                       {formType === "signin"
                         ? "Sign In"
                         : formType === "forgotPassword"
-                        ? "Send Email"
-                        : formType === "resetPassword"
-                        ? "Reset Password"
-                        : "Sign Up"}
+                          ? "Send Email"
+                          : formType === "resetPassword"
+                            ? "Reset Password"
+                            : "Sign Up"}
                     </Button>
 
                   </Flex>
@@ -325,28 +319,26 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
                 {/* Social login options */}
                 {(formType === "signin" || formType === "signup") && (
                   <>
-                   <Flex mt="22px" justifyContent="center" gap="20px">
+                    <Flex mt="22px" justifyContent="center" gap="20px">
                       <Text color="gray.800" fontSize="16px" mt="14px">
                         or continue with
                       </Text>
-                   </Flex>
-                    
-                      <Flex mt="22px" justifyContent="center" gap="20px">
+                    </Flex>
+
+                    <Flex mt="22px" justifyContent="center" gap="20px">
                       <a href="/accounts/google/login/">
                         <Image
                           src="static/images/google_icon.svg"
                           alt="Google Icon"
                           h="40px"
-                          w="40px"
-                        />
+                          w="40px" />
                       </a>
                       <a href="/accounts/github/login/">
                         <Image
                           src="static/images/github_icon.svg"
                           alt="GitHub Icon"
                           h="40px"
-                          w="40px"
-                        />
+                          w="40px" />
                       </a>
                       <Image src="static/images/apple_icon.svg" alt="Apple Icon" h="40px" w="40px" />
                     </Flex>
@@ -377,6 +369,6 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
           </Flex>
         </ModalBody>
       </ModalContent>
-    </Modal>
+    </Modal><SessionPrompt /></>
   );
 }
