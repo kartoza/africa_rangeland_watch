@@ -159,7 +159,7 @@ export default function OrganisationInformation() {
               My Organisations
             </Heading>
 
-            {/* {loading && <p>Loading...</p>} */}
+            {loading && <p>Loading...</p>}
             {/* {error && <p>{error}</p>} */}
 
             {/* Organisation Tabs */}
