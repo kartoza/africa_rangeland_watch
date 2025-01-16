@@ -38,6 +38,7 @@ export default function OrganisationInformation() {
   const [selectedOrgKey, setSelectedOrgKey] = useState<string | null>(null);
   const refetch = useSelector(selectRefetch);
   const [currentPage, setCurrentPage] = useState(1);
+  const [currentInvitationPage, setCurrentInvitationPage] = useState(1);
   const itemsPerPage = 5;
 
 
@@ -113,8 +114,6 @@ export default function OrganisationInformation() {
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
   };
-
-  const [currentInvitationPage, setCurrentInvitationPage] = useState(1);
 
   const handleInvitationPageChange = (page: number) => {
     setCurrentInvitationPage(page);
