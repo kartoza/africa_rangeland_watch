@@ -34,12 +34,12 @@ class CustomLoginView(LoginView):
     def login(self):
         remember = self.request.POST.get('remember', 'False').lower() == 'true'
 
-        if remember is True:
+        if remember:
             # Set session to expire based on the SESSION_COOKIE_AGE (7 days)
             self.request.session.set_expiry(
                 allauth_settings.SESSION_COOKIE_AGE
             )
-        elif remember is False:
+        else:
             # Set session to expire at the end of the browser session
             self.request.session.set_expiry(0)
 
