@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from .models import (
     Organisation,
+    OrganisationInvitationDetail,
     UserProfile,
     OrganisationInvitation,
     UserOrganisations
@@ -15,14 +16,47 @@ from django.shortcuts import get_object_or_404
 
 
 
+def updateInvite(self, modeladmin, request, invitation):
+    try:
+        invitation_detail = OrganisationInvitationDetail.objects.get(
+            invitation=invitation,
+            organisation=invitation.organisation
+        )
+        invitation_detail.accepted = True
+        invitation_detail.save()
+    except OrganisationInvitationDetail.DoesNotExist:
+        modeladmin.message_user(
+            request,
+            "OrganisationInvitationDetail not found for this request.",
+            level="error"
+        )
+        return
+
+
 @admin.action(description="Approve selected join/add requests")
 def approve_join_request(modeladmin, request, queryset):
     """
     Admin action to approve join/add requests.
     Creates organisations for 'add_organisation' requests and assigns roles.
     """
+    # Check if there is a superuser
+    if not User.objects.filter(is_superuser=True).exists():
+        modeladmin.message_user(
+            request,
+            "No admin user found to process the request.",
+            level="error"
+        )
+        return
+
     for invitation in queryset:
-        if invitation.request_type == "add_organisation":
+        # Get the related OrganisationInvitationDetail
+        invitation_detail = OrganisationInvitationDetail.objects.filter(
+            invitation=invitation).first()
+
+        if (
+            invitation_detail and
+            invitation_detail.request_type == "add_organisation"
+        ):
             # Parse metadata from the invitation
             metadata = json.loads(invitation.metadata or "{}")
             organisation_name = metadata.get("organisationName", "")
@@ -38,6 +72,8 @@ def approve_join_request(modeladmin, request, queryset):
                 organisation=organisation,
                 user_type='manager'
             )
+
+            updateInvite(modeladmin, request, invitation)
 
             # Notify the inviter
             email_body = render_to_string(
@@ -65,7 +101,6 @@ def approve_join_request(modeladmin, request, queryset):
                     level="error",
                 )
 
-
             modeladmin.message_user(
                 request,
                 f"Organisation '{organisation.name}' created and request "
@@ -73,7 +108,10 @@ def approve_join_request(modeladmin, request, queryset):
             )
             return
 
-        elif invitation.request_type == "join_organisation":
+        elif (
+            invitation_detail and
+            invitation_detail.request_type == "join_organisation"
+        ):
             # Process join requests
             inviter = invitation.inviter
             user_profile = get_object_or_404(UserProfile, user=inviter)
@@ -84,6 +122,8 @@ def approve_join_request(modeladmin, request, queryset):
                 organisation=organisation,
                 user_type='member'
             )
+
+            updateInvite(modeladmin, request, invitation)
 
             email_body = render_to_string(
                 "accepted_organization_request.html",
@@ -109,7 +149,6 @@ def approve_join_request(modeladmin, request, queryset):
                     level="error",
                 )
 
-
             modeladmin.message_user(
                 request, "Individual has been added."
             )
@@ -117,13 +156,17 @@ def approve_join_request(modeladmin, request, queryset):
 
 
 
-
-
-class OrganisationInvitationAdmin(admin.ModelAdmin):
-    list_display = ('email', 'request_type', 'organisation', 'inviter')
+@admin.register(OrganisationInvitationDetail)
+class OrganisationInvitationDetailAdmin(admin.ModelAdmin):
+    list_display = (
+        'invitation',
+        'organisation',
+        'accepted',
+        'request_type'
+    )
     actions = [approve_join_request]
-    list_filter = ('organisation', 'request_type')
-    search_fields = ('email', 'organisation__name', 'inviter__username')
+    list_filter = ('organisation', 'accepted', 'request_type')
+    search_fields = ('invitation__email', 'organisation__name')
 
 
 class UserProfileInline(admin.StackedInline):
@@ -200,10 +243,8 @@ class OrganisationAdmin(admin.ModelAdmin):
     readonly_fields = ('created_at', 'updated_at')
 
 
-
 admin.site.register(UserOrganisations, UserOrganisationsAdmin)
 
 admin.site.unregister(User)
 admin.site.register(User, UserAdmin)
 admin.site.unregister(OrganisationInvitation)
-admin.site.register(OrganisationInvitation, OrganisationInvitationAdmin)

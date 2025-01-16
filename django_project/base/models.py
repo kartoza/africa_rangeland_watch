@@ -35,10 +35,7 @@ class Organisation(models.Model):
 
 
 class OrganisationInvitation(Invitation):
-    REQUEST_TYPE_CHOICES = [
-        ('add_organisation', 'Add Organisation'),
-        ('join_organisation', 'Join Organisation'),
-    ]
+
     organisation = models.ForeignKey(
         Organisation,
         on_delete=models.CASCADE,
@@ -46,22 +43,11 @@ class OrganisationInvitation(Invitation):
         null=True,
         blank=True,
     )
-    request_type = models.CharField(
-        max_length=20,
-        choices=REQUEST_TYPE_CHOICES,
-        default='add_organisation',
-    )
-    metadata = models.TextField(
-        null=True,
-        blank=True,
-        help_text="Additional metadata for the request (JSON format).",
-    )
 
     def __str__(self):
         if self.organisation:
-            return f"Invitation for {self.email} to join {
-                self.organisation.name}"
-        return f"Invitation for {self.email}, organisation not yet created"
+            return f"Invitation for {self.email} to join organisation"
+        return f"Request from {self.email}, to create organisation"
 
     def save(self, *args, **kwargs):
         # Ensure a unique key is generated if missing
@@ -107,6 +93,44 @@ class OrganisationInvitation(Invitation):
                 f"Failed to send email to {self.email}: {str(e)}"
             )
 
+
+class OrganisationInvitationDetail(models.Model):
+    REQUEST_TYPE_CHOICES = [
+        ('add_organisation', 'Add Organisation'),
+        ('join_organisation', 'Join Organisation'),
+    ]
+    invitation = models.ForeignKey(
+        OrganisationInvitation,
+        on_delete=models.CASCADE,
+        related_name="details",
+        null=True
+    )
+    organisation = models.ForeignKey(
+        Organisation,
+        on_delete=models.CASCADE,
+        related_name="invitation_details",
+        null=True
+    )
+    request_type = models.CharField(
+        max_length=20,
+        choices=REQUEST_TYPE_CHOICES,
+        default='add_organisation',
+    )
+    metadata = models.TextField(
+        null=True,
+        blank=True,
+        help_text="Additional metadata for the request (JSON format).",
+    )
+    accepted = models.BooleanField(default=False)
+
+    class Meta:
+        unique_together = ('invitation', 'organisation')
+
+    def __str__(self):
+        if self.organisation:
+            return f"{self.invitation.email} invited " \
+                f"to {self.organisation.name}"
+        return f"{self.invitation.email}"
 
 
 
