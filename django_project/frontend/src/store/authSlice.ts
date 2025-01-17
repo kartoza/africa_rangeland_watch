@@ -68,15 +68,16 @@ const authSlice = createSlice({
 export const { loginStart, loginSuccess, loginFailure, logout, setUser } = authSlice.actions;
 
 // Login action
-export const loginUser = (email: string, password: string) => async (dispatch: AppDispatch) => {
+export const loginUser = (email: string, password: string, rememberMe: boolean) => async (dispatch: AppDispatch) => {
   dispatch(loginStart());
 
   try {
     setCSRFToken();
-    
+
     const response = await axios.post('/auth/login/', {
       email,
       password,
+      remember: rememberMe,
     });
 
     const token = response.data.key;
