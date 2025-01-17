@@ -6,59 +6,64 @@
     <title>Africa Rangeland Watch Admin has made you Organisation Manager</title>
 </head>
 <body style="font-family: Helvetica, sans-serif; margin: 0; padding: 0; background-color: #f4f4f4;">
-    <table align="center" width="900" style="background-color: #2f5c4a; padding: 10px;">
+    <table align="center" border="0" cellpadding="0" cellspacing="0" width="900" style="background-color: #2f5c4a; padding: 10px;">
         <tr>
+            <!-- Left Column: Logo -->
             <td align="left" width="50%" style="padding: 10px;">
-                <img src="https://arw.sta.do.kartoza.com/static/images/main_logo.svg" alt="Logo" width="200">
+                <img src="https://arw.sta.do.kartoza.com/static/images/main_logo.svg" alt="Logo" width="200" style="display: block;">
             </td>
-            <td align="right" width="50%" style="padding: 10px; color: #ffffff;">
-                <h2>Africa Rangeland Watch</h2>
+            <!-- Right Column: Title or Navigation Links -->
+            <td align="right" width="50%" style="padding: 10px; color: #ffffff; font-family: Helvetica,sans-serif;">
+                <h2 style="margin: 0; font-size: 24px;">Africa Rangeland Watch</h2>
+                <!-- Optional: Add links or other content here -->
             </td>
         </tr>
-    </table>
-    <table align="center" width="900" style="background-color: #ffffff; padding: 20px; border: 10px solid #dddddd;">
+    </table> 
+    <table align="center" border="0" cellpadding="0" cellspacing="0" width="900" style="background-color: #ffffff; padding: 20px; border: 10px solid #dddddd;">
         <tr>
             <td style="padding: 20px;">
-                <h2>New Organisation Manager Role Assigned</h2>
-                <p>Dear {{ user.first_name }},</p>
-                <p>
-                    We are pleased to inform you that you have been appointed as the 
-                    manager of your organisation, <strong>{{ organisation.name }}</strong>, 
-                    on the Africa Rangeland Watch platform!
+                <h2 style="font-size: 20px; color: #333333;">New Organisation Manager Role Assigned</h2>
+               
+                <p style="font-size: 16px; color: #333333;">
+                    Dear User,
                 </p>
-                <p>
-                    To get started, log in to your account and visit the Organisation 
-                    Information section under your profile.
+                <p style="font-size: 16px; color: #333333;">
+                    We would like to inform you that you have been appointed as the manager of your organisation, {{ organisation.name }}, on the Africa Rangeland Watch platform!
                 </p>
-                <p style="text-align: center;" style="padding: 20px 0;">
-                    <a href="{{ platform_url }}" style="background-color: #FFA500; color: #ffffff; padding: 15px 50px; text-decoration: none; border-radius: 5px;">
-                        Access Organisation Information
-                    </a>
+                <p style="font-size: 16px; color: #333333;">
+                To get started, simply log in to your account or and visit the Organisation Information section under your profile.
                 </p>
-                <p>As the organisation manager, you now have the ability to:</p>
-                <ul>
-                    <li>Invite new members to join your organisation</li>
-                    <li>Manage existing members and assign roles as needed</li>
-                    <li>Oversee the activities and settings of your organisation</li>
-                </ul>
-                <p>
-                    If you have any questions or need assistance, please contact us at 
-                    <a href="mailto:{{ support_email }}" style="color: #FFA500;">{{ support_email }}</a>.
+
+                <table width="100%" cellspacing="0" cellpadding="0">
+                    <tr>
+                        <td align="center" style="padding: 20px 0;">
+                            <a href="{{ platform_url }}" style="background-color: #FFA500; color: #ffffff; padding: 15px 50px; text-decoration: none; font-size: 16px; border-radius: 5px;">Access Organisation Information</a>
+                        </td>
+                    </tr>
+                </table>
+                <p style="font-size: 16px; color: #333333;">
+                    As the organisation manager, you now have the ability to:</p>
+                    <ul style="font-size: 16px; color: #333333;">
+                        <li>Invite new members to join your organization on the platform</li>
+                        <li>Manage existing members and assign roles as needed</li>
+                        <li>Oversee the activities and settings of your organization</li>
+                    </ul>
                 </p>
-                <p>
-                    Thank you,<br>
-                    The Africa Rangeland Watch Team
+                
+                <p style="font-size: 16px; color: #333333;">
+                    If you have any questions or need assistance with your new role, please don’t hesitate to reach out to our support team at <a href="mailto:{{ support_email }}" style="color: #FFA500;">{{ support_email }}</a>.
+                </p>
+                <p style="font-size: 16px; color: #333333;">
+                We look forward to seeing how you’ll help grow and support your organization on the platform!
+                </p>
+                <p style="font-size: 16px; color: #333333;">
+                    Thank you,
+                    <br>The Africa Rangeland Watch Team
                 </p>
             </td>
         </tr>
-        <tr>
-            <td style="text-align: center; font-size: 14px; color: #999999;">
-                <p>
-                    Visit the platform at 
-                    <a href="{{ platform_url }}" style="color: #FFA500;">Africa Rangeland Watch</a>.
-                    If you do not want to receive emails, 
-                    <a href="{{ unsubscribe_url }}" style="color: #FFA500;">unsubscribe here</a>.
-                </p>
+            <td style="padding: 10px; text-align: center; font-size: 14px; color: #999999;">
+                <p>Find the platform here <a href="{{ support_email }}" style="color: #FFA500;">Africa Rangeland Watch</a>. Not interested in emails from us? <a href="[Unsubscribe Link]" style="color: #FFA500;">Unsubscribe here</a>.</p>
             </td>
         </tr>
     </table>
