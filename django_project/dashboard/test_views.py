@@ -20,7 +20,7 @@ def create_organisation():
     return Organisation.objects.create(name="Test Organisation")
 
 
-class CustomRegistrationViewTest(TestCase):
+class DashboardVisibilityViewTest(TestCase):
     def test_list_dashboards(self):
         """Test listing dashboards."""
         api_client = APIClient()
@@ -99,7 +99,7 @@ class CustomRegistrationViewTest(TestCase):
     def test_share_dashboard(db):
         """Test sharing a dashboard with specific users and groups."""
         api_client = APIClient()
-        user = create_user("testuser", "test@example.com", "password123")
+        user = create_user("testuser2", "test2@example.com", "password123")
         shared_user = create_user("shareduser", "shared@example.com", "password123")
         group = Group.objects.create(name="Test Group")
         dashboard = create_dashboard("Dashboard 1", user)
