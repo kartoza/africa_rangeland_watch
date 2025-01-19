@@ -1,7 +1,7 @@
 from django.test import TestCase
 from rest_framework.test import APIClient
 from django.contrib.auth.models import User, Group
-from .models import Dashboard
+from dashboard.models import Dashboard
 from base.models import Organisation
 
 
