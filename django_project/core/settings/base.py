@@ -148,4 +148,6 @@ LOGIN_URL = '/'
 LOGIN_REDIRECT_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
 
-RESEND_API_KEY = 're_B8q6mRsd_ADoxCSBwM8bKG7es6Dff6Cgy'
+RESEND_API_KEY = os.environ.get(
+    'RESEND_API_KEY', ''
+)
