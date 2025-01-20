@@ -96,21 +96,27 @@ class DashboardVisibilityViewTest(TestCase):
         assert Dashboard.objects.count() == 0
 
 
-    def test_share_dashboard(db):
+    def test_share_dashboard(self):
         """Test sharing a dashboard with specific users and groups."""
         api_client = APIClient()
+        
         user = create_user("testuser2", "test2@example.com", "password123")
         shared_user = create_user("shareduser", "shared@example.com", "password123")
         group = Group.objects.create(name="Test Group")
         dashboard = create_dashboard("Dashboard 1", user)
-
+    
+        assert shared_user.id is not None, "shared_user ID is None"
+        assert group.id is not None, "Group ID is None"
+    
         api_client.force_authenticate(user=user)
         payload = {
             "users": [shared_user.id],
             "groups": [group.id],
         }
         response = api_client.post(f"/dashboards/{dashboard.uuid}/share/", payload)
-
+    
         assert response.status_code == 200
+        dashboard.refresh_from_db()
         assert shared_user in dashboard.users.all()
         assert group in dashboard.groups.all()
+
