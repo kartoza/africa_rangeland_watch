@@ -16,7 +16,7 @@ import {
   } from "@chakra-ui/react";
   import React, { useState } from "react";
   import { useDispatch } from "react-redux";
-  import { inviteMember } from "../store/organizationSlice";
+  import { updateState, inviteMemberThunk } from "../store/organizationSlice";
 import { AppDispatch } from "../store";
   
   interface Props {
@@ -45,9 +45,13 @@ import { AppDispatch } from "../store";
     
     const dispatch = useDispatch<AppDispatch>();
   
-    const handleInvite = () => {
+    const handleInvite = async () => {
       if (email && message) {
-        dispatch(inviteMember({ orgKey, email, message }));
+        const parsedOrgKey = parseInt(orgKey, 10);
+        const result = await dispatch(
+          inviteMemberThunk({ orgKey: parsedOrgKey, email, message })
+        ).unwrap();
+        dispatch(updateState({ orgKey: String(result.orgKey), email: result.email, message }));
         onClose();
       }
     };

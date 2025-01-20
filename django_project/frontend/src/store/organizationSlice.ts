@@ -91,7 +91,7 @@ const organizationsSlice = createSlice({
         (member) => member.user !== user
       );
     },
-    inviteMember: (state, action: PayloadAction<{ orgKey: string; email: string; message: string }>) => {
+    updateState: (state, action: PayloadAction<{ orgKey: string; email: string; message: string }>) => {
       const { orgKey, email, message } = action.payload;
       const newInvitation: Invitation = {
         email,
@@ -157,5 +157,5 @@ const organizationsSlice = createSlice({
 });
 
 export const selectRefetch = (state: RootState) => state.organization.refetch;
-export const { addMember, deleteMemberFromState, inviteMember, resetRefetch } = organizationsSlice.actions;
+export const { addMember, deleteMemberFromState, updateState, resetRefetch } = organizationsSlice.actions;
 export default organizationsSlice.reducer;
