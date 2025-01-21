@@ -1,4 +1,4 @@
-from django.test import TestCase
+from django.test import TestCase, RequestFactory
 from rest_framework import status
 from django.urls import reverse
 from django.contrib.auth import get_user_model
@@ -9,6 +9,11 @@ from django.contrib.auth.tokens import default_token_generator
 from django.conf import settings
 from rest_framework.test import APITestCase, APIClient
 from core.models import UserSession
+from django.contrib.sessions.middleware import SessionMiddleware
+from unittest.mock import MagicMock
+from allauth.account import app_settings as allauth_settings
+from core.custom_auth_view import CustomLoginView
+from django.http import HttpResponse
 
 User = get_user_model()
 
@@ -239,3 +244,36 @@ class UserSessionViewSetTestCase(APITestCase):
 
         response = self.client.put(self.url, {}, format="json")
         self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+class CustomLoginViewTestCase(TestCase):
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.user = get_user_model().objects.create_user(username="testuser", password="testpassword")
+        self.user.backend = 'django.contrib.auth.backends.ModelBackend'  # Set backend manually
+
+    def add_session_to_request(self, request):
+        """Add session middleware to the request."""
+        # Mock get_response function for SessionMiddleware
+        def get_response(request):
+            return HttpResponse()
+
+        middleware = SessionMiddleware(get_response)
+        middleware.process_request(request)
+        request.session.save()
+
+    def test_login_with_remember_me(self):
+        # Simulate a request with "remember" set to True
+        request = self.factory.post("/login", {"remember": True})
+        self.add_session_to_request(request)
+
+        # Mocking request.user and data
+        request.user = self.user
+        request.data = {"remember": True}
+
+        # Instantiate the view and call the login method
+        view = CustomLoginView()
+        view.request = request
+        view.user = self.user
+        view.login()
+
+        # Assert that the session expiry is set to SESSION_COOKIE_AGE
+        self.assertEqual(request.session.get_expiry_age(), allauth_settings.SESSION_COOKIE_AGE)

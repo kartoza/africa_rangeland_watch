@@ -26,7 +26,8 @@ from .custom_auth_view import (
     ForgotPasswordView,
     ResetPasswordConfirmView,
     user_info,
-    logout_view
+    logout_view,
+    CustomLoginView
 )
 
 urlpatterns = [
@@ -45,6 +46,7 @@ urlpatterns = [
     path('api/logout/', logout_view, name='logout'),
     path('accounts/', include('allauth.urls')),
     path('auth/', include('dj_rest_auth.urls')),
+    path('auth/login/', CustomLoginView.as_view(), name='custom_login'),
     path('auth/activation/', include('allauth.account.urls')),
     path(
         'api/auth/check-token/',

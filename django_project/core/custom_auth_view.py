@@ -24,6 +24,27 @@ from django.contrib.auth import logout
 from allauth.account.models import EmailAddress
 from email.mime.image import MIMEImage
 from django.contrib.staticfiles.finders import find
+from dj_rest_auth.views import LoginView
+from allauth.account import app_settings as allauth_settings
+from django.contrib.auth import login as auth_login
+
+
+
+class CustomLoginView(LoginView):
+    def login(self):
+        remember = self.request.POST.get('remember', 'False').lower() == 'true'
+
+        if remember:
+            # Set session to expire based on the SESSION_COOKIE_AGE (7 days)
+            self.request.session.set_expiry(
+                allauth_settings.SESSION_COOKIE_AGE
+            )
+        else:
+            # Set session to expire at the end of the browser session
+            self.request.session.set_expiry(0)
+
+        # Call the original login method
+        auth_login(self.request, self.user)
 
 
 @api_view(["POST"])
