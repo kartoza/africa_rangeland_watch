@@ -17,7 +17,7 @@ from django.contrib import messages
 
 
 
-def updateInvite(modeladmin, request, invitation):
+def update_invite(modeladmin, request, invitation):
     try:
         invitation_detail = OrganisationInvitationDetail.objects.get(
             invitation=invitation,
@@ -165,7 +165,7 @@ def approve_join_request(modeladmin, request, queryset):
                 )
 
                 # Update invitation status
-                updateInvite(modeladmin, request, invitation_instance)
+                update_invite(modeladmin, request, invitation_instance)
 
                 # Send the email (optional, catch any errors here)
                 try:
@@ -201,7 +201,7 @@ def approve_join_request(modeladmin, request, queryset):
                     user_type='member'
                 )
 
-                updateInvite(modeladmin, request, invitation_instance)
+                update_invite(modeladmin, request, invitation_instance)
 
                 # Send the acceptance email (optional, catch any errors here)
                 try:

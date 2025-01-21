@@ -2,7 +2,7 @@ from unittest import mock
 from django.test import TestCase
 from django.urls import reverse
 from django.contrib.auth.models import User
-from base.admin import approve_join_request, updateInvite
+from base.admin import approve_join_request, update_invite
 from rest_framework.test import APIClient
 from base.models import Organisation, OrganisationInvitation, OrganisationInvitationDetail, UserOrganisations, UserProfile
 import json
@@ -347,7 +347,7 @@ class AdminActionsTestCase(TestCase):
         # Simulate the updateInvite function when invitation detail exists
         modeladmin = MagicMock()
         request = MagicMock()
-        updateInvite(modeladmin, request, self.invitation)
+        update_invite(modeladmin, request, self.invitation)
 
         # Verify that the invitation detail's 'accepted' status is set to True
         self.invitation_detail.refresh_from_db()
@@ -361,7 +361,7 @@ class AdminActionsTestCase(TestCase):
         # Delete the invitation detail to simulate a "not found" situation
         self.invitation_detail.delete()
 
-        updateInvite(modeladmin, request, self.invitation)
+        update_invite(modeladmin, request, self.invitation)
 
         # Check that an error message is added
         modeladmin.message_user.assert_called_with(
