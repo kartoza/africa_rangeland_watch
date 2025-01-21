@@ -9,6 +9,7 @@ import Header from "../../components/Header";
 import Sidebar from "../../components/SideBar";
 import "../../styles/index.css";
 import Pagination from "../../components/Pagination";
+import SearchInput from "../../components/SearchInput";
 
 
 interface Layer {
@@ -20,30 +21,35 @@ interface Layer {
 }
 
 export default function UploadedResults() {
-  const [searchTerm, setSearchTerm] = useState("");
-  const [showAll, setShowAll] = useState(false);
   const dispatch = useDispatch<AppDispatch>();
   const [currentPage, setCurrentPage] = useState(1);
+  const [filteredLayers, setFilteredLayers] = useState<Layer[]>([]);
+  const [currentLayers, setcurrentLayers] = useState([]); 
+  
   
   const { layers, loading, error } = useSelector((state: any) => state.layer);
 
-  // Filtering based on search term
-  const filteredData = layers.filter((layer: any) =>
-    layer.name.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+
 
   // Fetch user-defined layers on component mount
   useEffect(() => {
     dispatch(fetchUserDefinedLayers());
   }, [dispatch]);
 
+  useEffect(() => {
+    if(!loading)
+      setFilteredLayers(layers);
+  }, [loading])
+
   const itemsPerPage = 4;
-  const totalItems = filteredData.length
+  const totalItems = layers.length
   const totalPages = Math.ceil(totalItems / itemsPerPage);
 
-  const currentLayers = filteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-
-
+  useEffect(() => {
+      const startIndex = (currentPage - 1) * itemsPerPage;
+      const endIndex = currentPage * itemsPerPage;
+      setcurrentLayers(filteredLayers.slice(startIndex, endIndex));
+    }, [filteredLayers, currentPage, itemsPerPage]);
 
 
   const handlePageChange = (page: number) => {
@@ -98,13 +104,15 @@ export default function UploadedResults() {
                     </Button>
 
                     {/* Search Input */}
-                    <Input
-                      placeholder="Search results"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      borderColor="gray.400"
-                      width="100%"
-                    />
+                    {!loading && (
+                      <SearchInput
+                        placeholder="Search results"
+                        data={layers}
+                        filterKeys={["name"]}
+                        onFilteredData={setFilteredLayers}
+                      />
+                    )}
+                    
                   </Flex>
                 </Box>
 
@@ -199,7 +207,7 @@ export default function UploadedResults() {
               
               
             </Box>
-            {filteredData.length >= 3 && (
+            {filteredLayers.length >= 3 && (
                   <Flex justifyContent="center" mb={5}>
                       <Pagination
                           currentPage={currentPage}
