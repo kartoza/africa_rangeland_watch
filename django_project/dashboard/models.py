@@ -12,6 +12,7 @@ class Dashboard(models.Model):
     PRIVACY_TYPES = [
         ('public', 'Public'),
         ('private', 'Private'),
+        ('organisation', 'Organisation'),
         ('restricted', 'Restricted'),
     ]
 
@@ -21,6 +22,21 @@ class Dashboard(models.Model):
         default=uuid.uuid4,
         help_text="Unique identifier for the dashboard."
     )
+
+    title = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True
+    )
+
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="created_dashboards",
+        null=True,
+        blank=True
+    )
+
 
     organisations = models.ManyToManyField(
         Organisation,
@@ -38,7 +54,7 @@ class Dashboard(models.Model):
 
     users = models.ManyToManyField(
         User,
-        related_name="dashboards",
+        related_name="accessible_dashboards",
         help_text="Users who have access to this dashboard.",
         blank=True
     )
