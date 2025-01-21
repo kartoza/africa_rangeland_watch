@@ -23,10 +23,10 @@ class UserSessionViewSet(viewsets.ViewSet):
         data = request.data
 
         if 'analysisState' in data:
-            session.analysis_state = data['analysisState']
+            session.analysis_state = data.get('analysisState')
 
         if 'last_page' in data:
-            session.last_page = data['last_page']
+            session.last_page = data.get('last_page')
 
         if 'activity_data' in data:
             # Merge the new activity data with existing data
