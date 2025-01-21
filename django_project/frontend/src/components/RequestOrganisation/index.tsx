@@ -88,9 +88,14 @@ export default function RequestOrganisation({ isOpen, onClose }: Props) {
         onClose();
       })
       .catch((error) => {
+        const errorMessage = 
+          error.response?.data?.message || 
+          error.response?.data?.error || 
+          "An unexpected error occurred";
+      
         toast({
           title: "Failed to submit request",
-          description: error.response.data.message,
+          description: errorMessage,
           status: "error",
           duration: 5000,
           isClosable: true,
@@ -100,7 +105,7 @@ export default function RequestOrganisation({ isOpen, onClose }: Props) {
             color: "white",
           },
         });
-      });
+      });      
   };
 
   return (
