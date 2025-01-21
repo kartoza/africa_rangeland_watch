@@ -106,7 +106,7 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
   };
 
   const handleSignIn = () => {
-    dispatch(loginUser(email, password));
+    dispatch(loginUser(email, password, rememberMe));
   };
 
   const closeModal = () => {
@@ -275,6 +275,7 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
                           gap="2px"
                           py="4px"
                           size={"lg"}
+                          checked={rememberMe}
                           onChange={() => setRememberMe(!rememberMe)}
                         >
                           Remember me

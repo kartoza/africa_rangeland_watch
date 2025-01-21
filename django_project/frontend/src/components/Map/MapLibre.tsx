@@ -14,6 +14,7 @@ import { hasSource, removeLayer, removeSource } from "./utils";
 import { fetchBaseMaps } from '../../store/baseMapSlice';
 import { fetchMapConfig, mapInitated } from '../../store/mapConfigSlice';
 import { Layer, setSelectedNrtLayer } from '../../store/layerSlice';
+import { selectIsLoggedIn } from "../../store/authSlice";
 import { COMMUNITY_ID } from "./DataTypes";
 
 import 'maplibre-gl/dist/maplibre-gl.css';
@@ -37,6 +38,7 @@ export const MapLibre = forwardRef(
     const { baseMaps } = useSelector((state: RootState) => state.baseMap);
     const { selected: selectedLandscape } = useSelector((state: RootState) => state.landscape);
     const { selectedNrt } = useSelector((state: RootState) => state.layer);
+    const isAuthenticated = useSelector(selectIsLoggedIn);
 
     const doRenderLayer = (layer: Layer) => {
       if (map) {
@@ -81,7 +83,7 @@ export const MapLibre = forwardRef(
             layerStyle['source'] = ID
             layerStyle['id'] = ID
           }
-          map.addLayer(layerStyle, COMMUNITY_ID)
+          map.addLayer(layerStyle, isAuthenticated ? COMMUNITY_ID : null)
         } else if (layer.type === "raster") {
           if (!hasSource(map, ID)) {
             map.addSource(ID, {
@@ -97,17 +99,21 @@ export const MapLibre = forwardRef(
               source: ID,
               type: "raster"
             },
-            COMMUNITY_ID
+            isAuthenticated ? COMMUNITY_ID : null
           )
           legendRef?.current?.renderLayer(layer)
         }
       }
     }
 
-    const doRemoveLayer = (layer: Layer) => {
+    const doRemoveLayer = (layer: Layer, isRemoveSource?: boolean) => {
       if (map) {
         const ID = `layer-${layer.id}`
-        removeLayer(map, ID)
+        if (isRemoveSource) {
+          removeSource(map, ID)
+        } else {
+          removeLayer(map, ID)
+        }
         legendRef?.current?.removeLayer(layer)
       }
     }
@@ -125,8 +131,8 @@ export const MapLibre = forwardRef(
         doRenderLayer(layer)
       },
       /** Hide layer */
-      removeLayer(layer: Layer) {
-        doRemoveLayer(layer)
+      removeLayer(layer: Layer, isRemoveSource?: boolean) {
+        doRemoveLayer(layer, isRemoveSource)
       }
     }));
 

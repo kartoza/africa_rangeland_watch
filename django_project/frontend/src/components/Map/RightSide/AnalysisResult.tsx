@@ -23,9 +23,12 @@ export function BarChart({ analysis }: Props) {
 
   const jsonData = analysis.results[0];
 
-  const labels: number[] = [jsonData.features[0].properties.year, jsonData.features[jsonData.features.length -1].properties.year];
+  let labels: number[] = [jsonData.features[0].properties.year];
+  if (jsonData.features.length > 1) {
+    labels.push(jsonData.features[jsonData.features.length -1].properties.year);
+  }
   const name1 = jsonData.features[0].properties.Name;
-  const name2 = jsonData.features[1].properties.Name;
+  const name2 = jsonData.features.length > 1 ? jsonData.features[1].properties.Name : null;
 
   const dataBar1 = jsonData.features
     .filter((feature:any) => feature.properties.Name === name1)
@@ -42,7 +45,7 @@ export function BarChart({ analysis }: Props) {
     ],
   };
 
-  if (name1 != name2) {
+  if (name2 !== null && name1 != name2) {
     const dataBar2 = jsonData.features
     .filter((feature:any) => feature.properties.Name === name2)
     .map((feature:any) => feature.properties[analysis.data.variable]);

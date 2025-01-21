@@ -31,3 +31,15 @@
     * **Joined:** It shows that the invitation has been accepted.
 
     * **PENDING:** It shows that the invitation is pending and needs to be reviewed.
+
+## Join organisation as a member
+
+If users join the organisation as members, they will see different tabs and options.
+
+[![Member UI](./img/organisation-info-img-3.png)](./img/organisation-info-img-3.png)
+
+1. **Test 2:** Name of the organisation.
+
+2. **Search organisation members:** Users can search for specific organisation members by using this search field.Enter the keyword in the search field and press the Enter key on the keyboard to search for organisation members.
+
+3. **Organisation Members:** Displays the list of organisation members and managers with their corresponding roles and actions.

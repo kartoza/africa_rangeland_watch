@@ -61,6 +61,14 @@ Enter your 1️⃣ `Current Password`, 2️⃣ `New Password`, and 3️⃣ `Repe
 
     [![Password Does Not Match](./img/guide-profile-img-17.png)](./img/guide-profile-img-17.png)
 
+## How to Update Personnel Information?
+
+This allows you to update your personal information, such as name, purpose, occupation, and country.
+
+Fill the latest information you want to update and then click on the 1️⃣ `Update Info` button to update the information.
+
+[![Update Personnel Info](./img/guide-profile-img-19.png)](./img/guide-profile-img-19.png)
+
 ## How to Request Organisation?
 
 Click on the 1️⃣ `Request Organisation` button to begin the process of requesting an organisation. Upon clicking, a new page will open, allowing you to join the organisation.

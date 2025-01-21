@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, forwardRef, useImperativeHandle } from 'react';
 import { useSelector } from "react-redux";
 import {FeatureCollection} from "geojson";
 import { combine } from "@turf/combine";
@@ -93,12 +93,21 @@ const styles = [
 ];
 
 /** Custom geometry selector. */
-export default function AnalysisCustomGeometrySelector(
-  { isDrawing, onSelected }: Props
-) {
+export const AnalysisCustomGeometrySelector = forwardRef((
+  { isDrawing, onSelected }: Props, ref
+) => {
     const [map, setMap] = useState<maplibregl.Map>(null);
     const { mapInitiated } = useSelector((state: RootState) => state.mapConfig);
     const drawingRef = useRef(null);
+
+    useImperativeHandle(ref, () => ({
+        /** Remove layer */
+        removeLayer() {
+          if (map) {
+            removeSource(map, CUSTOM_GEOM_ID);
+          }
+        }
+      }));
 
     const checkArea = (geom: FeatureCollection) => {
       try {
@@ -195,4 +204,4 @@ export default function AnalysisCustomGeometrySelector(
     }, [map, isDrawing])
 
     return <></>
-}
+})
