@@ -74,6 +74,7 @@ urlpatterns = [
     path('', include('support.urls')),
     path('', include('cloud_native_gis.urls')),
     path('', include('dashboard.urls')),
+    path('', include('analysis.urls')),
 ]
 
 if settings.DEBUG:

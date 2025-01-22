@@ -251,3 +251,28 @@ class LandscapeCommunity(models.Model):
     def __str__(self):
         """Return string representation of LandscapeArea."""
         return self.community_name
+
+
+
+class UserAnalysisResults(models.Model):
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True
+    )
+    analysis_results = models.JSONField(
+        null=True,
+        blank=True
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    source = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True
+    )
+
+    def __str__(self):
+        created_by = self.created_by.username if self.created_by else 'Unknown'
+        created_at = self.created_at
+        return f"Analysis by {created_by} on {created_at}"

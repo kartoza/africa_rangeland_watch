@@ -9,6 +9,8 @@ import mapConfigReducer from './mapConfigSlice';
 import analysisReducer from './analysisSlice';
 import uploadReducer from './uploadSlice';
 import userProfileReducer from './userProfileSlice';
+import userAnalysisReducer from './useAnalysisSlice';
+import dashboardReducer from './dashboardSlice';
 
 
 const store = configureStore({
@@ -23,6 +25,8 @@ const store = configureStore({
     analysis: analysisReducer,
     upload: uploadReducer,
     userProfile: userProfileReducer, 
+    userAnalysis: userAnalysisReducer,
+    dashboard: dashboardReducer
   },
 });
 

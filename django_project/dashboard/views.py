@@ -1,9 +1,13 @@
+from base.models import Organisation
+from analysis.models import UserAnalysisResults
 from rest_framework import generics, status, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from .models import Dashboard
 from .serializers import DashboardSerializer
 from django.db import models
+from rest_framework.exceptions import ValidationError
+from django.contrib.auth.models import User
 
 
 class DashboardListCreateView(generics.ListCreateAPIView):
@@ -29,7 +33,83 @@ class DashboardListCreateView(generics.ListCreateAPIView):
         ).distinct()
 
     def perform_create(self, serializer):
-        serializer.save(created_by=self.request.user)
+        # Extract data from the request
+        data = self.request.data
+        dashboard_name = data.get("config", {}).get("dashboardName")
+        preference = data.get("config", {}).get("preference")
+        chart_type = data.get("config", {}).get("chartType")
+        privacy_type = data.get("privacy_type")
+        selected_organisation = data.get("organisations", [None])[0]
+
+        # Save the dashboard instance with basic fields
+        dashboard = serializer.save(
+            created_by=self.request.user,
+            title=dashboard_name,
+            config={
+                "dashboardName": dashboard_name,
+                "preference": preference,
+                "chartType": chart_type,
+            },
+            privacy_type=privacy_type,
+        )
+
+        # Handle organisation and user associations based on privacy_type
+        if privacy_type == "organisation":
+            if selected_organisation:
+                try:
+                    organisation = Organisation.objects.get(
+                        id=selected_organisation
+                    )
+                    organisation_users = User.objects.filter(
+                        profile__organisations=organisation
+                    )
+                    dashboard.organisations.add(organisation)
+                    dashboard.users.add(*organisation_users)
+                except Organisation.DoesNotExist:
+                    raise ValidationError(
+                        {
+                            "organisations": 
+                            "Selected organisation does not exist."
+                        }
+                    )
+            else:
+                user_organisations = (
+                    self.request.user.profile.organisations.all()
+                )
+                if user_organisations:
+                    dashboard.organisations.add(*user_organisations)
+                    users_to_add = User.objects.filter(
+                        profile__organisations__in=user_organisations
+                    )
+                    dashboard.users.add(*users_to_add)
+                else:
+                    raise ValidationError(
+                        {
+                            "organisations": 
+                            "No valid organisation found for the user."
+                        }
+                    )
+
+        elif privacy_type == "public":
+            all_users = User.objects.all()
+            dashboard.users.add(*all_users)
+
+        analysis_results = data.get("analysis_results", [])
+        if analysis_results:
+            for analysis_id in analysis_results:
+                try:
+                    analysis_result = UserAnalysisResults.objects.get(
+                        id=analysis_id
+                    )
+                    dashboard.analysis_results.add(analysis_result)
+                except UserAnalysisResults.DoesNotExist:
+                    raise ValidationError(
+                        {
+                            "analysis_results":
+                            f"Analysis result {analysis_id} does not exist."
+                        }
+                    )
+        dashboard.save()
 
 
 class DashboardRetrieveUpdateDestroyView(
