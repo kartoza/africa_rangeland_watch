@@ -5,10 +5,14 @@ Africa Rangeland Watch (ARW).
 .. note:: Analysis APIs
 """
 import uuid
+from analysis.models import Analysis, InterventionArea
+from alerts.models import Indicator
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from django.contrib.gis.geos import Point
+from django.contrib.gis.geos import GEOSGeometry
 
 from analysis.analysis import (
     initialize_engine_analysis,
@@ -22,6 +26,37 @@ class AnalysisAPI(APIView):
     """API to do analysis."""
 
     permission_classes = [IsAuthenticated]
+
+    def save_analysis(self, user, data, results):
+        """Save the analysis to the database."""
+        try:
+            # Fetch or create the intervention area
+            intervention_area = None
+            if 'interventionArea' in data:
+                intervention_area, _ = InterventionArea.objects.get_or_create(
+                    name=data['interventionArea']
+                )
+
+            # Fetch the indicator
+            indicator = Indicator.objects.get(name=data['variable'])
+
+            # Create the analysis record
+            analysis = Analysis.objects.create(
+                uuid=uuid.uuid4(),
+                intervention_area=intervention_area,
+                indicator=indicator,
+                analysis_type=data['analysisType'].lower(),
+                temporal_resolution=data.get('temporalResolution'),
+                reference_period_start=data['period'].get('start'),
+                reference_period_end=data['period'].get('end'),
+                comparison_period_start=data['comparisonPeriod'].get('start'),
+                comparison_period_end=data['comparisonPeriod'].get('end'),
+                # geom = Point(data['longitude'], data['latitude'] ,srid=4326)
+                created_by=user
+            )
+            return analysis
+        except Exception as e:
+            raise ValueError(f"Error saving analysis: {e}")
 
     def run_baseline_analysis(self, data):
         """Run the baseline analysis."""
