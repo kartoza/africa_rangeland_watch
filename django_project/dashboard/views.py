@@ -39,7 +39,7 @@ class DashboardListCreateView(generics.ListCreateAPIView):
         preference = data.get("config", {}).get("preference")
         chart_type = data.get("config", {}).get("chartType")
         privacy_type = data.get("privacy_type")
-        selected_organisation = data.get("organisations", [None])[0]
+        organisation_names = data.get("organisations", [])
 
         # Save the dashboard instance with basic fields
         dashboard = serializer.save(
@@ -55,23 +55,24 @@ class DashboardListCreateView(generics.ListCreateAPIView):
 
         # Handle organisation and user associations based on privacy_type
         if privacy_type == "organisation":
-            if selected_organisation:
-                try:
-                    organisation = Organisation.objects.get(
-                        id=selected_organisation
-                    )
-                    organisation_users = User.objects.filter(
-                        profile__organisations=organisation
-                    )
-                    dashboard.organisations.add(organisation)
-                    dashboard.users.add(*organisation_users)
-                except Organisation.DoesNotExist:
-                    raise ValidationError(
-                        {
-                            "organisations": 
-                            "Selected organisation does not exist."
-                        }
-                    )
+            if organisation_names:
+                for organisation_name in organisation_names:
+                    try:
+                        organisation = Organisation.objects.get(
+                            name=organisation_name
+                        )
+                        organisation_users = User.objects.filter(
+                            profile__organisations=organisation
+                        )
+                        dashboard.organisations.add(organisation)
+                        dashboard.users.add(*organisation_users)
+                    except Organisation.DoesNotExist:
+                        raise ValidationError(
+                            {
+                                "organisations":
+                                "Selected organisation does not exist."
+                            }
+                        )
             else:
                 user_organisations = (
                     self.request.user.profile.organisations.all()
@@ -85,7 +86,7 @@ class DashboardListCreateView(generics.ListCreateAPIView):
                 else:
                     raise ValidationError(
                         {
-                            "organisations": 
+                            "organisations":
                             "No valid organisation found for the user."
                         }
                     )
