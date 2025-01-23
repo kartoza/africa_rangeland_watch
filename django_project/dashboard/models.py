@@ -4,6 +4,7 @@ from django.contrib.auth.models import Group, User
 from django.db import models
 
 from base.models import Organisation
+from analysis.models import UserAnalysisResults
 
 
 class Dashboard(models.Model):
@@ -72,6 +73,13 @@ class Dashboard(models.Model):
         choices=PRIVACY_TYPES,
         default='private',
         help_text="Privacy level of the dashboard."
+    )
+
+    analysis_results = models.ManyToManyField(
+        UserAnalysisResults,
+        related_name="dashboards",
+        blank=True,
+        help_text="Analysis results associated with this dashboard."
     )
 
     created_at = models.DateTimeField(
