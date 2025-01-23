@@ -49,12 +49,6 @@ The Goal section outlines the primary objective of the platform, providing you w
 
     [![Impact Report](./img/guide-about-img-4.png)](https://arw.dev.do.kartoza.com/static/CSA-Impact-report-11-04-23_hi-res.pdf)
 
-#### Contact Us
-
-To contact the ARW team, use the contact us form. Fill in the required details in the 1️⃣ `Form` and click the 2️⃣ `Submit` button to send your message.
-
-[![Contact Us](./img/guide-about-img-5.png)](./img/guide-about-img-5.png)
-
 ## Conversation
 
 ## Learn More

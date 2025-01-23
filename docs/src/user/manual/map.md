@@ -69,6 +69,8 @@ license: This program is free software; you can redistribute it and/or modify it
         
         [![Bare Ground Cover](./img/manual-map-img-21.png)](./img/manual-map-img-21.png)
 
+    **3. User Defined:** allows users to view the shape files they have uploaded. Users can also apply their shape files onn the checking the corresponding checkbox.
+
 2. **Analysis:** This section allows users to perform analyses based on various conditions and run the analysis on the map to visualise the results.
 
     [![Analysis Section](./img/manual-map-img-5.png)](./img/manual-map-img-5.png)
@@ -77,35 +79,43 @@ license: This program is free software; you can redistribute it and/or modify it
 
     [![Analysis Type](./img/manual-map-img-6.png)](./img/manual-map-img-6.png)
 
-    * Analysis type allows to select the type of analysis to be performed. The available options are:
+    * When users select a landscape, the map zooms into the selected area. From there, they can choose a polygon on the map to run the desired analysis.
 
-        **1. Baseline:** Baseline describes a 5-year (and in some cases longer) average of each variable. Baseline variables are visible at the whole extent of southern Africa. After this user have to select the polygon from the map.
+        - **For example:**
 
-        **2. Temporal:** Temporal analysis gives users greater control over the time period they wish to examine. After selecting this option, users can access additional settings.
+            - If a user selects `Bahine NP` from the landscape drop-down menu, they will automatically be zoomed into that location on the map, eliminating the need to navigate to it manually.
 
-        [![Temporal Type](./img/manual-map-img-7.png)](./img/manual-map-img-7.png)
+                [![Bahine NP](./img/manual-map-img-24.png)](./img/manual-map-img-24.png)
 
-        **1. Select temporal resolution:** This option enables users to customise the time period by selecting either an Annual or Quarterly timeframe, based on users needs.
+    **2. Select analysis type:** Analysis type allows to select the type of analysis to be performed. The available options are:
 
-        **2. Select variables:** variables are those that are used to compute temporal and spatial statistics for different areas within the app.
+    **1. Baseline:** Baseline describes a 5-year (and in some cases longer) average of each variable. Baseline variables are visible at the whole extent of southern Africa. After this user have to select the polygon from the map.
 
-        [![Variables](./img/manual-map-img-8.png)](./img/manual-map-img-8.png)
+    **2. Temporal:** Temporal analysis gives users greater control over the time period they wish to examine. After selecting this option, users can access additional settings.
 
-        - **EVI:** The Enhanced Vegetation Index (EVI) is a satellite-derived metric used to measure vegetation health, greenness, and biomass.
+    [![Temporal Type](./img/manual-map-img-7.png)](./img/manual-map-img-7.png)
 
-        - **NDVI:** The Normalised Difference Vegetation Index (NDVI) is similar to the Enhanced Vegetation Index (EVI) but is more sensitive to sparse vegetation, making it ideal for monitoring arid regions with low vegetation greenness.
+    **1. Select temporal resolution:** This option enables users to customise the time period by selecting either an Annual or Quarterly timeframe, based on users needs.
 
-        - **Bare ground cover:**  Bare ground cover refers to the proportion of the landscape where the surface is exposed without significant vegetation, such as grass or woody plants. These areas may consist of soil, sand, or rock and are important in ecological assessments as they affect processes like erosion, water infiltration, and habitat stability.
+    **2. Select variables:** variables are those that are used to compute temporal and spatial statistics for different areas within the app.
 
-        - After selecting the variable, user will be able to select the time period.
+    [![Variables](./img/manual-map-img-8.png)](./img/manual-map-img-8.png)
 
-            [![Temporal Type](./img/manual-map-img-9.png)](./img/manual-map-img-9.png)
+    - **EVI:** The Enhanced Vegetation Index (EVI) is a satellite-derived metric used to measure vegetation health, greenness, and biomass.
 
-            **1. Select reference period:** This option allows users to choose a reference period for comparison. After this user will be able to select comparison period.
+    - **NDVI:** The Normalised Difference Vegetation Index (NDVI) is similar to the Enhanced Vegetation Index (EVI) but is more sensitive to sparse vegetation, making it ideal for monitoring arid regions with low vegetation greenness.
 
-            **2. Select comparison period:** This option allows users to choose a comparison period for comparison with the reference period.
+    - **Bare ground cover:**  Bare ground cover refers to the proportion of the landscape where the surface is exposed without significant vegetation, such as grass or woody plants. These areas may consist of soil, sand, or rock and are important in ecological assessments as they affect processes like erosion, water infiltration, and habitat stability.
 
-            **3. Select quarter:** Allows users to select the specific quarter of the year. This option is only available when the temporal resolution is set to quarterly.
+    - After selecting the variable, user will be able to select the time period.
+
+        [![Temporal Type](./img/manual-map-img-9.png)](./img/manual-map-img-9.png)
+
+        **1. Select reference period:** This option allows users to choose a reference period for comparison. After this user will be able to select comparison period.
+
+        **2. Select comparison period:** This option allows users to choose a comparison period for comparison with the reference period.
+
+        **3. Select quarter:** Allows users to select the specific quarter of the year. This option is only available when the temporal resolution is set to quarterly.
 
         **3. Spatial:** After selecting this option, the user can choose the desired variable, select a polygon from the map, and proceed to run the analysis.
 
@@ -113,9 +123,27 @@ license: This program is free software; you can redistribute it and/or modify it
 
         **4. BACI:** BACI (Before-After-Control-Impact) evaluates land management effects by comparing changes over time between impacted and control areas.
 
-        **5. Run Analysis:** After selecting the desired analysis type, users can proceed to run the analysis by clicking the Run Analysis.
+        **5. Run Analysis:** Users are required to select the polygon before running the analysis.
 
-        **6. Reset From:** This option allows users to reset the analysis to its default state.
+        * **Select polygon:** To select a polygon, users need to click on the desired polygon after choosing the landscape. Users can only select one polygon at a time.
+
+            [![Polygons](./img/manual-map-img-25.png)](./img/manual-map-img-25.png)
+
+            **1 Landscape:** For example, we have selected the `Bahine NP` landscape.
+
+            **2 Polygons:** The highlighted area displays the available polygons within the selected landscape. 
+
+            **3 Click polygon the map:** This description provides users with the location of the polygon, specifying whether it is situated in the eastern, northern, western, or southern section of the landscape.
+
+            [![Polygons 2](./img/manual-map-img-26.png)](./img/manual-map-img-26.png)
+
+            * After successfully running the analysis, the user will be able to view the results in the statistics pop up. The `Statistics` table provides quantitative data for the selected polygon. It includes the following columns: Name, EVI, and Bare Ground % etc.
+
+                [![Statistics](./img/manual-map-img-27.png)](./img/manual-map-img-27.png)
+
+        **6. Reset From:** This option allows users to reset the form to its default state, including the selected polygon.
+
+        [![Map](./img/manual-map-img-28.png)](./img/manual-map-img-28.png)
 
 3. **Upload:** Users can upload their own data to the app for analysis. This feature is useful for users who have their own data and want to perform analysis on it. Click on this `Upload` button to upload the shape file.
 

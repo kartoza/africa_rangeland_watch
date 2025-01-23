@@ -55,24 +55,6 @@ The Goal section outlines the primary objective of the platform, providing users
 
     [![Impact Report](./img/about-img-8.png)](https://arw.dev.do.kartoza.com/static/CSA-Impact-report-11-04-23_hi-res.pdf)
 
-#### Contact Us
-
-Contact us section allows users to get in touch with the team behind the platform.
-
-[![Contact Us](./img/about-img-6.png)](./img/about-img-6.png)
-
-* **First Name:** Users can enter their first name.
-    
-* **Last Name:** Users can enter their last name
-    
-* **Email:** Users verified email address.
-    
-* **Organisation:** The details about the organisation that wishes to contact the platform.
-    
-* **Additional Details:** Users can enter any additional details they wish to share with the platform.
-
-* **Submit:** By clicking on this button user will bw able to submit their contact information to the platform.
-
 ## Conversation
 
 ## Learn More
