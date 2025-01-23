@@ -2,17 +2,19 @@ from unittest import mock
 from django.test import TestCase
 from django.urls import reverse
 from django.contrib.auth.models import User
+from base.admin import approve_join_request, update_invite
 from rest_framework.test import APIClient
-from base.models import Organisation, OrganisationInvitation, UserOrganisations, UserProfile
+from base.models import Organisation, OrganisationInvitation, OrganisationInvitationDetail, UserOrganisations, UserProfile
 import json
 from invitations.models import Invitation
-from unittest.mock import patch
-
-
+from unittest.mock import patch, MagicMock
 from rest_framework.test import APIClient
 from django.test import TestCase
 from django.contrib.auth.models import User
-from base.models import Organisation, UserProfile, UserOrganisations
+from base.models import Organisation, UserProfile, UserOrganisations, OrganisationInvitationDetail
+from django.contrib import messages
+
+
 
 class OrganisationViewsTestCase(TestCase):
     def setUp(self):
@@ -158,22 +160,22 @@ class OrganisationViewsTestCase(TestCase):
 
 
 
-class InviteToOrganisationTestCase(TestCase):
+class JoinOrganisationTestCase(TestCase):
     def setUp(self):
-        # Create users
-        self.org_manager = User.objects.create_user(
-            username="org_manager", email="manager@example.com", password="password"
+        self.manager = User.objects.create_user(
+            username="manager",
+            email="manager@example.com",
+            password="password"
         )
-        self.unrelated_user = User.objects.create_user(
-            username="unrelated_user", email="unrelated@example.com", password="password"
+        self.user = User.objects.create_user(
+            username="user",
+            email="user@example.com",
+            password="password"
         )
-
-        # Create organisation
         self.organisation = Organisation.objects.create(name="Test Organisation")
-
         # Create UserProfile for each user
-        self.org_manager_profile, _ = UserProfile.objects.get_or_create(user=self.org_manager)
-        self.unrelated_user_profile, _ = UserProfile.objects.get_or_create(user=self.unrelated_user)
+        self.org_manager_profile, _ = UserProfile.objects.get_or_create(user=self.manager)
+        self.unrelated_user_profile, _ = UserProfile.objects.get_or_create(user=self.user)
 
         # Attach user to org and make manager using UserOrganisations model
         self.user_org_relation = UserOrganisations.objects.create(
@@ -188,53 +190,44 @@ class InviteToOrganisationTestCase(TestCase):
             user_type="member"  # unrelated user is not a manager
         )
 
-        # Client setup and login
-        self.client.login(username="org_manager", password="password")
+        self.client.login(username="user", password="password")
+        self.url = reverse("join_organization")
 
-        # URL for inviting user to organisation
-        self.url = reverse("invite_to_organisation", args=[self.organisation.id])
-
-    def test_invite_success(self):
-        """Test successful invitation."""
-        data = {"email": "new_user@example.com", "message": "Welcome to the team!"}
-        response = self.client.post(self.url, data=json.dumps(data), content_type="application/json")
+    def test_join_organisation_success(self):
+        """Test a successful join organisation request."""
+        data = {"selectedOrganisationId": self.organisation.id}
+        response = self.client.post(self.url, json.dumps(data), content_type="application/json")
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.json(), {"success": True})
+        self.assertIn("message", response.json())
+        self.assertEqual(response.json()["message"], "Request sent successfully!")
 
-        # Verify that an invitation was created
-        invitation = OrganisationInvitation.objects.filter(email="new_user@example.com").first()
-        self.assertIsNotNone(invitation)
-        self.assertEqual(invitation.organisation, self.organisation)
-
-
-    def test_invite_invalid_form(self):
-        """Test invitation with invalid email."""
-        data = {"email": "invalid-email"} 
-        response = self.client.post(self.url, data=data, content_type="application/json")
+    def test_join_organisation_invalid_organisation(self):
+        """Test with an invalid organisation ID."""
+        data = {"selectedOrganisationId": 999}
+        response = self.client.post(self.url, json.dumps(data), content_type="application/json")
 
         self.assertEqual(response.status_code, 400)
-        self.assertIn("error", response.json())
-        self.assertIn("email", response.json()["details"])
+        self.assertIn("message", response.json())
+        self.assertEqual(response.json()["message"], "Invalid organisation ID.")
 
+    def test_join_organisation_already_requested(self):
+        """Test trying to join an organisation twice."""
+        OrganisationInvitation.objects.create(email=self.user.email)
+        OrganisationInvitationDetail.objects.create(
+            invitation=OrganisationInvitation.objects.first(),
+            organisation=self.organisation
+        )
 
-    def test_invite_invalid_http_method(self):
-        """Test handling of invalid HTTP methods."""
-        response = self.client.get(self.url)
+        data = {"selectedOrganisationId": self.organisation.id}
+        response = self.client.post(self.url, json.dumps(data), content_type="application/json")
 
-        self.assertEqual(response.status_code, 405)
-        self.assertEqual(response.json(), {"error": "Invalid HTTP method. Use POST."})
-
-
-    def test_invite_unrelated_user(self):
-        """Test invitation by an unrelated user."""
-        self.client.logout()
-        self.client.login(username="unrelated_user", password="password")
-
-        data = {"email": "new_user@example.com"}
-        response = self.client.post(self.url, data=data, content_type="application/json")
-
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("message", response.json())
+        self.assertEqual(
+            response.json()["message"], 
+            "You have already requested to join this organisation."
+        )
 
 
 
@@ -333,3 +326,106 @@ class AddOrganisationTests(TestCase):
         response = self.client.post(reverse('add_organization'), json.dumps(data), content_type="application/json")
         self.assertEqual(response.status_code, 200)
         self.assertContains(response, "Request sent successfully!")
+
+
+
+class AdminActionsTestCase(TestCase):
+    def setUp(self):
+        # Create necessary objects for testing
+        self.user = User.objects.create_user(username="testuser", password="password")
+        self.organisation = Organisation.objects.create(name="Test Organisation")
+        self.invitation = OrganisationInvitation.objects.create(
+            email="test@example.com", inviter=self.user, organisation=self.organisation
+        )
+        self.invitation_detail = OrganisationInvitationDetail.objects.create(
+            invitation=self.invitation,
+            organisation=self.organisation,
+            request_type="add_organisation"
+        )
+
+    def test_update_invite_success(self):
+        # Simulate the updateInvite function when invitation detail exists
+        modeladmin = MagicMock()
+        request = MagicMock()
+        update_invite(modeladmin, request, self.invitation)
+
+        # Verify that the invitation detail's 'accepted' status is set to True
+        self.invitation_detail.refresh_from_db()
+        self.assertTrue(self.invitation_detail.accepted)
+
+    def test_update_invite_not_found(self):
+        # Simulate the updateInvite function when invitation detail doesn't exist
+        modeladmin = MagicMock()
+        request = MagicMock()
+
+        # Delete the invitation detail to simulate a "not found" situation
+        self.invitation_detail.delete()
+
+        update_invite(modeladmin, request, self.invitation)
+
+        # Check that an error message is added
+        modeladmin.message_user.assert_called_with(
+            request, "OrganisationInvitationDetail not found for this request.", level="error"
+        )
+
+
+class AdminActionsTestCase(TestCase):
+    def setUp(self):
+        # Create necessary objects for testing
+        self.user = User.objects.create_superuser(username="testuser", password="password")
+        self.user_manager = User.objects.create_superuser(username="testuser_manager", password="password")
+        self.organisation = Organisation.objects.create(name="Test Organisation")
+        self.invitation = OrganisationInvitation.objects.create(
+            email="test@example.com", inviter=self.user, organisation=self.organisation
+        )
+        self.invitation_manager = OrganisationInvitation.objects.create(
+            email="test_manager@example.com", inviter=self.user_manager, organisation=self.organisation
+        )
+        self.invitation_detail = OrganisationInvitationDetail.objects.create(
+            invitation=self.invitation,
+            organisation=self.organisation,
+            request_type="join_organisation"
+        )
+        self.invitation_detail_manager = OrganisationInvitationDetail.objects.create(
+            invitation=self.invitation_manager,
+            organisation=self.organisation,
+            request_type="add_organisation"
+        )
+        self.metadata = json.dumps({
+            "organisationName": "Test Organisation Test",
+            "industry": "Technology"
+        })
+        self.invitation_detail_manager.metadata = self.metadata
+        self.invitation_detail_manager.save()
+
+    @patch("base.admin.EmailMultiAlternatives.send")
+    def test_approve_join_request_add_organisation(self, mock_send):
+        # Simulate the approve_join_request function for add_organisation requests
+        modeladmin = MagicMock()
+        request = MagicMock()
+        queryset = OrganisationInvitation.objects.filter(id=self.invitation_manager.id)
+
+        approve_join_request(modeladmin, request, queryset)
+
+        user_profile = UserProfile.objects.get(user=self.user_manager)
+        user_org = UserOrganisations.objects.get(user_profile=user_profile)
+        self.assertEqual(user_org.user_type, 'manager')
+
+        # Check if the email was sent
+        mock_send.assert_called_once()
+
+    @patch("base.admin.EmailMultiAlternatives.send")
+    def test_approve_join_request_no_superuser(self, mock_send):
+        # Remove the superuser to simulate the error case
+        User.objects.filter(is_superuser=True).delete()
+
+        modeladmin = MagicMock()
+        request = MagicMock()
+        queryset = OrganisationInvitation.objects.filter(id=self.invitation.id)
+
+        approve_join_request(modeladmin, request, queryset)
+
+        # Check that an error message is shown
+        modeladmin.message_user.assert_called_with(
+            request, "No admin user found to process the request.", level=messages.ERROR
+        )

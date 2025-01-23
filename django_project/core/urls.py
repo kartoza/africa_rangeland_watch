@@ -80,6 +80,7 @@ urlpatterns = [
             {'get': 'retrieve', 'put': 'update'}
         )
     ),
+    path('', include('dashboard.urls')),
 ]
 
 if settings.DEBUG:
