@@ -142,11 +142,15 @@ export const checkLoginStatus = () => async (dispatch: AppDispatch) => {
 // Logout action
 export const logoutUser = () => async (dispatch: AppDispatch) => {
   localStorage.clear();
-  await axios.post('/api/logout/', {}, { withCredentials: true });
-  axios.defaults.headers['Authorization'] = '';
-  setCSRFToken();
-  dispatch(logout());
-  window.location.href = '/';
+  try {
+    await axios.post('/api/logout/', {}, { withCredentials: true });
+    axios.defaults.headers['Authorization'] = '';
+    setCSRFToken();
+    dispatch(logout());
+    window.location.href = '/';
+  } catch (e) {
+    console.error(e)
+  }
 };
 
 // Action to request password reset
