@@ -269,7 +269,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
         {/* Draw buttons for spatial */}
         {
           data.analysisType === Types.SPATIAL && data.variable &&
-          <Box mb={4} color={'red'}>
+          <Box mb={4} color={'green'}>
             Draw a reference area
           </Box>
         }
@@ -350,7 +350,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
           <HStack mt={4} color={'red'}
             wrap="wrap" gap={2} alignItems='center' justifyContent='center'>
             <Spinner size="xs"/>
-            <Text color={'red'}>Generating % difference in {data.variable}</Text>
+            <Text color={'green'}>Generating % difference in {data.variable}</Text>
           </HStack>
         }
         {/* 4) Select variable for temporal */}
@@ -415,7 +415,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
       <Box mt={4} mb={4} marginTop={10}>
         {
           !dataError ?
-            <Box mb={4} color={'red'}>
+            <Box mb={4} color={'green'}>
               Click polygons on the
               map {communitySelected ?
               <Box>{communitySelected.name}</Box> : null}
