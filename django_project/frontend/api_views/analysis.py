@@ -5,8 +5,6 @@ Africa Rangeland Watch (ARW).
 .. note:: Analysis APIs
 """
 import uuid
-from analysis.models import Analysis, InterventionArea
-from alerts.models import Indicator
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
