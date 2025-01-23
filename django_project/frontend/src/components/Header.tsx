@@ -66,13 +66,15 @@ export default function Header(props: any) {
             >
                 {/* Logo on the Left */}
                 <Flex alignItems="center">
-                    <Image
-                        src="static/images/main_logo.svg"
-                        alt="Header Logo"
-                        h="52px"
-                        w="auto"
-                        maxW="190px"
-                    />
+                    <a href={'/'}>
+                        <Image
+                            src="static/images/main_logo.svg"
+                            alt="Header Logo"
+                            h="52px"
+                            w="auto"
+                            maxW="190px"
+                        />
+                    </a>
                 </Flex>
 
                 {/* Centered Menu Items (Desktop only) */}
