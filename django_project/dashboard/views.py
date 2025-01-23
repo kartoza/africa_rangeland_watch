@@ -97,7 +97,7 @@ class DashboardCreateView(APIView):
                                 {
                                     "error": True,
                                     "message":
-                                    f"Organisation does not exist."
+                                    "Organisation does not exist."
                                 },
                                 status=status.HTTP_400_BAD_REQUEST
                             )
