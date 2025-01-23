@@ -51,6 +51,7 @@ nav:
                           - user/guide/index.md
                   - Manual :
                           - user/manual/index.md
+                  - Onboarding: user/onboard.md
         - Administrators:
                 - administrator/index.md
                 - Guide:
