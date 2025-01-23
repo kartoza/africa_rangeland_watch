@@ -15,11 +15,12 @@ import {
     Stack,
     Select,
     useBreakpointValue,
+    useToast,
   } from "@chakra-ui/react";
   import React, { useEffect, useState } from "react";
   import { useSelector, useDispatch } from 'react-redux';
   import { createDashboard, DashboardData } from "../store/dashboardSlice";
-import { AppDispatch, RootState } from "../store";
+  import { AppDispatch, RootState } from "../store";
 
 
   
@@ -40,36 +41,40 @@ import { AppDispatch, RootState } from "../store";
     const dispatch = useDispatch<AppDispatch>();
     const [selectedOrganisation, setSelectedOrganisation] = useState("");
     const [organisations, setOrganisations] = useState<string[]>([]);
+    const toast = useToast();
+
+    const dashboardCreated = useSelector(
+        (state: RootState) => state.dashboard.dashboardCreated
+      );
+    
+      useEffect(() => {
+        if (dashboardCreated) {
+            toast({
+                title: "Dashboard Created!",
+                description: "Your dashboard has been created please head over to the dashboard page to view it.",
+                status: "success",
+                duration: 5000,
+                isClosable: true,
+                position: "top-right",
+                containerStyle: {
+                  backgroundColor: "#00634b",
+                  color: "white",
+                },
+              });
+              onClose();
+        }
+      }, [dashboardCreated]);
 
     const { profile } = useSelector((state: RootState) => state.userProfile);
 
     useEffect(() => {
-        // Populate organisations when the profile is loaded
         if (profile && profile.organisations) {
             setOrganisations(profile.organisations);
-            console.log(profile.organisations)
         }
     }, [profile]);
   
-    const handleSave = () => {
-      console.log({
-        dashboardName,
-        preference,
-        chartType: preference === "chart" ? chartType : null,
-        accessLevel,
-      });
-      onClose();
-    };
-
+   
     const handleCreateDashboard = () => {
-        console.log({
-            dashboardName,
-            preference,
-            chartType: preference === "chart" ? chartType : null,
-            accessLevel,
-            selectedOrganisation,
-            selectedAnalysis
-          });
         const newDashboard: DashboardData = {
             title: "My Dashboard",
             config: {
@@ -84,7 +89,6 @@ import { AppDispatch, RootState } from "../store";
             groups: [],
             users: [],
           };
-        
           dispatch(createDashboard(newDashboard));
       };
     

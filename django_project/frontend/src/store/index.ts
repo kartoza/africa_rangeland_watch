@@ -9,7 +9,7 @@ import mapConfigReducer from './mapConfigSlice';
 import analysisReducer from './analysisSlice';
 import uploadReducer from './uploadSlice';
 import userProfileReducer from './userProfileSlice';
-import userAnalysisReducer from './useAnalysisSlice';
+import userAnalysisReducer from './userAnalysisSlice';
 import dashboardReducer from './dashboardSlice';
 
 

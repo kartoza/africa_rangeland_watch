@@ -1,5 +1,6 @@
 from django.urls import path
 from .views import (
+    DashboardCreateView,
     DashboardListCreateView,
     DashboardRetrieveUpdateDestroyView,
     DashboardShareView,
@@ -22,4 +23,6 @@ urlpatterns = [
         DashboardShareView.as_view(),
         name='dashboard-share'
     ),
+    path('dashboards/create/', DashboardCreateView.as_view(), name='dashboard-create'),
+    
 ]

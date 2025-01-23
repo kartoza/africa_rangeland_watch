@@ -19,12 +19,14 @@ export interface Analysis {
 }
 
 interface AnalysisState extends DataState {
-  analysis: Analysis;
+  analysis: Analysis | null;
+  saveAnalysisFlag: boolean;
   referenceLayerDiff?: Layer;
 }
 
 const initialAnalysisState: AnalysisState = {
   analysis: null,
+  saveAnalysisFlag: false,
   loading: false,
   error: null,
   referenceLayerDiff: null
@@ -49,6 +51,7 @@ export const analysisSlice = createSlice({
     },
     resetAnalysisResult(state, action: PayloadAction<string>) {
       state.analysis = null;
+      state.saveAnalysisFlag = false;
       if (action.payload) {
         if (action.payload !== 'Spatial') {
           state.referenceLayerDiff = null;
@@ -68,6 +71,7 @@ export const analysisSlice = createSlice({
         state.loading = false;
         // check if result is from spatial reference layer diff
         const data = action.payload.data;
+        state.saveAnalysisFlag = true;
         if (data.analysisType === 'Spatial' && data.latitude === null && data.longitude === null) {
           state.referenceLayerDiff = {
             ...action.payload.results,
@@ -79,6 +83,7 @@ export const analysisSlice = createSlice({
       })
       .addCase(doAnalysis.rejected, (state, action) => {
         state.loading = false;
+        state.saveAnalysisFlag = false;
         state.error = action.error.message || 'An error occurred while fetching landscapes';
       })
   }

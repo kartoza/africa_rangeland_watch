@@ -6,6 +6,7 @@ import axios from 'axios';
 interface AnalysisState {
   data: any[];
   loading: boolean;
+  savedAnalysisFlag: boolean;
   error: string | null;
 }
 
@@ -13,6 +14,7 @@ interface AnalysisState {
 const initialState: AnalysisState = {
   data: [],
   loading: false,
+  savedAnalysisFlag: false,
   error: null,
 };
 
@@ -66,13 +68,16 @@ const userAnalysisSlice = createSlice({
       .addCase(saveAnalysis.pending, (state) => {
         state.loading = true;
         state.error = null;
+        state.savedAnalysisFlag = false;
       })
       .addCase(saveAnalysis.fulfilled, (state, action) => {
         state.loading = false;
         state.data.push(action.payload);
+        state.savedAnalysisFlag = true;
       })
       .addCase(saveAnalysis.rejected, (state, action) => {
         state.loading = false;
+        state.savedAnalysisFlag = false;
         state.error = action.payload as string;
       });
   },

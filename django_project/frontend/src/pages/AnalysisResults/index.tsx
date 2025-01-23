@@ -24,7 +24,7 @@ import AnalysisSideBar from "../../components/SideBar/AnalysisSideBar";
 import "../../styles/index.css";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "../../store";
-import { fetchAnalysis } from "../../store/useAnalysisSlice";
+import { fetchAnalysis } from "../../store/userAnalysisSlice";
 import maplibregl, { Map } from 'maplibre-gl';
 import "maplibre-gl/dist/maplibre-gl.css"; 
 import CreateDashboardModal from "../../components/CreateDashboard";
@@ -66,27 +66,6 @@ export default function AnalysisResults() {
   }, [loading,analysisData]);
 
 
-  const renderMap = (latitude: number, longitude: number) => {
-    useEffect(() => {
-      // Initialize the map only once
-      const map = new Map({
-        container: 'map', // The container element for the map
-        style: 'https://demotiles.maplibre.org/style.json', // Map style URL
-        center: [longitude, latitude], // Set initial coordinates
-        zoom: 10, // Initial zoom level
-      });
-
-      // Add a marker at the given coordinates
-      new maplibregl.Marker()
-        .setLngLat([longitude, latitude])
-        .addTo(map);
-
-      return () => map.remove(); // Cleanup the map on component unmount
-    }, [latitude, longitude]);
-
-    return <div id="map" style={{ height: '200px', width: '150px' }} />;
-  };
-
   const handleCheckboxChange = (isChecked: boolean, analysisId: any) => {
     setSelectedAnalysis((prevSelected: any[]) => {
       if (isChecked) {
@@ -115,12 +94,12 @@ export default function AnalysisResults() {
         <meta name="description" content="View detailed analysis results and reports." />
       </Helmet>
       <Header />
-
+  
       <Box bg="white" w="100%">
         <Flex direction={{ base: "column", md: "row" }} gap="30px" alignItems="start">
           {/* Sidebar */}
           <Sidebar display={{ base: "none", md: "flex" }} />
-
+  
           {/* Main Content */}
           <Box
             flex="1"
@@ -132,40 +111,46 @@ export default function AnalysisResults() {
             <Heading size="lg" mb={6} color="black">
               Analysis Results
             </Heading>
-
+  
             {/* Search & Action Row */}
             <Flex justify="space-between" align="center" mb={6} direction={{ base: "column", md: "row" }}>
               <Box width={{ base: "100%", md: "50%" }} mb={{ base: 4, md: 0 }} ml={{ md: "0px" }}>
-                  <Flex direction={{ base: "column", md: "row" }} gap={4} align="center">
-                    {/* Filter Button */}
-                    <Button
-                      leftIcon={<FaFilter />}
-                      colorScheme="green"
-                      variant="solid"
-                      backgroundColor="dark_green.800"
-                      _hover={{ backgroundColor: "light_green.400" }}
-                      fontWeight={700}
-                      w={{base: "100%",md:"auto"}}
-                      h={10}
-                      color="white.a700"
-                      borderRadius="0px"
-                    >
-                      Filter
-                    </Button>
-
-                    {/* Search Input */}
-                    <Input
-                      placeholder="Search tickets"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      borderColor="gray.400"
-                      width="100%"
-                    />
-                  </Flex>
-                </Box>
-
-              {/* Create Dashboard and New Analysing Buttons */}
-              <Box display="flex" gap={2} width={{base: "100%" ,md:"auto"}} mb={{ base: 4, md: 0 }} flexDirection={{ base: "column", md: "row" }}>
+                <Flex direction={{ base: "column", md: "row" }} gap={4} align="center">
+                  {/* Filter Button */}
+                  <Button
+                    leftIcon={<FaFilter />}
+                    colorScheme="green"
+                    variant="solid"
+                    backgroundColor="dark_green.800"
+                    _hover={{ backgroundColor: "light_green.400" }}
+                    fontWeight={700}
+                    w={{ base: "100%", md: "auto" }}
+                    h={10}
+                    color="white.a700"
+                    borderRadius="0px"
+                  >
+                    Filter
+                  </Button>
+  
+                  {/* Search Input */}
+                  <Input
+                    placeholder="Search tickets"
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    borderColor="gray.400"
+                    width="100%"
+                  />
+                </Flex>
+              </Box>
+  
+              {/* Create Dashboard and New Analysis Buttons */}
+              <Box
+                display="flex"
+                gap={2}
+                width={{ base: "100%", md: "auto" }}
+                mb={{ base: 4, md: 0 }}
+                flexDirection={{ base: "column", md: "row" }}
+              >
                 <Button
                   colorScheme="green"
                   variant="outline"
@@ -188,18 +173,17 @@ export default function AnalysisResults() {
                   borderRadius="0px"
                   h={10}
                 >
-                  New Analysing
+                  New Analysis
                 </Button>
               </Box>
-
             </Flex>
-
+  
             {/* Content Section */}
             <Divider mb={6} borderColor="black" borderWidth="1px" />
-
+  
             {loading && <Text>Loading...</Text>}
             {error && <Text>{error}</Text>}
-
+  
             {/* Analysis Cards Section */}
             <Box
               maxHeight="calc(100vh - 250px)"
@@ -209,92 +193,87 @@ export default function AnalysisResults() {
               flexDirection="column"
               gap={4}
             >
-              {analysisData?.map((analysis: any, index: number) => (
-                <Card key={index} boxShadow="md" borderRadius="md">
-                  <CardBody>
-                    <Flex
-                      direction={{ base: "column", md: "row" }}
-                      align="stretch" 
-                      gap={4}
-                      justify="space-between"
-                    >
-                       <Checkbox
-                        isChecked={selectedAnalysis.includes(analysis?.id)}
-                        onChange={(e) =>
-                          handleCheckboxChange(e.target.checked, analysis?.id)
-                        }
-                       />
-                      {/* Image */}
-                      <Image
-                        src={analysis?.image}
-                        alt={analysis?.heading}
-                        borderRadius="md"
-                        boxSize={{ base: "100%", md: "150px" }}
-                        mb={{ base: 4, md: 0 }}
-                      />
+              {analysisData?.map((analysis: any, index: number) => {
+                // Generate a meaningful title
+                const projectName = analysis?.analysis_results?.results?.features[0]?.properties?.Project || "Unknown Project";
+                const locationName = analysis?.analysis_results?.results?.features[0]?.properties?.Name || "Unknown Location";
+                const analysisType = analysis?.analysis_results?.data?.analysisType || "Analysis";
+                // const communityId = analysis?.analysis_results?.data?.community || "Unknown Community";
+                const meaningfulTitle = `${analysisType} Analysis of ${locationName} in the ${projectName} Landscape.`;
+  
+                return (
+                  <Card key={index} boxShadow="md" borderRadius="md">
+                    <CardBody>
+                      <Flex
+                        direction={{ base: "column", md: "row" }}
+                        align="stretch"
+                        gap={4}
+                        justify="space-between"
+                      >
+                        <Checkbox
+                          isChecked={selectedAnalysis.includes(analysis?.id)}
+                          onChange={(e) =>
+                            handleCheckboxChange(e.target.checked, analysis?.id)
+                          }
+                        />
+  
+                        {/* Content */}
+                        <Box flex="1" display="flex" flexDirection="column" justifyContent="space-between">
 
-                      {/* {renderMap(analysis?.analysis_results?.data?.latitude, analysis?.analysis_results?.data?.longitude)} */}
-
-                      
-                      {/* Content */}
-                      <Box flex="1" display="flex" flexDirection="column" justifyContent="space-between">
-                        <Heading size="md" fontWeight="bold" color="black" mb={2}>
-                          {analysis?.heading}
-                        </Heading>
-                        
-                        <Text mt={2} color="black" mb={4}>
-                          {analysis?.description}
-                        </Text>
-                        
-                        <Box mt={4} display="flex" flexWrap="wrap" gap={2}>
-                          <Tag colorScheme="green" mr={2}>
-                            <TagLabel>{format(new Date(analysis?.created_at), 'MMMM dd, yyyy HH:mm:ss')}</TagLabel>
-                          </Tag>
-                          <Tag colorScheme="blue" mr={2}>
-                            <TagLabel>{analysis?.analysis_results?.results?.features[0]?.properties?.Project}</TagLabel>
-                          </Tag>
-                          <Tag colorScheme="teal">
-                            <TagLabel>{analysis?.analysis_results?.results?.features[0]?.properties?.Name}</TagLabel>
-                          </Tag>
+                          <Heading size="md" fontWeight="bold" color="black" mb={2}>
+                            {meaningfulTitle}
+                          </Heading>
+  
+                          <Box mt={4} display="flex" flexWrap="wrap" gap={2}>
+                            <Tag colorScheme="green" mr={2}>
+                              <TagLabel>
+                                {format(new Date(analysis?.created_at), "MMMM dd, yyyy HH:mm:ss")}
+                              </TagLabel>
+                            </Tag>
+                            <Tag colorScheme="blue" mr={2}>
+                              <TagLabel>{projectName}</TagLabel>
+                            </Tag>
+                            <Tag colorScheme="teal">
+                              <TagLabel>{locationName}</TagLabel>
+                            </Tag>
+                          </Box>
                         </Box>
-                      </Box>
-                
-                      {/* View Button */}
-                      <Flex justify="flex-end" mt={{ base: 4, md: 8 }}>
-                        <Button
-                          colorScheme="green"
-                          variant="solid"
-                          backgroundColor="dark_green.800"
-                          _hover={{ backgroundColor: "light_green.400" }}
-                          color="white"
-                          width="auto"
-                          borderRadius="0px"
-                          h={10}
-                          onClick={() => handleViewClick(analysis)} 
-                        >
-                          View
-                        </Button>
+  
+                        {/* View Button */}
+                        <Flex justify="flex-end" mt={{ base: 4, md: 8 }}>
+                          <Button
+                            colorScheme="green"
+                            variant="solid"
+                            backgroundColor="dark_green.800"
+                            _hover={{ backgroundColor: "light_green.400" }}
+                            color="white"
+                            width="auto"
+                            borderRadius="0px"
+                            h={10}
+                            onClick={() => handleViewClick(analysis)}
+                          >
+                            View
+                          </Button>
+                        </Flex>
                       </Flex>
-                    </Flex>
-                  </CardBody>
-                </Card>
-              ))}
-
-              
+                    </CardBody>
+                  </Card>
+                );
+              })}
             </Box>
+  
+            <CreateDashboardModal
+              onClose={() => setCreateDashboard(false)}
+              selectedAnalysis={selectedAnalysis} // Pass selected analysis data to the modal
+              onSave={handleSave}
+              isOpen={isCreateDashboardOpen}
+            />
+  
+            {/* Right Sidebar */}
+            <AnalysisSideBar isOpen={isOpen} onClose={onClose} selectedAnalysis={selectedAnalysis} />
           </Box>
         </Flex>
       </Box>
-
-      <CreateDashboardModal
-        onClose={() => setCreateDashboard(false)}
-        selectedAnalysis={selectedAnalysis}  // Pass selected analysis data to the modal
-        onSave={handleSave}
-        isOpen={isCreateDashboardOpen}
-      />
-
-      {/* Right Sidebar */}
-      <AnalysisSideBar isOpen={isOpen} onClose={onClose} selectedAnalysis={selectedAnalysis} />
     </>
   );
-}
+}  
