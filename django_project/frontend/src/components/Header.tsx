@@ -87,9 +87,27 @@ export default function Header(props: any) {
                     zIndex={10}
                 >
                     <ListItem>
-                        <Link href="/#/map" _hover={{ textDecoration: 'underline', textDecorationColor: 'white' }}>
-                            <Text color="white" fontWeight={400} fontSize={16}>MAP</Text>
-                        </Link>
+                        {/*
+                        # TODO: This is currently a hacky solution.
+                        If we don't refresh the map, it causes multiple render issues.
+                        We need to investigate the root cause.
+                        Currently, forcing a page reload ensures the map resets.
+                      */}
+                        <Text
+                            as="a"
+                            href="/#/map"
+                            onClick={(e) => {
+                                e.preventDefault();
+                                window.location.href = "/#/map";
+                                window.location.reload();
+                            }}
+                            _hover={{ textDecoration: "underline", textDecorationColor: "white" }}
+                            color="white"
+                            fontWeight={400}
+                            fontSize={16}
+                        >
+                            MAP
+                        </Text>
                     </ListItem>
                     <ListItem>
                         <Link
