@@ -6,7 +6,6 @@ from rest_framework.views import APIView
 from .models import Dashboard
 from .serializers import DashboardSerializer
 from django.db import models
-from rest_framework.exceptions import ValidationError
 from django.contrib.auth.models import User
 from rest_framework.permissions import (
     IsAuthenticated,
@@ -98,7 +97,7 @@ class DashboardCreateView(APIView):
                                 {
                                     "error": True,
                                     "message":
-                                    f"Organisation '{organisation_name}' does not exist."
+                                    f"Organisation does not exist."
                                 },
                                 status=status.HTTP_400_BAD_REQUEST
                             )
@@ -116,7 +115,7 @@ class DashboardCreateView(APIView):
                         return Response(
                             {
                                 "error": True,
-                                "message": 
+                                "message":
                                 "No valid organisation found for the user."
                             },
                             status=status.HTTP_400_BAD_REQUEST
@@ -160,7 +159,7 @@ class DashboardCreateView(APIView):
                             {
                                 "error": True,
                                 "message":
-                                f"Analysis result with ID {analysis_id} does not exist."
+                                f"Analysis {analysis_id} does not exist."
                             },
                             status=status.HTTP_400_BAD_REQUEST
                         )
@@ -184,7 +183,9 @@ class DashboardCreateView(APIView):
 
 
 
-class DashboardRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
+class DashboardRetrieveUpdateDestroyView(
+    generics.RetrieveUpdateDestroyAPIView
+):
     """
     View for retrieving, updating, or deleting a specific dashboard.
     """
@@ -224,7 +225,7 @@ class DashboardRetrieveUpdateDestroyView(generics.RetrieveUpdateDestroyAPIView):
         # If neither condition is met, deny the request
         return Response(
             {
-                "detail": 
+                "detail":
                 "You do not have permission to delete this dashboard."
             },
             status=status.HTTP_403_FORBIDDEN,

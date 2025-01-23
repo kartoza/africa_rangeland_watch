@@ -23,6 +23,9 @@ urlpatterns = [
         DashboardShareView.as_view(),
         name='dashboard-share'
     ),
-    path('dashboards/create/', DashboardCreateView.as_view(), name='dashboard-create'),
-    
+    path(
+        'dashboards/create/',
+        DashboardCreateView.as_view(),
+        name='dashboard-create'
+    ),
 ]
