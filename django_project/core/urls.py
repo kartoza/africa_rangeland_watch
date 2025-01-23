@@ -81,6 +81,7 @@ urlpatterns = [
         )
     ),
     path('', include('dashboard.urls')),
+    path('', include('analysis.urls')),
 ]
 
 if settings.DEBUG:

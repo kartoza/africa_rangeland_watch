@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Accordion, Box, Button, HStack, Spinner, Text } from "@chakra-ui/react";
+import { Accordion, Box, Button, HStack, Spinner, Text, useToast } from "@chakra-ui/react";
 import { useDispatch, useSelector } from "react-redux";
 import { Layer } from '../../../../store/layerSlice';
 import { Community, Landscape } from '../../../../store/landscapeSlice';
@@ -21,6 +21,7 @@ import { doAnalysis, REFERENCE_LAYER_DIFF_ID, resetAnalysisResult } from "../../
 import { AnalysisCustomGeometrySelector } from "./AnalysisCustomGeometrySelector";
 import { LayerCheckboxProps } from '../Layers';
 import { useSession } from '../../../../sessionProvider';
+import { saveAnalysis } from '../../../../store/userAnalysisSlice';
 
 
 interface Props extends LayerCheckboxProps {
@@ -47,6 +48,37 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
   const [mapInteraction, setMapInteraction] = useState(MapAnalysisInteraction.NO_INTERACTION);
   const [isGeomError, setGeomError] = useState(false);
   const geometrySelectorRef = useRef(null);
+  const toast = useToast();
+  const saveAnalysisFlag = useSelector(
+    (state: RootState) => state.analysis.saveAnalysisFlag
+  );
+  const savedAnalysisFlag = useSelector(
+    (state: RootState) => state.userAnalysis.savedAnalysisFlag
+  );
+
+  const handleSaveAnalysis = () => {
+    if (data) {
+      dispatch(saveAnalysis(data))
+    }
+  };
+
+  useEffect(() => {
+    if(savedAnalysisFlag){
+      toast({
+        title: "Analysis results saved!",
+        description: "You will find your results on the analysis results page in the profile area.",
+        status: "success",
+        duration: 5000,
+        isClosable: true,
+        position: "top-right",
+        containerStyle: {
+          backgroundColor: "#00634b",
+          color: "white",
+        },
+      });
+    }
+  }, [savedAnalysisFlag]);
+
 
 
   
@@ -390,40 +422,52 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
             </Box> :
             null
         }
-        <HStack
-          wrap="wrap" gap={8} alignItems='center' justifyContent='center'>
-          <Button
-            size="xs"
-            borderRadius={4}
-            paddingX={4}
-            borderColor='dark_green.800'
-            color="dark_green.800"
-            _hover={{ bg: "dark_green.800", color: "white" }}
-            variant="outline"
-            disabled={loading}
-            onClick={() => {
-              setData({ analysisType: Types.BASELINE });
-              setCommunitySelected(null);
-              setMapInteraction(MapAnalysisInteraction.NO_INTERACTION);
-              geometrySelectorRef?.current?.removeLayer();
-              dispatch(resetAnalysisResult());
-            }}
-          >
-            Reset Form
-          </Button>
-          <Button
-            size="xs"
-            borderRadius={4}
-            paddingX={4}
-            bg='dark_green.800'
-            color="white"
-            _hover={{ opacity: 0.8 }}
-            disabled={disableSubmit}
-            onClick={triggerAnalysis}
-          >
-            Run Analysis
-          </Button>
-        </HStack>
+        <HStack wrap="wrap" gap={8} alignItems="center" justifyContent="center">
+        <Button
+          size="xs"
+          borderRadius={4}
+          paddingX={4}
+          borderColor="dark_green.800"
+          color="dark_green.800"
+          _hover={{ bg: "dark_green.800", color: "white" }}
+          variant="outline"
+          disabled={loading}
+          onClick={() => {
+            setData({ analysisType: Types.BASELINE });
+            setCommunitySelected(null);
+            setMapInteraction(MapAnalysisInteraction.NO_INTERACTION);
+            geometrySelectorRef?.current?.removeLayer();
+            dispatch(resetAnalysisResult());
+          }}
+        >
+          Reset Form
+        </Button>
+        <Button
+          size="xs"
+          borderRadius={4}
+          paddingX={4}
+          bg="dark_green.800"
+          color="white"
+          _hover={{ opacity: 0.8 }}
+          disabled={disableSubmit}
+          onClick={triggerAnalysis}
+        >
+          Run Analysis
+        </Button>
+        <Button
+          size="xs"
+          borderRadius={4}
+          paddingX={4}
+          bg="dark_green.800"
+          color="white"
+          _hover={{ opacity: 0.8 }}
+          disabled={!saveAnalysisFlag}
+          onClick={handleSaveAnalysis}
+        >
+          Save Results
+        </Button>
+      </HStack>
+
       </Box>
     </Box>
   )
