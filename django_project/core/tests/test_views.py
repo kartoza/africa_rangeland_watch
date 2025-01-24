@@ -1,4 +1,4 @@
-from django.test import TestCase
+from django.test import TestCase, RequestFactory
 from rest_framework import status
 from django.urls import reverse
 from django.contrib.auth import get_user_model
@@ -7,7 +7,15 @@ from unittest.mock import patch
 from django.utils.http import urlsafe_base64_encode
 from django.contrib.auth.tokens import default_token_generator
 from django.conf import settings
-from rest_framework.test import APIClient
+from rest_framework.test import APITestCase, APIClient
+from core.models import UserSession
+from django.contrib.sessions.middleware import SessionMiddleware
+from unittest.mock import MagicMock
+from allauth.account import app_settings as allauth_settings
+from core.custom_auth_view import CustomLoginView
+from django.http import HttpResponse
+
+User = get_user_model()
 
 
 class CustomRegistrationViewTest(TestCase):
@@ -157,3 +165,115 @@ class ResetPasswordConfirmViewTest(TestCase):
 
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data["error"], "Invalid reset link")
+
+
+
+
+class UserSessionViewSetTestCase(APITestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(username="testuser", password="testpassword")
+        self.client.force_authenticate(user=self.user)
+        self.url = "/api/session/"
+
+    def test_retrieve_existing_session(self):
+        # Create a UserSession manually
+        session = UserSession.objects.create(user=self.user, analysis_state="initial", last_page="dashboard")
+        
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["analysis_state"], "initial")
+        self.assertEqual(response.data["last_page"], "dashboard")
+
+    def test_retrieve_creates_new_session(self):
+        # No session exists for the user
+        response = self.client.get(self.url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(UserSession.objects.filter(user=self.user).exists())
+        self.assertEqual(response.data["analysis_state"], {})  
+        self.assertIsNone(response.data["last_page"])
+
+    def test_update_session(self):
+        session = UserSession.objects.create(user=self.user)
+
+        data = {
+            "analysisState": "completed",
+            "last_page": "profile",
+            "activity_data": {"clicks": 10, "views": 5},
+        }
+        response = self.client.put(self.url, data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        session.refresh_from_db()
+        self.assertEqual(session.analysis_state, "completed")
+        self.assertEqual(session.last_page, "profile")
+        self.assertEqual(session.activity_data, {"clicks": 10, "views": 5})
+        self.assertEqual(response.data["message"], "Session updated successfully.")
+
+    def test_partial_update_session(self):
+        session = UserSession.objects.create(user=self.user)
+
+        data = {"analysisState": "in_progress"}
+        response = self.client.put(self.url, data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        session.refresh_from_db()
+        self.assertEqual(session.analysis_state, "in_progress")
+        self.assertIsNone(session.last_page)  # Not updated
+        self.assertEqual(session.activity_data, {})  # Check for an empty dictionary
+
+    def test_update_merges_activity_data(self):
+        session = UserSession.objects.create(
+            user=self.user, activity_data={"clicks": 5, "views": 3}
+        )
+
+        data = {"activity_data": {"views": 10, "shares": 2}}
+        response = self.client.put(self.url, data, format="json")
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        session.refresh_from_db()
+        self.assertEqual(session.activity_data, {"clicks": 5, "views": 10, "shares": 2})
+
+    def test_authentication_required(self):
+        self.client.force_authenticate(user=None)  # Unauthenticate the client
+
+        response = self.client.get(self.url)
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+        response = self.client.put(self.url, {}, format="json")
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+class CustomLoginViewTestCase(TestCase):
+    def setUp(self):
+        self.factory = RequestFactory()
+        self.user = get_user_model().objects.create_user(username="testuser", password="testpassword")
+        self.user.backend = 'django.contrib.auth.backends.ModelBackend'  # Set backend manually
+
+    def add_session_to_request(self, request):
+        """Add session middleware to the request."""
+        # Mock get_response function for SessionMiddleware
+        def get_response(request):
+            return HttpResponse()
+
+        middleware = SessionMiddleware(get_response)
+        middleware.process_request(request)
+        request.session.save()
+
+    def test_login_with_remember_me(self):
+        # Simulate a request with "remember" set to True
+        request = self.factory.post("/login", {"remember": True})
+        self.add_session_to_request(request)
+
+        # Mocking request.user and data
+        request.user = self.user
+        request.data = {"remember": True}
+
+        # Instantiate the view and call the login method
+        view = CustomLoginView()
+        view.request = request
+        view.user = self.user
+        view.login()
+
+        # Assert that the session expiry is set to SESSION_COOKIE_AGE
+        self.assertEqual(request.session.get_expiry_age(), allauth_settings.SESSION_COOKIE_AGE)

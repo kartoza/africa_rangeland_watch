@@ -9,6 +9,7 @@ const COMMUNITY_FILL_ID = COMMUNITY_ID + '-fill';
 
 interface Props {
   landscape: Landscape;
+  enableSelection: boolean;
   onSelected: (value: Community) => void;
 }
 
@@ -21,7 +22,7 @@ let clickFunction: (ev: maplibregl.MapMouseEvent & {
 
 /** Landscape geometry selector. */
 export default function AnalysisLandscapeGeometrySelector(
-  { landscape, onSelected }: Props
+  { landscape, enableSelection, onSelected }: Props
 ) {
   const [map, setMap] = useState<maplibregl.Map>(null);
   const { mapInitiated } = useSelector((state: RootState) => state.mapConfig);
@@ -101,6 +102,7 @@ export default function AnalysisLandscapeGeometrySelector(
     map.setFilter(
       (COMMUNITY_ID + '-highlight'), ["==", "landscape_id", 0]
     );
+
     if (!landscape?.bbox) {
       return
     }
@@ -119,43 +121,52 @@ export default function AnalysisLandscapeGeometrySelector(
 
     // Click event
     map.off('click', COMMUNITY_FILL_ID, clickFunction);
-    map.on('click', COMMUNITY_FILL_ID, (e: any) => {
-      if (!landscape) {
-        return
+    if (enableSelection) {
+      clickFunction = (e: any) => {
+        if (!landscape) {
+          return
+        }
+        const hit = e.features.find((feature: any) => feature.properties.landscape_id === landscape.id)
+        if (hit) {
+          onSelected(
+            {
+              id: hit.properties['community_id'],
+              name: hit.properties['community_name'],
+              latitude: e.lngLat.lat,
+              longitude: e.lngLat.lng,
+            }
+          )
+          map.setFilter(
+            (COMMUNITY_ID + '-highlight'), ["==", "id", hit.properties.id]
+          );
+        }
       }
-      const hit = e.features.find((feature: any) => feature.properties.landscape_id === landscape.id)
-      if (hit) {
-        onSelected(
-          {
-            id: hit.properties['community_id'],
-            name: hit.properties['community_name'],
-            latitude: e.lngLat.lat,
-            longitude: e.lngLat.lng,
-          }
-        )
-        map.setFilter(
-          (COMMUNITY_ID + '-highlight'), ["==", "id", hit.properties.id]
-        );
-      }
-    });
-
-    // Create effect
-    map.off('mousemove', COMMUNITY_FILL_ID, hoverFunction);
-    hoverFunction = function (e) {
-      if (e.features.length <= 0) {
-        return
-      }
-      const hit = e.features.find(feature => feature.properties.landscape_id === landscape.id)
-      if (hit) {
-        map.getCanvas().style.cursor = 'pointer';
-      } else {
-        map.getCanvas().style.cursor = '';
-      }
+      map.on('click', COMMUNITY_FILL_ID, clickFunction);
     }
-    map.on('mousemove', COMMUNITY_ID, hoverFunction);
+    
+    // Create effect
+    map.off('mousemove', COMMUNITY_ID, hoverFunction);
+    if (enableSelection) {
+      hoverFunction = function (e) {
+        if (e.features.length <= 0) {
+          return
+        }
+        const hit = e.features.find(feature => feature.properties.landscape_id === landscape.id)
+        if (hit) {
+          map.getCanvas().style.cursor = 'pointer';
+        } else {
+          map.getCanvas().style.cursor = '';
+        }
+      }
+      map.on('mousemove', COMMUNITY_ID, hoverFunction);
+    }
 
-
-  }, [map, landscape])
+    return () => {
+      map.off('click', COMMUNITY_FILL_ID, clickFunction);
+      map.off('mousemove', COMMUNITY_ID, hoverFunction);
+    }
+      
+  }, [map, landscape, enableSelection])
 
   return <></>
 }

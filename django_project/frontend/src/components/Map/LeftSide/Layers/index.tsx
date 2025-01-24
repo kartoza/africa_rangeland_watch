@@ -19,7 +19,7 @@ import LeftSideLoading from "../Loading";
 
 export interface LayerCheckboxProps {
   onLayerChecked: (layer: Layer) => void;
-  onLayerUnchecked: (layer: Layer) => void;
+  onLayerUnchecked: (layer: Layer, isRemoveSource?: boolean) => void;
 }
 
 export interface Props extends LayerCheckboxProps {

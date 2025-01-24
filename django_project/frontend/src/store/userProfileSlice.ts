@@ -125,6 +125,10 @@ export const updateProfile = createAsyncThunk(
   }
 );
 
+export const resetUpdateSuccess = () => ({
+  type: 'userProfile/resetUpdateSuccess',
+});
+
 const userProfileSlice = createSlice({
   name: 'userProfile',
   initialState,
@@ -177,6 +181,9 @@ const userProfileSlice = createSlice({
       .addCase(updateProfileImage.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
+        state.updateSuccess = false;
+      })
+      .addCase('userProfile/resetUpdateSuccess', (state) => {
         state.updateSuccess = false;
       });
   },

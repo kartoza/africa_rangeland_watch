@@ -66,4 +66,40 @@ Here are two options to sign up for a new account:
 
 5. **x:** By clicking on this button users can close the form.
 
+## Sign-up using google
+
+[![Sign-in Form](./img/signup-img-8.png)](./img/signup-img-8.png)
+
+1. **Google:** Click on this icon to sign up using Google.
+
+[![Choose Account](./img/signup-img-9.png)](./img/signup-img-9.png)
+
+1. **Account:** Click on the account to sign up.
+
+2. **Use another account:** If the user wants to use another account, they can click on this link.
+
+[![Confirmation](./img/signup-img-10.png)](./img/signup-img-10.png)
+
+1. **Account:** Users can see there current selected account.
+
+2. **Cancel:** Click on this button to cancel the sign up process.
+
+3. **Continue:** Click on this button to continue the sign up process.
+
+* After clicking on the `Continue` button, the user will be redirected to the `ARW` profile page.
+
+## Sign-up using github
+
+[![Sign-up Form](./img/signup-img-11.png)](./img/signup-img-11.png)
+
+1. **Github:** Click on this icon to sign up using Github.
+
+[![Github Authorise](./img/signup-img-12.png)](./img/signup-img-12.png)
+
+1. **Cancel:** Click on this button to cancel the sign up process.
+
+2. **Authorise:** Click on this button to authorise the sign up process.
+
+* After completing the sign up process, the users will be redirected to the `ARW` home page.
+
 - Click on the [signing](./sign-in.md) to see the signing process.

@@ -18,6 +18,7 @@ from django.urls import path, include, re_path
 from django.conf import settings
 from django.conf.urls.static import static
 from core.views import PreferencesRedirectView
+from core.session_views import UserSessionViewSet
 from .custom_auth_view import (
     CheckTokenView,
     CustomRegistrationView,
@@ -25,7 +26,8 @@ from .custom_auth_view import (
     ForgotPasswordView,
     ResetPasswordConfirmView,
     user_info,
-    logout_view
+    logout_view,
+    CustomLoginView
 )
 
 urlpatterns = [
@@ -44,6 +46,7 @@ urlpatterns = [
     path('api/logout/', logout_view, name='logout'),
     path('accounts/', include('allauth.urls')),
     path('auth/', include('dj_rest_auth.urls')),
+    path('auth/login/', CustomLoginView.as_view(), name='custom_login'),
     path('auth/activation/', include('allauth.account.urls')),
     path(
         'api/auth/check-token/',
@@ -71,6 +74,14 @@ urlpatterns = [
     ),
     path('', include('support.urls')),
     path('', include('cloud_native_gis.urls')),
+    path(
+        'api/session/',
+        UserSessionViewSet.as_view(
+            {'get': 'retrieve', 'put': 'update'}
+        )
+    ),
+    path('', include('dashboard.urls')),
+    path('', include('analysis.urls')),
 ]
 
 if settings.DEBUG:

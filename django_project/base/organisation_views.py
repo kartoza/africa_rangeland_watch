@@ -6,7 +6,8 @@ from .models import (
     Organisation,
     OrganisationInvitation,
     UserProfile,
-    UserOrganisations
+    UserOrganisations,
+    OrganisationInvitationDetail
 )
 from django.http import JsonResponse
 import json
@@ -17,6 +18,7 @@ from django.contrib.auth.models import User
 from django.conf import settings
 from django.template.loader import render_to_string
 from django.core.mail import EmailMultiAlternatives
+from django.db import IntegrityError
 
 
 Invitation = get_invitation_model()
@@ -29,25 +31,18 @@ def fetch_organisations(request):
     return JsonResponse(list(organisations), safe=False)
 
 
+
+
 @login_required
 def join_organisation(request):
-    """
-    Handles requests to join an organisation. Sends an email notification
-    to the manager of the organisation for approval.
-    """
     data = json.loads(request.body)
 
     try:
-        # Convert the selectedOrganisationId to an integer
         selected_org_id = int(data["selectedOrganisationId"])
         selected_org = Organisation.objects.get(id=selected_org_id)
-    except ValueError:
+    except (ValueError, Organisation.DoesNotExist):
         return JsonResponse(
-            {"message": "Invalid organisation ID format."}, status=400
-        )
-    except Organisation.DoesNotExist:
-        return JsonResponse(
-            {"message": "Organisation does not exist."}, status=400
+            {"message": "Invalid organisation ID."}, status=400
         )
 
     try:
@@ -57,14 +52,61 @@ def join_organisation(request):
         manager_user = user_organisation.user_profile.user
     except UserOrganisations.DoesNotExist:
         return JsonResponse(
-            {"message": "No manager found for this organisation."}, status=400
+            {"message": "No manager found for this organisation."},
+            status=400
         )
 
-    manager_email = manager_user.email
+    # Check for an existing invitation
+    existing_invitation = OrganisationInvitation.objects.filter(
+        email=request.user.email
+    ).first()
 
+    if existing_invitation:
+        if not existing_invitation.organisation:
+            # Update the invitation if organisation is None
+            existing_invitation.organisation = selected_org
+            existing_invitation.save()
+
+        # Check if already linked to the selected organization
+        if OrganisationInvitationDetail.objects.filter(
+            invitation=existing_invitation, organisation=selected_org
+        ).exists():
+            return JsonResponse(
+                {
+                    "message":
+                    "You have already requested to join this organisation."
+                },
+                status=400
+            )
+
+        # Add a new detail to link the invitation to this organization
+        OrganisationInvitationDetail.objects.create(
+            invitation=existing_invitation,
+            organisation=selected_org,
+            request_type="join_organisation"
+        )
+    else:
+        # If no existing invitation, create a new one
+        try:
+            new_invitation = OrganisationInvitation.objects.create(
+                inviter=request.user,
+                email=request.user.email,
+                organisation=selected_org,
+            )
+            OrganisationInvitationDetail.objects.create(
+                invitation=new_invitation,
+                organisation=selected_org,
+                request_type="join_organisation"
+            )
+        except IntegrityError as e:
+            return JsonResponse(
+                {"error": f"Failed to create invitation: {str(e)}"},
+                status=500
+            )
+
+    manager_email = manager_user.email
     link = (
         f"{settings.DJANGO_BACKEND_URL}/admin/base/organisationinvitation/"
-        f"{selected_org.id}/change/"
     )
     logo_url = f"{settings.DJANGO_BACKEND_URL}/static/images/main_logo.svg"
     email_body = render_to_string(
@@ -91,35 +133,8 @@ def join_organisation(request):
         return JsonResponse(
             {"error": f"Failed to send email: {str(e)}"}, status=500
         )
-
-
-    # Check for existing invitations
-    existing_invitation = OrganisationInvitation.objects.filter(
-        email=request.user.email, organisation=selected_org
-    ).first()
-
-    if existing_invitation:
-        return JsonResponse(
-            {
-                "message": "You have already requested to join this "
-                "organisation."
-            },
-            status=400,
-        )
-
-    try:
-        OrganisationInvitation.objects.create(
-            inviter=request.user,
-            email=request.user.email,
-            organisation=selected_org,
-            request_type="join_organisation",
-        )
-    except Exception as e:
-        return JsonResponse(
-            {"error": f"Failed to create invitation: {str(e)}"}, status=500
-        )
-
     return JsonResponse({"message": "Request sent successfully!"})
+
 
 
 
@@ -131,61 +146,84 @@ def add_organisation(request):
     """
     data = json.loads(request.body)
 
-    # Create the organisation invitation
-    OrganisationInvitation.objects.create(
-        inviter=request.user,
+    invitation, _ = OrganisationInvitation.objects.get_or_create(
         email=data.get("organisationEmail", ""),
-        request_type="add_organisation",
         organisation=None,
-        metadata=json.dumps(
+        inviter=request.user,
+        defaults={
+            "inviter": request.user,
+            "organisation": None,
+        }
+    )
+
+    # Fetch or create the OrganisationInvitationDetail
+    organisation_invitation_detail, created = (
+        OrganisationInvitationDetail.objects.update_or_create(
+            invitation=invitation,
+            organisation=None,
+            defaults={
+                "request_type": "add_organisation",
+                "metadata": json.dumps(
+                    {
+                        "organisationName": data.get("organisationName", ""),
+                        "industry": data.get("industry", ""),
+                        "requester": {
+                            "first_name": data.get("firstName", ""),
+                            "last_name": data.get("lastName", ""),
+                        },
+                    }
+                ),
+                "accepted": False,
+            }
+        )
+    )
+
+    # Handle the response or further logic
+    if created:
+        # Get the email of the first superuser
+        admin_user = User.objects.filter(is_superuser=True).first()
+        if not admin_user:
+            return JsonResponse(
+                {"error": "No admin user found to process the request."},
+                status=500,
+            )
+
+        admin_email = admin_user.email
+
+        # Render the email content
+        email_body = render_to_string(
+            "request_to_add_organization.html",
             {
-                "organisationName": data.get("organisationName", ""),
-                "industry": data.get("industry", ""),
                 "requester": {
                     "first_name": data.get("firstName", ""),
                     "last_name": data.get("lastName", ""),
                 },
-            }
-        ),
-    )
-
-    # Get the email of the first superuser
-    admin_user = User.objects.filter(is_superuser=True).first()
-    if not admin_user:
-        return JsonResponse(
-            {"error": "No admin user found to process the request."},
-            status=500,
+                "organisation": {
+                    "name": data.get("organisationName", ""),
+                    "email": data.get("organisationEmail", ""),
+                    "industry": data.get("industry", ""),
+                },
+            },
         )
 
-    admin_email = admin_user.email
+        # Prepare and send the email
+        email = EmailMultiAlternatives(
+            subject="New Organisation Request",
+            body="",
+            from_email=settings.NO_REPLY_EMAIL,
+            to=[admin_email],
+        )
+        email.attach_alternative(email_body, "text/html")
+        email.send()
+        return JsonResponse({"message": "Request sent successfully!"})
+    else:
+        return JsonResponse(
+            {
+                "error":
+                "You've already sent a request for organisation creation"
+            }, status=500
+        )
 
-    # Render the email content
-    email_body = render_to_string(
-        "request_to_add_organization.html",
-        {
-            "requester": {
-                "first_name": data.get("firstName", ""),
-                "last_name": data.get("lastName", ""),
-            },
-            "organisation": {
-                "name": data.get("organisationName", ""),
-                "email": data.get("organisationEmail", ""),
-                "industry": data.get("industry", ""),
-            },
-        },
-    )
-
-    # Prepare and send the email
-    email = EmailMultiAlternatives(
-        subject="New Organisation Request",
-        body="",
-        from_email=settings.NO_REPLY_EMAIL,
-        to=[admin_email],
-    )
-    email.attach_alternative(email_body, "text/html")
-    email.send()
-
-    return JsonResponse({"message": "Request sent successfully!"})
 
 
 @login_required

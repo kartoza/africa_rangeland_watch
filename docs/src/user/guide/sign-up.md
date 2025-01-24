@@ -57,3 +57,19 @@ Here is the sign-up form.
 [![Sign up Other Accounts](./img/guide-signup-img-5.png)](./img/guide-signup-img-5.png)
 
 * If you already have an account and you want to sign-in please click [here](./sign-in.md).
+
+#### How to sign-up using google
+
+Click on the 1️⃣ `Google` button. This will open a new window. You will be asked to choose your account.
+
+[![Sign-up Form](./img/guide-signup-img-9.png)](./img/guide-signup-img-9.png)
+
+To know the further process click [here](../manual/sign-up.md#sign-up-using-google).
+
+#### How to sign-up using github
+
+Click on the 1️⃣ `GitHub` button. This will open a new window.
+
+[![Sign-up Form](./img/guide-signup-img-10.png)](./img/guide-signup-img-9.png)
+
+For the further process click [here](../manual/sign-up.md#sign-up-using-github).

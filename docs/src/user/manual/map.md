@@ -117,10 +117,26 @@ license: This program is free software; you can redistribute it and/or modify it
 
         **6. Reset From:** This option allows users to reset the analysis to its default state.
 
-    **3. [![Menu Icon](./img/manual-map-img-11.png)](./img/manual-map-img-11.png):** This button allows user to hide the left menu.
+3. **Upload:** Users can upload their own data to the app for analysis. This feature is useful for users who have their own data and want to perform analysis on it. Click on this `Upload` button to upload the shape file.
+
+    [![Map Upload Shape File](./img/manual-map-img-22.png)](./img/manual-map-img-22.png)
+
+    * **Select File:** Click on the `Select File` button to select the shape file from the local computer.
+
+        [![File Explorer](./img/manual-map-img-23.png)](./img/manual-map-img-23.png)
+
+        1 **Cancel:** Click on this button close the file explorer.
+
+        2 **File:** Select the desired file.
+
+        3 **Select:** After selecting the file click on this button to upload the file.
+
+    * **X:** Click on this `X` button to cancel the upload process.
+
+4. [![Menu Icon](./img/manual-map-img-11.png)](./img/manual-map-img-11.png):** This button allows user to hide the left menu.
 
     [![Map](./img/manual-map-img-12.png)](./img/manual-map-img-12.png)
 
-    **4. ➕ and ➖ buttons:** These buttons allow users to zoom in and out of the map.
+5. ➕ and ➖ buttons:** These buttons allow users to zoom in and out of the map.
 
     [![Zooming Buttons](./img/manual-map-img-13.png)](./img/manual-map-img-13.png)

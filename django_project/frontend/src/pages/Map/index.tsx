@@ -34,8 +34,8 @@ export default function MapPage() {
             onLayerChecked={layer => {
               mapLibreRef?.current.renderLayer(layer)
             }}
-            onLayerUnchecked={layer => {
-              mapLibreRef?.current.removeLayer(layer)
+            onLayerUnchecked={(layer, isRemoveSource?) => {
+              mapLibreRef?.current.removeLayer(layer, isRemoveSource)
             }}
           />
           <Box
