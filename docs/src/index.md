@@ -115,6 +115,10 @@ We do not yet have a [Chatroom]() set up for this project. Please use the GitHub
 
 Contributions to this project will be subject to our [Contributor License Agreement]() (Coming soon)
 
+#### License
+
+You can read our license to find out what rights this license bestows to users and contributors.
+
 [License](about/license.md)
 
 <!-- Keep the Kartoza Logo at the bottom of the page if the project allows -->
