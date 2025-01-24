@@ -13,7 +13,6 @@ from cloud_native_gis.models.layer import Layer
 from cloud_native_gis.models.layer_upload import LayerUpload
 
 from core.settings.utils import absolute_path
-from core.factories import UserF
 from core.tests.common import BaseAPIViewTest
 from layers.models import (
     InputLayer, InputLayerType,
@@ -206,7 +205,7 @@ class LayerAPITest(BaseAPIViewTest):
         """Test upload with invalid shapefile."""
         view = UploadLayerAPI.as_view()
         file_path = absolute_path(
-            'core', 'tests', 'data', 'shp_no_shp.zip')
+            'frontend', 'tests', 'data', 'shp_no_shp.zip')
         request = self._get_request(file_path)
         response = view(request)
         self._check_error(
@@ -219,7 +218,7 @@ class LayerAPITest(BaseAPIViewTest):
         """Test upload with invalid crs."""
         view = UploadLayerAPI.as_view()
         file_path = absolute_path(
-            'core', 'tests', 'data', 'shp_3857.zip')
+            'frontend', 'tests', 'data', 'shp_3857.zip')
         request = self._get_request(file_path)
         response = view(request)
         self._check_error(

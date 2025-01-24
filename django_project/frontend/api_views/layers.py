@@ -18,19 +18,19 @@ from rest_framework.exceptions import ValidationError
 from cloud_native_gis.models import Layer, LayerUpload
 from cloud_native_gis.utils.main import id_generator
 from django.shortcuts import get_object_or_404
+from cloud_native_gis.utils.fiona import (
+    FileType,
+    validate_shapefile_zip,
+    validate_collection_crs,
+    delete_tmp_shapefile,
+    open_fiona_collection
+)
 
 from layers.models import InputLayer, DataProvider, LayerGroupType
 from frontend.serializers.layers import LayerSerializer
 from layers.tasks.import_layer import (
     import_layer,
     detect_file_type_by_extension
-)
-from core.utils.fiona import (
-    FileType,
-    validate_shapefile_zip,
-    validate_collection_crs,
-    delete_tmp_shapefile,
-    open_fiona_collection
 )
 
 
