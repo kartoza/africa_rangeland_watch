@@ -1,13 +1,12 @@
-import React, { useEffect, useState, useRef, forwardRef, useImperativeHandle } from 'react';
-import { useSelector } from "react-redux";
+import React, { useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import {FeatureCollection} from "geojson";
 import { combine } from "@turf/combine";
 import { area } from "@turf/area";
 import MapboxDraw from "@mapbox/mapbox-gl-draw";
 import '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css';
-import { RootState } from "../../../../store";
 import {CUSTOM_GEOM_ID} from "../../DataTypes";
 import { removeSource } from '../../utils';
+import { useMap } from '../../../../MapContext';
 
 export const CUSTOM_GEOM_FILL_ID = CUSTOM_GEOM_ID + "-fill";
 
@@ -96,8 +95,7 @@ const styles = [
 export const AnalysisCustomGeometrySelector = forwardRef((
   { isDrawing, onSelected }: Props, ref
 ) => {
-    const [map, setMap] = useState<maplibregl.Map>(null);
-    const { mapInitiated } = useSelector((state: RootState) => state.mapConfig);
+    const { map } = useMap();
     const drawingRef = useRef(null);
 
     useImperativeHandle(ref, () => ({
@@ -119,16 +117,10 @@ export const AnalysisCustomGeometrySelector = forwardRef((
     }
 
     useEffect(() => {
-        try {
-            window.map.getStyle()
-            const _map = window.map
-            setMap(_map)
-        } catch (err) {
-            console.log(err)
+        if (!map) {
+            return;
         }
-    }, [window.map, mapInitiated])
 
-    useEffect(() => {
         if (isDrawing) {
             removeSource(map, CUSTOM_GEOM_ID);
 

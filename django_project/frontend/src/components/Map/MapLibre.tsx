@@ -5,17 +5,18 @@ import React, {
   useRef,
   useState
 } from 'react';
-import maplibregl from 'maplibre-gl';
+import maplibregl, { FillLayerSpecification } from 'maplibre-gl';
 import { Box } from "@chakra-ui/react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../store";
 import { BasemapControl, LegendControl } from "./control";
 import { hasSource, removeLayer, removeSource } from "./utils";
 import { fetchBaseMaps } from '../../store/baseMapSlice';
-import { fetchMapConfig, mapInitated } from '../../store/mapConfigSlice';
+import { fetchMapConfig } from '../../store/mapConfigSlice';
 import { Layer, setSelectedNrtLayer } from '../../store/layerSlice';
 import { selectIsLoggedIn } from "../../store/authSlice";
 import { COMMUNITY_ID } from "./DataTypes";
+import { useMap } from '../../MapContext';
 
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './style.css';
@@ -33,7 +34,7 @@ export const MapLibre = forwardRef(
     const dispatch = useDispatch<AppDispatch>();
     const legendRef = useRef(null);
     const baseMapRef = useRef(null);
-    const [map, setMap] = useState(null);
+    const { map, setMap } = useMap();
     const { mapConfig } = useSelector((state: RootState) => state.mapConfig);
     const { baseMaps } = useSelector((state: RootState) => state.baseMap);
     const { selected: selectedLandscape } = useSelector((state: RootState) => state.landscape);
@@ -62,7 +63,7 @@ export const MapLibre = forwardRef(
               )
             }
           }
-          let layerStyle = {
+          let layerStyle: FillLayerSpecification = {
             "source": ID,
             "id": ID,
             "type": "fill",
@@ -138,44 +139,67 @@ export const MapLibre = forwardRef(
 
     /** First initiate */
     useEffect(() => {
-      if (baseMaps.length == 0 || !mapConfig) {
+      if (map) {
         return;
       }
+
+      const _map = new maplibregl.Map({
+        container: 'map',
+        style: {
+          version: 8,
+          sources: {},
+          layers: [],
+          glyphs: "/static/fonts/{fontstack}/{range}.pbf"
+        },
+        center: [0, 0],
+        zoom: 1
+      });
+
+      _map.once("load", () => {
+        setMap(_map)
+      })
+      _map.addControl(new BasemapControl(baseMaps, baseMapRef), 'bottom-left');
+      _map.addControl(new LegendControl(legendRef), 'top-left');
+      _map.addControl(new maplibregl.NavigationControl(), 'bottom-left');
+
+      // Clean up the map on component unmount
+      return () => {
+          // avoid removing map synchronously
+          setTimeout(() => {
+            _map.remove();
+            setMap(null)
+          }, 0)
+      };
+    }, [setMap]);
+
+    useEffect(() => {
       if (!map) {
-        const _map = new maplibregl.Map({
-          container: 'map',
-          style: {
-            version: 8,
-            sources: {},
-            layers: [],
-            glyphs: "/static/fonts/{fontstack}/{range}.pbf"
-          },
-          center: [0, 0],
-          zoom: 1
-        });
-
-        // Save as global variable
-        window.map = _map;
-
-        _map.once("load", () => {
-          setMap(_map)
-
-          _map.fitBounds(mapConfig.initial_bound,
-            {
-              pitch: 0,
-              bearing: 0
-            }
-          )
-
-          // render default base map
-          baseMapRef?.current?.setBaseMapLayer(baseMaps[0])
-          dispatch(mapInitated());
-        })
-        _map.addControl(new BasemapControl(baseMaps, baseMapRef), 'bottom-left');
-        _map.addControl(new LegendControl(legendRef), 'top-left');
-        _map.addControl(new maplibregl.NavigationControl(), 'bottom-left');
+        return;
       }
-    }, [baseMaps, mapConfig]);
+      if (!mapConfig) {
+        return;
+      }
+
+      map.fitBounds(mapConfig.initial_bound,
+        {
+          pitch: 0,
+          bearing: 0
+        }
+      )
+    }, [map, mapConfig])
+
+    useEffect(() => {
+      if (!map) {
+        return;
+      }
+      if (baseMaps.length == 0) {
+        return;
+      }
+
+      // render default base map
+      baseMapRef?.current?.setBaseMapLayer(baseMaps[0])
+    }, [map, baseMaps])
+
 
     // zoom when landscape is selected
     useEffect(() => {
@@ -197,7 +221,7 @@ export const MapLibre = forwardRef(
         removeSource(map, ID)
       }
 
-      map.fitBounds(selectedLandscape.bbox,
+      map.fitBounds(new maplibregl.LngLatBounds(selectedLandscape.bbox as [number, number, number, number]),
         {
           pitch: 0,
           bearing: 0
@@ -217,4 +241,3 @@ export const MapLibre = forwardRef(
     )
   }
 )
-
