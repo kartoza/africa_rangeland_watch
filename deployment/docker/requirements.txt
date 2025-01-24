@@ -58,3 +58,6 @@ pyjwt
 cryptography
 
 Pillow
+
+# fiona
+fiona==1.10.1

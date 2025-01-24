@@ -6,8 +6,9 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import MegaMenu from './MegaMenu';
 import SignIn from './SignIn';
 import { AppDispatch, RootState } from '../store';
-import { checkLoginStatus, logoutUser } from '../store/authSlice';
+import { checkLoginStatus } from '../store/authSlice';
 import { selectIsLoggedIn } from "../store/authSlice";
+import { useSession } from '../sessionProvider'
 
 export default function Header(props: any) {
     const dispatch = useDispatch<AppDispatch>();
@@ -18,14 +19,15 @@ export default function Header(props: any) {
     const location = useLocation();
     const navigate = useNavigate();
     const isAuthenticated = useSelector(selectIsLoggedIn);
+    const { saveSession } = useSession();
 
-    // Handle logout
-    const handleLogout = () => {
-        dispatch(logoutUser());
-        onClose();
-        navigate('/');
-    };
+    useEffect(() => {
+        if (isAuthenticated && location.pathname !== '/' && location.pathname !== '/map') {
+            saveSession(location.pathname, { activity: "Visited Page" });
+        }
+    }, [isAuthenticated, location.pathname, saveSession]);
 
+    
     // Handle hover for different sections
     const handleHoverEnter = (section: string) => {
         setHoveredSection(section);
@@ -40,7 +42,6 @@ export default function Header(props: any) {
     }, [dispatch]);
 
     const isDashboard = location.pathname === '/dashboard';
-    const isProfile = location.pathname === '/profile';
 
     const handleNavigation = (to: string | undefined) => {
         if (to) {
@@ -65,13 +66,15 @@ export default function Header(props: any) {
             >
                 {/* Logo on the Left */}
                 <Flex alignItems="center">
-                    <Image
-                        src="static/images/main_logo.svg"
-                        alt="Header Logo"
-                        h="52px"
-                        w="auto"
-                        maxW="190px"
-                    />
+                    <a href={'/'}>
+                        <Image
+                            src="static/images/main_logo.svg"
+                            alt="Header Logo"
+                            h="52px"
+                            w="auto"
+                            maxW="190px"
+                        />
+                    </a>
                 </Flex>
 
                 {/* Centered Menu Items (Desktop only) */}
@@ -84,9 +87,27 @@ export default function Header(props: any) {
                     zIndex={10}
                 >
                     <ListItem>
-                        <Link href="/#/map" _hover={{ textDecoration: 'underline', textDecorationColor: 'white' }}>
-                            <Text color="white" fontWeight={400} fontSize={16}>MAP</Text>
-                        </Link>
+                        {/*
+                        # TODO: This is currently a hacky solution.
+                        If we don't refresh the map, it causes multiple render issues.
+                        We need to investigate the root cause.
+                        Currently, forcing a page reload ensures the map resets.
+                      */}
+                        <Text
+                            as="a"
+                            href="/#/map"
+                            onClick={(e) => {
+                                e.preventDefault();
+                                window.location.href = "/#/map";
+                                window.location.reload();
+                            }}
+                            _hover={{ textDecoration: "underline", textDecorationColor: "white" }}
+                            color="white"
+                            fontWeight={400}
+                            fontSize={16}
+                        >
+                            MAP
+                        </Text>
                     </ListItem>
                     <ListItem>
                         <Link

@@ -13,7 +13,6 @@ from cloud_native_gis.models.layer import Layer
 from cloud_native_gis.models.layer_upload import LayerUpload
 
 from core.settings.utils import absolute_path
-from core.factories import UserF
 from core.tests.common import BaseAPIViewTest
 from layers.models import (
     InputLayer, InputLayerType,
@@ -86,17 +85,12 @@ class LayerAPITest(BaseAPIViewTest):
         response = view(request)
         self.assertEqual(response.status_code, 401)
 
-    @mock.patch('layers.tasks.import_layer.import_layer.delay')
-    def test_upload_layer(self, mock_import_layer):
-        """Test upload layer."""
-        view = UploadLayerAPI.as_view()
-        file_path = absolute_path(
-            'frontend', 'tests', 'data', 'polygons.zip'
-        )
+    def _get_request(self, file_path, file_name=None):
+        """Get request for test upload."""
         with open(file_path, 'rb') as data:
             file = SimpleUploadedFile(
                 content=data.read(),
-                name=data.name,
+                name=file_name if file_name else data.name,
                 content_type='multipart/form-data'
             )
         request = self.factory.post(
@@ -106,6 +100,25 @@ class LayerAPITest(BaseAPIViewTest):
             }
         )
         request.user = self.superuser
+        return request
+
+    def _check_error(
+            self, response, error_detail, status_code = 400,
+            error_key='Invalid uploaded file'
+        ):
+        """Check for error in the response."""
+        self.assertEqual(response.status_code, status_code)
+        self.assertIn(error_key, response.data)
+        self.assertEqual(str(response.data[error_key]), error_detail)
+
+    @mock.patch('layers.tasks.import_layer.import_layer.delay')
+    def test_upload_layer(self, mock_import_layer):
+        """Test upload layer."""
+        view = UploadLayerAPI.as_view()
+        file_path = absolute_path(
+            'frontend', 'tests', 'data', 'polygons.zip'
+        )
+        request = self._get_request(file_path)
         response = view(request)
         self.assertEqual(response.status_code, 200)
         self.assertIn('id', response.data)
@@ -173,3 +186,43 @@ class LayerAPITest(BaseAPIViewTest):
         self.assertIsNotNone(self.input_layer.url)
         self.layer.refresh_from_db()
         self.assertIsNotNone(self.layer.pmtile)
+
+    def test_upload_invalid_type(self):
+        """Test upload with invalid file type."""
+        view = UploadLayerAPI.as_view()
+        file_path = absolute_path(
+            'frontend', 'tests', 'data', 'polygons.zip'
+        )
+        request = self._get_request(file_path, 'test.txt')
+        response = view(request)
+        self._check_error(
+            response,
+            'Unrecognized file type! Please upload the zip of shapefile!',
+            400
+        )
+
+    def test_upload_invalid_shapefile(self):
+        """Test upload with invalid shapefile."""
+        view = UploadLayerAPI.as_view()
+        file_path = absolute_path(
+            'frontend', 'tests', 'data', 'shp_no_shp.zip')
+        request = self._get_request(file_path)
+        response = view(request)
+        self._check_error(
+            response,
+            'Missing required file(s) inside zip file: \n- shp_1_1.shp',
+            400
+        )
+
+    def test_upload_invalid_crs(self):
+        """Test upload with invalid crs."""
+        view = UploadLayerAPI.as_view()
+        file_path = absolute_path(
+            'frontend', 'tests', 'data', 'shp_3857.zip')
+        request = self._get_request(file_path)
+        response = view(request)
+        self._check_error(
+            response,
+            'Incorrect CRS type: epsg:3857! Please use epsg:4326 (WGS84)!',
+            400
+        )

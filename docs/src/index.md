@@ -70,16 +70,6 @@ for any loss of revenue, life, physical harm or any other adverse outcome that m
 occur as a result of the use of this platform.
 </div>
 
-### Purpose
-
-### Scope of project
-
-### Project roadmap
-
-![Project Roadmap]()
-[Project Roadmap]()
-<!-- Either insert link to roadmap or actual roadmap (Speak to team leads) -->
-
 #### Contributing
 
 We would love to collaborate with you! But first, please read our [contributor
@@ -104,35 +94,29 @@ While much of the work for our project is technical in nature, we value and
 encourage contributions from those with expertise in other areas, and welcome
 them into our community.
 
-## Project partners
+<!-- ## Project partners
 
-<!-- Insert Project Partner Logos and/or Links -->
+<!-- Insert Project Partner Logos and/or Links
 ![Project Partner 1]()
-[Project Partner 1]()
+[Project Partner 1]() 
 
-#### Releases
-
-<!-- Insert links to release pages, change as needed -->
-[GitHub releases page]()
-[Releases page]()
+-->
 
 | | **Project Badges** | |
 | ----------------------- | ----------------------- | ----------------------- |
 | ![License](https://img.shields.io/github/license/{username}/{repo-name}.svg) | ![Version](https://img.shields.io/github/release/{username}/{repo-name}.svg) | ![Commits](https://img.shields.io/github/commits-since/{username}/{repo-name}/{version}.svg) |
 | ![Issue Tracker](https://img.shields.io/github/issues/{username}/{repo-name}.svg) | ![Closed Issues](https://img.shields.io/github/issues-closed/{username}/{repo-name}.svg) | ![Pull requests](https://img.shields.io/github/issues-pr/{username}/{repo-name}.svg) |
 
-#### Project chatroom
+#### Project Chatroom
 
-<!-- Insert links to chatroom pages if available, otherwise remove -->
-[Chatroom]()
+We do not yet have a [Chatroom]() set up for this project. Please use the GitHub issue tracker for discussions rather.
 
 #### Contributor License Agreement (CLA)
-<!-- Insert links to CLA -->
-Contributions to this project will be subject to our [Contributor License Agreement]()
+
+Contributions to this project will be subject to our [Contributor License Agreement]() (Coming soon)
 
 #### License
 
-This project is open source, published under the AGPL-3.
 You can read our license to find out what rights this license bestows to users and contributors.
 
 [License](about/license.md)
