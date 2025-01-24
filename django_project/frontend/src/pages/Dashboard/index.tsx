@@ -21,6 +21,7 @@ import {
   DrawerContent,
   DrawerCloseButton,
   useDisclosure,
+  Grid,
 } from "@chakra-ui/react";
 import { FaFilter } from "react-icons/fa";
 import { ChevronLeftIcon, ChevronRightIcon } from "@chakra-ui/icons";
@@ -29,6 +30,12 @@ import { Helmet } from "react-helmet";
 import Footer from "../../components/Footer";
 import AnalysisSideBar from "../../components/SideBar/AnalysisSideBar";
 import Pagination from "../../components/Pagination";
+import ChartCard from "../../components/ChartCard";
+import { useDispatch, useSelector } from "react-redux";
+import { AppDispatch } from "../../store";
+import { fetchDashboards } from "../../store/dashboardSlice";
+
+
 
 const DashboardPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
@@ -39,18 +46,44 @@ const DashboardPage: React.FC = () => {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [isAnalysisOpen, setIsAnalysisOpen] = useState(false);
   const [data, setData] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-
-
-  const fetchData = () => {
-    setIsLoading(true);
-      setData([]);
-      setIsLoading(false);;
-  };
+  const dispatch = useDispatch<AppDispatch>();
+    const dashboardData = useSelector((state: any) => state.dashboard.dashboards);
+    const loading = useSelector((state: any) => state.dashboard.loading);
+    const error = useSelector((state: any) => state.dashboard.error);
+    const [resourcesCount, setResourcesCount] = useState(0);
+    const [chartsConfig, setChartsConfig] = useState([]);
 
   useEffect(() => {
-    fetchData();
-  }, []);
+    if (!loading && Array.isArray(dashboardData)) {
+      const updatedChartsConfig = dashboardData.map((dashboard) => ({
+        config: dashboard.config,
+        analysisResults: dashboard.analysis_results,
+        title: dashboard.title,
+        uuid: dashboard.uuid,
+        owner: dashboard.owner,
+      }));
+      
+      // Set the state to pass down to the chart cards
+      setChartsConfig(updatedChartsConfig);
+    }
+  }, [loading, dashboardData]);
+  
+  
+    useEffect(() => {
+      dispatch(fetchDashboards());
+    }, [dispatch]);
+
+
+  
+  useEffect(() => {
+    if(!loading){
+        console.log(dashboardData)
+        setResourcesCount(Array.isArray(dashboardData)? dashboardData.length: 0)
+    }
+        
+  }, [loading]);
+
+
 
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
@@ -120,7 +153,7 @@ const DashboardPage: React.FC = () => {
                       Filter
                   </Button>
                   <Text fontSize="lg" color="black">
-                      0 resources found
+                      {resourcesCount} resources found.
                   </Text>
               </Flex>
 
@@ -157,9 +190,26 @@ const DashboardPage: React.FC = () => {
               </Flex>
           </Flex>
 
+          <SimpleGrid
+            // templateColumns="repeat(auto-fill, minmax(400px, 1fr))"
+            columns={[1, 2, 3, 4]}
+            spacing="2"
+            marginBottom={6}
+            paddingLeft={{ base: "5%", md: "2.5%" }}
+            templateColumns="repeat(auto-fill, minmax(300px, 1fr))"
+          >
+            {chartsConfig.map((config, index) => (
+                <ChartCard
+                    key={config.uuid}
+                    config={config}
+                    className={`draggable-card-${index}`}
+                />
+            ))}
+            </SimpleGrid>
+
           {/* Cards Section */}
           <SimpleGrid columns={[1, 2, 3, 4]} spacing="2" marginBottom={6} paddingLeft={{ base: "5%", md: "2.5%" }}>
-              {isLoading ? (
+              {loading ? (
                   <Text>Loading...</Text>
               ) : (
                   data
