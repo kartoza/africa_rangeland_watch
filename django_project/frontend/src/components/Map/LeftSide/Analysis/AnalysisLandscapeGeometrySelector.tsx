@@ -1,9 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import maplibregl from "maplibre-gl";
 import { COMMUNITY_ID } from "../../DataTypes";
 import { Community, Landscape } from "../../../../store/landscapeSlice";
-import { useSelector } from "react-redux";
-import { RootState } from "../../../../store";
+import { useMap } from '../../../../MapContext';
 
 const COMMUNITY_FILL_ID = COMMUNITY_ID + '-fill';
 
@@ -24,17 +23,15 @@ let clickFunction: (ev: maplibregl.MapMouseEvent & {
 export default function AnalysisLandscapeGeometrySelector(
   { landscape, enableSelection, onSelected }: Props
 ) {
-  const [map, setMap] = useState<maplibregl.Map>(null);
-  const { mapInitiated } = useSelector((state: RootState) => state.mapConfig);
+  const { map } = useMap();
 
   useEffect(() => {
     try {
-      window.map.getStyle()
-      const _map = window.map
-      setMap(_map)
-
+      if (!map) {
+        return
+      }
       // render community layer
-      _map.addSource(
+      map.addSource(
         COMMUNITY_ID, {
           type: 'vector',
           tiles: [
@@ -42,7 +39,7 @@ export default function AnalysisLandscapeGeometrySelector(
           ]
         }
       );
-      _map.addLayer({
+      map.addLayer({
         'id': COMMUNITY_ID,
         'type': 'line',
         'source': COMMUNITY_ID,
@@ -52,7 +49,7 @@ export default function AnalysisLandscapeGeometrySelector(
           'line-width': 1
         }
       });
-      _map.addLayer({
+      map.addLayer({
         'id': COMMUNITY_ID + '-community',
         'type': 'line',
         'source': COMMUNITY_ID,
@@ -63,7 +60,7 @@ export default function AnalysisLandscapeGeometrySelector(
         },
         "filter": ["==", "landscape_id", 0]
       });
-      _map.addLayer({
+      map.addLayer({
         'id': COMMUNITY_ID + '-highlight',
         'type': 'fill',
         'source': COMMUNITY_ID,
@@ -74,7 +71,7 @@ export default function AnalysisLandscapeGeometrySelector(
         },
         "filter": ["==", "landscape_id", 0]
       });
-      _map.addLayer({
+      map.addLayer({
         'id': COMMUNITY_FILL_ID,
         'type': 'fill',
         'source': COMMUNITY_ID,
@@ -87,7 +84,7 @@ export default function AnalysisLandscapeGeometrySelector(
     } catch (err) {
       console.log(err)
     }
-  }, [window.map, mapInitiated])
+  }, [map])
 
   useEffect(() => {
     if (!map) {
