@@ -98,11 +98,45 @@ export const AnalysisCustomGeometrySelector = forwardRef((
     const { map } = useMap();
     const drawingRef = useRef(null);
 
+    const drawGeom = (geom: FeatureCollection) => {
+      // add geom to map
+      map.addSource(
+        CUSTOM_GEOM_ID, {
+          type: 'geojson',
+          data: geom
+        }
+      );
+      map.addLayer({
+        'id': CUSTOM_GEOM_ID,
+        'type': 'line',
+        'source': CUSTOM_GEOM_ID,
+        'paint': {
+          "line-color": "#D20C0C",
+          "line-width": 2
+        }
+      });
+      map.addLayer({
+        'id': CUSTOM_GEOM_FILL_ID,
+        'type': 'fill',
+        'source': CUSTOM_GEOM_ID,
+        'paint': {
+          "fill-color": "#D20C0C",
+          "fill-outline-color": "#D20C0C",
+          "fill-opacity": 0.1
+        }
+      });
+    }
+
     useImperativeHandle(ref, () => ({
         /** Remove layer */
         removeLayer() {
           if (map) {
             removeSource(map, CUSTOM_GEOM_ID);
+          }
+        },
+        drawLayer(geom: FeatureCollection) {
+          if (map) {
+            drawGeom(geom);
           }
         }
       }));
@@ -164,32 +198,7 @@ export const AnalysisCustomGeometrySelector = forwardRef((
             if (area === 0) {
               onSelected(null, 0)
             } else {
-              // add geom to map
-              map.addSource(
-                CUSTOM_GEOM_ID, {
-                  type: 'geojson',
-                  data: geom
-                }
-              );
-              map.addLayer({
-                'id': CUSTOM_GEOM_ID,
-                'type': 'line',
-                'source': CUSTOM_GEOM_ID,
-                'paint': {
-                  "line-color": "#D20C0C",
-                  "line-width": 2
-                }
-              });
-              map.addLayer({
-                'id': CUSTOM_GEOM_FILL_ID,
-                'type': 'fill',
-                'source': CUSTOM_GEOM_ID,
-                'paint': {
-                  "fill-color": "#D20C0C",
-                  "fill-outline-color": "#D20C0C",
-                  "fill-opacity": 0.1
-                }
-              });
+              drawGeom(geom);
               onSelected(geom, area);
             }
         }

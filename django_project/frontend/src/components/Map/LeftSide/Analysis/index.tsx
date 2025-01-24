@@ -35,9 +35,23 @@ enum MapAnalysisInteraction {
   CUSTOM_GEOMETRY_DRAWING
 }
 
+function checkPropertyEqualsXAndOthersNull<T>(
+  obj: T,
+  keyToCheck: keyof T,
+  valueToMatch: unknown
+): boolean {
+  return Object.entries(obj).every(([key, value]) => {
+    if (key === keyToCheck) {
+      return value === valueToMatch;
+    }
+    return value === null || value === undefined;
+  });
+}
+
+
 /** Layer Checkbox component of map. */
 export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUnchecked }: Props) {
-  const { session, saveSession, loadingSession,loadSession } = useSession();
+  const { session, saveSession, loadingSession, loadSession, clearAnalysisState } = useSession();
   const dispatch = useDispatch<AppDispatch>();
   const [data, setData] = useState<AnalysisData>(
     { analysisType: Types.BASELINE }
@@ -79,19 +93,31 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
     }
   }, [savedAnalysisFlag]);
 
-
-
-  
+  useEffect(() => {
+    console.log('load Session once')
+    loadSession()
+  }, [])
 
   useEffect(() => {
-    if (session && session?.analysisState) {
-      setData(session.analysisState);
+    console.log('loadingSession ', session?.analysisState)
+    if (session && session?.analysisState && checkPropertyEqualsXAndOthersNull(data, 'analysisType', Types.BASELINE)) {
+      console.log('set data')
+      setData(session.analysisState)
+      if (session.analysisState.reference_layer) {
+        geometrySelectorRef?.current?.drawLayer({
+          'type': 'FeatureCollection',
+          'features': [{
+            'type': 'Feature',
+            'geometry': session.analysisState.reference_layer
+          }]
+        });
+      }
+      clearAnalysisState()
     }
     if(!loadingSession && session?.lastPage !== '/'){
       saveSession('/map', { activity: "Visited Analysis Page"});
     }
-      
-  }, [loadingSession]);
+  }, [loadingSession, data]);
   
 
   /** When data changed */
@@ -105,6 +131,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
   }
 
   useEffect(() => {
+    console.log('communitySelected', communitySelected)
     setData({
       ...data,
       community: communitySelected?.id ? '' + communitySelected?.id : null,
@@ -114,40 +141,39 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
   }, [communitySelected]);
 
   useEffect(() => {
-    if (
-      data.analysisType === 'Baseline' &&
-      data.community === null &&
-      data.latitude === null &&
-      data.longitude === null
-    ) {
-      if(!session?.analysisState)
-        loadSession()
-    }
+    console.log('called mapinteraction', data)
+    // if (
+    //   data.analysisType === 'Baseline' &&
+    //   data.community === null &&
+    //   data.latitude === null &&
+    //   data.longitude === null
+    // ) {
+    //   if(!session?.analysisState)
+    //     loadSession()
+    // }
 
 
     if (data.landscape && data.analysisType === Types.BASELINE) {
       setMapInteraction(MapAnalysisInteraction.LANDSCAPE_SELECTOR)
       saveSession('/map', { activity: "Visited Analysis Page"}, data);
-     
     } else if (data.landscape && data.analysisType === Types.TEMPORAL) {
       if (data.temporalResolution === TemporalResolution.ANNUAL && data.period?.year && data.comparisonPeriod?.year) {
-        setMapInteraction(MapAnalysisInteraction.LANDSCAPE_SELECTOR)
-        saveSession('/map', { activity: "Visited Analysis Page"}, data);
+        setMapInteraction(MapAnalysisInteraction.LANDSCAPE_SELECTOR);
       } else if (data.temporalResolution === TemporalResolution.QUARTERLY && data.period?.year 
         && data.period?.quarter && data.comparisonPeriod?.year && data.comparisonPeriod?.quarter) {
           setMapInteraction(MapAnalysisInteraction.LANDSCAPE_SELECTOR)
-          saveSession('/map', { activity: "Visited Analysis Page"}, data);
       } else {
         setMapInteraction(MapAnalysisInteraction.NO_INTERACTION)
-        saveSession('/map', { activity: "Visited Analysis Page"}, data);
       }
+      saveSession('/map', { activity: "Visited Analysis Page"}, data);
     } else if (data.landscape && data.analysisType === Types.SPATIAL) {
       if (mapInteraction === MapAnalysisInteraction.NO_INTERACTION && data.reference_layer && data.variable) {
         // trigger relative layer diff
         dispatch(doAnalysis(data))
-        saveSession('/map', { activity: "Visited Analysis Page"}, data);
       }
+      saveSession('/map', { activity: "Visited Analysis Page"}, data);
     }
+        
   }, [mapInteraction, data])
 
   useEffect(() => {
@@ -224,6 +250,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
               setGeomError(true)
               setMapInteraction(MapAnalysisInteraction.CUSTOM_GEOMETRY_DRAWING)
             } else if (geometry !== null) {
+              console.log('set geom')
               setGeomError(false)
               setData({
                 ...data,
@@ -438,6 +465,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
             setMapInteraction(MapAnalysisInteraction.NO_INTERACTION);
             geometrySelectorRef?.current?.removeLayer();
             dispatch(resetAnalysisResult());
+            saveSession('/map', { activity: "Visited Analysis Page"}, { analysisType: Types.BASELINE });
           }}
         >
           Reset Form
