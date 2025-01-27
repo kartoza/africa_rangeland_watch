@@ -8,6 +8,7 @@ import PieChart from "./DashboardCharts/PieChart";
 import { RenderResult } from "./DashboardCharts/CombinedCharts";
 import { Analysis } from "../store/analysisSlice";
 import CONFIG from "../config";
+import {InProgressBadge} from "./InProgressBadge";
 
  
 interface ChartCardProps {
@@ -97,7 +98,7 @@ const ChartCard: React.FC<ChartCardProps> = ({ config, className }) => {
   };
 
   return (
-    <Draggable>
+    <Draggable disabled>
       <div className={className}  style={{ overflow: "hidden" ,width: cardWidth+ 'px', height: cardHeight + 'px'}}>
         <ResizableBox
           width={cardWidth}
@@ -147,6 +148,7 @@ const ChartCard: React.FC<ChartCardProps> = ({ config, className }) => {
             <ModalHeader>Dashboard Settings</ModalHeader>
             <ModalCloseButton />
             <ModalBody>
+              <InProgressBadge/>
               <VStack spacing={4}>
                 <Box width="100%">
                   <Text fontSize="sm" color={"black"}>Dashboard Name</Text>

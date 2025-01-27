@@ -36,7 +36,7 @@ import CONFIG from "../config";
 
   const CreateDashboardModal: React.FC<CreateDashboardModalProps> = ({ isOpen, onClose, onSave, selectedAnalysis }) => {
     const [dashboardName, setDashboardName] = useState("");
-    const [preference, setPreference] = useState("map");
+    const [preference, setPreference] = useState("chart");
     const [chartType, setChartType] = useState("");
     const [accessLevel, setAccessLevel] = useState<PrivacyType>("private");
     const dispatch = useDispatch<AppDispatch>();
@@ -195,7 +195,7 @@ import CONFIG from "../config";
               borderRadius="0px"
               h={10}
               onClick={handleCreateDashboard}
-              isDisabled={!dashboardName || (preference === "chart" && !chartType)}
+              isDisabled={!dashboardName}
             >
               Save
             </Button>
