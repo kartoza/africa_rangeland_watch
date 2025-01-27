@@ -75,8 +75,8 @@ class UploadLayerAPI(APIView):
         :return: file type
         :rtype: str
         """
-        # if filename.lower().endswith('.zip'):
-        #     return FileType.SHAPEFILE
+        if filename.lower().endswith('.zip'):
+            return FileType.SHAPEFILE
         return ''
 
     def _check_shapefile_zip(self, file_obj: any) -> str:
