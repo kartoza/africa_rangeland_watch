@@ -5,83 +5,8 @@ import Draggable from "react-draggable";
 import LineChart from "./DashboardCharts/LineChart";
 import BarChart from "./DashboardCharts/BarChart";
 import PieChart from "./DashboardCharts/PieChart";
-
-
-  function purifyApiData(apiData: any[]) {
-    if (!Array.isArray(apiData)) {
-      throw new Error("Input data should be an array.");
-    }
-  
-    return apiData.map((item) => {
-      const { analysis_results } = item;
-  
-      if (!analysis_results || !analysis_results.data || !analysis_results.results) {
-        throw new Error("Invalid data structure.");
-      }
-  
-      const {
-        latitude,
-        community,
-        landscape,
-        longitude,
-        analysisType,
-      } = analysis_results.data;
-  
-      const {
-        id,
-        type,
-        columns,
-        version,
-        features,
-      } = analysis_results.results;
-  
-      const purifiedFeatures = features.map((feature: { id: any; type: any; geometry: any; properties: any; }) => {
-        const {
-          id: featureId,
-          type: featureType,
-          geometry,
-          properties,
-        } = feature;
-  
-        return {
-          id: featureId,
-          type: featureType,
-          geometry: geometry || {},
-          properties: {
-            EVI: parseFloat(properties.EVI.toFixed(2)),
-            NDVI: parseFloat(properties.NDVI.toFixed(2)),
-            Name: properties.Name,
-            area: parseFloat(properties.area.toFixed(0)),
-            "SOC kg/m2": parseFloat(properties["SOC kg/m2"].toFixed(2)),
-          },
-        };
-      });
-  
-      return {
-        data: {
-          latitude,
-          community,
-          landscape,
-          longitude,
-          analysisType,
-        },
-        results: {
-          id,
-          type,
-          columns: {
-            EVI: columns.EVI,
-            NDVI: columns.NDVI,
-            Name: columns.Name,
-            area: columns.area,
-            "SOC kg/m2": columns["SOC kg/m2"],
-          },
-          version,
-          features: purifiedFeatures,
-        },
-      };
-    });
-  }
-  
+import { RenderResult } from "./DashboardCharts/CombinedCharts";
+import { Analysis } from "../store/analysisSlice";
 
  
 interface ChartCardProps {
@@ -112,7 +37,6 @@ const ChartCard: React.FC<ChartCardProps> = ({ config, className }) => {
 
   // Check if config.chartType is "chart" or "map"
   const isChart = config.config.preference === "chart";
-  console.log('config ',config.config)
 
 
   const getChartComponent = () => {
@@ -126,20 +50,33 @@ const ChartCard: React.FC<ChartCardProps> = ({ config, className }) => {
         </Box>
       );
     }
-
-    // If chart type is defined, render corresponding chart component
-    const data = purifyApiData(config.analysisResults);
-
-
-    switch (chartType) {
-      case "bar":
-        return <BarChart inputData={data[0]} />;
-      case "pie":
-        return <PieChart inputData={data[0]} />;
-      default:
-        return <LineChart inputData={data[0]} />;
+  
+    try {
+  
+      // switch (chartType) {
+      //   case "bar":
+      //     return <BarChart inputData={data[0]} />;
+      //   case "pie":
+      //     return <PieChart inputData={data[0]} />;
+      //   default:
+      //     return <LineChart inputData={data[0]} />;
+      // }
+      return <RenderResult analysis={config.analysisResults[0].analysis_results as unknown as Analysis} />
+    } catch (error) {
+      console.error("Error processing data:", error);
+  
+      // Fallback card in case of invalid data
+      return (
+        <Box textAlign="center" p={4}>
+          <Text fontSize="xl" fontWeight="bold" color="red.500">
+            Data Processing Error
+          </Text>
+          <Text color="black">We couldn't process the data for this chart. Please check the data source or try again later.</Text>
+        </Box>
+      );
     }
   };
+  
 
   const handleResize = (event: any, { size }: any) => {
     setCardWidth(size.width);
@@ -163,7 +100,7 @@ const ChartCard: React.FC<ChartCardProps> = ({ config, className }) => {
 
   return (
     <Draggable>
-      <div className={className}>
+      <div className={className}  style={{ overflow: "hidden" ,width: cardWidth+ 'px', height: cardHeight + 'px'}}>
         <ResizableBox
           width={cardWidth}
           height={cardHeight}
@@ -172,7 +109,8 @@ const ChartCard: React.FC<ChartCardProps> = ({ config, className }) => {
           onResizeStop={handleResize}
           resizeHandles={["se", "s", "e"]}
         >
-          <Card boxShadow="lg" borderRadius={8} borderWidth="1px" borderColor="gray.300">
+        
+          <Card boxShadow="lg" borderRadius={8} borderWidth="1px" borderColor="gray.300"  style={{ width: "auto"}}>
             <CardBody>
               <VStack spacing={2}>
                 <Text fontSize="xl" fontWeight="bold" color="black">
@@ -200,7 +138,9 @@ const ChartCard: React.FC<ChartCardProps> = ({ config, className }) => {
               </VStack>
             </CardBody>
           </Card>
+          
         </ResizableBox>
+        
 
         {/* Settings Modal */}
         <Modal isOpen={isSettingsOpen} onClose={() => setSettingsOpen(false)}>
@@ -244,9 +184,9 @@ const ChartCard: React.FC<ChartCardProps> = ({ config, className }) => {
                     value={chartType}
                     onChange={(e) => setChartType(e.target.value)}
                   >
-                    <option value="lineChart">Line Chart</option>
-                    <option value="barChart">Bar Chart</option>
-                    <option value="pieChart">Pie Chart</option>
+                    <option value="line">Line Chart</option>
+                    <option value="bar">Bar Chart</option>
+                    <option value="pie">Pie Chart</option>
                   </Select>
                 </Box>
                 <Button colorScheme="blue" onClick={handleSettingsSave} mt={4}>
@@ -256,7 +196,7 @@ const ChartCard: React.FC<ChartCardProps> = ({ config, className }) => {
             </ModalBody>
           </ModalContent>
         </Modal>
-      </div>
+        </div>
     </Draggable>
   );
 };

@@ -182,6 +182,7 @@ export default function AnalysisResults() {
             <Divider mb={6} borderColor="black" borderWidth="1px" />
   
             {loading && <Text>Loading...</Text>}
+            {!loading && !analysisData?.length && <Text>No analysis data available.</Text>}
             {error && <Text>{error}</Text>}
   
             {/* Analysis Cards Section */}
@@ -195,11 +196,27 @@ export default function AnalysisResults() {
             >
               {analysisData?.map((analysis: any, index: number) => {
                 // Generate a meaningful title
-                const projectName = analysis?.analysis_results?.results?.features[0]?.properties?.Project || "Unknown Project";
-                const locationName = analysis?.analysis_results?.results?.features[0]?.properties?.Name || "Unknown Location";
+                const analysisResults = analysis?.analysis_results?.results;
+                const features = analysisResults?.length ? analysisResults[0]?.features : [];
+                
+                // Extract properties safely
+                const projectName = features?.[0]?.properties?.Project || "Unknown Project";
+                const locationName = features?.[0]?.properties?.Name || "Coordinates Location";
                 const analysisType = analysis?.analysis_results?.data?.analysisType || "Analysis";
-                // const communityId = analysis?.analysis_results?.data?.community || "Unknown Community";
-                const meaningfulTitle = `${analysisType} Analysis of ${locationName} in the ${projectName} Landscape.`;
+
+                // Extract coordinates safely
+                const latitude = analysis?.analysis_results?.data?.latitude;
+                const longitude = analysis?.analysis_results?.data?.longitude;
+
+                // Generate a meaningful title
+                const meaningfulTitle = locationName === "Coordinates Location" && projectName === "Unknown Project" 
+                  ? `${analysisType} Results from Area (${latitude}, ${longitude})`
+                  : projectName === "Unknown Project"
+                    ? `${analysisType} Analysis of ${locationName} in the Area (${latitude}, ${longitude})`
+                    : `${analysisType} Analysis of ${locationName} in the ${projectName} Landscape.`;
+
+
+
   
                 return (
                   <Card key={index} boxShadow="md" borderRadius="md">
