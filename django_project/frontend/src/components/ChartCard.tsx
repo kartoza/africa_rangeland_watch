@@ -35,16 +35,15 @@ const ChartCard: React.FC<ChartCardProps> = ({ config, className }) => {
   const [newHeight, setNewHeight] = useState(cardHeight);
   const [chartType, setChartType] = useState('defaultChartType');
   const [dashboardName, setDashboardName] = useState('defaultDashboardName');
-
-  useEffect(() => {
-    if (config?.config) {
-      setChartType(config.config.chartType);
-      setDashboardName(config.config.dashboardName);
-    }
-  }, [config]);
-
-  // Check if config.chartType is "chart" or "map"
-  const isChart = config.config.preference === "chart";
+  const [isChart, setIsChart] = useState(false);
+  
+    useEffect(() => {
+      if (config?.config) {
+        setChartType(config.config.chartType);
+        setDashboardName(config.config.dashboardName);
+        setIsChart(config.config.preference === "chart");
+      }
+    }, [config]);
 
 
   const getChartComponent = () => {
@@ -60,15 +59,6 @@ const ChartCard: React.FC<ChartCardProps> = ({ config, className }) => {
     }
   
     try {
-  
-      // switch (chartType) {
-      //   case "bar":
-      //     return <BarChart inputData={data[0]} />;
-      //   case "pie":
-      //     return <PieChart inputData={data[0]} />;
-      //   default:
-      //     return <LineChart inputData={data[0]} />;
-      // }
       return <RenderResult analysis={config.analysisResults[0].analysis_results as unknown as Analysis} />
     } catch (error) {
       console.error("Error processing data:", error);
