@@ -55,10 +55,12 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
   const savedAnalysisFlag = useSelector(
     (state: RootState) => state.userAnalysis.savedAnalysisFlag
   );
+   const analysis = useSelector((state: RootState) => state.analysis);
+
 
   const handleSaveAnalysis = () => {
-    if (data) {
-      dispatch(saveAnalysis(data))
+    if (data && analysis) {
+      dispatch(saveAnalysis(analysis))
     }
   };
 
