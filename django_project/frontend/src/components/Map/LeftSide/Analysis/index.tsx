@@ -60,7 +60,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
 
   const handleSaveAnalysis = () => {
     if (data && analysis) {
-      dispatch(saveAnalysis(analysis))
+      dispatch(saveAnalysis(analysis.analysis))
     }
   };
 
