@@ -1,6 +1,7 @@
 import React from "react";
 import { Box, Image, Heading, Button, Tabs, TabList, Tab, TabPanels, TabPanel, Table, Thead, Tbody, Tr, Th, Td, Flex, Divider, Text } from "@chakra-ui/react";
 import { FaTimes } from "react-icons/fa";
+import {InProgressBadge} from "../InProgressBadge";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -10,7 +11,6 @@ interface SidebarProps {
 
 const AnalysisSideBar = ({ isOpen, onClose, selectedAnalysis }: SidebarProps) => {
   if (!selectedAnalysis) return null;
-
   return (
     <Box
       position="fixed"
@@ -72,12 +72,15 @@ const AnalysisSideBar = ({ isOpen, onClose, selectedAnalysis }: SidebarProps) =>
           w="auto"
           borderRadius="2px"
           h={8}
+          disabled
         >
           View Analysis
         </Button>
       </Flex>
 
       <Divider mb={4} borderColor="gray.300" />
+
+      <InProgressBadge/>
 
       {/* Tabs */}
       <Tabs variant="enclosed" isLazy>

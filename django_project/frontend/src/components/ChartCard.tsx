@@ -7,6 +7,8 @@ import BarChart from "./DashboardCharts/BarChart";
 import PieChart from "./DashboardCharts/PieChart";
 import { RenderResult } from "./DashboardCharts/CombinedCharts";
 import { Analysis } from "../store/analysisSlice";
+import CONFIG from "../config";
+import {InProgressBadge} from "./InProgressBadge";
 
  
 interface ChartCardProps {
@@ -96,7 +98,7 @@ const ChartCard: React.FC<ChartCardProps> = ({ config, className }) => {
   };
 
   return (
-    <Draggable>
+    <Draggable disabled>
       <div className={className}  style={{ overflow: "hidden" ,width: cardWidth+ 'px', height: cardHeight + 'px'}}>
         <ResizableBox
           width={cardWidth}
@@ -146,6 +148,7 @@ const ChartCard: React.FC<ChartCardProps> = ({ config, className }) => {
             <ModalHeader>Dashboard Settings</ModalHeader>
             <ModalCloseButton />
             <ModalBody>
+              <InProgressBadge/>
               <VStack spacing={4}>
                 <Box width="100%">
                   <Text fontSize="sm" color={"black"}>Dashboard Name</Text>
@@ -175,6 +178,7 @@ const ChartCard: React.FC<ChartCardProps> = ({ config, className }) => {
                     max={500}
                   />
                 </Box>
+                { CONFIG.ENABLE_CHART_TYPE &&
                 <Box width="100%">
                   <Text fontSize="sm" color={"black"}>Chart Type</Text>
                   <Select
@@ -186,6 +190,7 @@ const ChartCard: React.FC<ChartCardProps> = ({ config, className }) => {
                     <option value="pie">Pie Chart</option>
                   </Select>
                 </Box>
+                }
                 <Button colorScheme="blue" onClick={handleSettingsSave} mt={4}>
                   Save Changes
                 </Button>

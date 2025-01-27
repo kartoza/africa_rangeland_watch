@@ -214,7 +214,7 @@ export default function SupportPage() {
             )}
 
             {/* Content Section */}
-            <Divider mb={6} borderColor="black" borderWidth="1px" />
+            <Divider mb={6} borderColor="black" borderWidth="1px" width="calc(100% - 10px)" />
 
             {loading && <Text>Loading...</Text>}
             {error && <Text>{error}</Text>}

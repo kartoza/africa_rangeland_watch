@@ -17,10 +17,11 @@ import {
     useBreakpointValue,
     useToast,
   } from "@chakra-ui/react";
-  import React, { useEffect, useState } from "react";
-  import { useSelector, useDispatch } from 'react-redux';
-  import { createDashboard, DashboardData } from "../store/dashboardSlice";
-  import { AppDispatch, RootState } from "../store";
+import React, { useEffect, useState } from "react";
+import { useSelector, useDispatch } from 'react-redux';
+import { createDashboard, DashboardData } from "../store/dashboardSlice";
+import { AppDispatch, RootState } from "../store"
+import CONFIG from "../config";
 
 
   
@@ -35,7 +36,7 @@ import {
 
   const CreateDashboardModal: React.FC<CreateDashboardModalProps> = ({ isOpen, onClose, onSave, selectedAnalysis }) => {
     const [dashboardName, setDashboardName] = useState("");
-    const [preference, setPreference] = useState("map");
+    const [preference, setPreference] = useState("chart");
     const [chartType, setChartType] = useState("");
     const [accessLevel, setAccessLevel] = useState<PrivacyType>("private");
     const dispatch = useDispatch<AppDispatch>();
@@ -134,7 +135,7 @@ import {
             </FormControl>
   
             {/* Chart Options (Visible only if 'Chart' is selected) */}
-            {preference === "chart" && (
+            {preference === "chart" && CONFIG.ENABLE_CHART_TYPE && (
               <FormControl mb={4}>
                 <FormLabel fontWeight="bold">Chart Type</FormLabel>
                 <Select
@@ -194,7 +195,7 @@ import {
               borderRadius="0px"
               h={10}
               onClick={handleCreateDashboard}
-              isDisabled={!dashboardName || (preference === "chart" && !chartType)}
+              isDisabled={!dashboardName}
             >
               Save
             </Button>
