@@ -20,8 +20,11 @@ interface Props {
 
 export function BarChart({ analysis }: Props) {
   // Extracting data for the chart
-
   const jsonData = analysis.results[0];
+
+  if (jsonData.features.length == 0) {
+    return
+  }
 
   let labels: number[] = [jsonData.features[0].properties.year];
   if (jsonData.features.length > 1) {
@@ -83,6 +86,9 @@ export function LineChart({ analysis }: Props) {
   // Extracting data for the chart
 
   const jsonData = analysis.results[1];
+  if (jsonData.features.length == 0) {
+    return
+  }
 
   const name1 = jsonData.features[0].properties.Name;
   const name2 = jsonData.features[1].properties.Name;

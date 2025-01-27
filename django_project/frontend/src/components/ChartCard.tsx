@@ -7,6 +7,7 @@ import BarChart from "./DashboardCharts/BarChart";
 import PieChart from "./DashboardCharts/PieChart";
 import { RenderResult } from "./DashboardCharts/CombinedCharts";
 import { Analysis } from "../store/analysisSlice";
+import CONFIG from "../config";
 
  
 interface ChartCardProps {
@@ -185,6 +186,7 @@ const ChartCard: React.FC<ChartCardProps> = ({ config, className }) => {
                     max={500}
                   />
                 </Box>
+                { CONFIG.ENABLE_CHART_TYPE &&
                 <Box width="100%">
                   <Text fontSize="sm" color={"black"}>Chart Type</Text>
                   <Select
@@ -196,6 +198,7 @@ const ChartCard: React.FC<ChartCardProps> = ({ config, className }) => {
                     <option value="pie">Pie Chart</option>
                   </Select>
                 </Box>
+                }
                 <Button colorScheme="blue" onClick={handleSettingsSave} mt={4}>
                   Save Changes
                 </Button>

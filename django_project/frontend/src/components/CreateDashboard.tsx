@@ -17,10 +17,11 @@ import {
     useBreakpointValue,
     useToast,
   } from "@chakra-ui/react";
-  import React, { useEffect, useState } from "react";
-  import { useSelector, useDispatch } from 'react-redux';
-  import { createDashboard, DashboardData } from "../store/dashboardSlice";
-  import { AppDispatch, RootState } from "../store";
+import React, { useEffect, useState } from "react";
+import { useSelector, useDispatch } from 'react-redux';
+import { createDashboard, DashboardData } from "../store/dashboardSlice";
+import { AppDispatch, RootState } from "../store"
+import CONFIG from "../config";
 
 
   
@@ -134,7 +135,7 @@ import {
             </FormControl>
   
             {/* Chart Options (Visible only if 'Chart' is selected) */}
-            {preference === "chart" && (
+            {preference === "chart" && CONFIG.ENABLE_CHART_TYPE && (
               <FormControl mb={4}>
                 <FormLabel fontWeight="bold">Chart Type</FormLabel>
                 <Select
