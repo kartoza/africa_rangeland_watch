@@ -10,8 +10,6 @@ import {
   Text,
   Card,
   CardBody,
-  Image,
-  Stack,
   Tag,
   TagLabel,
   useDisclosure,
@@ -25,7 +23,6 @@ import "../../styles/index.css";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "../../store";
 import { fetchAnalysis } from "../../store/userAnalysisSlice";
-import maplibregl, { Map } from 'maplibre-gl';
 import "maplibre-gl/dist/maplibre-gl.css"; 
 import CreateDashboardModal from "../../components/CreateDashboard";
 import { format } from 'date-fns';
@@ -54,17 +51,8 @@ export default function AnalysisResults() {
   // );
 
   const handleViewClick = (analysis: any) => {
-    setSelectedAnalysis(analysis);
     onOpen();
   };
-
-  useEffect(() => {
-    console.log('loading ',loading, ' analyis ',analysisData)
-    if(!loading)
-      console.log('data ',analysisData)
-    
-  }, [loading,analysisData]);
-
 
   const handleCheckboxChange = (isChecked: boolean, analysisId: any) => {
     setSelectedAnalysis((prevSelected: any[]) => {
@@ -215,9 +203,6 @@ export default function AnalysisResults() {
                     ? `${analysisType} Analysis of ${locationName} in the Area (${latitude}, ${longitude})`
                     : `${analysisType} Analysis of ${locationName} in the ${projectName} Landscape.`;
 
-
-
-  
                 return (
                   <Card key={index} boxShadow="md" borderRadius="md">
                     <CardBody>

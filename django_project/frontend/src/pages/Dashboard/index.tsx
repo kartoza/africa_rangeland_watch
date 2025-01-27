@@ -181,6 +181,7 @@ const DashboardPage: React.FC = () => {
                       h={10}
                       color="white.a700"
                       borderRadius="2px"
+                      onClick={() => window.location.href = "/#/analysis-results"}
                   >
                       New
                   </Button>
