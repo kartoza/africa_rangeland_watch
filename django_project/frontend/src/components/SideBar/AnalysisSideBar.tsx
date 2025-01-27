@@ -10,9 +10,6 @@ interface SidebarProps {
 
 const AnalysisSideBar = ({ isOpen, onClose, selectedAnalysis }: SidebarProps) => {
   if (!selectedAnalysis) return null;
-
-  console.log(selectedAnalysis)
-
   return (
     <Box
       position="fixed"

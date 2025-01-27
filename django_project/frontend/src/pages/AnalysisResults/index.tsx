@@ -18,6 +18,9 @@ import {
 import { FaFilter } from "react-icons/fa";
 import Header from "../../components/Header";
 import Sidebar from "../../components/SideBar";
+import { FaLocationDot } from "react-icons/fa6";
+
+import { useNavigate } from 'react-router-dom';
 import AnalysisSideBar from "../../components/SideBar/AnalysisSideBar";
 import "../../styles/index.css";
 import { useDispatch, useSelector } from "react-redux";
@@ -27,6 +30,36 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import CreateDashboardModal from "../../components/CreateDashboard";
 import { format } from 'date-fns';
 
+interface FeatureProperties {
+  Project?: string;
+  Name?: string;
+}
+
+interface Feature {
+  properties?: FeatureProperties;
+}
+
+interface AnalysisResults {
+  results?: { features?: Feature[] }[];
+  data?: {
+    analysisType?: string;
+    latitude?: number;
+    longitude?: number;
+  };
+}
+
+interface AnalysisData {
+  analysis_results?: AnalysisResults;
+}
+
+interface AnalysisSummary {
+  title: string;
+  projectName: string;
+  locationName: string;
+  analysisType: string;
+  latitude?: number;
+  longitude?: number;
+}
 
 export default function AnalysisResults() {
   const [searchTerm, setSearchTerm] = useState("");
@@ -34,6 +67,7 @@ export default function AnalysisResults() {
   const [selectedAnalysis, setSelectedAnalysis] = useState([]);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [isCreateDashboardOpen, setCreateDashboard] = useState(false);
+  const navigate = useNavigate()
 
   const dispatch = useDispatch<AppDispatch>();
   const analysisData = useSelector((state: any) => state.userAnalysis.data);
@@ -45,10 +79,39 @@ export default function AnalysisResults() {
     dispatch(fetchAnalysis());
   }, [dispatch]);
 
+  const getAnalysisSummary = (analysis: AnalysisData): AnalysisSummary => {
+    const { analysis_results } = analysis || {};
+    const { results, data } = analysis_results || {};
+
+    const features = results?.[0]?.features || [];
+    const { analysisType = "Analysis", latitude, longitude } = data || {};
+
+    // Extract properties safely
+    const projectName = features?.[0]?.properties?.Project || "Unknown Project";
+    const locationName = features?.[0]?.properties?.Name || "Coordinates Location";
+
+    // Construct a meaningful title
+    const title =
+      locationName === "Coordinates Location" && projectName === "Unknown Project"
+        ? `${analysisType} Results from Area`
+        : projectName === "Unknown Project"
+          ? `${analysisType} Analysis of ${locationName} in the Area`
+          : `${analysisType} Analysis of ${locationName} in the ${projectName} Landscape.`;
+
+    return {
+      title,
+      projectName,
+      locationName,
+      analysisType,
+      latitude,
+      longitude,
+    };
+  };
+
   // Filtering based on search term
-  // const filteredData = analysisData.filter((analysis: { heading: string; }) =>
-  //   analysis.heading.toLowerCase().includes(searchTerm.toLowerCase())
-  // );
+  const filteredData = analysisData.filter((analysis: AnalysisData) =>
+      getAnalysisSummary(analysis).title.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const handleViewClick = (analysis: any) => {
     onOpen();
@@ -106,6 +169,7 @@ export default function AnalysisResults() {
                 <Flex direction={{ base: "column", md: "row" }} gap={4} align="center">
                   {/* Filter Button */}
                   <Button
+                      disabled
                     leftIcon={<FaFilter />}
                     colorScheme="green"
                     variant="solid"
@@ -119,10 +183,10 @@ export default function AnalysisResults() {
                   >
                     Filter
                   </Button>
-  
+
                   {/* Search Input */}
                   <Input
-                    placeholder="Search tickets"
+                    placeholder="Search analysis"
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
                     borderColor="gray.400"
@@ -130,7 +194,7 @@ export default function AnalysisResults() {
                   />
                 </Flex>
               </Box>
-  
+
               {/* Create Dashboard and New Analysis Buttons */}
               <Box
                 display="flex"
@@ -160,19 +224,20 @@ export default function AnalysisResults() {
                   w="auto"
                   borderRadius="0px"
                   h={10}
+                  onClick={() => navigate("/map")}
                 >
                   New Analysis
                 </Button>
               </Box>
             </Flex>
-  
+
             {/* Content Section */}
-            <Divider mb={6} borderColor="black" borderWidth="1px" />
-  
+            <Divider mb={6} borderColor="black" borderWidth="1px" width="calc(100% - 10px)" />
+
             {loading && <Text>Loading...</Text>}
-            {!loading && !analysisData?.length && <Text>No analysis data available.</Text>}
+            {!loading && !filteredData?.length && <Text>No analysis data available.</Text>}
             {error && <Text>{error}</Text>}
-  
+
             {/* Analysis Cards Section */}
             <Box
               maxHeight="calc(100vh - 250px)"
@@ -182,26 +247,8 @@ export default function AnalysisResults() {
               flexDirection="column"
               gap={4}
             >
-              {analysisData?.map((analysis: any, index: number) => {
-                // Generate a meaningful title
-                const analysisResults = analysis?.analysis_results?.results;
-                const features = analysisResults?.length ? analysisResults[0]?.features : [];
-                
-                // Extract properties safely
-                const projectName = features?.[0]?.properties?.Project || "Unknown Project";
-                const locationName = features?.[0]?.properties?.Name || "Coordinates Location";
-                const analysisType = analysis?.analysis_results?.data?.analysisType || "Analysis";
-
-                // Extract coordinates safely
-                const latitude = analysis?.analysis_results?.data?.latitude;
-                const longitude = analysis?.analysis_results?.data?.longitude;
-
-                // Generate a meaningful title
-                const meaningfulTitle = locationName === "Coordinates Location" && projectName === "Unknown Project" 
-                  ? `${analysisType} Results from Area (${latitude}, ${longitude})`
-                  : projectName === "Unknown Project"
-                    ? `${analysisType} Analysis of ${locationName} in the Area (${latitude}, ${longitude})`
-                    : `${analysisType} Analysis of ${locationName} in the ${projectName} Landscape.`;
+              {filteredData?.map((analysis: any, index: number) => {
+                let analysisSummary = getAnalysisSummary(analysis)
 
                 return (
                   <Card key={index} boxShadow="md" borderRadius="md">
@@ -218,14 +265,25 @@ export default function AnalysisResults() {
                             handleCheckboxChange(e.target.checked, analysis?.id)
                           }
                         />
-  
+
                         {/* Content */}
-                        <Box flex="1" display="flex" flexDirection="column" justifyContent="space-between">
+                        <Box
+                            flex="1"
+                            display="flex"
+                            flexDirection="column"
+                            justifyContent="space-between"
+                            onClick={() => handleCheckboxChange(!selectedAnalysis.includes(analysis?.id), analysis?.id)}
+                            cursor="pointer"
+                          >
 
                           <Heading size="md" fontWeight="bold" color="black" mb={2}>
-                            {meaningfulTitle}
+                            {analysisSummary.title}
                           </Heading>
-  
+
+                          { analysisSummary.latitude &&
+                              <Flex><FaLocationDot/><Text color={'black'} textStyle="xs">{analysisSummary.latitude}, {analysisSummary.longitude}</Text></Flex>
+                          }
+
                           <Box mt={4} display="flex" flexWrap="wrap" gap={2}>
                             <Tag colorScheme="green" mr={2}>
                               <TagLabel>
@@ -233,16 +291,16 @@ export default function AnalysisResults() {
                               </TagLabel>
                             </Tag>
                             <Tag colorScheme="blue" mr={2}>
-                              <TagLabel>{projectName}</TagLabel>
+                              <TagLabel>{analysisSummary.projectName}</TagLabel>
                             </Tag>
                             <Tag colorScheme="teal">
-                              <TagLabel>{locationName}</TagLabel>
+                              <TagLabel>{analysisSummary.locationName}</TagLabel>
                             </Tag>
                           </Box>
                         </Box>
-  
+
                         {/* View Button */}
-                        <Flex justify="flex-end" mt={{ base: 4, md: 8 }}>
+                        <Flex justify="flex-end" mt={{ base: 4, md: 8 }} >
                           <Button
                             colorScheme="green"
                             variant="solid"
@@ -256,6 +314,20 @@ export default function AnalysisResults() {
                           >
                             View
                           </Button>
+
+                          <Button
+                              disabled
+                            colorScheme="red"
+                            variant="solid"
+                            backgroundColor="red.500"
+                            _hover={{ backgroundColor: "light_green.400" }}
+                            color="white"
+                            width="auto"
+                            borderRadius="0px"
+                            h={10}
+                          >
+                            Delete
+                          </Button>
                         </Flex>
                       </Flex>
                     </CardBody>
@@ -263,14 +335,14 @@ export default function AnalysisResults() {
                 );
               })}
             </Box>
-  
+
             <CreateDashboardModal
               onClose={() => setCreateDashboard(false)}
               selectedAnalysis={selectedAnalysis} // Pass selected analysis data to the modal
               onSave={handleSave}
               isOpen={isCreateDashboardOpen}
             />
-  
+
             {/* Right Sidebar */}
             <AnalysisSideBar isOpen={isOpen} onClose={onClose} selectedAnalysis={selectedAnalysis} />
           </Box>
