@@ -12,7 +12,10 @@ class UserAnalysisResultsViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def perform_create(self, serializer):
-        serializer.save(created_by=self.request.user)
+        serializer.save(
+            created_by=self.request.user,
+            analysis_results=self.request.data.get('analysis_results')
+        )
 
     @action(detail=False, methods=['get'])
     def fetch_analysis_results(self, request):

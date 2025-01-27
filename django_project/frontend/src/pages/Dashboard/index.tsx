@@ -64,6 +64,7 @@ const DashboardPage: React.FC = () => {
       }));
       
       // Set the state to pass down to the chart cards
+      
       setChartsConfig(updatedChartsConfig);
     }
   }, [loading, dashboardData]);
@@ -192,11 +193,12 @@ const DashboardPage: React.FC = () => {
 
           <SimpleGrid
             // templateColumns="repeat(auto-fill, minmax(400px, 1fr))"
-            columns={[1, 2, 3, 4]}
-            spacing="2"
-            marginBottom={6}
+            columns={[1, 2, 3]}
+            spacing="0"
+            marginBottom={0}
             paddingLeft={{ base: "5%", md: "2.5%" }}
-            templateColumns="repeat(auto-fill, minmax(300px, 1fr))"
+            templateColumns="repeat(auto-fill, minmax(500px, 1fr))"
+            autoFlow="dense"
           >
             {chartsConfig.map((config, index) => (
                 <ChartCard

@@ -24,7 +24,6 @@ export const fetchAnalysis = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await axios.get('/user_analysis_results/fetch_analysis_results/');
-      console.log(response.data.data)
       return response.data;
     } catch (error) {
       return rejectWithValue('Error fetching analysis results');
@@ -37,7 +36,10 @@ export const saveAnalysis = createAsyncThunk(
   'analysis/saveAnalysis',
   async (data: any, { rejectWithValue }) => {
     try {
-      const response = await axios.post('/user_analysis_results/save_analysis_results/', data);
+      const payload = {
+        analysis_results: data,
+      };
+      const response = await axios.post('/user_analysis_results/save_analysis_results/', payload);
       return response.data;
     } catch (error) {
       return rejectWithValue('Error saving analysis results');
