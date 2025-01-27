@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { Card, CardBody, Text, Box, Button, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, Input, Select, VStack } from "@chakra-ui/react";
 import { ResizableBox } from "react-resizable";
 import Draggable from "react-draggable";
@@ -32,8 +32,15 @@ const ChartCard: React.FC<ChartCardProps> = ({ config, className }) => {
   const [isSettingsOpen, setSettingsOpen] = useState(false);
   const [newWidth, setNewWidth] = useState(cardWidth);
   const [newHeight, setNewHeight] = useState(cardHeight);
-  const [chartType, setChartType] = useState(config.config.chartType);
-  const [dashboardName, setDashboardName] = useState(config.config.dashboardName);
+  const [chartType, setChartType] = useState('defaultChartType');
+  const [dashboardName, setDashboardName] = useState('defaultDashboardName');
+
+  useEffect(() => {
+    if (config?.config) {
+      setChartType(config.config.chartType);
+      setDashboardName(config.config.dashboardName);
+    }
+  }, [config]);
 
   // Check if config.chartType is "chart" or "map"
   const isChart = config.config.preference === "chart";
