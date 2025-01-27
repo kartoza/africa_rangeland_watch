@@ -222,10 +222,16 @@ export function RenderBaseline({ analysis }: Props) {
 }
 
 export function RenderTemporal({ analysis }: Props) {
-  return <Box>
-    <BarChart analysis={analysis}></BarChart>
-    {/* <LineChart analysis={analysis}></LineChart> */}
-  </Box>
+  return (
+    <Box display="flex" flexDirection="column" gap="4px" overflow={"auto"}>
+      <Box flex="0 0 auto">
+        <LineChart analysis={analysis} />
+      </Box>
+      <Box flex="0 0 auto">
+        <BarChart analysis={analysis} />
+      </Box>
+    </Box>
+  );
 }
 
 export function RenderSpatial({ analysis }: Props) {
