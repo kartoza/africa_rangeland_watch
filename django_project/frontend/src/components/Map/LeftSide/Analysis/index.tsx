@@ -93,16 +93,15 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
   }, [savedAnalysisFlag]);
 
   useEffect(() => {
-    console.log('load Session once')
+    // load saved session once
     loadSession()
   }, [])
 
   useEffect(() => {
-    console.log('loadingSession ', session?.analysisState)
     if (session && session?.analysisState && checkPropertyEqualsXAndOthersNull(data, 'analysisType', Types.BASELINE)) {
-      console.log('set data')
       setData(session.analysisState)
       if (session.analysisState.reference_layer) {
+        // draw reference layer for spatial analysis
         geometrySelectorRef?.current?.drawLayer({
           'type': 'FeatureCollection',
           'features': [{
@@ -110,7 +109,14 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
             'geometry': session.analysisState.reference_layer
           }]
         });
+        // trigger relative layer diff
+        dispatch(doAnalysis({
+          ...session.analysisState,
+          latitude: null,
+          longitude: null
+        }))
       }
+      // pop stored state
       clearAnalysisState()
     }
     if(!loadingSession && session?.lastPage !== '/'){
@@ -130,8 +136,6 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
   }
 
   useEffect(() => {
-    console.log('called mapinteraction', data)
-
     if (data.landscape && data.analysisType === Types.BASELINE) {
       setMapInteraction(MapAnalysisInteraction.LANDSCAPE_SELECTOR)
       saveSession('/map', { activity: "Visited Analysis Page"}, data);
@@ -146,9 +150,11 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
       }
       saveSession('/map', { activity: "Visited Analysis Page"}, data);
     } else if (data.landscape && data.analysisType === Types.SPATIAL) {
-      if (mapInteraction === MapAnalysisInteraction.NO_INTERACTION && data.reference_layer && data.variable) {
+      if (mapInteraction === MapAnalysisInteraction.NO_INTERACTION && data.reference_layer && data.variable && data.latitude === null && data.longitude === null) {
         // trigger relative layer diff
         dispatch(doAnalysis(data))
+      } else if (mapInteraction === MapAnalysisInteraction.LANDSCAPE_SELECTOR && !data.reference_layer) {
+        setMapInteraction(MapAnalysisInteraction.NO_INTERACTION)
       }
       saveSession('/map', { activity: "Visited Analysis Page"}, data);
     }
@@ -218,7 +224,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
           landscape={landscapes.find(landscape => landscape.name === data.landscape)}
           featureId={data.communityFeatureId}
           enableSelection={mapInteraction === MapAnalysisInteraction.LANDSCAPE_SELECTOR}
-          onSelected={(value) => 
+          onSelected={(value) => {
             setData({
               ...data,
               community: value?.id ? '' + value?.id : null,
@@ -227,6 +233,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
               communityName: value?.name ? value?.name : null,
               communityFeatureId: value?.featureId ? value?.featureId : null
             })
+          }
           }
         />
         <AnalysisCustomGeometrySelector
@@ -306,7 +313,8 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
                     community: null,
                     latitude: null,
                     longitude: null,
-                    communityName: null
+                    communityName: null,
+                    communityFeatureId: null
                   })
                   setMapInteraction(MapAnalysisInteraction.CUSTOM_GEOMETRY_DRAWING)
                   dispatch(resetAnalysisResult())
