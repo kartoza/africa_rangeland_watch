@@ -164,8 +164,12 @@ export default function AnalysisLandscapeGeometrySelector(
       map.setFilter(
         (COMMUNITY_ID + '-highlight'), ["==", "id", featureId]
       );
+    } else {
+      map.setFilter(
+        (COMMUNITY_ID + '-highlight'), ["==", "id", '']
+      );
     }
-    console.log('rendered map community')
+
     return () => {
       map.off('click', COMMUNITY_FILL_ID, clickFunction);
       map.off('mousemove', COMMUNITY_ID, hoverFunction);
