@@ -9,6 +9,7 @@ export interface Community {
   name: string;
   latitude: number;
   longitude: number;
+  featureId?: string;
 }
 
 export interface Landscape {

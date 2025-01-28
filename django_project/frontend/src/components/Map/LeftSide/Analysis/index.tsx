@@ -56,7 +56,6 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
   const [data, setData] = useState<AnalysisData>(
     { analysisType: Types.BASELINE }
   );
-  const [communitySelected, setCommunitySelected] = useState<Community | null>(null);
   const { loading, referenceLayerDiff } = useSelector((state: RootState) => state.analysis);
   const { mapConfig } = useSelector((state: RootState) => state.mapConfig);
   const [mapInteraction, setMapInteraction] = useState(MapAnalysisInteraction.NO_INTERACTION);
@@ -131,27 +130,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
   }
 
   useEffect(() => {
-    console.log('communitySelected', communitySelected)
-    setData({
-      ...data,
-      community: communitySelected?.id ? '' + communitySelected?.id : null,
-      latitude: communitySelected?.latitude ? communitySelected?.latitude : null,
-      longitude: communitySelected?.longitude ? communitySelected?.longitude : null
-    })
-  }, [communitySelected]);
-
-  useEffect(() => {
     console.log('called mapinteraction', data)
-    // if (
-    //   data.analysisType === 'Baseline' &&
-    //   data.community === null &&
-    //   data.latitude === null &&
-    //   data.longitude === null
-    // ) {
-    //   if(!session?.analysisState)
-    //     loadSession()
-    // }
-
 
     if (data.landscape && data.analysisType === Types.BASELINE) {
       setMapInteraction(MapAnalysisInteraction.LANDSCAPE_SELECTOR)
@@ -237,11 +216,21 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
         />
         <AnalysisLandscapeGeometrySelector
           landscape={landscapes.find(landscape => landscape.name === data.landscape)}
+          featureId={data.communityFeatureId}
           enableSelection={mapInteraction === MapAnalysisInteraction.LANDSCAPE_SELECTOR}
-          onSelected={(value) => setCommunitySelected(value)}
+          onSelected={(value) => 
+            setData({
+              ...data,
+              community: value?.id ? '' + value?.id : null,
+              latitude: value?.latitude ? value?.latitude : null,
+              longitude: value?.longitude ? value?.longitude : null,
+              communityName: value?.name ? value?.name : null,
+              communityFeatureId: value?.featureId ? value?.featureId : null
+            })
+          }
         />
         <AnalysisCustomGeometrySelector
-        ref={geometrySelectorRef}
+          ref={geometrySelectorRef}
           isDrawing={mapInteraction === MapAnalysisInteraction.CUSTOM_GEOMETRY_DRAWING}
           onSelected={(geometry, area) => {
             if (area > mapConfig.spatial_reference_layer_max_area) {
@@ -250,7 +239,6 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
               setGeomError(true)
               setMapInteraction(MapAnalysisInteraction.CUSTOM_GEOMETRY_DRAWING)
             } else if (geometry !== null) {
-              console.log('set geom')
               setGeomError(false)
               setData({
                 ...data,
@@ -317,9 +305,9 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
                     reference_layer: null,
                     community: null,
                     latitude: null,
-                    longitude: null
+                    longitude: null,
+                    communityName: null
                   })
-                  setCommunitySelected(null)
                   setMapInteraction(MapAnalysisInteraction.CUSTOM_GEOMETRY_DRAWING)
                   dispatch(resetAnalysisResult())
                 }}
@@ -444,8 +432,8 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
           !dataError ?
             <Box mb={4} color={'green'}>
               Click polygons on the
-              map {communitySelected ?
-              <Box>{communitySelected.name}</Box> : null}
+              map {data?.communityName ?
+              <Box>{data?.communityName}</Box> : null}
             </Box> :
             null
         }
@@ -461,7 +449,6 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
           disabled={loading}
           onClick={() => {
             setData({ analysisType: Types.BASELINE });
-            setCommunitySelected(null);
             setMapInteraction(MapAnalysisInteraction.NO_INTERACTION);
             geometrySelectorRef?.current?.removeLayer();
             dispatch(resetAnalysisResult());
