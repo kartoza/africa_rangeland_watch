@@ -100,7 +100,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
   useEffect(() => {
     if (session && session?.analysisState && checkPropertyEqualsXAndOthersNull(data, 'analysisType', Types.BASELINE)) {
       setData(session.analysisState)
-      if (session.analysisState.reference_layer) {
+      if (session.analysisState.analysisType === Types.SPATIAL && session.analysisState.reference_layer) {
         // draw reference layer for spatial analysis
         geometrySelectorRef?.current?.drawLayer({
           'type': 'FeatureCollection',
@@ -195,7 +195,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
       dataError = false
     }
   } else if (
-    data.landscape && data.analysisType === Types.SPATIAL && data.variable && data.reference_layer !== null
+    data.landscape && data.analysisType === Types.SPATIAL && data.variable && data.reference_layer
   ) {
     dataError = false
   }
@@ -206,7 +206,6 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
   if (loading) {
     disableSubmit = true;
   }
-
 
   return (
     <Box fontSize='13px'>

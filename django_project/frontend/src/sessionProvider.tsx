@@ -3,14 +3,6 @@ import axios from 'axios';
 import { AnalysisData as AnalysisState } from './components/Map/DataTypes';
 
 
-// interface AnalysisState {
-//   analysisType?: string;
-//   community?: string | null;
-//   landscape?: string;
-//   latitude?: number | null;
-//   longitude?: number | null;
-// }
-
 interface SessionData {
   lastPage: string;
   activityData: Record<string, any>;
@@ -49,7 +41,6 @@ export const SessionProvider: React.FC<{ children: React.ReactNode }> = ({ child
 
   const saveSession = useCallback(
     async (page: string, activity: Record<string, any>, analysis?: AnalysisState) => {
-      console.log('save analysis ', analysis)
       const sessionData: Record<string, any> = {
         last_page: page,
         activity_data: activity,
@@ -82,7 +73,6 @@ export const SessionProvider: React.FC<{ children: React.ReactNode }> = ({ child
   );
 
   const loadSession = useCallback(async () => {
-    console.log('loadSession')
     setLoading(true);
     try {
       const response = await axios.get('/api/session/');
