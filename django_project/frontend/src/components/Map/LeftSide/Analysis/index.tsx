@@ -35,14 +35,27 @@ enum MapAnalysisInteraction {
   CUSTOM_GEOMETRY_DRAWING
 }
 
+function checkPropertyEqualsXAndOthersNull<T>(
+  obj: T,
+  keyToCheck: keyof T,
+  valueToMatch: unknown
+): boolean {
+  return Object.entries(obj).every(([key, value]) => {
+    if (key === keyToCheck) {
+      return value === valueToMatch;
+    }
+    return value === null || value === undefined;
+  });
+}
+
+
 /** Layer Checkbox component of map. */
 export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUnchecked }: Props) {
-  const { session, saveSession, loadingSession,loadSession } = useSession();
+  const { session, saveSession, loadingSession, loadSession, clearAnalysisState } = useSession();
   const dispatch = useDispatch<AppDispatch>();
   const [data, setData] = useState<AnalysisData>(
     { analysisType: Types.BASELINE }
   );
-  const [communitySelected, setCommunitySelected] = useState<Community | null>(null);
   const { loading, referenceLayerDiff } = useSelector((state: RootState) => state.analysis);
   const { mapConfig } = useSelector((state: RootState) => state.mapConfig);
   const [mapInteraction, setMapInteraction] = useState(MapAnalysisInteraction.NO_INTERACTION);
@@ -81,19 +94,37 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
     }
   }, [savedAnalysisFlag]);
 
-
-
-  
+  useEffect(() => {
+    // load saved session once
+    loadSession()
+  }, [])
 
   useEffect(() => {
-    if (session && session?.analysisState) {
-      setData(session.analysisState);
+    if (session && session?.analysisState && checkPropertyEqualsXAndOthersNull(data, 'analysisType', Types.BASELINE)) {
+      setData(session.analysisState)
+      if (session.analysisState.analysisType === Types.SPATIAL && session.analysisState.reference_layer) {
+        // draw reference layer for spatial analysis
+        geometrySelectorRef?.current?.drawLayer({
+          'type': 'FeatureCollection',
+          'features': [{
+            'type': 'Feature',
+            'geometry': session.analysisState.reference_layer
+          }]
+        });
+        // trigger relative layer diff
+        dispatch(doAnalysis({
+          ...session.analysisState,
+          latitude: null,
+          longitude: null
+        }))
+      }
+      // pop stored state
+      clearAnalysisState()
     }
     if(!loadingSession && session?.lastPage !== '/'){
       saveSession('/map', { activity: "Visited Analysis Page"});
     }
-      
-  }, [loadingSession]);
+  }, [loadingSession, data]);
   
 
   /** When data changed */
@@ -107,49 +138,29 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
   }
 
   useEffect(() => {
-    setData({
-      ...data,
-      community: communitySelected?.id ? '' + communitySelected?.id : null,
-      latitude: communitySelected?.latitude ? communitySelected?.latitude : null,
-      longitude: communitySelected?.longitude ? communitySelected?.longitude : null
-    })
-  }, [communitySelected]);
-
-  useEffect(() => {
-    if (
-      data.analysisType === 'Baseline' &&
-      data.community === null &&
-      data.latitude === null &&
-      data.longitude === null
-    ) {
-      if(!session?.analysisState)
-        loadSession()
-    }
-
-
     if (data.landscape && data.analysisType === Types.BASELINE) {
       setMapInteraction(MapAnalysisInteraction.LANDSCAPE_SELECTOR)
       saveSession('/map', { activity: "Visited Analysis Page"}, data);
-     
     } else if (data.landscape && data.analysisType === Types.TEMPORAL) {
       if (data.temporalResolution === TemporalResolution.ANNUAL && data.period?.year && data.comparisonPeriod?.year) {
-        setMapInteraction(MapAnalysisInteraction.LANDSCAPE_SELECTOR)
-        saveSession('/map', { activity: "Visited Analysis Page"}, data);
+        setMapInteraction(MapAnalysisInteraction.LANDSCAPE_SELECTOR);
       } else if (data.temporalResolution === TemporalResolution.QUARTERLY && data.period?.year 
         && data.period?.quarter && data.comparisonPeriod?.year && data.comparisonPeriod?.quarter) {
           setMapInteraction(MapAnalysisInteraction.LANDSCAPE_SELECTOR)
-          saveSession('/map', { activity: "Visited Analysis Page"}, data);
       } else {
         setMapInteraction(MapAnalysisInteraction.NO_INTERACTION)
-        saveSession('/map', { activity: "Visited Analysis Page"}, data);
       }
+      saveSession('/map', { activity: "Visited Analysis Page"}, data);
     } else if (data.landscape && data.analysisType === Types.SPATIAL) {
-      if (mapInteraction === MapAnalysisInteraction.NO_INTERACTION && data.reference_layer && data.variable) {
+      if (mapInteraction === MapAnalysisInteraction.NO_INTERACTION && data.reference_layer && data.variable && data.latitude === null && data.longitude === null) {
         // trigger relative layer diff
         dispatch(doAnalysis(data))
-        saveSession('/map', { activity: "Visited Analysis Page"}, data);
+      } else if (mapInteraction === MapAnalysisInteraction.LANDSCAPE_SELECTOR && !data.reference_layer) {
+        setMapInteraction(MapAnalysisInteraction.NO_INTERACTION)
       }
+      saveSession('/map', { activity: "Visited Analysis Page"}, data);
     }
+        
   }, [mapInteraction, data])
 
   useEffect(() => {
@@ -186,7 +197,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
       dataError = false
     }
   } else if (
-    data.landscape && data.analysisType === Types.SPATIAL && data.variable && data.reference_layer !== null
+    data.landscape && data.analysisType === Types.SPATIAL && data.variable && data.reference_layer
   ) {
     dataError = false
   }
@@ -197,7 +208,6 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
   if (loading) {
     disableSubmit = true;
   }
-
 
   return (
     <Box fontSize='13px'>
@@ -213,11 +223,22 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
         />
         <AnalysisLandscapeGeometrySelector
           landscape={landscapes.find(landscape => landscape.name === data.landscape)}
+          featureId={data.communityFeatureId}
           enableSelection={mapInteraction === MapAnalysisInteraction.LANDSCAPE_SELECTOR}
-          onSelected={(value) => setCommunitySelected(value)}
+          onSelected={(value) => {
+            setData({
+              ...data,
+              community: value?.id ? '' + value?.id : null,
+              latitude: value?.latitude ? value?.latitude : null,
+              longitude: value?.longitude ? value?.longitude : null,
+              communityName: value?.name ? value?.name : null,
+              communityFeatureId: value?.featureId ? value?.featureId : null
+            })
+          }
+          }
         />
         <AnalysisCustomGeometrySelector
-        ref={geometrySelectorRef}
+          ref={geometrySelectorRef}
           isDrawing={mapInteraction === MapAnalysisInteraction.CUSTOM_GEOMETRY_DRAWING}
           onSelected={(geometry, area) => {
             if (area > mapConfig.spatial_reference_layer_max_area) {
@@ -292,9 +313,10 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
                     reference_layer: null,
                     community: null,
                     latitude: null,
-                    longitude: null
+                    longitude: null,
+                    communityName: null,
+                    communityFeatureId: null
                   })
-                  setCommunitySelected(null)
                   setMapInteraction(MapAnalysisInteraction.CUSTOM_GEOMETRY_DRAWING)
                   dispatch(resetAnalysisResult())
                 }}
@@ -419,8 +441,8 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
           !dataError ?
             <Box mb={4} color={'green'}>
               Click polygons on the
-              map {communitySelected ?
-              <Box>{communitySelected.name}</Box> : null}
+              map {data?.communityName ?
+              <Box>{data?.communityName}</Box> : null}
             </Box> :
             null
         }
@@ -436,10 +458,10 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
           disabled={loading}
           onClick={() => {
             setData({ analysisType: Types.BASELINE });
-            setCommunitySelected(null);
             setMapInteraction(MapAnalysisInteraction.NO_INTERACTION);
             geometrySelectorRef?.current?.removeLayer();
             dispatch(resetAnalysisResult());
+            saveSession('/map', { activity: "Visited Analysis Page"}, { analysisType: Types.BASELINE });
           }}
         >
           Reset Form
