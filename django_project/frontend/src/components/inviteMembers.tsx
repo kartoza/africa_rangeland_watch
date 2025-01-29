@@ -13,11 +13,12 @@ import {
     ModalBody,
     useBreakpointValue,
     Textarea,
+    useToast,
   } from "@chakra-ui/react";
-  import React, { useState } from "react";
-  import { useDispatch } from "react-redux";
-  import { updateState, inviteMemberThunk } from "../store/organizationSlice";
-import { AppDispatch } from "../store";
+  import React, { useEffect, useState } from "react";
+  import { useDispatch, useSelector } from "react-redux";
+  import { updateState, inviteMemberThunk, clearResponseMessage } from "../store/organizationSlice";
+import { AppDispatch, RootState } from "../store";
   
   interface Props {
     isOpen: boolean;
@@ -29,6 +30,9 @@ import { AppDispatch } from "../store";
   type ModalPosition = "absolute" | "fixed";
   
   export default function InviteMember({ isOpen, onClose, orgKey, organizationName }: Props) {
+    const { error, loading ,invite_sent }  = useSelector((state: RootState) => state.organization);
+    const toast = useToast();
+
     const modalPosition = useBreakpointValue<ModalPosition>({
       base: "absolute",
       md: "fixed",
@@ -55,6 +59,47 @@ import { AppDispatch } from "../store";
         onClose();
       }
     };
+
+
+    useEffect(() => {
+      
+      if(!loading){
+        
+        if(error){
+          toast({
+            title: "Request failed. Please try again later",
+            description: error,
+            status: "error",
+            duration: 5000,
+            isClosable: true,
+            position: "top-right",
+            containerStyle: {
+              backgroundColor: "red",
+              color: "white",
+            },
+          });
+        }else {
+          if(invite_sent)
+            toast({
+              title: "Invitation sent.",
+              description: "Your request has been submitted successfully.",
+              status: "success",
+              duration: 5000,
+              isClosable: true,
+              position: "top-right",
+              containerStyle: {
+                backgroundColor: "#00634b",
+                color: "white",
+              },
+            })
+        }
+        dispatch(clearResponseMessage());
+
+        
+      }
+        
+      }, [error, loading]);
+    
   
     return (
       <Modal isOpen={isOpen} onClose={onClose} isCentered={modalPosition === "absolute"}>

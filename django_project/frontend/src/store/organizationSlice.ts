@@ -22,6 +22,7 @@ interface Organization {
 interface OrganizationsState {
   organizations: { [key: string]: Organization };
   loading: boolean;
+  invite_sent: boolean;
   error: string | null;
   refetch: boolean;
 }
@@ -30,6 +31,7 @@ interface OrganizationsState {
 const initialState: OrganizationsState = {
   organizations: {},
   loading: false,
+  invite_sent: false,
   error: null,
   refetch: false,
 };
@@ -53,13 +55,19 @@ export const inviteMemberThunk = createAsyncThunk(
   "organizations/inviteMember",
   async ({ orgKey, email, message }: { orgKey: number; email: string; message: string }) => {
     setCSRFToken();
-    const response = await axios.post(`/api/organization/${orgKey}/invite/`, {
-      email,
-      message,
-    });
-    return { orgKey, email };
+    try {
+      const response = await axios.post(`/api/organization/${orgKey}/invite/`, {
+        email,
+        message,
+      });
+      return { orgKey, email }; // Return success response
+    } catch (error: any) {
+      // If the error is caught, throw a custom error
+      throw new Error(error.response?.data?.error || "Failed to send invitation.");
+    }
   }
 );
+
 
 // Async thunk for deleting a member from an organization
 export const deleteMember = createAsyncThunk(
@@ -81,6 +89,10 @@ const organizationsSlice = createSlice({
   name: "organizations",
   initialState,
   reducers: {
+    clearResponseMessage: (state) => {
+      state.error = null;
+      state.invite_sent = false;
+    },
     addMember: (state, action: PayloadAction<{ orgKey: string; member: Member }>) => {
       const { orgKey, member } = action.payload;
       state.organizations[orgKey]?.members.push(member);
@@ -125,6 +137,7 @@ const organizationsSlice = createSlice({
       .addCase(inviteMemberThunk.pending, (state) => {
         state.loading = true;
         state.error = null;
+        state.invite_sent = false;
       })
       .addCase(inviteMemberThunk.fulfilled, (state, action) => {
         const { orgKey, email } = action.payload;
@@ -135,10 +148,12 @@ const organizationsSlice = createSlice({
         state.organizations[orgKey]?.invitations.push(invitation);
         state.loading = false;
         state.refetch = true;
+        state.invite_sent = true;
       })
       .addCase(inviteMemberThunk.rejected, (state, action) => {
         state.error = action.error.message || "Failed to send invitation.";
         state.loading = false;
+        state.invite_sent = false
       })
       .addCase(deleteMember.pending, (state) => {
         state.loading = true;
@@ -157,5 +172,6 @@ const organizationsSlice = createSlice({
 });
 
 export const selectRefetch = (state: RootState) => state.organization.refetch;
-export const { addMember, deleteMemberFromState, updateState, resetRefetch } = organizationsSlice.actions;
+export const { addMember, deleteMemberFromState, updateState, resetRefetch, clearResponseMessage } = organizationsSlice.actions;
 export default organizationsSlice.reducer;
+ 
