@@ -1,7 +1,13 @@
 from django.contrib import admin
 from django.contrib.gis.admin import OSMGeoAdmin
 
-from .models import Analysis, InterventionArea, Landscape, LandscapeCommunity
+from .models import (
+    Analysis,
+    InterventionArea,
+    Landscape,
+    LandscapeCommunity,
+    UserAnalysisResults
+)
 
 
 @admin.register(Analysis)
@@ -93,3 +99,16 @@ class LandscapeCommunityAdmin(OSMGeoAdmin):
     list_filter = ('landscape',)
 
     map_template = 'gis/admin/osm.html'
+
+
+class UserAnalysisResultsAdmin(admin.ModelAdmin):
+    list_display = ('created_by', 'source', 'created_at',)
+    search_fields = ('created_by__username', 'source',)
+    list_filter = ('source',)
+
+    def view_analysis_results(self, obj):
+        return str(obj.analysis_results)[:100]
+    view_analysis_results.short_description = 'Analysis Results...'
+
+
+admin.site.register(UserAnalysisResults, UserAnalysisResultsAdmin)

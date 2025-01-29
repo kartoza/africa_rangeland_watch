@@ -25,6 +25,7 @@ import { fetchTickets, createTicket, fetchIssueTypes } from "../../store/ticketS
 import { AppDispatch, RootState } from "../../store";
 import { selectUserEmail } from "../../store/authSlice";
 import Pagination from "../../components/Pagination";
+import SearchInput from "../../components/SearchInput";
 
 
 export default function SupportPage() {
@@ -36,6 +37,7 @@ export default function SupportPage() {
   const [screenshot, setScreenshot] = useState<File | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [filteredTickets, setFilteredTickets] = useState([]);
+  const [currentTickets, setCurrentTickets] = useState([]); 
 
   const dispatch = useDispatch<AppDispatch>();
   const toast = useToast();
@@ -51,9 +53,11 @@ export default function SupportPage() {
   const totalItems = tickets.length
   const totalPages = Math.ceil(totalItems / itemsPerPage);
 
-  const currentTickets = tickets.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-
-
+  useEffect(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = currentPage * itemsPerPage;
+    setCurrentTickets(filteredTickets.slice(startIndex, endIndex));
+  }, [filteredTickets, currentPage, itemsPerPage]);
 
   useEffect(() => {
     dispatch(fetchTickets());
@@ -127,14 +131,7 @@ export default function SupportPage() {
     }
   };
 
-  useEffect(() => {
-    setFilteredTickets(
-      tickets.filter((ticket) =>
-        ticket.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        ticket.description.toLowerCase().includes(searchTerm.toLowerCase())
-      )
-    );
-  }, [searchTerm, tickets]);
+ 
 
   return (
     <>
@@ -185,14 +182,14 @@ export default function SupportPage() {
                     </Button>
 
                     {/* Search Input */}
-                    <Input
+                    <SearchInput
                       placeholder="Search tickets"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      borderColor="gray.400"
-                      width="100%"
+                      data={tickets}
+                      filterKeys={["title", "description"]} 
+                      onFilteredData={setFilteredTickets}
                       isDisabled={creatingTicket}
                     />
+                    
                   </Flex>
                 </Box>
 
@@ -217,7 +214,7 @@ export default function SupportPage() {
             )}
 
             {/* Content Section */}
-            <Divider mb={6} borderColor="black" borderWidth="1px" />
+            <Divider mb={6} borderColor="black" borderWidth="1px" width="calc(100% - 10px)" />
 
             {loading && <Text>Loading...</Text>}
             {error && <Text>{error}</Text>}

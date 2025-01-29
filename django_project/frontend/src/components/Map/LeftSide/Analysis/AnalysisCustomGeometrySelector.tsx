@@ -1,13 +1,12 @@
-import React, { useEffect, useState, useRef, forwardRef, useImperativeHandle } from 'react';
-import { useSelector } from "react-redux";
+import React, { useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
 import {FeatureCollection} from "geojson";
 import { combine } from "@turf/combine";
 import { area } from "@turf/area";
 import MapboxDraw from "@mapbox/mapbox-gl-draw";
 import '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css';
-import { RootState } from "../../../../store";
 import {CUSTOM_GEOM_ID} from "../../DataTypes";
 import { removeSource } from '../../utils';
+import { useMap } from '../../../../MapContext';
 
 export const CUSTOM_GEOM_FILL_ID = CUSTOM_GEOM_ID + "-fill";
 
@@ -96,15 +95,48 @@ const styles = [
 export const AnalysisCustomGeometrySelector = forwardRef((
   { isDrawing, onSelected }: Props, ref
 ) => {
-    const [map, setMap] = useState<maplibregl.Map>(null);
-    const { mapInitiated } = useSelector((state: RootState) => state.mapConfig);
+    const { map } = useMap();
     const drawingRef = useRef(null);
+
+    const drawGeom = (geom: FeatureCollection) => {
+      // add geom to map
+      map.addSource(
+        CUSTOM_GEOM_ID, {
+          type: 'geojson',
+          data: geom
+        }
+      );
+      map.addLayer({
+        'id': CUSTOM_GEOM_ID,
+        'type': 'line',
+        'source': CUSTOM_GEOM_ID,
+        'paint': {
+          "line-color": "#D20C0C",
+          "line-width": 2
+        }
+      });
+      map.addLayer({
+        'id': CUSTOM_GEOM_FILL_ID,
+        'type': 'fill',
+        'source': CUSTOM_GEOM_ID,
+        'paint': {
+          "fill-color": "#D20C0C",
+          "fill-outline-color": "#D20C0C",
+          "fill-opacity": 0.1
+        }
+      });
+    }
 
     useImperativeHandle(ref, () => ({
         /** Remove layer */
         removeLayer() {
           if (map) {
             removeSource(map, CUSTOM_GEOM_ID);
+          }
+        },
+        drawLayer(geom: FeatureCollection) {
+          if (map) {
+            drawGeom(geom);
           }
         }
       }));
@@ -119,16 +151,10 @@ export const AnalysisCustomGeometrySelector = forwardRef((
     }
 
     useEffect(() => {
-        try {
-            window.map.getStyle()
-            const _map = window.map
-            setMap(_map)
-        } catch (err) {
-            console.log(err)
+        if (!map) {
+            return;
         }
-    }, [window.map, mapInitiated])
 
-    useEffect(() => {
         if (isDrawing) {
             removeSource(map, CUSTOM_GEOM_ID);
 
@@ -172,32 +198,7 @@ export const AnalysisCustomGeometrySelector = forwardRef((
             if (area === 0) {
               onSelected(null, 0)
             } else {
-              // add geom to map
-              map.addSource(
-                CUSTOM_GEOM_ID, {
-                  type: 'geojson',
-                  data: geom
-                }
-              );
-              map.addLayer({
-                'id': CUSTOM_GEOM_ID,
-                'type': 'line',
-                'source': CUSTOM_GEOM_ID,
-                'paint': {
-                  "line-color": "#D20C0C",
-                  "line-width": 2
-                }
-              });
-              map.addLayer({
-                'id': CUSTOM_GEOM_FILL_ID,
-                'type': 'fill',
-                'source': CUSTOM_GEOM_ID,
-                'paint': {
-                  "fill-color": "#D20C0C",
-                  "fill-outline-color": "#D20C0C",
-                  "fill-opacity": 0.1
-                }
-              });
+              drawGeom(geom);
               onSelected(geom, area);
             }
         }

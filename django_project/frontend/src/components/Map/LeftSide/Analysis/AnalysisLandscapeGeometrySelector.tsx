@@ -1,9 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect } from 'react';
 import maplibregl from "maplibre-gl";
 import { COMMUNITY_ID } from "../../DataTypes";
 import { Community, Landscape } from "../../../../store/landscapeSlice";
-import { useSelector } from "react-redux";
-import { RootState } from "../../../../store";
+import { useMap } from '../../../../MapContext';
 
 const COMMUNITY_FILL_ID = COMMUNITY_ID + '-fill';
 
@@ -11,6 +10,7 @@ interface Props {
   landscape: Landscape;
   enableSelection: boolean;
   onSelected: (value: Community) => void;
+  featureId?: string;
 }
 
 let hoverFunction: (ev: maplibregl.MapMouseEvent & {
@@ -22,19 +22,17 @@ let clickFunction: (ev: maplibregl.MapMouseEvent & {
 
 /** Landscape geometry selector. */
 export default function AnalysisLandscapeGeometrySelector(
-  { landscape, enableSelection, onSelected }: Props
+  { landscape, enableSelection, onSelected, featureId }: Props
 ) {
-  const [map, setMap] = useState<maplibregl.Map>(null);
-  const { mapInitiated } = useSelector((state: RootState) => state.mapConfig);
+  const { map } = useMap();
 
   useEffect(() => {
     try {
-      window.map.getStyle()
-      const _map = window.map
-      setMap(_map)
-
+      if (!map) {
+        return
+      }
       // render community layer
-      _map.addSource(
+      map.addSource(
         COMMUNITY_ID, {
           type: 'vector',
           tiles: [
@@ -42,7 +40,7 @@ export default function AnalysisLandscapeGeometrySelector(
           ]
         }
       );
-      _map.addLayer({
+      map.addLayer({
         'id': COMMUNITY_ID,
         'type': 'line',
         'source': COMMUNITY_ID,
@@ -52,7 +50,7 @@ export default function AnalysisLandscapeGeometrySelector(
           'line-width': 1
         }
       });
-      _map.addLayer({
+      map.addLayer({
         'id': COMMUNITY_ID + '-community',
         'type': 'line',
         'source': COMMUNITY_ID,
@@ -63,7 +61,7 @@ export default function AnalysisLandscapeGeometrySelector(
         },
         "filter": ["==", "landscape_id", 0]
       });
-      _map.addLayer({
+      map.addLayer({
         'id': COMMUNITY_ID + '-highlight',
         'type': 'fill',
         'source': COMMUNITY_ID,
@@ -74,7 +72,7 @@ export default function AnalysisLandscapeGeometrySelector(
         },
         "filter": ["==", "landscape_id", 0]
       });
-      _map.addLayer({
+      map.addLayer({
         'id': COMMUNITY_FILL_ID,
         'type': 'fill',
         'source': COMMUNITY_ID,
@@ -87,7 +85,7 @@ export default function AnalysisLandscapeGeometrySelector(
     } catch (err) {
       console.log(err)
     }
-  }, [window.map, mapInitiated])
+  }, [map])
 
   useEffect(() => {
     if (!map) {
@@ -134,6 +132,7 @@ export default function AnalysisLandscapeGeometrySelector(
               name: hit.properties['community_name'],
               latitude: e.lngLat.lat,
               longitude: e.lngLat.lng,
+              featureId: hit.properties.id
             }
           )
           map.setFilter(
@@ -161,13 +160,22 @@ export default function AnalysisLandscapeGeometrySelector(
       map.on('mousemove', COMMUNITY_ID, hoverFunction);
     }
 
+    if (featureId) {
+      map.setFilter(
+        (COMMUNITY_ID + '-highlight'), ["==", "id", featureId]
+      );
+    } else {
+      map.setFilter(
+        (COMMUNITY_ID + '-highlight'), ["==", "id", '']
+      );
+    }
+
     return () => {
       map.off('click', COMMUNITY_FILL_ID, clickFunction);
       map.off('mousemove', COMMUNITY_ID, hoverFunction);
     }
       
-  }, [map, landscape, enableSelection])
+  }, [map, landscape, featureId, enableSelection])
 
   return <></>
 }
-

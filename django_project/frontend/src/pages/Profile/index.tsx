@@ -17,7 +17,13 @@ import {
 } from "@chakra-ui/react";
 import React, { ChangeEvent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { getUserProfile, updateProfile, updateProfileImage, updatePassword } from '../../store/userProfileSlice';
+import {
+  getUserProfile,
+  updateProfile,
+  updateProfileImage,
+  updatePassword,
+  resetUpdateSuccess
+} from '../../store/userProfileSlice';
 import { AppDispatch, RootState } from '../../store';
 import RequestOrganisation from "../../components/RequestOrganisation";
 import ChangePasswordModal from "../../components/ChangePassword";
@@ -121,6 +127,7 @@ export default function ProfileInformationPage() {
           color: "white",
         },
       });
+      dispatch(resetUpdateSuccess());
     } else if (error != null &&  error !='Failed to fetch profile'){
       toast({
         title: "Error occurred",

@@ -128,11 +128,11 @@ export const checkLoginStatus = () => async (dispatch: AppDispatch) => {
         is_admin: response.data.is_admin
       }));
     } else {
-      dispatch(logout());
+      await dispatch(logoutUser());
     }
   } catch (error) {
     console.error("User info validation failed:", error);
-    dispatch(logout());
+    await dispatch(logoutUser());
   }
 };
 
@@ -141,12 +141,16 @@ export const checkLoginStatus = () => async (dispatch: AppDispatch) => {
 
 // Logout action
 export const logoutUser = () => async (dispatch: AppDispatch) => {
-  localStorage.removeItem('auth_token');
-  axios.defaults.headers['Authorization'] = '';
-  setCSRFToken();
-  await axios.post('/api/logout/', {}, { withCredentials: true });
-  dispatch(logout());
-  window.location.href = '/';
+  localStorage.clear();
+  try {
+    await axios.post('/api/logout/', {}, { withCredentials: true });
+    axios.defaults.headers['Authorization'] = '';
+    setCSRFToken();
+    dispatch(logout());
+    window.location.href = '/';
+  } catch (e) {
+    console.error(e)
+  }
 };
 
 // Action to request password reset

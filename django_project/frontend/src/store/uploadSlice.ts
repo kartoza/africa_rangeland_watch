@@ -48,7 +48,11 @@ export const uploadFile = createAsyncThunk(
       });
       return response.data;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data || 'Upload failed');
+      let error_msg = error.response?.data || 'Upload failed';
+      if (typeof error_msg === 'object') {
+        error_msg = Object.values(error_msg)[0];
+      }
+      return rejectWithValue(error_msg);
     }
   }
 );

@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { Accordion, Box, Button, HStack, Spinner, Text } from "@chakra-ui/react";
+import { Accordion, Box, Button, HStack, Spinner, Text, useToast } from "@chakra-ui/react";
 import { useDispatch, useSelector } from "react-redux";
 import { Layer } from '../../../../store/layerSlice';
 import { Community, Landscape } from '../../../../store/landscapeSlice';
@@ -20,6 +20,8 @@ import { AppDispatch, RootState } from "../../../../store";
 import { doAnalysis, REFERENCE_LAYER_DIFF_ID, resetAnalysisResult } from "../../../../store/analysisSlice";
 import { AnalysisCustomGeometrySelector } from "./AnalysisCustomGeometrySelector";
 import { LayerCheckboxProps } from '../Layers';
+import { useSession } from '../../../../sessionProvider';
+import { saveAnalysis } from '../../../../store/userAnalysisSlice';
 
 
 interface Props extends LayerCheckboxProps {
@@ -33,18 +35,97 @@ enum MapAnalysisInteraction {
   CUSTOM_GEOMETRY_DRAWING
 }
 
+function checkPropertyEqualsXAndOthersNull<T>(
+  obj: T,
+  keyToCheck: keyof T,
+  valueToMatch: unknown
+): boolean {
+  return Object.entries(obj).every(([key, value]) => {
+    if (key === keyToCheck) {
+      return value === valueToMatch;
+    }
+    return value === null || value === undefined;
+  });
+}
+
+
 /** Layer Checkbox component of map. */
 export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUnchecked }: Props) {
+  const { session, saveSession, loadingSession, loadSession, clearAnalysisState } = useSession();
   const dispatch = useDispatch<AppDispatch>();
   const [data, setData] = useState<AnalysisData>(
     { analysisType: Types.BASELINE }
   );
-  const [communitySelected, setCommunitySelected] = useState<Community | null>(null);
   const { loading, referenceLayerDiff } = useSelector((state: RootState) => state.analysis);
   const { mapConfig } = useSelector((state: RootState) => state.mapConfig);
   const [mapInteraction, setMapInteraction] = useState(MapAnalysisInteraction.NO_INTERACTION);
   const [isGeomError, setGeomError] = useState(false);
   const geometrySelectorRef = useRef(null);
+  const toast = useToast();
+  const saveAnalysisFlag = useSelector(
+    (state: RootState) => state.analysis.saveAnalysisFlag
+  );
+  const savedAnalysisFlag = useSelector(
+    (state: RootState) => state.userAnalysis.savedAnalysisFlag
+  );
+   const analysis = useSelector((state: RootState) => state.analysis);
+
+
+  const handleSaveAnalysis = () => {
+    if (data && analysis) {
+      dispatch(saveAnalysis(analysis.analysis))
+    }
+  };
+
+  useEffect(() => {
+    if(savedAnalysisFlag){
+      toast({
+        title: "Analysis results saved!",
+        description: "You will find your results on the analysis results page in the profile area.",
+        status: "success",
+        duration: 5000,
+        isClosable: true,
+        position: "top-right",
+        containerStyle: {
+          backgroundColor: "#00634b",
+          color: "white",
+        },
+      });
+    }
+  }, [savedAnalysisFlag]);
+
+  useEffect(() => {
+    // load saved session once
+    loadSession()
+  }, [])
+
+  useEffect(() => {
+    if (session && session?.analysisState && checkPropertyEqualsXAndOthersNull(data, 'analysisType', Types.BASELINE)) {
+      setData(session.analysisState)
+      if (session.analysisState.analysisType === Types.SPATIAL && session.analysisState.reference_layer) {
+        // draw reference layer for spatial analysis
+        geometrySelectorRef?.current?.drawLayer({
+          'type': 'FeatureCollection',
+          'features': [{
+            'type': 'Feature',
+            'geometry': session.analysisState.reference_layer
+          }]
+        });
+        // trigger relative layer diff
+        dispatch(doAnalysis({
+          ...session.analysisState,
+          latitude: null,
+          longitude: null
+        }))
+      }
+      // pop stored state
+      clearAnalysisState()
+    }
+    if(!loadingSession && session?.lastPage !== '/'){
+      saveSession('/map', { activity: "Visited Analysis Page"});
+    }
+  }, [loadingSession, data]);
+  
 
   /** When data changed */
   const triggerAnalysis = () => {
@@ -57,32 +138,29 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
   }
 
   useEffect(() => {
-    setData({
-      ...data,
-      community: communitySelected?.id ? '' + communitySelected?.id : null,
-      latitude: communitySelected?.latitude ? communitySelected?.latitude : null,
-      longitude: communitySelected?.longitude ? communitySelected?.longitude : null
-    })
-  }, [communitySelected]);
-
-  useEffect(() => {
     if (data.landscape && data.analysisType === Types.BASELINE) {
       setMapInteraction(MapAnalysisInteraction.LANDSCAPE_SELECTOR)
+      saveSession('/map', { activity: "Visited Analysis Page"}, data);
     } else if (data.landscape && data.analysisType === Types.TEMPORAL) {
       if (data.temporalResolution === TemporalResolution.ANNUAL && data.period?.year && data.comparisonPeriod?.year) {
-        setMapInteraction(MapAnalysisInteraction.LANDSCAPE_SELECTOR)
+        setMapInteraction(MapAnalysisInteraction.LANDSCAPE_SELECTOR);
       } else if (data.temporalResolution === TemporalResolution.QUARTERLY && data.period?.year 
         && data.period?.quarter && data.comparisonPeriod?.year && data.comparisonPeriod?.quarter) {
           setMapInteraction(MapAnalysisInteraction.LANDSCAPE_SELECTOR)
       } else {
         setMapInteraction(MapAnalysisInteraction.NO_INTERACTION)
       }
+      saveSession('/map', { activity: "Visited Analysis Page"}, data);
     } else if (data.landscape && data.analysisType === Types.SPATIAL) {
-      if (mapInteraction === MapAnalysisInteraction.NO_INTERACTION && data.reference_layer && data.variable) {
+      if (mapInteraction === MapAnalysisInteraction.NO_INTERACTION && data.reference_layer && data.variable && data.latitude === null && data.longitude === null) {
         // trigger relative layer diff
         dispatch(doAnalysis(data))
+      } else if (mapInteraction === MapAnalysisInteraction.LANDSCAPE_SELECTOR && !data.reference_layer) {
+        setMapInteraction(MapAnalysisInteraction.NO_INTERACTION)
       }
+      saveSession('/map', { activity: "Visited Analysis Page"}, data);
     }
+        
   }, [mapInteraction, data])
 
   useEffect(() => {
@@ -119,7 +197,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
       dataError = false
     }
   } else if (
-    data.landscape && data.analysisType === Types.SPATIAL && data.variable && data.reference_layer !== null
+    data.landscape && data.analysisType === Types.SPATIAL && data.variable && data.reference_layer
   ) {
     dataError = false
   }
@@ -145,11 +223,22 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
         />
         <AnalysisLandscapeGeometrySelector
           landscape={landscapes.find(landscape => landscape.name === data.landscape)}
+          featureId={data.communityFeatureId}
           enableSelection={mapInteraction === MapAnalysisInteraction.LANDSCAPE_SELECTOR}
-          onSelected={(value) => setCommunitySelected(value)}
+          onSelected={(value) => {
+            setData({
+              ...data,
+              community: value?.id ? '' + value?.id : null,
+              latitude: value?.latitude ? value?.latitude : null,
+              longitude: value?.longitude ? value?.longitude : null,
+              communityName: value?.name ? value?.name : null,
+              communityFeatureId: value?.featureId ? value?.featureId : null
+            })
+          }
+          }
         />
         <AnalysisCustomGeometrySelector
-        ref={geometrySelectorRef}
+          ref={geometrySelectorRef}
           isDrawing={mapInteraction === MapAnalysisInteraction.CUSTOM_GEOMETRY_DRAWING}
           onSelected={(geometry, area) => {
             if (area > mapConfig.spatial_reference_layer_max_area) {
@@ -203,7 +292,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
         {/* Draw buttons for spatial */}
         {
           data.analysisType === Types.SPATIAL && data.variable &&
-          <Box mb={4} color={'red'}>
+          <Box mb={4} color={'green'}>
             Draw a reference area
           </Box>
         }
@@ -224,9 +313,10 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
                     reference_layer: null,
                     community: null,
                     latitude: null,
-                    longitude: null
+                    longitude: null,
+                    communityName: null,
+                    communityFeatureId: null
                   })
-                  setCommunitySelected(null)
                   setMapInteraction(MapAnalysisInteraction.CUSTOM_GEOMETRY_DRAWING)
                   dispatch(resetAnalysisResult())
                 }}
@@ -284,7 +374,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
           <HStack mt={4} color={'red'}
             wrap="wrap" gap={2} alignItems='center' justifyContent='center'>
             <Spinner size="xs"/>
-            <Text color={'red'}>Generating % difference in {data.variable}</Text>
+            <Text color={'green'}>Generating % difference in {data.variable}</Text>
           </HStack>
         }
         {/* 4) Select variable for temporal */}
@@ -349,49 +439,60 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
       <Box mt={4} mb={4} marginTop={10}>
         {
           !dataError ?
-            <Box mb={4} color={'red'}>
+            <Box mb={4} color={'green'}>
               Click polygons on the
-              map {communitySelected ?
-              <Box>{communitySelected.name}</Box> : null}
+              map {data?.communityName ?
+              <Box>{data?.communityName}</Box> : null}
             </Box> :
             null
         }
-        <HStack
-          wrap="wrap" gap={8} alignItems='center' justifyContent='center'>
-          <Button
-            size="xs"
-            borderRadius={4}
-            paddingX={4}
-            borderColor='dark_green.800'
-            color="dark_green.800"
-            _hover={{ bg: "dark_green.800", color: "white" }}
-            variant="outline"
-            disabled={loading}
-            onClick={() => {
-              setData({ analysisType: Types.BASELINE });
-              setCommunitySelected(null);
-              setMapInteraction(MapAnalysisInteraction.NO_INTERACTION);
-              geometrySelectorRef?.current?.removeLayer();
-              dispatch(resetAnalysisResult());
-            }}
-          >
-            Reset Form
-          </Button>
-          <Button
-            size="xs"
-            borderRadius={4}
-            paddingX={4}
-            bg='dark_green.800'
-            color="white"
-            _hover={{ opacity: 0.8 }}
-            disabled={disableSubmit}
-            onClick={triggerAnalysis}
-          >
-            Run Analysis
-          </Button>
-        </HStack>
+        <HStack wrap="wrap" gap={8} alignItems="center" justifyContent="center">
+        <Button
+          size="xs"
+          borderRadius={4}
+          paddingX={4}
+          borderColor="dark_green.800"
+          color="dark_green.800"
+          _hover={{ bg: "dark_green.800", color: "white" }}
+          variant="outline"
+          disabled={loading}
+          onClick={() => {
+            setData({ analysisType: Types.BASELINE });
+            setMapInteraction(MapAnalysisInteraction.NO_INTERACTION);
+            geometrySelectorRef?.current?.removeLayer();
+            dispatch(resetAnalysisResult());
+            saveSession('/map', { activity: "Visited Analysis Page"}, { analysisType: Types.BASELINE });
+          }}
+        >
+          Reset Form
+        </Button>
+        <Button
+          size="xs"
+          borderRadius={4}
+          paddingX={4}
+          bg="dark_green.800"
+          color="white"
+          _hover={{ opacity: 0.8 }}
+          disabled={disableSubmit}
+          onClick={triggerAnalysis}
+        >
+          Run Analysis
+        </Button>
+        <Button
+          size="xs"
+          borderRadius={4}
+          paddingX={4}
+          bg="dark_green.800"
+          color="white"
+          _hover={{ opacity: 0.8 }}
+          disabled={!saveAnalysisFlag}
+          onClick={handleSaveAnalysis}
+        >
+          Save Results
+        </Button>
+      </HStack>
+
       </Box>
     </Box>
   )
 }
-

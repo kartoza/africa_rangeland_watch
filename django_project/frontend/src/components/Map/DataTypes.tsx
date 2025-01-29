@@ -17,6 +17,8 @@ export interface AnalysisData {
   period?: AnalysisDataPeriod;
   comparisonPeriod?: AnalysisDataPeriod;
   community?: string;
+  communityName?: string;
+  communityFeatureId?: string;
   reference_layer?: object;
 }
 

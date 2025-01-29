@@ -11,12 +11,10 @@ interface MapConfig {
 
 interface MapConfigState extends DataState {
     mapConfig: MapConfig;
-    mapInitiated: boolean;
 }
 
 const initialMapConfigState: MapConfigState = {
     mapConfig: null,
-    mapInitiated:false,
     loading: false,
     error: null,
 };
@@ -35,10 +33,7 @@ const mapConfigSlice = createSlice({
     reducers: {
       clearError(state) {
         state.error = null;
-      },
-      mapInitated(state) {
-        state.mapInitiated = true;
-      },
+      }
     },
     extraReducers: (builder) => {
       builder
@@ -56,6 +51,6 @@ const mapConfigSlice = createSlice({
     }
 });
 
-export const { clearError, mapInitated } = mapConfigSlice.actions;
+export const { clearError } = mapConfigSlice.actions;
 
 export default mapConfigSlice.reducer;
