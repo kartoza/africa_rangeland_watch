@@ -174,6 +174,8 @@ const DashboardPage: React.FC = () => {
     }
   };
 
+  var render = 0;
+
  
 
   const renderPanels = () => {
@@ -186,6 +188,7 @@ const DashboardPage: React.FC = () => {
             const rowPanels = paginatedData.slice(rowIndex * 3, rowIndex * 3 + 3);
 
             if (layoutMode === "horizontal") {
+              render = 0;
               const remainder = rowPanels.length % 3;
               const extraPanels = remainder === 0 ? 0 : 3 - remainder;
             
@@ -260,6 +263,7 @@ const DashboardPage: React.FC = () => {
             
 
             if (layoutMode === "vertical") {
+              render = 0;
               const remainder = rowPanels.length % 3;
               const extraPanels = remainder === 0 ? 0 : 3 - remainder;
               const balancedPanels = [...rowPanels, ...Array(extraPanels).fill(null)];
@@ -330,7 +334,8 @@ const DashboardPage: React.FC = () => {
 
 
 
-            if (layoutMode === "nested") {
+            if (layoutMode === "nested" && render == 0) {
+              ++render;
               const totalPanels = filteredData.length;
               const smallPanels: any[] = [];
               const mainPanels: any[] = [];
