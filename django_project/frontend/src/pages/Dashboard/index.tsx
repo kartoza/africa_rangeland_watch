@@ -17,6 +17,12 @@ import {
   DrawerContent,
   DrawerCloseButton,
   useDisclosure,
+  VStack,
+  IconButton,
+  Menu, 
+  MenuButton, 
+  MenuList, 
+  MenuItem,
 } from "@chakra-ui/react";
 import { FaFilter } from "react-icons/fa";
 import Header from "../../components/Header";
@@ -29,6 +35,10 @@ import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "../../store";
 import { fetchDashboards } from "../../store/dashboardSlice";
 import {InProgressBadge} from "../../components/InProgressBadge";
+import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
+import { DragHandleDots2Icon } from '@radix-ui/react-icons';
+import DashboardFilters from "../../components/DashboardFilters";
+import { FaCog } from "react-icons/fa"; 
 
 
 
@@ -36,18 +46,36 @@ const DashboardPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [isFilterActive, setIsFilterActive] = useState(false);
-  const itemsPerPage = 12; //these will be dynamic
-  const totalItems = 12; //these will be dynamic
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [isAnalysisOpen, setIsAnalysisOpen] = useState(false);
-  const [data, setData] = useState<any[]>([]);
   const dispatch = useDispatch<AppDispatch>();
   const dashboardData = useSelector((state: any) => state.dashboard.dashboards);
   const loading = useSelector((state: any) => state.dashboard.loading);
   const error = useSelector((state: any) => state.dashboard.error);
-  const [resourcesCount, setResourcesCount] = useState(0);
   const [chartsConfig, setChartsConfig] = useState([]);
+  const [hasError, setHasError] = useState(false);
+  const [isLayoutMenuOpen, setIsLayoutMenuOpen] = useState(false);
+  // pagination variables
+  const [paginatedData, setPaginatedData] = useState([]);
+  const [totalPages, setTotalPages] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(6)
+  const [startIdx , setStartIdx] = useState(0);
+  const [endIdx, setEndIdx] = useState(1);
+
+  const toggleMenu = () => {
+    setIsLayoutMenuOpen(prevState => !prevState);
+  };
+
+  const closeMenu = () => {
+    setIsLayoutMenuOpen(false);
+  };
+
+  // Function to reset the panel dimensions
+  const resetPanelDimensions = () => {
+    // Logic to reset the layout dimensions can go here, if required
+    console.log("Dimensions reset!");
+  };
+
 
   useEffect(() => {
     if (!loading && Array.isArray(dashboardData)) {
@@ -68,17 +96,7 @@ const DashboardPage: React.FC = () => {
     dispatch(fetchDashboards());
   }, [dispatch]);
 
-  useEffect(() => {
-    if(!loading){
-      setResourcesCount(Array.isArray(dashboardData)? dashboardData.length: 0)
-    }
-  }, [loading]);
-
-  const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
-    }
-  };
+  
 
   const handleFilterClick = () => {
     if (isOpen) {
@@ -100,8 +118,266 @@ const DashboardPage: React.FC = () => {
       typeof chartConfig.title !== 'undefined' ? chartConfig.title.toLowerCase().includes(searchTerm.toLowerCase()) : false
   );
 
+  
+  const rows = Math.ceil(filteredData.length / 3);
+
+  const [layoutMode, setLayoutMode] = useState("horizontal"); // Default layout
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  // Effect to update layout mode when screen size changes
+  useEffect(() => {
+    const handleResize = () => {
+      const mobileView = window.innerWidth < 768;
+      setIsMobile(mobileView);
+
+      // Force vertical layout on mobile
+      if (mobileView) {
+        setLayoutMode("vertical");
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+    handleResize(); // Check on mount
+
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
+    // Recalculate items per page based on the layout mode
+    const itemsPerPage = layoutMode === "horizontal" ? 6 : layoutMode === "vertical" ? 3 : 1;
+    
+    // Calculate total pages
+    const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+
+    // Recalculate the paginated data for the current page
+    const startIdx = (currentPage - 1) * itemsPerPage;
+    const endIdx = startIdx + itemsPerPage;
+    const paginatedData = filteredData.slice(startIdx, endIdx);
+
+    setStartIdx(startIdx)
+    setEndIdx(endIdx)
+    setItemsPerPage(itemsPerPage)
+    setPaginatedData(paginatedData);
+    setTotalPages(totalPages);
+  }, [layoutMode, currentPage, filteredData])
+
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+ 
+
+  const renderPanels = () => {
+    try {
+      const paginatedData = filteredData.slice(startIdx, endIdx);
+
+      return (
+        <VStack spacing={6} align="stretch">
+          {Array.from({ length: rows }).map((_, rowIndex) => {
+            const rowPanels = paginatedData.slice(rowIndex * 3, rowIndex * 3 + 3);
+            const nestedPanelsRows = filteredData.slice(rowIndex * 3, rowIndex * 3 + 3);
+
+            if (layoutMode === "horizontal") {
+              const remainder = rowPanels.length % 3;
+              const extraPanels = remainder === 0 ? 0 : 3 - remainder;
+            
+              // Create an array with original panels + dummy panels
+              const balancedPanels = [...rowPanels, ...Array(extraPanels).fill(null)];
+            
+              return (
+                <PanelGroup
+                  key={rowIndex}
+                  direction="horizontal"
+                  style={{ display: "flex", justifyContent: "center", gap: "4px" }}
+                >
+                  {balancedPanels.map((config, index) => {
+                    const panelKey = rowIndex * 3 + index;
+                    const isDummy = config === null;
+            
+                    return (
+                      <React.Fragment key={panelKey}>
+                        <Panel
+                          key={`panel-${panelKey}`}
+                          defaultSize={33.33}
+                          minSize={20}
+                          style={{
+                            height: "400px",
+                            padding: "8px",
+                            opacity: isDummy ? 0 : 1,
+                            pointerEvents: isDummy ? "none" : "auto",
+                          }}
+                        >
+                          <Flex
+                            bg="gray.400"
+                            border="2px solid"
+                            borderColor="gray.500"
+                            shadow="lg"
+                            rounded="lg"
+                            align="center"
+                            justify="center"
+                            h="100%"
+                            p={4}
+                          >
+                            {!isDummy && <span>Each panel</span>}
+                          </Flex>
+                        </Panel>
+            
+                        {/* Add resize handle only for non-dummy panels */}
+                        {!isDummy && index !== balancedPanels.length - 1 && (
+                          <PanelResizeHandle key={`resize-handle-${panelKey}`}>
+                          </PanelResizeHandle>
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
+                </PanelGroup>
+              );
+            }
+            
+
+            if (layoutMode === "vertical") {
+              const remainder = rowPanels.length % 3;
+              const extraPanels = remainder === 0 ? 0 : 3 - remainder;
+            
+              // Create an array with original panels + dummy panels
+              const balancedPanels = [...rowPanels, ...Array(extraPanels).fill(null)];
+            
+              return (
+                <PanelGroup
+                  key={rowIndex}
+                  direction="vertical"
+                  style={{
+                    height: "80vh",
+                    display: "flex",
+                    flexDirection: "column",
+                  }}
+                >
+                  {balancedPanels.map((config, index) => {
+                    const panelKey = rowIndex * 3 + index;
+                    const isDummy = config === null;
+            
+                    return (
+                      <React.Fragment key={panelKey}>
+                        <Panel
+                          key={`panel-${panelKey}`}
+                          defaultSize={100 / balancedPanels.length}
+                          minSize={20}
+                          style={{
+                            padding: "8px",
+                            flex: "1",
+                            opacity: isDummy ? 0 : 1,
+                            pointerEvents: isDummy ? "none" : "auto",
+                          }}
+                        >
+                          <Flex
+                            bg="gray.400"
+                            border="2px solid"
+                            borderColor="gray.500"
+                            shadow="lg"
+                            rounded="lg"
+                            align="center"
+                            justify="center"
+                            h="100%"
+                            p={4}
+                          >
+                            {!isDummy && <span>Each panel</span>}
+                          </Flex>
+                        </Panel>
+            
+                        {!isDummy && index !== balancedPanels.length - 1 && (
+                          <PanelResizeHandle key={`resize-handle-${panelKey}`}>
+                          </PanelResizeHandle>
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
+                </PanelGroup>
+              );
+            }
+            
+            
+
+            if (layoutMode === "nested") {
+              const remainder = nestedPanelsRows.length % 3;
+              const extraPanels = remainder === 0 ? 0 : 3 - remainder;
+            
+              const balancedPanels = [...nestedPanelsRows, ...Array(extraPanels).fill(null)];
+            
+              return (
+                <PanelGroup key={rowIndex} direction="horizontal" style={{ height: "80vh" }}>
+                  <Panel defaultSize={50} minSize={20}>
+                    <PanelGroup direction="vertical">
+                      {balancedPanels.map((config, index) => {
+                        const isDummy = config === null;
+            
+                        return (
+                          <React.Fragment key={isDummy ? `dummy-${index}` : config?.key}>
+                            <Panel
+                              defaultSize={100 / balancedPanels.length}
+                              minSize={20}
+                              style={{
+                                opacity: isDummy ? 0 : 1,
+                                pointerEvents: isDummy ? "none" : "auto",
+                                marginBottom: isDummy ? "0" : "8px",
+                                marginRight: isDummy ? "0" : "8px",
+                              }}
+                            >
+                              <Flex
+                                bg={isDummy ? "transparent" : config?.bg || "gray.400"}
+                                h="100%"
+                                align="center"
+                                justify="center"
+                              >
+                                {!isDummy && <span>{config?.label || "Panel"}</span>}
+                              </Flex>
+                            </Panel>
+            
+                            {/* Add resize handle only for non-dummy panels */}
+                            {!isDummy && index !== balancedPanels.length - 1 && <PanelResizeHandle />}
+                          </React.Fragment>
+                        );
+                      })}
+                    </PanelGroup>
+                  </Panel>
+                  <PanelResizeHandle />
+                  <Panel defaultSize={50} minSize={20}>
+                    <Flex bg="gray.600" h="100%" align="center" justify="center">
+                      <span>Main Panel</span>
+                    </Flex>
+                  </Panel>
+                </PanelGroup>
+              );
+            }
+            return null;
+          })}
+
+           {/* Pagination controls */}
+            <Pagination
+                currentPage={currentPage}
+                totalPages={Math.ceil(filteredData.length / itemsPerPage)}
+                handlePageChange={handlePageChange}
+             />
+        </VStack>
+      );
+    } catch (error) {
+      console.error("Error rendering panels:", error);
+      setHasError(true);
+    }
+  };
+
+  
+  
+  
+  
+
   return (
-    <><Box width="100%" minHeight={{base: "auto", md:"80vh"}}>
+    <>
+    
+    
+    
+    <Box width="100%" minHeight={{base: "auto", md:"80vh"}}>
       <Helmet>
         <title>Dashboard | Africa Rangeland Watch | Sustainable Management</title>
         <meta name="description" content="dashboard data." />
@@ -121,257 +397,137 @@ const DashboardPage: React.FC = () => {
         padding={5}
         ml={{ base: 0, md: 6 }}
       >
-        {/* Filter Button */}
-        <Flex
-          alignItems="center"
-          gap="4"
-          flex={{ base: "1", md: "auto" }}
-          justifyContent={{ base: "flex-start", md: "flex-start" }}
-          w={{ base: "100%", md: "30%" }}
-        >
-          <Button
-            leftIcon={<FaFilter />}
-            colorScheme="green"
-            variant="solid"
-            backgroundColor={isFilterActive ? "gray.500" : "dark_green.800"}
-            _hover={{ backgroundColor: "light_green.400" }}
-            fontWeight={700}
-            w={{ base: "auto", md: "15%" }}
-            h={10}
-            color="white.a700"
-            borderRadius="2px"
-            isDisabled={isFilterActive}
-            onClick={handleFilterClick}
+          {/* Filter Button */}
+          <Flex
+            alignItems="center"
+            gap="4"
+            flex={{ base: "1", md: "auto" }}
+            justifyContent={{ base: "flex-start", md: "flex-start" }}
+            w={{ base: "100%", md: "30%" }}
           >
-            Filter
-          </Button>
-          <Text fontSize="lg" color="black">
-            {filteredData ? filteredData.length : 0} resources found.
-          </Text>
-        </Flex>
-
-        {/* Search, New, Organise */}
-        <Flex
-          alignItems="center"
-          gap="4"
-          flexDirection={{ base: "column", md: "row" }}
-          w={{ base: "100%", md: "40%" }}
-          justifyContent={{ base: "flex-start", md: "flex-end" }}
-        >
-          <Input
-            placeholder="Search resources..."
-            w={{ base: "100%", md: "400px" }}
-            size="md"
-            onChange={(e) => setSearchTerm(e.target.value)}
-            borderRadius="md" />
-          <Button
-            colorScheme="green"
-            variant="solid"
-            backgroundColor="dark_green.800"
-            _hover={{ backgroundColor: "light_green.400" }}
-            fontWeight={700}
-            w={{ base: "100%", md: "auto" }}
-            h={10}
-            color="white.a700"
-            borderRadius="2px"
-            onClick={() => window.location.href = "/#/analysis-results"}
-          >
-            New
-          </Button>
-          <Image src="static/images/toggle_icon.svg" alt="toggle" h="15px" w="20px" />
-          <Text color="black" whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis">
-            Organise by
-          </Text>
-        </Flex>
-      </Flex>
-
-      <SimpleGrid
-        // templateColumns="repeat(auto-fill, minmax(400px, 1fr))"
-        columns={[1, 2, 3]}
-        spacing="0"
-        marginBottom={0}
-        paddingLeft={{ base: "5%", md: "2.5%" }}
-        templateColumns="repeat(auto-fill, minmax(500px, 1fr))"
-        autoFlow="dense"
-      >
-        {filteredData.map((config, index) => (
-          <ChartCard
-            key={config.uuid}
-            config={config}
-            className={`draggable-card-${index}`}
-          />
-        ))}
-      </SimpleGrid>
-
-      {/* Cards Section */}
-      <SimpleGrid columns={[1, 2, 3, 4]} spacing="2" marginBottom={6} paddingLeft={{ base: "5%", md: "2.5%" }}>
-        {loading ? (
-          <Text>Loading...</Text>
-        ) : (
-          data
-            .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
-            .map((item) => (
-              <Box key={item.id} borderWidth="1px" borderRadius="lg" overflow="hidden" width="90%" height="250px">
-                {/* Image */}
-                <Image
-                  src={item.imageUrl}
-                  alt={item.title}
-                  objectFit="cover"
-                  width="100%"
-                  height="60%" />
-                {/* Card Content */}
-                <Box padding="2" height="40%">
-                  <Heading size="sm" mb="2" color="black">
-                    {item.title}
-                  </Heading>
-                  <Text fontSize="sm" noOfLines={2} mb="1" color="black">
-                    {item.description}
-                  </Text>
-                  <Flex justifyContent="space-between" alignItems="center">
-                    <Badge colorScheme="green">{item.userName}</Badge>
-                    <Button
-                      colorScheme="green"
-                      variant="solid"
-                      backgroundColor="dark_green.800"
-                      _hover={{ backgroundColor: "light_green.400" }}
-                      fontWeight={700}
-                      w={{ base: "50%", md: "auto" }}
-                      h={8}
-                      color="white.a700"
-                      borderRadius="4px"
-                      onClick={() => handleViewClick(item)}
-                    >
-                      View
-                    </Button>
-                  </Flex>
-                </Box>
-              </Box>
-            ))
-        )}
-        {data.length > 11 && (
-          <Flex mr={50}>
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              handlePageChange={handlePageChange} />
-          </Flex>
-        )}
-      </SimpleGrid>
-      {/* Filter Panel (Drawer) */}
-      <Drawer isOpen={isOpen} placement="left" onClose={onClose}>
-        <DrawerOverlay />
-        <DrawerContent backgroundColor={"white"}>
-          <DrawerCloseButton />
-          <Flex alignItems="center" justifyContent="space-between" mb="4" paddingX="4">
-            <Flex alignItems="center" gap="2">
-              <FaFilter />
-              <Text fontSize="lg" fontWeight="bold" color={"black"}>
-                Filter
-              </Text>
-            </Flex>
             <Button
+              leftIcon={<FaFilter />}
               colorScheme="green"
-              variant="outline"
-              borderColor="dark_green.800"
-              textColor="dark_green.800"
+              variant="solid"
+              backgroundColor={isFilterActive ? "gray.500" : "dark_green.800"}
+              _hover={{ backgroundColor: "light_green.400" }}
               fontWeight={700}
-              h={8}
-              width={"40%"}
-              borderRadius="0px"
-              onClick={() => { } }
-              mr={35}
-              mt={2}
+              w={{ base: "auto", md: "15%" }}
+              h={10}
+              color="white.a700"
+              borderRadius="2px"
+              isDisabled={isFilterActive}
+              onClick={handleFilterClick}
             >
-              Clear Filters
+              Filter
             </Button>
+            <Text fontSize="lg" color="black">
+              {filteredData ? filteredData.length : 0} resources found.
+            </Text>
           </Flex>
 
-          {/* Divider */}
-          <Box borderBottom="1px solid gray" mb="4" />
-          <DrawerBody>
-            <InProgressBadge/>
-            {/* Search Field Inside Drawer */}
+          {/* Search, New, Organise */}
+          <Flex
+            alignItems="center"
+            gap="4"
+            flexDirection={{ base: "column", md: "row" }}
+            w={{ base: "100%", md: "40%" }}
+            justifyContent={{ base: "flex-start", md: "flex-end" }}
+          >
             <Input
-              placeholder="Search dashboard..."
+              placeholder="Search resources..."
+              w={{ base: "100%", md: "400px" }}
               size="md"
               onChange={(e) => setSearchTerm(e.target.value)}
-              borderRadius="md"
-              mb="4" />
+              borderRadius="md" />
+            <Button
+              colorScheme="green"
+              variant="solid"
+              backgroundColor="dark_green.800"
+              _hover={{ backgroundColor: "light_green.400" }}
+              fontWeight={700}
+              w={{ base: "100%", md: "auto" }}
+              h={10}
+              color="white.a700"
+              borderRadius="2px"
+              onClick={() => window.location.href = "/#/analysis-results"}
+            >
+              New
+            </Button>
+            <Image src="static/images/toggle_icon.svg" alt="toggle" h="15px" w="20px" />
+            <Text color="black" whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis">
+              Organise by
+            </Text>
+          </Flex>
 
-            {/* Filters inside Drawer */}
-            <Text fontWeight="bold" mt="4" color={"black"} mb={4} fontSize={18}>Resources</Text>
-            <Checkbox mb="4">My Resources</Checkbox>
-            <br></br>
-            <Checkbox mb="4">My Organisations</Checkbox>
-            <br></br>
-            <Checkbox mb="4">Favorites</Checkbox>
-            <br></br>
-            <Checkbox mb="4">My Dashboards</Checkbox>
-            <br></br>
-            <Checkbox mb="4">Datasets</Checkbox>
+
+      {/* Customizeable layouts */}
+
+      {/* Gear Icon Menu */}
+      <Menu isOpen={isLayoutMenuOpen} onClose={closeMenu}>
+        <MenuButton as="div" onClick={toggleMenu} aria-label="Layout Settings">
+          <FaCog size={24} />
+        </MenuButton>
+        <MenuList>
+          {!isMobile && (
+            <MenuItem
+              onClick={() => {
+                setLayoutMode("horizontal");
+                resetPanelDimensions();
+                closeMenu();
+              }}
+            >
+              Horizontal
+            </MenuItem>
+          )}
+          <MenuItem
+            onClick={() => {
+              setLayoutMode("vertical");
+              resetPanelDimensions();
+              closeMenu();
+            }}
+          >
+            Vertical
+          </MenuItem>
+          <MenuItem
+            onClick={() => {
+              setLayoutMode("nested");
+              resetPanelDimensions();
+              closeMenu();
+            }}
+          >
+            Nested
+          </MenuItem>
+        </MenuList>
+      </Menu>
+    </Flex>
 
 
-            <br></br>
-            <Checkbox mb="2" ml={5}>EVI</Checkbox>
-            <br></br>
-            <Checkbox mb="2" ml={5}>NDVI</Checkbox>
-            <br></br>
-            <Checkbox mb="2" ml={5}>BACI</Checkbox>
-            <br></br>
-            <Checkbox mb="4" ml={5}>Bare Ground</Checkbox>
 
-            {/* Other Sections */}
-            <br></br>
-            <Checkbox mb="4">Maps</Checkbox>
-            <br></br>
-            <Checkbox mb="4">Map Viewers</Checkbox>
-            <br></br>
-            <Checkbox mb="4">Dashboards</Checkbox>
+     
+      {hasError ? (
+        <p>Something went wrong while loading the dashboards.</p>
+      ) : (
+        <div
+          style={{
+            border: "2px solid red",
+            padding: "18px",
+          }}
+        >
+          {renderPanels()}
+        </div>
+      )}
 
-            <Box mb="6">
-              <Text fontWeight="bold" color="black" mb="2" fontSize={16}>
-                Select Category
-              </Text>
-              <Select placeholder="Select Category">
-                <option value="category1">Category 1</option>
-                <option value="category2">Category 2</option>
-              </Select>
-            </Box>
 
-            <Box mb="6">
-              <Text fontWeight="bold" color="black" mb="2" fontSize={16}>
-                Select Keyword
-              </Text>
-              <Select placeholder="Select Keyword">
-                <option value="keyword1">Keyword 1</option>
-                <option value="keyword2">Keyword 2</option>
-              </Select>
-            </Box>
 
-            <Box mb="6">
-              <Text fontWeight="bold" color="black" mb="2" fontSize={16}>
-                Select Region
-              </Text>
-              <Select placeholder="Select Region">
-                <option value="region1">Region 1</option>
-                <option value="region2">Region 2</option>
-              </Select>
-            </Box>
 
-            <Box mb="6">
-              <Text fontWeight="bold" color="black" mb="2" fontSize={16}>
-                Select Owner
-              </Text>
-              <Select placeholder="Select Owner">
-                <option value="owner1">Owner 1</option>
-                <option value="owner2">Owner 2</option>
-              </Select>
-            </Box>
+          
 
-          </DrawerBody>
-        </DrawerContent>
-      </Drawer>
+     
+      {/* Filter Panel (Drawer) */}
+      <DashboardFilters isOpen={isOpen} onClose={onClose} setSearchTerm={setSearchTerm} />
 
+      {/* Analysis sidebar */}
       <AnalysisSideBar isOpen={isAnalysisOpen} onClose={() => { closeIsAnakysis(); } } selectedAnalysis={null} />
 
     </Box><Footer /></>
