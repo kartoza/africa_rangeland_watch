@@ -5,20 +5,9 @@ import {
   Text,
   Button,
   Input,
-  Badge,
-  SimpleGrid,
   Image,
-  Heading,
-  Checkbox,
-  Select,
-  Drawer,
-  DrawerBody,
-  DrawerOverlay,
-  DrawerContent,
-  DrawerCloseButton,
   useDisclosure,
   VStack,
-  IconButton,
   Menu, 
   MenuButton, 
   MenuList, 
@@ -39,7 +28,7 @@ import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import { DragHandleDots2Icon } from '@radix-ui/react-icons';
 import DashboardFilters from "../../components/DashboardFilters";
 import { FaCog } from "react-icons/fa"; 
-
+import Draggable from "react-draggable";
 
 
 const DashboardPage: React.FC = () => {
@@ -62,6 +51,15 @@ const DashboardPage: React.FC = () => {
   const [startIdx , setStartIdx] = useState(0);
   const [endIdx, setEndIdx] = useState(1);
 
+  const [panelPositions, setPanelPositions] = useState({});
+
+  const handleDragStop = (panelKey: any, data: { x: any; y: any; }) => {
+    setPanelPositions((prevState) => ({
+      ...prevState,
+      [panelKey]: { x: data.x, y: data.y },
+    }));
+  };
+
   const toggleMenu = () => {
     setIsLayoutMenuOpen(prevState => !prevState);
   };
@@ -72,8 +70,8 @@ const DashboardPage: React.FC = () => {
 
   // Function to reset the panel dimensions
   const resetPanelDimensions = () => {
-    // Logic to reset the layout dimensions can go here, if required
-    console.log("Dimensions reset!");
+    // if(layoutMode == "horizontal")
+    //   window.location.reload()
   };
 
 
@@ -122,6 +120,7 @@ const DashboardPage: React.FC = () => {
   const rows = Math.ceil(filteredData.length / 3);
 
   const [layoutMode, setLayoutMode] = useState("horizontal"); // Default layout
+  const [layoutKey, setLayoutKey] = useState(0);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
 
   // Effect to update layout mode when screen size changes
@@ -159,7 +158,7 @@ const DashboardPage: React.FC = () => {
     setItemsPerPage(itemsPerPage)
     setPaginatedData(paginatedData);
     setTotalPages(totalPages);
-  }, [filteredData, currentPage, layoutMode])
+  }, [currentPage, layoutMode])
 
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
@@ -190,54 +189,61 @@ const DashboardPage: React.FC = () => {
                 <PanelGroup
                   key={rowIndex}
                   direction="horizontal"
-                  style={{ display: "flex", justifyContent: "center", gap: "2px" }}
+                  style={{ display: "flex", justifyContent: "center", gap: "6px" }}
                 >
                   {balancedPanels.map((config, index) => {
                     const panelKey = rowIndex * 3 + index;
                     const isDummy = config === null;
             
                     return (
-                      <React.Fragment key={panelKey}>
-                        <Panel
-                          key={`panel-${panelKey}`}
-                          defaultSize={33.33}
-                          minSize={20}
-                          style={{
-                            height: "400px",
-                            padding: "0px",
-                            opacity: isDummy ? 0 : 1,
-                            pointerEvents: isDummy ? "none" : "auto",
-                          }}
-                        >
-                          <Flex
-                            bg="gray.400"
-                            border="2px solid"
-                            borderColor="gray.500"
-                            shadow="lg"
-                            rounded="lg"
-                            align="center"
-                            justify="center"
-                            h="100%"
-                            p={2}
+                      <Draggable
+                        key={`panel-${panelKey}`}
+                        axis="x"
+                        defaultPosition={{ x: 0, y: 0 }}
+                        onStop={(e, data) => handleDragStop(panelKey, data)}
+                      >
+                        <React.Fragment key={panelKey}>
+                          <Panel
+                            key={`panel-${panelKey}`}
+                            defaultSize={33.33}
+                            minSize={20}
+                            style={{
+                              height: "400px",
+                              padding: "0px",
+                              opacity: isDummy ? 0 : 1,
+                              pointerEvents: isDummy ? "none" : "auto",
+                            }}
                           >
-                            {!isDummy && (
-                              <div style={{ width: "100%", height: "100%" }}>
-                                <ChartCard
-                                  key={config.uuid}
-                                  config={config}
-                                  className={`draggable-card-${panelKey}`}
-                                />
-                              </div>
-                            )}
-                          </Flex>
-                        </Panel>
-            
-                        {/* Add resize handle only for non-dummy panels */}
-                        {!isDummy && index !== balancedPanels.length - 1 && (
-                          <PanelResizeHandle key={`resize-handle-${panelKey}`}>
-                          </PanelResizeHandle>
-                        )}
-                      </React.Fragment>
+                            <Flex
+                              bg="gray.200"
+                              border="1px solid"
+                              borderColor="gray.200"
+                              shadow="lg"
+                              rounded="lg"
+                              align="center"
+                              justify="center"
+                              h="100%"
+                              p={2}
+                            >
+                              {!isDummy && (
+                                <div style={{ width: "100%", height: "100%" }}>
+                                  <ChartCard
+                                    key={config.uuid}
+                                    config={config}
+                                    className={`draggable-card-${panelKey}`}
+                                  />
+                                </div>
+                              )}
+                            </Flex>
+                          </Panel>
+              
+                          {/* Add resize handle only for non-dummy panels */}
+                          {!isDummy && index !== balancedPanels.length - 1 && (
+                            <PanelResizeHandle key={`resize-handle-${panelKey}`}>
+                            </PanelResizeHandle>
+                          )}
+                        </React.Fragment>
+                      </Draggable>
                     );
                   })}
                 </PanelGroup>
@@ -248,18 +254,7 @@ const DashboardPage: React.FC = () => {
             if (layoutMode === "vertical") {
               const remainder = rowPanels.length % 3;
               const extraPanels = remainder === 0 ? 0 : 3 - remainder;
-            
-              console.log("check", {
-                remainder: remainder,
-                extraPanels: extraPanels,
-              });
-            
-              // Create an array with original panels + dummy panels
               const balancedPanels = [...rowPanels, ...Array(extraPanels).fill(null)];
-            
-              console.log("balanced panels ", balancedPanels);
-            
-              // ⬇️ Add a condition to skip rendering when rowPanels is empty
               if (rowPanels.length === 0) {
                 return null;
               }
@@ -270,9 +265,9 @@ const DashboardPage: React.FC = () => {
                   direction="vertical"
                   style={{
                     display: "flex",
-                    height: "70vh",
-                    border: "2px solid red",
+                    gap: "6px",
                     flexDirection: "column",
+                    overflowY: "auto"
                   }}
                 >
                   {balancedPanels.map((config, index) => {
@@ -286,24 +281,32 @@ const DashboardPage: React.FC = () => {
                           defaultSize={100 / balancedPanels.length}
                           minSize={20}
                           style={{
-                            padding: "8px",
+                            padding: "4px",
                             flex: "1",
                             opacity: isDummy ? 0 : 1,
                             pointerEvents: isDummy ? "none" : "auto",
                           }}
                         >
                           <Flex
-                            bg="gray.400"
-                            border="2px solid"
-                            borderColor="gray.500"
+                            bg="gray.200"
+                            border="1px solid"
+                            borderColor="gray.200"
                             shadow="lg"
                             rounded="lg"
                             align="center"
                             justify="center"
                             h="100%"
-                            p={4}
+                            p={2}
                           >
-                            {!isDummy && <span>Each panel</span>}
+                            {!isDummy && 
+                              <div style={{ width: "100%", height: "100%" }}>
+                                <ChartCard
+                                  key={config.uuid}
+                                  config={config}
+                                  className={`draggable-card-${panelKey}`}
+                                />
+                            </div>
+                            }
                           </Flex>
                         </Panel>
             
@@ -321,56 +324,61 @@ const DashboardPage: React.FC = () => {
             
 
             if (layoutMode === "nested") {
-              const remainder = nestedPanelsRows.length % 3;
-              const extraPanels = remainder === 0 ? 0 : 3 - remainder;
+              const totalPanels = filteredData.length;
+              const smallPanels: any[] = [];
+              const mainPanels: any[] = [];
             
-              const balancedPanels = [...nestedPanelsRows, ...Array(extraPanels).fill(null)];
+              // Distribute panels dynamically
+              filteredData.forEach((config, index) => {
+                if ((index ) % 4 === 0) {
+                  mainPanels.push(config); // Every 4th panel goes to Main Panel
+                } else {
+                  smallPanels.push(config); // Others go to Small Panels
+                }
+              });
+
+              console.log('main panels',mainPanels)
             
               return (
                 <PanelGroup key={rowIndex} direction="horizontal" style={{ height: "80vh" }}>
+                  {/* Small Panels Container */}
                   <Panel defaultSize={50} minSize={20}>
                     <PanelGroup direction="vertical">
-                      {balancedPanels.map((config, index) => {
-                        const isDummy = config === null;
-            
-                        return (
-                          <React.Fragment key={isDummy ? `dummy-${index}` : config?.key}>
-                            <Panel
-                              defaultSize={100 / balancedPanels.length}
-                              minSize={20}
-                              style={{
-                                opacity: isDummy ? 0 : 1,
-                                pointerEvents: isDummy ? "none" : "auto",
-                                marginBottom: isDummy ? "0" : "8px",
-                                marginRight: isDummy ? "0" : "8px",
-                              }}
-                            >
-                              <Flex
-                                bg={isDummy ? "transparent" : config?.bg || "gray.400"}
-                                h="100%"
-                                align="center"
-                                justify="center"
-                              >
-                                {!isDummy && <span>{config?.label || "Panel"}</span>}
-                              </Flex>
-                            </Panel>
-            
-                            {/* Add resize handle only for non-dummy panels */}
-                            {!isDummy && index !== balancedPanels.length - 1 && <PanelResizeHandle />}
-                          </React.Fragment>
-                        );
-                      })}
+                      {smallPanels.map((config, index) => (
+                        <React.Fragment key={config?.uuid}>
+                          <Panel defaultSize={100 / smallPanels.length} minSize={20} style={{ marginBottom: "8px" }}>
+                            <Flex bg={config?.bg || "gray.200"} h="100%" align="center" justify="center" p={2}>
+                              <div style={{ width: "100%", height: "100%" }}>
+                                <ChartCard key={config.uuid} config={config} className={`draggable-card-${index}`} />
+                              </div>
+                            </Flex>
+                          </Panel>
+                          {index !== smallPanels.length - 1 && <PanelResizeHandle />}
+                        </React.Fragment>
+                      ))}
                     </PanelGroup>
                   </Panel>
+            
                   <PanelResizeHandle />
+            
+                  {/* Main Panel Container */}
                   <Panel defaultSize={50} minSize={20}>
-                    <Flex bg="gray.600" h="100%" align="center" justify="center">
-                      <span>Main Panel</span>
+                    <Flex bg="gray.200" h="100%" align="center" justify="center" flexWrap="wrap">
+                      {mainPanels.length > 0 ? (
+                        mainPanels.map((config) => (
+                          <div key={config.uuid} style={{ width: "100%", height: "100%" }}>
+                            <ChartCard config={config} />
+                          </div>
+                        ))
+                      ) : (
+                        <span>Main Panel</span>
+                      )}
                     </Flex>
                   </Panel>
                 </PanelGroup>
               );
             }
+            
             return null;
           })}
 
@@ -479,6 +487,7 @@ const DashboardPage: React.FC = () => {
             <Text color="black" whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis">
               Organise by
             </Text>
+            
           </Flex>
 
 
@@ -486,14 +495,18 @@ const DashboardPage: React.FC = () => {
 
       {/* Gear Icon Menu */}
       <Menu isOpen={isLayoutMenuOpen} onClose={closeMenu}>
+        <Text color="black" whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis">
+                Layout
+              </Text>
         <MenuButton as="div" onClick={toggleMenu} aria-label="Layout Settings">
-          <FaCog size={24} />
+          <FaCog size={24} style={{ color: 'green' }} />
         </MenuButton>
         <MenuList>
           {!isMobile && (
             <MenuItem
               onClick={() => {
                 setLayoutMode("horizontal");
+                setLayoutKey(prevKey => prevKey + 1);
                 resetPanelDimensions();
                 closeMenu();
               }}
@@ -504,7 +517,7 @@ const DashboardPage: React.FC = () => {
           <MenuItem
             onClick={() => {
               setLayoutMode("vertical");
-              resetPanelDimensions();
+              setLayoutKey(prevKey => prevKey + 1);
               closeMenu();
             }}
           >
@@ -513,7 +526,7 @@ const DashboardPage: React.FC = () => {
           <MenuItem
             onClick={() => {
               setLayoutMode("nested");
-              resetPanelDimensions();
+              setLayoutKey(prevKey => prevKey + 1);
               closeMenu();
             }}
           >
@@ -530,8 +543,8 @@ const DashboardPage: React.FC = () => {
         <p>Something went wrong while loading the dashboards.</p>
       ) : (
         <div
+          key={layoutKey} 
           style={{
-            border: "2px solid red",
             padding: "18px",
           }}
         >

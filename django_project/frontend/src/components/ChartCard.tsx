@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
 import { Card, CardBody, Text, Box, IconButton, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, Input, Select, VStack, Button, Flex, HStack } from "@chakra-ui/react";
-import Draggable from "react-draggable";
 import { FiDownload, FiSettings } from "react-icons/fi"; 
 import { RenderResult } from "./DashboardCharts/CombinedCharts";
 import { Analysis } from "../store/analysisSlice";
@@ -82,9 +81,8 @@ const ChartCard: React.FC<ChartCardProps> = ({ config, className }) => {
   };
 
   return (
-    <Draggable disabled>
       <div ref={containerRef} className={className} style={{ width: "100%", height: "100%", overflow: "hidden" }}>
-      <Card width="100%" height="100%" shadow="lg" position="relative">
+      <Card width="100%" height="100%" position="relative" bg="gray.200">
         <CardBody p={0} m={0} width="100%" height="100%" display="flex" flexDirection="column">
           <VStack spacing={2} width="100%" height="100%" align="stretch">
             {/* Header with Name and Icons */}
@@ -136,7 +134,6 @@ const ChartCard: React.FC<ChartCardProps> = ({ config, className }) => {
           </ModalContent>
         </Modal>
       </div>
-    </Draggable>
   );
 };
 
