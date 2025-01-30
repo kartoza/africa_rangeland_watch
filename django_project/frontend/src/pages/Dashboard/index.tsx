@@ -159,7 +159,7 @@ const DashboardPage: React.FC = () => {
     setItemsPerPage(itemsPerPage)
     setPaginatedData(paginatedData);
     setTotalPages(totalPages);
-  }, [layoutMode, currentPage, filteredData])
+  }, [filteredData, currentPage, layoutMode])
 
   const handlePageChange = (page: number) => {
     if (page >= 1 && page <= totalPages) {
@@ -190,7 +190,7 @@ const DashboardPage: React.FC = () => {
                 <PanelGroup
                   key={rowIndex}
                   direction="horizontal"
-                  style={{ display: "flex", justifyContent: "center", gap: "4px" }}
+                  style={{ display: "flex", justifyContent: "center", gap: "2px" }}
                 >
                   {balancedPanels.map((config, index) => {
                     const panelKey = rowIndex * 3 + index;
@@ -204,7 +204,7 @@ const DashboardPage: React.FC = () => {
                           minSize={20}
                           style={{
                             height: "400px",
-                            padding: "8px",
+                            padding: "0px",
                             opacity: isDummy ? 0 : 1,
                             pointerEvents: isDummy ? "none" : "auto",
                           }}
@@ -218,9 +218,17 @@ const DashboardPage: React.FC = () => {
                             align="center"
                             justify="center"
                             h="100%"
-                            p={4}
+                            p={2}
                           >
-                            {!isDummy && <span>Each panel</span>}
+                            {!isDummy && (
+                              <div style={{ width: "100%", height: "100%" }}>
+                                <ChartCard
+                                  key={config.uuid}
+                                  config={config}
+                                  className={`draggable-card-${panelKey}`}
+                                />
+                              </div>
+                            )}
                           </Flex>
                         </Panel>
             
@@ -241,16 +249,29 @@ const DashboardPage: React.FC = () => {
               const remainder = rowPanels.length % 3;
               const extraPanels = remainder === 0 ? 0 : 3 - remainder;
             
+              console.log("check", {
+                remainder: remainder,
+                extraPanels: extraPanels,
+              });
+            
               // Create an array with original panels + dummy panels
               const balancedPanels = [...rowPanels, ...Array(extraPanels).fill(null)];
+            
+              console.log("balanced panels ", balancedPanels);
+            
+              // ⬇️ Add a condition to skip rendering when rowPanels is empty
+              if (rowPanels.length === 0) {
+                return null;
+              }
             
               return (
                 <PanelGroup
                   key={rowIndex}
                   direction="vertical"
                   style={{
-                    height: "80vh",
                     display: "flex",
+                    height: "70vh",
+                    border: "2px solid red",
                     flexDirection: "column",
                   }}
                 >
@@ -287,8 +308,7 @@ const DashboardPage: React.FC = () => {
                         </Panel>
             
                         {!isDummy && index !== balancedPanels.length - 1 && (
-                          <PanelResizeHandle key={`resize-handle-${panelKey}`}>
-                          </PanelResizeHandle>
+                          <PanelResizeHandle key={`resize-handle-${panelKey}`}></PanelResizeHandle>
                         )}
                       </React.Fragment>
                     );
@@ -296,6 +316,7 @@ const DashboardPage: React.FC = () => {
                 </PanelGroup>
               );
             }
+            
             
             
 

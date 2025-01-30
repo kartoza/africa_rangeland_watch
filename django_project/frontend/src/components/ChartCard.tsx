@@ -1,145 +1,111 @@
-import React, { useEffect, useState } from "react";
-import { Card, CardBody, Text, Box, Button, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, Input, Select, VStack } from "@chakra-ui/react";
-import { ResizableBox } from "react-resizable";
+import React, { useEffect, useRef, useState } from "react";
+import { Card, CardBody, Text, Box, IconButton, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, Input, Select, VStack, Button, Flex, HStack } from "@chakra-ui/react";
 import Draggable from "react-draggable";
-import LineChart from "./DashboardCharts/LineChart";
-import BarChart from "./DashboardCharts/BarChart";
-import PieChart from "./DashboardCharts/PieChart";
+import { FiDownload, FiSettings } from "react-icons/fi"; 
 import { RenderResult } from "./DashboardCharts/CombinedCharts";
 import { Analysis } from "../store/analysisSlice";
 import CONFIG from "../config";
-import {InProgressBadge} from "./InProgressBadge";
+import { InProgressBadge } from "./InProgressBadge";
 
- 
 interface ChartCardProps {
   config: {
     config: {
-        dashboardName: string;
-        preference: string;
-        chartType: string;
-        title: string;
-        data: any;
-        downloadData: string;
-        owner: boolean;
-    }
+      dashboardName: string;
+      preference: string;
+      chartType: string;
+      title: string;
+      data: any;
+      downloadData: string;
+      owner: boolean;
+    };
     analysisResults: any[];
-    
   };
   className?: string;
 }
 
 const ChartCard: React.FC<ChartCardProps> = ({ config, className }) => {
-  const [cardWidth, setCardWidth] = useState(500);
-  const [cardHeight, setCardHeight] = useState(500);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const [dimensions, setDimensions] = useState({ width: 0, height: 0 });
   const [isSettingsOpen, setSettingsOpen] = useState(false);
-  const [newWidth, setNewWidth] = useState(cardWidth);
-  const [newHeight, setNewHeight] = useState(cardHeight);
-  const [chartType, setChartType] = useState('defaultChartType');
-  const [dashboardName, setDashboardName] = useState('defaultDashboardName');
+  const [chartType, setChartType] = useState("defaultChartType");
+  const [dashboardName, setDashboardName] = useState("defaultDashboardName");
   const [isChart, setIsChart] = useState(false);
-  
-    useEffect(() => {
-      if (config?.config) {
-        setChartType(config.config.chartType);
-        setDashboardName(config.config.dashboardName);
-        setIsChart(config.config.preference === "chart");
-      }
-    }, [config]);
 
+  useEffect(() => {
+    if (config?.config) {
+      setChartType(config.config.chartType);
+      setDashboardName(config.config.dashboardName);
+      setIsChart(config.config.preference === "chart");
+    }
+  }, [config]);
+
+  useEffect(() => {
+    const observer = new ResizeObserver((entries) => {
+      for (let entry of entries) {
+        setDimensions({
+          width: entry.contentRect.width,
+          height: entry.contentRect.height,
+        });
+      }
+    });
+
+    if (containerRef.current) {
+      observer.observe(containerRef.current);
+    }
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
 
   const getChartComponent = () => {
     if (!isChart) {
       return (
-        <Box textAlign="center" p={4}>
-          <Text fontSize="xl" fontWeight="bold" color="black">
-            Coming Soon
-          </Text>
-          <Text color={"black"}>The map feature is not available yet.</Text>
+        <Box textAlign="center">
+          <Text fontSize="xl" fontWeight="bold" color="black">Coming Soon</Text>
+          <Text color="black">The map feature is not available yet.</Text>
         </Box>
       );
     }
-  
+
     try {
-      return <RenderResult analysis={config.analysisResults[0].analysis_results as unknown as Analysis} />
+      return <RenderResult analysis={config.analysisResults[0].analysis_results as Analysis} />;
     } catch (error) {
       console.error("Error processing data:", error);
-  
-      // Fallback card in case of invalid data
       return (
-        <Box textAlign="center" p={4}>
-          <Text fontSize="xl" fontWeight="bold" color="red.500">
-            Data Processing Error
-          </Text>
-          <Text color="black">We couldn't process the data for this chart. Please check the data source or try again later.</Text>
+        <Box textAlign="center">
+          <Text fontSize="xl" fontWeight="bold" color="red.500">Data Processing Error</Text>
+          <Text color="black">We couldn't process the data for this chart.</Text>
         </Box>
       );
     }
-  };
-  
-
-  const handleResize = (event: any, { size }: any) => {
-    setCardWidth(size.width);
-    setCardHeight(size.height);
-  };
-
-  const handleDownload = () => {
-    const element = document.createElement("a");
-    const file = new Blob([config.config.downloadData], { type: "text/plain" });
-    element.href = URL.createObjectURL(file);
-    element.download = "chart-data.txt";
-    document.body.appendChild(element);
-    element.click();
-  };
-
-  const handleSettingsSave = () => {
-    setCardWidth(newWidth);
-    setCardHeight(newHeight);
-    setSettingsOpen(false);
   };
 
   return (
     <Draggable disabled>
-      <div className={className}  style={{ overflow: "hidden" ,width: cardWidth+ 'px', height: cardHeight + 'px'}}>
-        <ResizableBox
-          width={cardWidth}
-          height={cardHeight}
-          minConstraints={[150, 150]}
-          maxConstraints={[500, 500]}
-          onResizeStop={handleResize}
-          resizeHandles={["se", "s", "e"]}
-        >
-        
-          <Card boxShadow="lg" borderRadius={8} borderWidth="1px" borderColor="gray.300"  style={{ width: "auto"}}>
-            <CardBody>
-              <VStack spacing={2}>
-                <Text fontSize="xl" fontWeight="bold" color="black">
-                  {dashboardName} {config.config.owner && "(Owner)"}
-                </Text>
-                {getChartComponent()}
-                <Box display="flex" justifyContent="space-between" width="100%">
-                  <Button
-                    colorScheme="teal"
-                    size="sm"
-                    variant="outline"
-                    onClick={() => setSettingsOpen(true)}
-                  >
-                    Settings
-                  </Button>
-                  <Button
-                    onClick={handleDownload}
-                    colorScheme="teal"
-                    size="sm"
-                    variant="outline"
-                  >
-                    Download
-                  </Button>
-                </Box>
-              </VStack>
-            </CardBody>
-          </Card>
-          
-        </ResizableBox>
-        
+      <div ref={containerRef} className={className} style={{ width: "100%", height: "100%", overflow: "hidden" }}>
+      <Card width="100%" height="100%" shadow="lg" position="relative">
+        <CardBody p={0} m={0} width="100%" height="100%" display="flex" flexDirection="column">
+          <VStack spacing={2} width="100%" height="100%" align="stretch">
+            {/* Header with Name and Icons */}
+            <Flex width="100%" align="center" justify="space-between" p={2}>
+              <Text fontSize="xl" fontWeight="bold" color="black">
+                {dashboardName} {config.config.owner && "(Owner)"}
+              </Text>
+              <HStack spacing={2}>
+                <IconButton icon={<FiSettings />} onClick={() => setSettingsOpen(true)} colorScheme="teal" aria-label="Settings" size="sm" />
+                <IconButton icon={<FiDownload />} colorScheme="teal" aria-label="Download" size="sm" />
+              </HStack>
+            </Flex>
+
+            {/* Chart Component */}
+            <Box width="100%" height="100%">
+              {getChartComponent()}
+            </Box>
+          </VStack>
+        </CardBody>
+      </Card>
+
 
         {/* Settings Modal */}
         <Modal isOpen={isSettingsOpen} onClose={() => setSettingsOpen(false)}>
@@ -148,57 +114,28 @@ const ChartCard: React.FC<ChartCardProps> = ({ config, className }) => {
             <ModalHeader>Dashboard Settings</ModalHeader>
             <ModalCloseButton />
             <ModalBody>
-              <InProgressBadge/>
+              <InProgressBadge />
               <VStack spacing={4}>
                 <Box width="100%">
-                  <Text fontSize="sm" color={"black"}>Dashboard Name</Text>
-                  <Input
-                    value={dashboardName}
-                    onChange={(e) => setDashboardName(e.target.value)}
-                    placeholder="Enter dashboard name"
-                  />
+                  <Text fontSize="sm" color="black">Dashboard Name</Text>
+                  <Input value={dashboardName} onChange={(e) => setDashboardName(e.target.value)} placeholder="Enter dashboard name" />
                 </Box>
-                <Box width="100%">
-                  <Text fontSize="sm" color={"black"}>Width</Text>
-                  <Input
-                    type="number"
-                    value={newWidth}
-                    onChange={(e) => setNewWidth(Number(e.target.value))}
-                    min={150}
-                    max={500}
-                  />
-                </Box>
-                <Box width="100%">
-                  <Text fontSize="sm" color={"black"}>Height</Text>
-                  <Input
-                    type="number"
-                    value={newHeight}
-                    onChange={(e) => setNewHeight(Number(e.target.value))}
-                    min={150}
-                    max={500}
-                  />
-                </Box>
-                { CONFIG.ENABLE_CHART_TYPE &&
-                <Box width="100%">
-                  <Text fontSize="sm" color={"black"}>Chart Type</Text>
-                  <Select
-                    value={chartType}
-                    onChange={(e) => setChartType(e.target.value)}
-                  >
-                    <option value="line">Line Chart</option>
-                    <option value="bar">Bar Chart</option>
-                    <option value="pie">Pie Chart</option>
-                  </Select>
-                </Box>
-                }
-                <Button colorScheme="blue" onClick={handleSettingsSave} mt={4}>
-                  Save Changes
-                </Button>
+                {CONFIG.ENABLE_CHART_TYPE && (
+                  <Box width="100%">
+                    <Text fontSize="sm" color="black">Chart Type</Text>
+                    <Select value={chartType} onChange={(e) => setChartType(e.target.value)}>
+                      <option value="line">Line Chart</option>
+                      <option value="bar">Bar Chart</option>
+                      <option value="pie">Pie Chart</option>
+                    </Select>
+                  </Box>
+                )}
+                <Button colorScheme="blue" onClick={() => setSettingsOpen(false)} mt={4}>Save Changes</Button>
               </VStack>
             </ModalBody>
           </ModalContent>
         </Modal>
-        </div>
+      </div>
     </Draggable>
   );
 };
