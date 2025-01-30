@@ -28,8 +28,10 @@ import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import { DragHandleDots2Icon } from '@radix-ui/react-icons';
 import DashboardFilters from "../../components/DashboardFilters";
 import { FaCog } from "react-icons/fa"; 
-import Draggable from "react-draggable";
+import Draggable, { DraggableData } from "react-draggable";
 
+
+type DragPosition = { [key: number]: { x: number; y: number } };
 
 const DashboardPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -52,6 +54,17 @@ const DashboardPage: React.FC = () => {
   const [endIdx, setEndIdx] = useState(1);
 
   const [panelPositions, setPanelPositions] = useState({});
+  const [dragPosition, setDragPosition] = useState<DragPosition>({});
+
+
+  const handleDragMove = (data: DraggableData, panelKey: number) => {
+    setDragPosition(prevState => ({
+      ...prevState,
+      [panelKey]: { x: data.x, y: data.y },
+    }));
+  };
+
+  
 
   const handleDragStop = (panelKey: any, data: { x: any; y: any; }) => {
     setPanelPositions((prevState) => ({
@@ -68,11 +81,6 @@ const DashboardPage: React.FC = () => {
     setIsLayoutMenuOpen(false);
   };
 
-  // Function to reset the panel dimensions
-  const resetPanelDimensions = () => {
-    // if(layoutMode == "horizontal")
-    //   window.location.reload()
-  };
 
 
   useEffect(() => {
@@ -143,7 +151,7 @@ const DashboardPage: React.FC = () => {
 
   useEffect(() => {
     // Recalculate items per page based on the layout mode
-    const itemsPerPage = layoutMode === "horizontal" ? 6 : layoutMode === "vertical" ? 3 : 1;
+    const itemsPerPage = layoutMode === "horizontal" ? 6 : layoutMode === "vertical" ? 3 : 4;
     
     // Calculate total pages
     const totalPages = Math.ceil(filteredData.length / itemsPerPage);
@@ -176,7 +184,6 @@ const DashboardPage: React.FC = () => {
         <VStack spacing={6} align="stretch">
           {Array.from({ length: rows }).map((_, rowIndex) => {
             const rowPanels = paginatedData.slice(rowIndex * 3, rowIndex * 3 + 3);
-            const nestedPanelsRows = filteredData.slice(rowIndex * 3, rowIndex * 3 + 3);
 
             if (layoutMode === "horizontal") {
               const remainder = rowPanels.length % 3;
@@ -199,8 +206,9 @@ const DashboardPage: React.FC = () => {
                       <Draggable
                         key={`panel-${panelKey}`}
                         axis="x"
-                        defaultPosition={{ x: 0, y: 0 }}
+                        position={dragPosition[panelKey] || { x: 0, y: 0 }}  // Dynamically set position
                         onStop={(e, data) => handleDragStop(panelKey, data)}
+                        onDrag={(e, data) => handleDragMove(data, panelKey)}
                       >
                         <React.Fragment key={panelKey}>
                           <Panel
@@ -319,9 +327,8 @@ const DashboardPage: React.FC = () => {
                 </PanelGroup>
               );
             }
-            
-            
-            
+
+
 
             if (layoutMode === "nested") {
               const totalPanels = filteredData.length;
@@ -330,14 +337,14 @@ const DashboardPage: React.FC = () => {
             
               // Distribute panels dynamically
               filteredData.forEach((config, index) => {
-                if ((index ) % 4 === 0) {
+                if (index % 4 === 0) {
                   mainPanels.push(config); // Every 4th panel goes to Main Panel
                 } else {
                   smallPanels.push(config); // Others go to Small Panels
                 }
               });
-
-              console.log('main panels',mainPanels)
+            
+              console.log('main panels', mainPanels);
             
               return (
                 <PanelGroup key={rowIndex} direction="horizontal" style={{ height: "80vh" }}>
@@ -345,11 +352,21 @@ const DashboardPage: React.FC = () => {
                   <Panel defaultSize={50} minSize={20}>
                     <PanelGroup direction="vertical">
                       {smallPanels.map((config, index) => (
-                        <React.Fragment key={config?.uuid}>
+                        <React.Fragment key={`small-panel-${config?.uuid}-${index}`}>
                           <Panel defaultSize={100 / smallPanels.length} minSize={20} style={{ marginBottom: "8px" }}>
-                            <Flex bg={config?.bg || "gray.200"} h="100%" align="center" justify="center" p={2}>
+                            <Flex 
+                              bg={config?.bg || "gray.200"} 
+                              h="100%" 
+                              align="center" 
+                              justify="center" 
+                              p={2}
+                              border="1px solid"
+                              borderColor="gray.200"
+                              shadow="lg"
+                              rounded="lg"
+                            >
                               <div style={{ width: "100%", height: "100%" }}>
-                                <ChartCard key={config.uuid} config={config} className={`draggable-card-${index}`} />
+                                <ChartCard key={`chart-card-${config?.uuid}-${index}`} config={config} className={`draggable-card-${index}`} />
                               </div>
                             </Flex>
                           </Panel>
@@ -363,21 +380,39 @@ const DashboardPage: React.FC = () => {
             
                   {/* Main Panel Container */}
                   <Panel defaultSize={50} minSize={20}>
-                    <Flex bg="gray.200" h="100%" align="center" justify="center" flexWrap="wrap">
+                    <Flex 
+                      bg="gray.200" 
+                      h="100%" 
+                      align="center" 
+                      justify="center" 
+                      flexWrap="wrap" 
+                      p={2}
+                      border="1px solid"
+                      borderColor="gray.200"
+                      shadow="lg"
+                      rounded="lg"
+                      ml={3}
+                    >
                       {mainPanels.length > 0 ? (
                         mainPanels.map((config) => (
-                          <div key={config.uuid} style={{ width: "100%", height: "100%" }}>
+                          <div key={`main-panel-${config?.uuid}`} style={{ width: "100%", height: "100%" }}>
                             <ChartCard config={config} />
                           </div>
                         ))
                       ) : (
-                        <span>Main Panel</span>
+                        <span>No main panels to display</span>
                       )}
                     </Flex>
                   </Panel>
                 </PanelGroup>
               );
             }
+            
+            
+            
+
+            
+            
             
             return null;
           })}
@@ -398,7 +433,26 @@ const DashboardPage: React.FC = () => {
 
   
   
-  
+  // Retrieve saved layout from localStorage on component mount
+  useEffect(() => {
+    const savedLayoutMode = localStorage.getItem('layoutMode');
+    const savedDragPosition = localStorage.getItem('dragPosition');
+
+    if (savedLayoutMode) {
+      setLayoutMode(savedLayoutMode);
+    }
+
+    if (savedDragPosition) {
+      setDragPosition(JSON.parse(savedDragPosition));
+    }
+  }, []);
+
+  // Save layout to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('layoutMode', layoutMode);
+    localStorage.setItem('dragPosition', JSON.stringify(dragPosition));
+  }, [layoutMode, dragPosition]);
+
   
 
   return (
@@ -496,8 +550,8 @@ const DashboardPage: React.FC = () => {
       {/* Gear Icon Menu */}
       <Menu isOpen={isLayoutMenuOpen} onClose={closeMenu}>
         <Text color="black" whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis">
-                Layout
-              </Text>
+          Layout
+        </Text>
         <MenuButton as="div" onClick={toggleMenu} aria-label="Layout Settings">
           <FaCog size={24} style={{ color: 'green' }} />
         </MenuButton>
@@ -507,9 +561,9 @@ const DashboardPage: React.FC = () => {
               onClick={() => {
                 setLayoutMode("horizontal");
                 setLayoutKey(prevKey => prevKey + 1);
-                resetPanelDimensions();
                 closeMenu();
               }}
+              bg={layoutMode === 'horizontal' ? '#91e05e' : 'transparent'}
             >
               Horizontal
             </MenuItem>
@@ -520,6 +574,7 @@ const DashboardPage: React.FC = () => {
               setLayoutKey(prevKey => prevKey + 1);
               closeMenu();
             }}
+            bg={layoutMode === 'vertical' ? '#91e05e' : 'transparent'}
           >
             Vertical
           </MenuItem>
@@ -529,6 +584,7 @@ const DashboardPage: React.FC = () => {
               setLayoutKey(prevKey => prevKey + 1);
               closeMenu();
             }}
+            bg={layoutMode === 'nested' ? '#91e05e' : 'transparent'}
           >
             Nested
           </MenuItem>
