@@ -28,6 +28,8 @@
     "date-fns": "^4.1.0",
     "dotenv": "^16.0.1",
     "framer-motion": "^10.16.5",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^2.5.2",
     "maplibre-gl": "^4.7.1",
     "mini-css-extract-plugin": "^2.9.2",
     "pmtiles": "^3.2.1",
