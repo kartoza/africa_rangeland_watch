@@ -62,15 +62,53 @@ const ChartCard: React.FC<ChartCardProps> = ({ config, className }) => {
 
   const downloadPDF = async () => {
     if (!containerRef.current) return;
-    const canvas = await html2canvas(containerRef.current);
+
+    const cardElement = containerRef.current;
+
+     // Store the original background color
+    const originalBg = cardElement.style.backgroundColor;
+    
+    // Remove background color
+    cardElement.style.backgroundColor = "transparent";
+
+    
+
+  
+    // Hide the dashboard name and icons temporarily
+    const dashboardNameElement = document.getElementById("dashboard-name");
+    const iconsElement = document.getElementById("dashboard-icons");
+  
+    if (dashboardNameElement) dashboardNameElement.style.display = "none";
+    if (iconsElement) iconsElement.style.display = "none";
+  
+    const canvas = await html2canvas(cardElement, {
+      backgroundColor: null, // Ensure transparent background
+    });
     const imgData = canvas.toDataURL("image/png");
     const pdf = new jsPDF("p", "mm", "a4");
+  
+    // Restore the hidden elements
+    if (dashboardNameElement) dashboardNameElement.style.display = "block";
+    if (iconsElement) iconsElement.style.display = "block";
+    cardElement.style.backgroundColor = originalBg;
+
+  
     const imgWidth = 190;
     const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-    pdf.addImage(imgData, "PNG", 10, 10, imgWidth, imgHeight);
+  
+    // Add title and description
+    pdf.setFontSize(16);
+    pdf.text("Analysis Results", 10, 20);
+  
+    pdf.setFontSize(12);
+    pdf.text(`Saved on Dashboard: ${dashboardName}`, 10, 30);
+  
+    // Add the chart image below the text
+    pdf.addImage(imgData, "PNG", 10, 40, imgWidth, imgHeight);
+  
     pdf.save(`${dashboardName}_chart.pdf`);
   };
+  
 
   return (
     <div ref={containerRef} className={className} style={{ width: "100%", height: "100%", overflow: "hidden" }}>
@@ -79,10 +117,10 @@ const ChartCard: React.FC<ChartCardProps> = ({ config, className }) => {
           <VStack spacing={2} width="100%" height="100%" align="stretch">
             {/* Header with Name and Icons */}
             <Flex width="100%" align="center" justify="space-between" p={2}>
-              <Text fontSize="xl" fontWeight="bold" color="black">
+              <Text fontSize="xl" fontWeight="bold" color="black" id="dashboard-name">
                 {dashboardName} {config.config.owner && "(Owner)"}
               </Text>
-              <HStack spacing={2}>
+              <HStack spacing={2} id="dashboard-icons">
                 <IconButton icon={<FiSettings />} colorScheme="teal" aria-label="Settings" size="sm" />
                 <IconButton icon={<FiDownload />} onClick={downloadPDF} colorScheme="teal" aria-label="Download" size="sm" />
               </HStack>
