@@ -325,20 +325,23 @@ def fetch_organisation_data(request):
                 .values("user_profile__user__email", "user_type")
             )
 
-
+            # Fetch invitations from OrganisationInvitationDetail
+            # where request_type is 'join_organisation'
             invitations = list(
-                org.custom_invitations.all().values("email", "accepted")
-            ) if org.custom_invitations.exists() else []
+                OrganisationInvitationDetail.objects.filter(
+                    organisation=org,
+                    request_type="join_organisation"
+                ).values("invitation__email", "accepted")
+            )
 
             # Check if the user is a manager
-            is_manager = user_org.user_type == 'manager'
-
+            is_manager = user_org.user_type == "manager"
 
             data[org.name] = {
                 "org_id": org.id,
                 "members": members,
                 "invitations": invitations,
-                "is_manager": is_manager
+                "is_manager": is_manager,
             }
 
         return JsonResponse(data, status=200)
@@ -347,15 +350,16 @@ def fetch_organisation_data(request):
         return JsonResponse(
             {
                 "error": "User profile is not set up correctly.",
-                "details": str(e)
+                "details": str(e),
             },
-            status=500
+            status=500,
         )
     except Exception as e:
         return JsonResponse(
             {"error": "An unexpected error occurred.", "details": str(e)},
-            status=500
+            status=500,
         )
+
 
 
 
@@ -364,7 +368,6 @@ def fetch_organisation_data(request):
 def invite_to_organisation(request, organisation_id):
     """View to invite a user to an organisation."""
     try:
-        # Ensure the organisation exists
         organisation = get_object_or_404(Organisation, id=organisation_id)
 
         if request.method != 'POST':
@@ -373,7 +376,6 @@ def invite_to_organisation(request, organisation_id):
                 status=405
             )
 
-        # Parse JSON payload
         try:
             data = json.loads(request.body)
         except json.JSONDecodeError:
@@ -389,7 +391,6 @@ def invite_to_organisation(request, organisation_id):
         email = form.cleaned_data["email"]
         message = data.get("message", "")
 
-        # Check if the user has permission to invite (using UserOrganisations)
         user_profile = get_object_or_404(UserProfile, user=request.user)
         user_organisation = UserOrganisations.objects.filter(
             user_profile=user_profile,
@@ -402,41 +403,50 @@ def invite_to_organisation(request, organisation_id):
                 status=403
             )
 
-        # Check if an invitation already exists
-        invitation = OrganisationInvitation.objects.filter(
+        invitation, created = OrganisationInvitation.objects.get_or_create(
             email=email,
-            organisation=organisation
-        ).first()
-        if not invitation:
-            invitation = OrganisationInvitation.objects.create(
-                email=email,
-                inviter=request.user,
-                organisation=organisation
+            organisation=organisation,
+            defaults={'inviter': request.user}
+        )
+
+        # Check if an invitation detail already exists
+        invitation_detail, detail_created = (
+            OrganisationInvitationDetail.objects.get_or_create(
+                invitation=invitation,
+                organisation=organisation,
+                defaults={'request_type': 'join_organisation'}
+            )
+        )
+
+        if not created or not detail_created:
+            return JsonResponse(
+                {
+                    "error":
+                    "Invitation already sent to member to join organisation."
+                },
+                status=400
             )
 
-            # Send the invitation
-            try:
-                invitation.send_invitation(
-                    request=request,
-                    custom_message=message
-                )
-                return JsonResponse({"success": True}, status=200)
-            except Exception as e:
-                return JsonResponse(
-                    {
-                        "error": "Failed to send invitation.",
-                        "details": str(e)
-                    }, status=500)
-
+        # Send the invitation if newly created
+        try:
+            invitation.send_invitation(
+                request=request,
+                custom_message=message
+            )
+            return JsonResponse({"success": True}, status=200)
+        except Exception as e:
+            return JsonResponse(
+                {"error": "Failed to send invitation.", "details": str(e)},
+                status=500
+            )
     except Organisation.DoesNotExist:
         return JsonResponse({"error": "Organisation not found."}, status=404)
     except Exception as e:
-        print(str(e))
         return JsonResponse(
-            {
-                "error": "An unexpected error occurred",
-                "details": str(e)
-            }, status=500)
+            {"error": "An unexpected error occurred", "details": str(e)},
+            status=500
+        )
+
 
 
 
@@ -469,9 +479,7 @@ def accept_invite(request, invitation_id):
 
     if user_org:
         return JsonResponse(
-            {
-                "error": "You are already a member of this organization."
-            },
+            {"error": "You are already a member of this organization."},
             status=400
         )
 
@@ -482,8 +490,13 @@ def accept_invite(request, invitation_id):
         user_type='member'
     )
 
-
     user_profile.organisations.add(invitation.organisation)
     user_profile.save()
+
+    # Update invitation detail as accepted
+    OrganisationInvitationDetail.objects.filter(
+        invitation=invitation,
+        organisation=invitation.organisation
+    ).update(accepted=True)
 
     return redirect(f"{reverse('home')}?invitation_accepted=true")

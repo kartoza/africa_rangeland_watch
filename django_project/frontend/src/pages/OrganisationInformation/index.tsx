@@ -297,7 +297,7 @@ export default function OrganisationInformation() {
                           <Tbody>
                             {paginatedInvitations.map((invite: any, idx: number) => (
                               <Tr key={idx}>
-                                <Td>{invite.email}</Td>
+                                <Td>{invite.invitation__email}</Td>
                                 <Td>
                                   <Badge
                                     backgroundColor={
