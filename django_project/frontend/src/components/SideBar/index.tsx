@@ -7,12 +7,20 @@ import {
   DrawerOverlay,
   DrawerContent,
   DrawerCloseButton,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalFooter,
+  ModalBody,
+  ModalCloseButton,
+  Button,
 } from "@chakra-ui/react";
 import React from "react";
 import { MenuItem, Menu } from "react-pro-sidebar";
 import { HamburgerIcon } from "@chakra-ui/icons";
 import { useLocation, useNavigate } from "react-router-dom";
-import { AppDispatch } from '../../store';
+import { AppDispatch } from "../../store";
 import { useDispatch } from "react-redux";
 import { logoutUser } from "../../store/authSlice";
 
@@ -22,19 +30,48 @@ interface Props extends ChakraProps {
 
 export default function Sidebar(props: Props) {
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const dispatch = useDispatch<AppDispatch>(); 
+  const {
+    isOpen: isSignOutModalOpen,
+    onOpen: openSignOutModal,
+    onClose: closeSignOutModal,
+  } = useDisclosure();
+
+  const dispatch = useDispatch<AppDispatch>();
   const location = useLocation();
   const navigate = useNavigate();
   const isActive = (path: string) => location.pathname === path;
 
-  const handleLogout = () => {
-    dispatch(logoutUser());
+  const handleSignOutClick = () => {
     onClose();
+    openSignOutModal();
+  };
+
+  const handleSignOutConfirm = () => {
+    dispatch(logoutUser());
+    closeSignOutModal();
     navigate('/');
   };
 
   return (
     <>
+      <Modal isOpen={isSignOutModalOpen} onClose={closeSignOutModal} isCentered>
+        <ModalOverlay/>
+        <ModalContent style={{backgroundColor: 'white'}}>
+          <ModalHeader>Confirm Sign Out</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody>
+            Are you sure you want to sign out?
+          </ModalBody>
+          <ModalFooter>
+            <Button variant="ghost" mr={3} onClick={closeSignOutModal}>
+              Cancel
+            </Button>
+            <Button variant="ghost" colorScheme="red" onClick={handleSignOutConfirm}>
+              Sign Out
+            </Button>
+          </ModalFooter>
+        </ModalContent>
+      </Modal>
       {/* Sidebar for desktop */}
       <Box
         {...props}
@@ -43,7 +80,7 @@ export default function Sidebar(props: Props) {
         flexDirection="column"
         display={{ md: "flex", base: "none" }}
         bg="dark_green.800"
-        h={{base:"auto" ,md:"100vh"}}
+        h={{ base: "auto", md: "100vh" }}
         top="0px"
         overflow="auto"
         sx={{ position: "sticky !important" }}
@@ -68,39 +105,66 @@ export default function Sidebar(props: Props) {
           justifyContent="space-between"
         >
           <MenuItem
-            style={{ backgroundColor: isActive('/profile') ? '#a8d159' : 'transparent' }}
-            onClick={() => navigate('/profile')}
+            style={{
+              backgroundColor: isActive("/profile") ? "#a8d159" : "transparent",
+            }}
+            onClick={() => navigate("/profile")}
           >
             Profile
           </MenuItem>
           <MenuItem
-            style={{ backgroundColor: isActive('/organisation') ? '#a8d159' : 'transparent' }}
-            onClick={() => navigate('/organisation')}
+            style={{
+              backgroundColor: isActive("/organisation")
+                ? "#a8d159"
+                : "transparent",
+            }}
+            onClick={() => navigate("/organisation")}
           >
             Organisation Information
           </MenuItem>
-          <MenuItem onClick={() => navigate('/dashboard')}>My Dashboard</MenuItem>
-          <MenuItem 
-            style={{ backgroundColor: isActive('/analysis-results') ? '#a8d159' : 'transparent' }}
-            onClick={() => navigate('/analysis-results')}>
-              Analysis Results
+          <MenuItem onClick={() => navigate("/dashboard")}>
+            My Dashboard
           </MenuItem>
-          <MenuItem 
-            style={{ backgroundColor: isActive('/uploaded-resources') ? '#a8d159' : 'transparent' }}
-            onClick={() => navigate('/uploaded-resources')}>
-              Uploaded Resources
+          <MenuItem
+            style={{
+              backgroundColor: isActive("/analysis-results")
+                ? "#a8d159"
+                : "transparent",
+            }}
+            onClick={() => navigate("/analysis-results")}
+          >
+            Analysis Results
           </MenuItem>
-          <MenuItem 
-            style={{ backgroundColor: isActive('/support') ? '#a8d159' : 'transparent' }}
-            onClick={() => navigate('/support')}>
+          <MenuItem
+            style={{
+              backgroundColor: isActive("/uploaded-resources")
+                ? "#a8d159"
+                : "transparent",
+            }}
+            onClick={() => navigate("/uploaded-resources")}
+          >
+            Uploaded Resources
+          </MenuItem>
+          <MenuItem
+            style={{
+              backgroundColor: isActive("/support") ? "#a8d159" : "transparent",
+            }}
+            onClick={() => navigate("/support")}
+          >
             Support
           </MenuItem>
-          <MenuItem 
-            style={{ backgroundColor: isActive('/notifications') ? '#a8d159' : 'transparent' }}
-            onClick={() => navigate('/notifications')}>
-              Notifications
+          <MenuItem
+            style={{
+              backgroundColor: isActive("/notifications")
+                ? "#a8d159"
+                : "transparent",
+            }}
+            onClick={() => navigate("/notifications")}
+          >
+            Notifications
           </MenuItem>
-          <MenuItem onClick={() => handleLogout()}>Sign Out</MenuItem>
+          {/* Updated Sign Out: Open confirmation modal */}
+          <MenuItem onClick={handleSignOutClick}>Sign Out</MenuItem>
         </Box>
       </Box>
 
@@ -159,43 +223,93 @@ export default function Sidebar(props: Props) {
                 w="100%"
               >
                 <MenuItem
-                  style={{ backgroundColor: isActive('/profile') ? '#a8d159' : 'transparent' }}
+                  style={{
+                    backgroundColor: isActive("/profile")
+                      ? "#a8d159"
+                      : "transparent",
+                  }}
                   onClick={() => {
-                    navigate('/profile');
+                    navigate("/profile");
                     onClose();
                   }}
                 >
                   Profile
                 </MenuItem>
                 <MenuItem
-                  style={{ backgroundColor: isActive('/organisation') ? '#a8d159' : 'transparent' }}
+                  style={{
+                    backgroundColor: isActive("/organisation")
+                      ? "#a8d159"
+                      : "transparent",
+                  }}
                   onClick={() => {
-                    navigate('/organisation');
+                    navigate("/organisation");
                     onClose();
                   }}
                 >
                   Organisation Information
                 </MenuItem>
-                <MenuItem onClick={() => { navigate('/dashboard'); onClose(); }}>My Dashboard</MenuItem>
                 <MenuItem
-                  style={{ backgroundColor: isActive('/analysis-results') ? '#a8d159' : 'transparent' }}
-                  onClick={() => { navigate('/analysis-results'); onClose(); }}>
+                  onClick={() => {
+                    navigate("/dashboard");
+                    onClose();
+                  }}
+                >
+                  My Dashboard
+                </MenuItem>
+                <MenuItem
+                  style={{
+                    backgroundColor: isActive("/analysis-results")
+                      ? "#a8d159"
+                      : "transparent",
+                  }}
+                  onClick={() => {
+                    navigate("/analysis-results");
+                    onClose();
+                  }}
+                >
                   Analysis Results
                 </MenuItem>
                 <MenuItem
-                  style={{ backgroundColor: isActive('/uploaded-resources') ? '#a8d159' : 'transparent' }}
-                  onClick={() => { navigate('/uploaded-resources'); onClose(); }}>
+                  style={{
+                    backgroundColor: isActive("/uploaded-resources")
+                      ? "#a8d159"
+                      : "transparent",
+                  }}
+                  onClick={() => {
+                    navigate("/uploaded-resources");
+                    onClose();
+                  }}
+                >
                   Uploaded Resources
                 </MenuItem>
-                <MenuItem 
-                  style={{ backgroundColor: isActive('/support') ? '#a8d159' : 'transparent' }}
-                  onClick={() => { navigate('/support'); onClose(); }}>Support</MenuItem>
                 <MenuItem
-                  style={{ backgroundColor: isActive('/notifications') ? '#a8d159' : 'transparent' }}
-                  onClick={() => { navigate('/notifications'); onClose(); }}>
+                  style={{
+                    backgroundColor: isActive("/support")
+                      ? "#a8d159"
+                      : "transparent",
+                  }}
+                  onClick={() => {
+                    navigate("/support");
+                    onClose();
+                  }}
+                >
+                  Support
+                </MenuItem>
+                <MenuItem
+                  style={{
+                    backgroundColor: isActive("/notifications")
+                      ? "#a8d159"
+                      : "transparent",
+                  }}
+                  onClick={() => {
+                    navigate("/notifications");
+                    onClose();
+                  }}
+                >
                   Notifications
                 </MenuItem>
-                <MenuItem onClick={() => { navigate('/sign-out'); onClose(); }}>Sign Out</MenuItem>
+                {/* Updated Sign Out: Open confirmation modal */}
+                <MenuItem onClick={handleSignOutClick}>Sign Out</MenuItem>
               </Box>
             </Box>
           </DrawerContent>
