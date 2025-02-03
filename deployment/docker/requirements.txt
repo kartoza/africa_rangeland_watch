@@ -1,13 +1,13 @@
-Django==4.2.15
+Django>=4.2.18
 
 # Web APIs for Django
-djangorestframework==3.14.0
+djangorestframework>=3.15.2
 
 # Geographic add-ons for Django Rest Framework
 djangorestframework-gis==1.0
 
 # Python HTTP library
-requests==2.28.2
+requests>=2.32.0
 
 # The uWSGI server
 uwsgi==2.0.23
@@ -16,7 +16,7 @@ uwsgi==2.0.23
 django-webpack-loader==1.8.1
 
 # Python client for Sentry (https://sentry.io)
-sentry-sdk==1.18.0
+sentry-sdk>=2.8.0
 
 # Implementation of per object permissions for Django.
 django-guardian==2.4.0
