@@ -510,7 +510,7 @@ const DashboardPage: React.FC = () => {
               Filter
             </Button>
             <Text fontSize="lg" color="black">
-              {filteredData ? filteredData.length : 0} resources found.
+              {filteredData ? filteredData.length : 0} resource{ filteredData.length != 1 && 's' } found
             </Text>
           </Flex>
 
