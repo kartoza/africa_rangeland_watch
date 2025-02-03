@@ -1,3 +1,16 @@
+---
+title: Africa Rangeland Watch
+summary: Understand and monitor the impact of sustainable rangeland management in Africa.
+    - Ketan Bamniya
+    
+date: 22/01/2025
+some_url: https://github.com/kartoza/africa_rangeland_watch
+copyright: Copyright 2023, Africa Rangeland Watch
+contact: Perushan Rajah, prajah@conservation.org
+license: This program is free software; you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation; either version 3 of the License, or (at your option) any later version.
+#context_id: 1234
+---
+
 # Support Page: Africa RangeLand Watch (ARW)
 
 To access the support page of the ARW you have to click on the 1️⃣ `Support` tab on the left menu bar.
@@ -63,10 +76,6 @@ This is the interface of the `Create Ticket` page. To create a new ticket, start
 
     [![Updated Attachment](./img/guide-support-img-12.png)](./img/guide-support-img-12.png)
 
-
-
-
 ## How to Filter Tickets?
 
 ## How to use Search?
-

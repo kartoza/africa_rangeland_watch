@@ -41,7 +41,9 @@ export default function Header(props: any) {
         dispatch(checkLoginStatus());
     }, [dispatch]);
 
-    const isDashboard = location.pathname === '/dashboard';
+    const isSelected = (menuName: string) => {
+        return location.pathname.includes(menuName)
+    }
 
     const handleNavigation = (to: string | undefined) => {
         if (to) {
@@ -87,7 +89,10 @@ export default function Header(props: any) {
                     zIndex={10}
                 >
                     <ListItem>
-                        <Link href="/#/map" _hover={{ textDecoration: 'underline', textDecorationColor: 'white' }}>
+                        <Link href="/#/map"
+                              _hover={{ textDecoration: 'underline', textDecorationColor: 'white' }}
+                              style={{ textDecoration: isSelected('map') ? 'underline' : 'none', textDecorationColor: 'white' }}
+                        >
                             <Text color="white" fontWeight={400} fontSize={16}>MAP</Text>
                         </Link>
                     </ListItem>
@@ -96,7 +101,7 @@ export default function Header(props: any) {
                             onClick={() => handleNavigation('/dashboard')}
                             _hover={{ textDecoration: 'underline', textDecorationColor: 'white' }}
                             _focus={{ textDecoration: 'underline', textDecorationColor: 'white' }}
-                            style={{ textDecoration: isDashboard ? 'underline' : 'none', textDecorationColor: 'white' }}
+                            style={{ textDecoration: isSelected('dashboard') ? 'underline' : 'none', textDecorationColor: 'white' }}
                         >
                             <Text color="white" fontWeight={400} fontSize={16}>DASHBOARD</Text>
                         </Link>
@@ -109,6 +114,7 @@ export default function Header(props: any) {
                     <ListItem
                         onMouseEnter={() => handleHoverEnter('about')}
                         onMouseLeave={handleHoverLeave}
+                        style={{ textDecoration: isSelected('about') || isSelected('learn-more') ? 'underline' : 'none', textDecorationColor: 'white' }}
                     >
                         <Flex gap="4px" alignItems="center" cursor="pointer">
                             <Text color="white" fontWeight={400} fontSize={16}>ABOUT</Text>
@@ -119,6 +125,7 @@ export default function Header(props: any) {
                     <ListItem
                         onMouseEnter={() => handleHoverEnter('resources')}
                         onMouseLeave={handleHoverLeave}
+                        style={{ textDecoration: isSelected('resources') ? 'underline' : 'none', textDecorationColor: 'white' }}
                     >
                         <Flex gap="4px" alignItems="center" cursor="pointer">
                             <Text color="white" fontWeight={400} fontSize={16}>RESOURCES</Text>

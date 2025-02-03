@@ -19,7 +19,7 @@ from django.conf import settings
 from django.template.loader import render_to_string
 from django.core.mail import EmailMultiAlternatives
 from django.db import IntegrityError
-
+import logging
 
 Invitation = get_invitation_model()
 
@@ -292,8 +292,11 @@ def delete_organisation_member(request):
         )
 
     except Exception as e:
+        logging.error(
+            "An error occurred while deleting organisation member: %s",
+            str(e))
         return JsonResponse(
-            {"error": "An error occurred.", "details": str(e)},
+            {"error": "An internal error has occurred."},
             status=500
         )
 
@@ -347,16 +350,17 @@ def fetch_organisation_data(request):
         return JsonResponse(data, status=200)
 
     except AttributeError as e:
+        logging.error("User profile setup error: %s", str(e))
         return JsonResponse(
-            {
-                "error": "User profile is not set up correctly.",
-                "details": str(e),
-            },
+            {"error": "User profile is not set up correctly."},
             status=500,
         )
     except Exception as e:
+        logging.error(
+            "An unexpected error occurred: %s",
+            str(e))
         return JsonResponse(
-            {"error": "An unexpected error occurred.", "details": str(e)},
+            {"error": "An unexpected error has occurred."},
             status=500,
         )
 

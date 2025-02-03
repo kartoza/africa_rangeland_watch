@@ -5,18 +5,13 @@ import {
   Text,
   Button,
   Input,
-  Badge,
-  SimpleGrid,
   Image,
-  Heading,
-  Checkbox,
-  Select,
-  Drawer,
-  DrawerBody,
-  DrawerOverlay,
-  DrawerContent,
-  DrawerCloseButton,
   useDisclosure,
+  VStack,
+  Menu, 
+  MenuButton, 
+  MenuList, 
+  MenuItem,
 } from "@chakra-ui/react";
 import { FaFilter } from "react-icons/fa";
 import Header from "../../components/Header";
@@ -29,25 +24,64 @@ import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "../../store";
 import { fetchDashboards } from "../../store/dashboardSlice";
 import {InProgressBadge} from "../../components/InProgressBadge";
+import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
+import { DragHandleDots2Icon } from '@radix-ui/react-icons';
+import DashboardFilters from "../../components/DashboardFilters";
+import { FaCog } from "react-icons/fa"; 
+import Draggable, { DraggableData } from "react-draggable";
 
 
+type DragPosition = { [key: number]: { x: number; y: number } };
 
 const DashboardPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [isFilterActive, setIsFilterActive] = useState(false);
-  const itemsPerPage = 12; //these will be dynamic
-  const totalItems = 12; //these will be dynamic
-  const totalPages = Math.ceil(totalItems / itemsPerPage);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [isAnalysisOpen, setIsAnalysisOpen] = useState(false);
-  const [data, setData] = useState<any[]>([]);
   const dispatch = useDispatch<AppDispatch>();
   const dashboardData = useSelector((state: any) => state.dashboard.dashboards);
   const loading = useSelector((state: any) => state.dashboard.loading);
   const error = useSelector((state: any) => state.dashboard.error);
-  const [resourcesCount, setResourcesCount] = useState(0);
   const [chartsConfig, setChartsConfig] = useState([]);
+  const [hasError, setHasError] = useState(false);
+  const [isLayoutMenuOpen, setIsLayoutMenuOpen] = useState(false);
+  // pagination variables
+  const [paginatedData, setPaginatedData] = useState([]);
+  const [totalPages, setTotalPages] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(6)
+  const [startIdx , setStartIdx] = useState(0);
+  const [endIdx, setEndIdx] = useState(1);
+
+  const [panelPositions, setPanelPositions] = useState({});
+  const [dragPosition, setDragPosition] = useState<DragPosition>({});
+
+
+  const handleDragMove = (data: DraggableData, panelKey: number) => {
+    setDragPosition(prevState => ({
+      ...prevState,
+      [panelKey]: { x: data.x, y: data.y },
+    }));
+  };
+
+  
+
+  const handleDragStop = (panelKey: any, data: { x: any; y: any; }) => {
+    setPanelPositions((prevState) => ({
+      ...prevState,
+      [panelKey]: { x: data.x, y: data.y },
+    }));
+  };
+
+  const toggleMenu = () => {
+    setIsLayoutMenuOpen(prevState => !prevState);
+  };
+
+  const closeMenu = () => {
+    setIsLayoutMenuOpen(false);
+  };
+
+
 
   useEffect(() => {
     if (!loading && Array.isArray(dashboardData)) {
@@ -68,17 +102,7 @@ const DashboardPage: React.FC = () => {
     dispatch(fetchDashboards());
   }, [dispatch]);
 
-  useEffect(() => {
-    if(!loading){
-      setResourcesCount(Array.isArray(dashboardData)? dashboardData.length: 0)
-    }
-  }, [loading]);
-
-  const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
-    }
-  };
+  
 
   const handleFilterClick = () => {
     if (isOpen) {
@@ -100,8 +124,348 @@ const DashboardPage: React.FC = () => {
       typeof chartConfig.title !== 'undefined' ? chartConfig.title.toLowerCase().includes(searchTerm.toLowerCase()) : false
   );
 
+  
+  const rows = Math.ceil(filteredData.length / 3);
+
+  const [layoutMode, setLayoutMode] = useState("horizontal"); // Default layout
+  const [layoutKey, setLayoutKey] = useState(0);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
+
+  // Effect to update layout mode when screen size changes
+  useEffect(() => {
+    const handleResize = () => {
+      const mobileView = window.innerWidth < 768;
+      setIsMobile(mobileView);
+
+      // Force vertical layout on mobile
+      if (mobileView) {
+        setLayoutMode("vertical");
+      }
+    };
+
+    window.addEventListener("resize", handleResize);
+    handleResize(); // Check on mount
+
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
+    // Recalculate items per page based on the layout mode
+    const itemsPerPage = layoutMode === "horizontal" ? 6 : layoutMode === "vertical" ? 3 : 4;
+    
+    // Calculate total pages
+    const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+
+    // Recalculate the paginated data for the current page
+    const startIdx = (currentPage - 1) * itemsPerPage;
+    const endIdx = startIdx + itemsPerPage;
+    const paginatedData = filteredData.slice(startIdx, endIdx);
+
+    setStartIdx(startIdx)
+    setEndIdx(endIdx)
+    setItemsPerPage(itemsPerPage)
+    setPaginatedData(paginatedData);
+    setTotalPages(totalPages);
+  }, [currentPage, layoutMode])
+
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
+
+  var render = 0;
+
+ 
+
+  const renderPanels = () => {
+    try {
+      const paginatedData = filteredData.slice(startIdx, endIdx);
+
+      return (
+        <VStack spacing={6} align="stretch">
+          {Array.from({ length: rows }).map((_, rowIndex) => {
+            const rowPanels = paginatedData.slice(rowIndex * 3, rowIndex * 3 + 3);
+
+            if (layoutMode === "horizontal") {
+              render = 0;
+              const remainder = rowPanels.length % 3;
+              const extraPanels = remainder === 0 ? 0 : 3 - remainder;
+            
+              // Create an array with original panels + dummy panels
+              const balancedPanels = [...rowPanels, ...Array(extraPanels).fill(null)];
+            
+              return (
+                <PanelGroup
+                  key={rowIndex}
+                  direction="horizontal"
+                  style={{ display: "flex", justifyContent: "center", gap: "6px" }}
+                >
+                  {balancedPanels.map((config, index) => {
+                    const panelKey = rowIndex * 3 + index;
+                    const isDummy = config === null;
+            
+                    return (
+                      <Draggable
+                        key={`panel-${panelKey}`}
+                        axis="x"
+                        position={dragPosition[panelKey] || { x: 0, y: 0 }}  // Dynamically set position
+                        onStop={(e, data) => handleDragStop(panelKey, data)}
+                        onDrag={(e, data) => handleDragMove(data, panelKey)}
+                      >
+                        <React.Fragment key={panelKey}>
+                          <Panel
+                            key={`panel-${panelKey}`}
+                            defaultSize={33.33}
+                            minSize={20}
+                            style={{
+                              height: "400px",
+                              padding: "0px",
+                              opacity: isDummy ? 0 : 1,
+                              pointerEvents: isDummy ? "none" : "auto",
+                            }}
+                          >
+                            <Flex
+                              bg="gray.200"
+                              border="1px solid"
+                              borderColor="gray.200"
+                              shadow="lg"
+                              rounded="lg"
+                              align="center"
+                              justify="center"
+                              h="100%"
+                              p={2}
+                            >
+                              {!isDummy && (
+                                <div style={{ width: "100%", height: "100%" }}>
+                                  <ChartCard
+                                    key={config.uuid}
+                                    config={config}
+                                    className={`draggable-card-${panelKey}`}
+                                  />
+                                </div>
+                              )}
+                            </Flex>
+                          </Panel>
+              
+                          {/* Add resize handle only for non-dummy panels */}
+                          {!isDummy && index !== balancedPanels.length - 1 && (
+                            <PanelResizeHandle key={`resize-handle-${panelKey}`}>
+                            </PanelResizeHandle>
+                          )}
+                        </React.Fragment>
+                      </Draggable>
+                    );
+                  })}
+                </PanelGroup>
+              );
+            }
+            
+
+            if (layoutMode === "vertical") {
+              render = 0;
+              const remainder = rowPanels.length % 3;
+              const extraPanels = remainder === 0 ? 0 : 3 - remainder;
+              const balancedPanels = [...rowPanels, ...Array(extraPanels).fill(null)];
+              if (rowPanels.length === 0) {
+                return null;
+              }
+            
+              return (
+                <PanelGroup
+                  key={rowIndex}
+                  direction="vertical"
+                  style={{
+                    display: "flex",
+                    gap: "6px",
+                    flexDirection: "column",
+                    overflowY: "auto"
+                  }}
+                >
+                  {balancedPanels.map((config, index) => {
+                    const panelKey = rowIndex * 3 + index;
+                    const isDummy = config === null;
+            
+                    return (
+                      <React.Fragment key={panelKey}>
+                        <Panel
+                          key={`panel-${panelKey}`}
+                          defaultSize={100 / balancedPanels.length}
+                          minSize={20}
+                          style={{
+                            padding: "4px",
+                            flex: "1",
+                            opacity: isDummy ? 0 : 1,
+                            pointerEvents: isDummy ? "none" : "auto",
+                          }}
+                        >
+                          <Flex
+                            bg="gray.200"
+                            border="1px solid"
+                            borderColor="gray.200"
+                            shadow="lg"
+                            rounded="lg"
+                            align="center"
+                            justify="center"
+                            h="100%"
+                            p={2}
+                          >
+                            {!isDummy && 
+                              <div style={{ width: "100%", height: "100%" }}>
+                                <ChartCard
+                                  key={config.uuid}
+                                  config={config}
+                                  className={`draggable-card-${panelKey}`}
+                                />
+                            </div>
+                            }
+                          </Flex>
+                        </Panel>
+            
+                        {!isDummy && index !== balancedPanels.length - 1 && (
+                          <PanelResizeHandle key={`resize-handle-${panelKey}`}></PanelResizeHandle>
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
+                </PanelGroup>
+              );
+            }
+
+
+
+            if (layoutMode === "nested" && render == 0) {
+              ++render;
+              const totalPanels = filteredData.length;
+              const smallPanels: any[] = [];
+              const mainPanels: any[] = [];
+            
+              // Distribute panels dynamically
+              filteredData.forEach((config, index) => {
+                if (index % 4 === 0) {
+                  mainPanels.push(config); // Every 4th panel goes to Main Panel
+                } else {
+                  smallPanels.push(config); // Others go to Small Panels
+                }
+              });
+            
+              console.log('main panels', mainPanels);
+            
+              return (
+                <PanelGroup key={rowIndex} direction="horizontal" style={{ height: "80vh" }}>
+                  {/* Small Panels Container */}
+                  <Panel defaultSize={50} minSize={20}>
+                    <PanelGroup direction="vertical">
+                      {smallPanels.map((config, index) => (
+                        <React.Fragment key={`small-panel-${config?.uuid}-${index}`}>
+                          <Panel defaultSize={100 / smallPanels.length} minSize={20} style={{ marginBottom: "8px" }}>
+                            <Flex 
+                              bg={config?.bg || "gray.200"} 
+                              h="100%" 
+                              align="center" 
+                              justify="center" 
+                              p={2}
+                              border="1px solid"
+                              borderColor="gray.200"
+                              shadow="lg"
+                              rounded="lg"
+                            >
+                              <div style={{ width: "100%", height: "100%" }}>
+                                <ChartCard key={`chart-card-${config?.uuid}-${index}`} config={config} className={`draggable-card-${index}`} />
+                              </div>
+                            </Flex>
+                          </Panel>
+                          {index !== smallPanels.length - 1 && <PanelResizeHandle />}
+                        </React.Fragment>
+                      ))}
+                    </PanelGroup>
+                  </Panel>
+            
+                  <PanelResizeHandle />
+            
+                  {/* Main Panel Container */}
+                  <Panel defaultSize={50} minSize={20}>
+                    <Flex 
+                      bg="gray.200" 
+                      h="100%" 
+                      align="center" 
+                      justify="center" 
+                      flexWrap="wrap" 
+                      p={2}
+                      border="1px solid"
+                      borderColor="gray.200"
+                      shadow="lg"
+                      rounded="lg"
+                      ml={3}
+                    >
+                      {mainPanels.length > 0 ? (
+                        mainPanels.map((config) => (
+                          <div key={`main-panel-${config?.uuid}`} style={{ width: "100%", height: "100%" }}>
+                            <ChartCard config={config} />
+                          </div>
+                        ))
+                      ) : (
+                        <span>No main panels to display</span>
+                      )}
+                    </Flex>
+                  </Panel>
+                </PanelGroup>
+              );
+            }
+            
+            
+            
+
+            
+            
+            
+            return null;
+          })}
+
+           {/* Pagination controls */}
+            <Pagination
+                currentPage={currentPage}
+                totalPages={Math.ceil(filteredData.length / itemsPerPage)}
+                handlePageChange={handlePageChange}
+             />
+        </VStack>
+      );
+    } catch (error) {
+      console.error("Error rendering panels:", error);
+      setHasError(true);
+    }
+  };
+
+  
+  
+  // Retrieve saved layout from localStorage on component mount
+  useEffect(() => {
+    const savedLayoutMode = localStorage.getItem('layoutMode');
+    const savedDragPosition = localStorage.getItem('dragPosition');
+
+    if (savedLayoutMode) {
+      setLayoutMode(savedLayoutMode);
+    }
+
+    if (savedDragPosition) {
+      setDragPosition(JSON.parse(savedDragPosition));
+    }
+  }, []);
+
+  // Save layout to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('layoutMode', layoutMode);
+    localStorage.setItem('dragPosition', JSON.stringify(dragPosition));
+  }, [layoutMode, dragPosition]);
+
+  
+
   return (
-    <><Box width="100%" minHeight={{base: "auto", md:"80vh"}}>
+    <>
+    
+    
+    
+    <Box width="100%" minHeight={{base: "auto", md:"80vh"}}>
       <Helmet>
         <title>Dashboard | Africa Rangeland Watch | Sustainable Management</title>
         <meta name="description" content="dashboard data." />
@@ -121,257 +485,144 @@ const DashboardPage: React.FC = () => {
         padding={5}
         ml={{ base: 0, md: 6 }}
       >
-        {/* Filter Button */}
-        <Flex
-          alignItems="center"
-          gap="4"
-          flex={{ base: "1", md: "auto" }}
-          justifyContent={{ base: "flex-start", md: "flex-start" }}
-          w={{ base: "100%", md: "30%" }}
-        >
-          <Button
-            leftIcon={<FaFilter />}
-            colorScheme="green"
-            variant="solid"
-            backgroundColor={isFilterActive ? "gray.500" : "dark_green.800"}
-            _hover={{ backgroundColor: "light_green.400" }}
-            fontWeight={700}
-            w={{ base: "auto", md: "15%" }}
-            h={10}
-            color="white.a700"
-            borderRadius="2px"
-            isDisabled={isFilterActive}
-            onClick={handleFilterClick}
+          {/* Filter Button */}
+          <Flex
+            alignItems="center"
+            gap="4"
+            flex={{ base: "1", md: "auto" }}
+            justifyContent={{ base: "flex-start", md: "flex-start" }}
+            w={{ base: "100%", md: "30%" }}
           >
-            Filter
-          </Button>
-          <Text fontSize="lg" color="black">
-            {filteredData ? filteredData.length : 0} resources found.
-          </Text>
-        </Flex>
-
-        {/* Search, New, Organise */}
-        <Flex
-          alignItems="center"
-          gap="4"
-          flexDirection={{ base: "column", md: "row" }}
-          w={{ base: "100%", md: "40%" }}
-          justifyContent={{ base: "flex-start", md: "flex-end" }}
-        >
-          <Input
-            placeholder="Search resources..."
-            w={{ base: "100%", md: "400px" }}
-            size="md"
-            onChange={(e) => setSearchTerm(e.target.value)}
-            borderRadius="md" />
-          <Button
-            colorScheme="green"
-            variant="solid"
-            backgroundColor="dark_green.800"
-            _hover={{ backgroundColor: "light_green.400" }}
-            fontWeight={700}
-            w={{ base: "100%", md: "auto" }}
-            h={10}
-            color="white.a700"
-            borderRadius="2px"
-            onClick={() => window.location.href = "/#/analysis-results"}
-          >
-            New
-          </Button>
-          <Image src="static/images/toggle_icon.svg" alt="toggle" h="15px" w="20px" />
-          <Text color="black" whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis">
-            Organise by
-          </Text>
-        </Flex>
-      </Flex>
-
-      <SimpleGrid
-        // templateColumns="repeat(auto-fill, minmax(400px, 1fr))"
-        columns={[1, 2, 3]}
-        spacing="0"
-        marginBottom={0}
-        paddingLeft={{ base: "5%", md: "2.5%" }}
-        templateColumns="repeat(auto-fill, minmax(500px, 1fr))"
-        autoFlow="dense"
-      >
-        {filteredData.map((config, index) => (
-          <ChartCard
-            key={config.uuid}
-            config={config}
-            className={`draggable-card-${index}`}
-          />
-        ))}
-      </SimpleGrid>
-
-      {/* Cards Section */}
-      <SimpleGrid columns={[1, 2, 3, 4]} spacing="2" marginBottom={6} paddingLeft={{ base: "5%", md: "2.5%" }}>
-        {loading ? (
-          <Text>Loading...</Text>
-        ) : (
-          data
-            .slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage)
-            .map((item) => (
-              <Box key={item.id} borderWidth="1px" borderRadius="lg" overflow="hidden" width="90%" height="250px">
-                {/* Image */}
-                <Image
-                  src={item.imageUrl}
-                  alt={item.title}
-                  objectFit="cover"
-                  width="100%"
-                  height="60%" />
-                {/* Card Content */}
-                <Box padding="2" height="40%">
-                  <Heading size="sm" mb="2" color="black">
-                    {item.title}
-                  </Heading>
-                  <Text fontSize="sm" noOfLines={2} mb="1" color="black">
-                    {item.description}
-                  </Text>
-                  <Flex justifyContent="space-between" alignItems="center">
-                    <Badge colorScheme="green">{item.userName}</Badge>
-                    <Button
-                      colorScheme="green"
-                      variant="solid"
-                      backgroundColor="dark_green.800"
-                      _hover={{ backgroundColor: "light_green.400" }}
-                      fontWeight={700}
-                      w={{ base: "50%", md: "auto" }}
-                      h={8}
-                      color="white.a700"
-                      borderRadius="4px"
-                      onClick={() => handleViewClick(item)}
-                    >
-                      View
-                    </Button>
-                  </Flex>
-                </Box>
-              </Box>
-            ))
-        )}
-        {data.length > 11 && (
-          <Flex mr={50}>
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              handlePageChange={handlePageChange} />
-          </Flex>
-        )}
-      </SimpleGrid>
-      {/* Filter Panel (Drawer) */}
-      <Drawer isOpen={isOpen} placement="left" onClose={onClose}>
-        <DrawerOverlay />
-        <DrawerContent backgroundColor={"white"}>
-          <DrawerCloseButton />
-          <Flex alignItems="center" justifyContent="space-between" mb="4" paddingX="4">
-            <Flex alignItems="center" gap="2">
-              <FaFilter />
-              <Text fontSize="lg" fontWeight="bold" color={"black"}>
-                Filter
-              </Text>
-            </Flex>
             <Button
+              leftIcon={<FaFilter />}
               colorScheme="green"
-              variant="outline"
-              borderColor="dark_green.800"
-              textColor="dark_green.800"
+              variant="solid"
+              backgroundColor={isFilterActive ? "gray.500" : "dark_green.800"}
+              _hover={{ backgroundColor: "light_green.400" }}
               fontWeight={700}
-              h={8}
-              width={"40%"}
-              borderRadius="0px"
-              onClick={() => { } }
-              mr={35}
-              mt={2}
+              w={{ base: "auto", md: "15%" }}
+              h={10}
+              color="white.a700"
+              borderRadius="2px"
+              isDisabled={isFilterActive}
+              onClick={handleFilterClick}
             >
-              Clear Filters
+              Filter
             </Button>
+            <Text fontSize="lg" color="black">
+              {filteredData ? filteredData.length : 0} resource{ filteredData.length != 1 && 's' } found
+            </Text>
           </Flex>
 
-          {/* Divider */}
-          <Box borderBottom="1px solid gray" mb="4" />
-          <DrawerBody>
-            <InProgressBadge/>
-            {/* Search Field Inside Drawer */}
+          {/* Search, New, Organise */}
+          <Flex
+            alignItems="center"
+            gap="4"
+            flexDirection={{ base: "column", md: "row" }}
+            w={{ base: "100%", md: "40%" }}
+            justifyContent={{ base: "flex-start", md: "flex-end" }}
+          >
             <Input
-              placeholder="Search dashboard..."
+              placeholder="Search resources..."
+              w={{ base: "100%", md: "400px" }}
               size="md"
               onChange={(e) => setSearchTerm(e.target.value)}
-              borderRadius="md"
-              mb="4" />
+              borderRadius="md" />
+            <Button
+              colorScheme="green"
+              variant="solid"
+              backgroundColor="dark_green.800"
+              _hover={{ backgroundColor: "light_green.400" }}
+              fontWeight={700}
+              w={{ base: "100%", md: "auto" }}
+              h={10}
+              color="white.a700"
+              borderRadius="2px"
+              onClick={() => window.location.href = "/#/analysis-results"}
+            >
+              New
+            </Button>
+            <Image src="static/images/toggle_icon.svg" alt="toggle" h="15px" w="20px" />
+            <Text color="black" whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis">
+              Organise by
+            </Text>
+            
+          </Flex>
 
-            {/* Filters inside Drawer */}
-            <Text fontWeight="bold" mt="4" color={"black"} mb={4} fontSize={18}>Resources</Text>
-            <Checkbox mb="4">My Resources</Checkbox>
-            <br></br>
-            <Checkbox mb="4">My Organisations</Checkbox>
-            <br></br>
-            <Checkbox mb="4">Favorites</Checkbox>
-            <br></br>
-            <Checkbox mb="4">My Dashboards</Checkbox>
-            <br></br>
-            <Checkbox mb="4">Datasets</Checkbox>
+
+      {/* Customizeable layouts */}
+
+      {/* Gear Icon Menu */}
+      <Menu isOpen={isLayoutMenuOpen} onClose={closeMenu}>
+        <Text color="black" whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis">
+          Layout
+        </Text>
+        <MenuButton as="div" onClick={toggleMenu} aria-label="Layout Settings">
+          <FaCog size={24} style={{ color: 'green' }} />
+        </MenuButton>
+        <MenuList>
+          {!isMobile && (
+            <MenuItem
+              onClick={() => {
+                setLayoutMode("horizontal");
+                setLayoutKey(prevKey => prevKey + 1);
+                closeMenu();
+              }}
+              bg={layoutMode === 'horizontal' ? '#91e05e' : 'transparent'}
+            >
+              Horizontal
+            </MenuItem>
+          )}
+          <MenuItem
+            onClick={() => {
+              setLayoutMode("vertical");
+              setLayoutKey(prevKey => prevKey + 1);
+              closeMenu();
+            }}
+            bg={layoutMode === 'vertical' ? '#91e05e' : 'transparent'}
+          >
+            Vertical
+          </MenuItem>
+          <MenuItem
+            onClick={() => {
+              setLayoutMode("nested");
+              setLayoutKey(prevKey => prevKey + 1);
+              closeMenu();
+            }}
+            bg={layoutMode === 'nested' ? '#91e05e' : 'transparent'}
+          >
+            Nested
+          </MenuItem>
+        </MenuList>
+      </Menu>
+    </Flex>
 
 
-            <br></br>
-            <Checkbox mb="2" ml={5}>EVI</Checkbox>
-            <br></br>
-            <Checkbox mb="2" ml={5}>NDVI</Checkbox>
-            <br></br>
-            <Checkbox mb="2" ml={5}>BACI</Checkbox>
-            <br></br>
-            <Checkbox mb="4" ml={5}>Bare Ground</Checkbox>
 
-            {/* Other Sections */}
-            <br></br>
-            <Checkbox mb="4">Maps</Checkbox>
-            <br></br>
-            <Checkbox mb="4">Map Viewers</Checkbox>
-            <br></br>
-            <Checkbox mb="4">Dashboards</Checkbox>
+     
+      {hasError ? (
+        <p>Something went wrong while loading the dashboards.</p>
+      ) : (
+        <div
+          key={layoutKey} 
+          style={{
+            padding: "18px",
+          }}
+        >
+          {renderPanels()}
+        </div>
+      )}
 
-            <Box mb="6">
-              <Text fontWeight="bold" color="black" mb="2" fontSize={16}>
-                Select Category
-              </Text>
-              <Select placeholder="Select Category">
-                <option value="category1">Category 1</option>
-                <option value="category2">Category 2</option>
-              </Select>
-            </Box>
 
-            <Box mb="6">
-              <Text fontWeight="bold" color="black" mb="2" fontSize={16}>
-                Select Keyword
-              </Text>
-              <Select placeholder="Select Keyword">
-                <option value="keyword1">Keyword 1</option>
-                <option value="keyword2">Keyword 2</option>
-              </Select>
-            </Box>
 
-            <Box mb="6">
-              <Text fontWeight="bold" color="black" mb="2" fontSize={16}>
-                Select Region
-              </Text>
-              <Select placeholder="Select Region">
-                <option value="region1">Region 1</option>
-                <option value="region2">Region 2</option>
-              </Select>
-            </Box>
 
-            <Box mb="6">
-              <Text fontWeight="bold" color="black" mb="2" fontSize={16}>
-                Select Owner
-              </Text>
-              <Select placeholder="Select Owner">
-                <option value="owner1">Owner 1</option>
-                <option value="owner2">Owner 2</option>
-              </Select>
-            </Box>
+          
 
-          </DrawerBody>
-        </DrawerContent>
-      </Drawer>
+     
+      {/* Filter Panel (Drawer) */}
+      <DashboardFilters isOpen={isOpen} onClose={onClose} setSearchTerm={setSearchTerm} />
 
+      {/* Analysis sidebar */}
       <AnalysisSideBar isOpen={isAnalysisOpen} onClose={() => { closeIsAnakysis(); } } selectedAnalysis={null} />
 
     </Box><Footer /></>

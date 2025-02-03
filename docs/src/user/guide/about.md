@@ -1,12 +1,12 @@
 ---
-title: PROJECT_TITLE
-summary: PROJECT_SUMMARY
-    - PERSON_1
-    - PERSON_2
-date: DATE
-some_url: PROJECT_GITHUB_URL
-copyright: Copyright 2023, PROJECT_OWNER
-contact: PROJECT_CONTACT
+title: Africa Rangeland Watch
+summary: Understand and monitor the impact of sustainable rangeland management in Africa.
+    - Ketan Bamniya
+
+date: 22/01/2025
+some_url: https://github.com/kartoza/africa_rangeland_watch
+copyright: Copyright 2023, Africa Rangeland Watch
+contact: Perushan Rajah, prajah@conservation.org
 license: This program is free software; you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation; either version 3 of the License, or (at your option) any later version.
 context_id: 
 ---
@@ -48,12 +48,6 @@ The Goal section outlines the primary objective of the platform, providing you w
 * To view the `Conservation South Africa Impact Report 2020-2022` click on the image below.
 
     [![Impact Report](./img/guide-about-img-4.png)](https://arw.dev.do.kartoza.com/static/CSA-Impact-report-11-04-23_hi-res.pdf)
-
-#### Contact Us
-
-To contact the ARW team, use the contact us form. Fill in the required details in the 1️⃣ `Form` and click the 2️⃣ `Submit` button to send your message.
-
-[![Contact Us](./img/guide-about-img-5.png)](./img/guide-about-img-5.png)
 
 ## Conversation
 
