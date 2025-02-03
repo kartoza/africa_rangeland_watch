@@ -121,7 +121,7 @@ const ChartCard: React.FC<ChartCardProps> = ({ config, className }) => {
                 {dashboardName} {config.config.owner && "(Owner)"}
               </Text>
               <HStack spacing={2} id="dashboard-icons">
-                <IconButton icon={<FiSettings />} colorScheme="teal" aria-label="Settings" size="sm" />
+                <IconButton icon={<FiSettings />} onClick={() => setSettingsOpen(true)} colorScheme="teal" aria-label="Settings" size="sm" />
                 <IconButton icon={<FiDownload />} onClick={downloadPDF} colorScheme="teal" aria-label="Download" size="sm" />
               </HStack>
             </Flex>
