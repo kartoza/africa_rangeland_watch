@@ -15,6 +15,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+
 class DashboardListCreateView(generics.ListCreateAPIView):
     """
     View for listing and creating dashboards.
@@ -177,7 +178,8 @@ class DashboardCreateView(APIView):
             )
 
         except Exception as e:
-            logger.error("An error occurred while creating the dashboard: %s", str(e))
+            logger.error(
+                "An error occurred while creating the dashboard: %s", str(e))
             return Response(
                 {"error": True, "message": "An internal error has occurred."},
                 status=status.HTTP_400_BAD_REQUEST
