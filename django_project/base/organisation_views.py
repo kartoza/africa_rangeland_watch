@@ -292,7 +292,9 @@ def delete_organisation_member(request):
         )
 
     except Exception as e:
-        logging.error("An error occurred while deleting organisation member: %s", str(e))
+        logging.error(
+            "An error occurred while deleting organisation member: %s", 
+            str(e))
         return JsonResponse(
             {"error": "An internal error has occurred."},
             status=500
@@ -354,7 +356,9 @@ def fetch_organisation_data(request):
             status=500,
         )
     except Exception as e:
-        logging.error("An unexpected error occurred while fetching organisation data: %s", str(e))
+        logging.error(
+            "An unexpected error occurred: %s", 
+            str(e))
         return JsonResponse(
             {"error": "An unexpected error has occurred."},
             status=500,
