@@ -61,7 +61,7 @@ class AnalysisAPI(APIView):
         comp_quarters = data['comparisonPeriod'].get('quarters', '').split(',')
         if len(comp_years) == 0:
             comp_quarters = [''] * len(comp_years)
-        
+
         analysis_dict_list = []
         for idx, comp_year in enumerate(comp_years):
             analysis_dict = {
@@ -76,7 +76,10 @@ class AnalysisAPI(APIView):
                     },
                     'Quarterly': {
                         'ref': data['period'].get('quarter', ''),
-                        'test': comp_quarters[idx] if len(comp_quarters) > 0 else '',
+                        'test': (
+                            comp_quarters[idx] if
+                            len(comp_quarters) > 0 else ''
+                        ),
                     }
                 },
                 'Spatial': {
@@ -93,8 +96,12 @@ class AnalysisAPI(APIView):
         with ThreadPoolExecutor() as executor:
             # Submit tasks to the executor
             futures = [
-                executor.submit(run_analysis, analysis_dict, data['longitude'], data['latitude']) 
-                for analysis_dict in analysis_dict_list
+                executor.submit(
+                    run_analysis,
+                    analysis_dict,
+                    data['longitude'],
+                    data['latitude']
+                ) for analysis_dict in analysis_dict_list
             ]
 
             # Collect results as they complete
