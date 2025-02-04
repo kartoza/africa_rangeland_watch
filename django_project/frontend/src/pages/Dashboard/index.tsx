@@ -100,8 +100,8 @@ const DashboardPage: React.FC = () => {
   }, [loading, dashboardData]);
 
   useEffect(() => {
-    dispatch(fetchDashboards());
-  }, [dispatch]);
+    dispatch(fetchDashboards(filters));
+  }, [dispatch, filters]);
 
   
 
