@@ -1,5 +1,5 @@
 import { Box, Text, Link, Flex } from "@chakra-ui/react";
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import { logoutUser, selectIsLoggedIn, isAdmin } from "../../store/authSlice";
 import { useDispatch, useSelector } from "react-redux";
@@ -37,7 +37,9 @@ export default function MegaMenu({ hoveredSection, isUserAvatarHovered }: MegaMe
       navigate('/admin');
     }
   };
-  
+
+  const userIsAdmin = useSelector(isAdmin);
+
   // Menu items based on hover
   const menuItems: Record<string, MenuItem[]> = {
     about: [
@@ -48,9 +50,9 @@ export default function MegaMenu({ hoveredSection, isUserAvatarHovered }: MegaMe
     userAvatar: !isAuthenticated
       ? []
       : [
-          ...(isAdmin ? [{ label: "Admin", to: "", onClick: navToAdmin }] : []),
+          ...(userIsAdmin ? [{ label: "Admin", to: "", onClick: navToAdmin }] : []),
           { label: "Profile Area", to: "/profile" },
-          { label: "Logout", to: "", onClick: handleLogout },
+          { label: "Sign Out", to: "", onClick: handleLogout },
       ],
     resources: [
       { label: "ARW Documentation", to: "/resources" },
@@ -66,23 +68,30 @@ export default function MegaMenu({ hoveredSection, isUserAvatarHovered }: MegaMe
     }
   };
 
+  const positionProps =
+    hoveredSection === "userAvatar"
+      ? { right: { base: 0, md: 0 } }
+      : { left: { base: isUserAvatarHovered ? "80%" : undefined, md: isUserAvatarHovered ? "93.5%" : undefined } };
+
+  const containerWidth = hoveredSection === "userAvatar" ? { base: "120px", md: "150px" } : "auto";
+
   return (
     <Box
-      position={"absolute"}
+      position="absolute"
       top="auto"
       pt="12px"
       zIndex={99}
-      left={{base: isUserAvatarHovered ? "80%" : undefined, md: isUserAvatarHovered? "93.5%" : undefined}}
+      {...positionProps}
     >
-      <Box bg="whiteAlpha.900" boxShadow="xs" w="100%" p="20px" borderRadius="8px">
+      <Box bg="whiteAlpha.900" boxShadow="xs" p="20px" borderRadius="8px" w={containerWidth}>
         <Flex gap="30px">
           {/* About Section */}
           {hoveredSection === "about" && (
             <Flex gap="16px" flexDirection="column" alignItems="start">
-              <Text 
-                color="black" 
-                fontSize={{ base: "15px", sm: "18px" }} 
-                fontWeight={700} 
+              <Text
+                color="black"
+                fontSize={{ base: "15px", sm: "18px" }}
+                fontWeight={700}
                 onClick={handleClick}
                 cursor="pointer"
               >
@@ -92,7 +101,7 @@ export default function MegaMenu({ hoveredSection, isUserAvatarHovered }: MegaMe
                 {menuItems.about.map((item) => (
                   <Box
                     key={item.label}
-                    onClick={() => handleNavigation(item.to)}
+                    onClick={() => handleNavigation(item.to, item.onClick)}
                     cursor="pointer"
                     fontSize={{ base: "13px", sm: "medium" }}
                   >
@@ -113,8 +122,16 @@ export default function MegaMenu({ hoveredSection, isUserAvatarHovered }: MegaMe
               </Text>
               <Flex gap="12px" flexDirection="column" alignItems="start">
                 {menuItems.userAvatar.map((item) => (
-                  <Link as={RouterLink} to={item.to} key={item.label} fontSize={{ base: "13px", sm: "medium" }} onClick={item.onClick}>
-                    <Text color="black" fontSize="16px" fontWeight={400}>{item.label}</Text>
+                  <Link
+                    as={RouterLink}
+                    to={item.to}
+                    key={item.label}
+                    fontSize={{ base: "13px", sm: "medium" }}
+                    onClick={item.onClick}
+                  >
+                    <Text color="black" fontSize="16px" fontWeight={400}>
+                      {item.label}
+                    </Text>
                   </Link>
                 ))}
               </Flex>
@@ -131,7 +148,7 @@ export default function MegaMenu({ hoveredSection, isUserAvatarHovered }: MegaMe
                 {menuItems.resources.map((item) => (
                   <Box
                     key={item.label}
-                    onClick={() => handleNavigation(item.to)}
+                    onClick={() => handleNavigation(item.to, item.onClick)}
                     cursor="pointer"
                     fontSize={{ base: "13px", sm: "medium" }}
                   >

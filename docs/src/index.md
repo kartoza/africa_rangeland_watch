@@ -1,12 +1,12 @@
 ---
-title: PROJECT_TITLE
-summary: PROJECT_SUMMARY
-    - PERSON_1
-    - PERSON_2
-date: DATE
-some_url: PROJECT_GITHUB_URL
-copyright: Copyright 2023, PROJECT_OWNER
-contact: PROJECT_CONTACT
+title: Africa Rangeland Watch
+summary: Understand and monitor the impact of sustainable rangeland management in Africa.
+    - Ketan Bamniya
+    
+date: 22/01/2025
+some_url: https://github.com/kartoza/africa_rangeland_watch
+copyright: Copyright 2023, Africa Rangeland Watch
+contact: Perushan Rajah, prajah@conservation.org
 license: This program is free software; you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation; either version 3 of the License, or (at your option) any later version.
 #context_id: 1234
 ---
@@ -104,8 +104,8 @@ them into our community.
 
 | | **Project Badges** | |
 | ----------------------- | ----------------------- | ----------------------- |
-| ![License](https://img.shields.io/github/license/{username}/{repo-name}.svg) | ![Version](https://img.shields.io/github/release/{username}/{repo-name}.svg) | ![Commits](https://img.shields.io/github/commits-since/{username}/{repo-name}/{version}.svg) |
-| ![Issue Tracker](https://img.shields.io/github/issues/{username}/{repo-name}.svg) | ![Closed Issues](https://img.shields.io/github/issues-closed/{username}/{repo-name}.svg) | ![Pull requests](https://img.shields.io/github/issues-pr/{username}/{repo-name}.svg) |
+![Staging Tag](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/lgkgh/889dd6c34a68d9461b1fd8cdb56b8a21/raw/arw_build_sta-tag.json)|![Staging Status](https://img.shields.io/endpoint?url=https://gist.githubusercontent.com/lgkgh/889dd6c34a68d9461b1fd8cdb56b8a21/raw/arw_build_sta-status.json)|
+
 
 #### Project Chatroom
 

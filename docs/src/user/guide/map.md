@@ -1,12 +1,12 @@
 ---
-title: PROJECT_TITLE
-summary: PROJECT_SUMMARY
-    - PERSON_1
-    - PERSON_2
-date: DATE
-some_url: PROJECT_GITHUB_URL
-copyright: Copyright 2023, PROJECT_OWNER
-contact: PROJECT_CONTACT
+title: Africa Rangeland Watch
+summary: Understand and monitor the impact of sustainable rangeland management in Africa.
+    - Ketan Bamniya
+    
+date: 22/01/2025
+some_url: https://github.com/kartoza/africa_rangeland_watch
+copyright: Copyright 2023, Africa Rangeland Watch
+contact: Perushan Rajah, prajah@conservation.org
 license: This program is free software; you can redistribute it and/or modify it under the terms of the GNU Affero General Public License as published by the Free Software Foundation; either version 3 of the License, or (at your option) any later version.
 #context_id: 1234
 ---
@@ -80,6 +80,12 @@ Bare ground cover refers to the proportion of the landscape where the surface is
 
 [![Bare Grounds Cover](./img/guide-map-img-16.png)](./img/guide-map-img-16.png)
 
+### User Defined
+
+By clicking on this `User Defined` dropdown menu you will be able to view the shape files you have uploaded here.
+
+[![User Defined Shape Files](./img/guide-map-img-23.png)](./img/guide-map-img-23.png)
+
 ### Analysis?
 
 Analysis allows you to select specific landscape from the 1️⃣ `Select Landscape` drop down menu.
@@ -94,11 +100,12 @@ Available options in `Select analysis type` are:
 
 #### How to do Baseline Analysis?
 
-* **Baseline:** After selecting this option you have to select the polygons from the map and then you can go for the analysis.
+* **Baseline:** After selecting this option you have to select the polygons from the map and then you can go for the analysis. To see the process of how to select the polygon click [here](#how-to-select-polygon)
 
 #### How to do Temporal Analysis?
 
-* **Temporal:** After selecting the temporal you will be able to select to the following options:
+* **Temporal:** After selecting the temporal you will be able to select the following options:
+
     - **Select temporal resolution:** You can choose whether to use the `Annual` or `Quarterly` option based on their preference.
 
     - **Select variable:** You can choose the variable they want to analyse from the available options.
@@ -109,9 +116,11 @@ Available options in `Select analysis type` are:
 
     [![Temporal Analysis Type](./img/guide-map-img-7.png)](./img/guide-map-img-7.png)
 
+    - After filling in the form, select the polygon from the map and then you can go for the analysis. To see the process of how to select the polygon click [here](#how-to-select-polygon)
+
 #### How to do Spatial Analysis?
 
-* **Spatial:** After selecting this option, you can choose a specific variable. Next, you need to select a polygon from the map. Once the selections are made, you can proceed with the analysis.
+* **Spatial:** After selecting this option, you can choose a specific variable. Next, you need to select a polygon from the map. Once the selections are made, you can proceed with the analysis. To see the process of how to select the polygon click [here](#how-to-select-polygon)
 
     [![Spatial Analysis Type](./img/guide-map-img-8.png)](./img/guide-map-img-8.png)
 
@@ -119,9 +128,19 @@ Available options in `Select analysis type` are:
 
 * **BACI:** This option allows you to directly go for analysis by clicking on the  `Run Analysis` button.
 
-    [![Spatial Analysis Type](./img/guide-map-img-8.png)](./img/guide-map-img-8.png)
+    [![BACI](./img/guide-map-img-19.png)](./img/guide-map-img-19.png)
 
 After filling in the necessary details, you can proceed with the analysis by clicking on the 3️⃣ `Run Analysis` button. If you wish to reset the form, simply click on the 2️⃣ `Reset Form` button.
+
+The `Reset Form` button will reset the form to its default state, including the selected polygon.
+
+[![Reset Form](./img/guide-map-img-22.png)](./img/guide-map-img-22.png)
+
+#### Statistics
+
+This is the report generated after running the analysis. It contains the results of the analysis.
+
+[![Statistics](./img/guide-map-img-21.png)](./img/guide-map-img-21.png)
 
 ### How to Upload Shape File
 
@@ -132,3 +151,9 @@ Click on the 1️⃣ `Upload` button and then click on the 2️⃣ `Select File`
 Select the desired 1️⃣ `File` then click on the 2️⃣ `Select` button to upload the file or can click on the 3️⃣ `Cancel` button to close the file explorer.
 
 [![File Explorer](./img/guide-map-img-18.png)](./img/guide-map-img-18.png)
+
+### How to Select Polygon
+
+To select the polygon for the analysis, you first need to select the land from the 1️⃣ `Landscape` dropdown menu. This will zoom you into the landscape, and then you can select the polygon by simply clicking on the 2️⃣ `polygon`. You can also see the location of the polygon in the 3️⃣ `description` to recognise whether the polygon is situated in the northern, eastern, western, or southern part of the landscape.
+
+[![Select Polygon](./img/guide-map-img-20.png)](./img/guide-map-img-20.png)

@@ -56,6 +56,7 @@ export function BarChart({ analysis }: Props) {
 
   const options:any = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: {
         position: "top",
@@ -159,9 +160,10 @@ function SpatialBarChart({ analysis }: Props) {
       }
     ],
   };
-
+  
   const options:any = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: {
         position: "top",
