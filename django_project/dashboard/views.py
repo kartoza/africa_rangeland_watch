@@ -253,7 +253,7 @@ class DashboardCreateView(APIView):
 
         except Exception as e:
             return Response(
-                {"error": True, "message": str(e)},
+                {"error": True, "message": "An internal error has occurred."},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
