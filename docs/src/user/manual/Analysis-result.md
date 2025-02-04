@@ -24,3 +24,5 @@ license: This program is free software; you can redistribute it and/or modify it
 4. **Create Dashboard:** Users can create a dashboard for their analysis results.
 
 5. **New Analysing:** Users can start a new analysis.
+
+6. **Analysis Results Table:** This table displays the analysis results done by users.
