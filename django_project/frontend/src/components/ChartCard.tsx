@@ -148,7 +148,7 @@ const ChartCard: React.FC<ChartCardProps> = ({ config, className }) => {
             {/* Chart Component */}
             <Box width="100%" height="100%">
               {isRenderFailed ? (
-                <Text color="red.500">
+                <Text color="red.500" fontSize="sm">
                   Analysis results saved on the dashboard cannot be rendered on the map. It should have polygon coordinates.
                 </Text>
               ) : !isChart ? (
