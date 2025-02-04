@@ -75,23 +75,23 @@ license: This program is free software; you can redistribute it and/or modify it
 
     [![Analysis Section](./img/manual-map-img-5.png)](./img/manual-map-img-5.png)
 
-    **1. Select a landscape:** Choose a landscape from the dropdown menu to focus on a specific region. After selecting a landscape, users can proceed to the next step.
+    **1. Select a landscape:** Choose a landscape from the dropdown menu to focus on a specific region. After selecting a landscape, users can proceed to the next step. When users select a landscape, the map zooms into the selected area. From there, they can choose a polygon on the map to run the desired analysis.
+
+    - **For example:**
+
+        - If a user selects `Bahine NP` from the landscape drop-down menu, they will automatically be zoomed into that location on the map, eliminating the need to navigate to it manually.
+
+            [![Bahine NP](./img/manual-map-img-24.png)](./img/manual-map-img-24.png)
+
+            1 **Click polygons on the map:** Here users can view the position of the polygon they have clicked on, such as whether it is situated in the east, west, north, or south part of the landscape. 
 
     [![Analysis Type](./img/manual-map-img-6.png)](./img/manual-map-img-6.png)
 
-    * When users select a landscape, the map zooms into the selected area. From there, they can choose a polygon on the map to run the desired analysis.
-
-        - **For example:**
-
-            - If a user selects `Bahine NP` from the landscape drop-down menu, they will automatically be zoomed into that location on the map, eliminating the need to navigate to it manually.
-
-                [![Bahine NP](./img/manual-map-img-24.png)](./img/manual-map-img-24.png)
-
     **2. Select analysis type:** Analysis type allows to select the type of analysis to be performed. The available options are:
 
-    **1. Baseline:** Baseline describes a 5-year (and in some cases longer) average of each variable. Baseline variables are visible at the whole extent of southern Africa. After this user have to select the polygon from the map.
+    **1 Baseline:** Baseline describes a 5-year (and in some cases longer) average of each variable. Baseline variables are visible at the whole extent of southern Africa. After this user have to select the polygon from the map.
 
-    **2. Temporal:** Temporal analysis gives users greater control over the time period they wish to examine. After selecting this option, users can access additional settings.
+    **2 Temporal:** Temporal analysis gives users greater control over the time period they wish to examine. After selecting this option, users can access additional settings.
 
     [![Temporal Type](./img/manual-map-img-7.png)](./img/manual-map-img-7.png)
 
@@ -144,6 +144,12 @@ license: This program is free software; you can redistribute it and/or modify it
         **6. Reset From:** This option allows users to reset the form to its default state, including the selected polygon.
 
         [![Map](./img/manual-map-img-28.png)](./img/manual-map-img-28.png)
+
+        **7. Save Result:** This option allows users to save the analysis result.
+
+        [![Notification](./img/manual-map-img-29.png)](./img/manual-map-img-29.png)
+
+        **1 Analysis results saved!:** The notification message will be displayed after the analysis result is saved and the users will be able to view the saved result in the [analysis results](./Analysis-result.md) page.
 
 3. **Upload:** Users can upload their own data to the app for analysis. This feature is useful for users who have their own data and want to perform analysis on it. Click on this `Upload` button to upload the shape file.
 
