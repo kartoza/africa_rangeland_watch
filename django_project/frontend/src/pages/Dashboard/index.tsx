@@ -52,6 +52,7 @@ const DashboardPage: React.FC = () => {
   const [itemsPerPage, setItemsPerPage] = useState(6)
   const [startIdx , setStartIdx] = useState(0);
   const [endIdx, setEndIdx] = useState(1);
+  const [filters, setFilters] = useState(null)
 
   const [panelPositions, setPanelPositions] = useState({});
   const [dragPosition, setDragPosition] = useState<DragPosition>({});
@@ -620,7 +621,13 @@ const DashboardPage: React.FC = () => {
 
      
       {/* Filter Panel (Drawer) */}
-      <DashboardFilters isOpen={isOpen} onClose={onClose} setSearchTerm={setSearchTerm} />
+      <DashboardFilters 
+        isOpen={isOpen}
+        onClose={onClose}
+        setSearchTerm={(searchTerm) => setFilters((prev: any) => ({ ...prev, searchTerm }))}
+        setFilters={setFilters}
+        filters={filters}
+      />
 
       {/* Analysis sidebar */}
       <AnalysisSideBar isOpen={isAnalysisOpen} onClose={() => { closeIsAnakysis(); } } selectedAnalysis={null} />
