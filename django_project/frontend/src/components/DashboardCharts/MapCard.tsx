@@ -55,10 +55,6 @@ const MiniMap: React.FC<MiniMapProps> = ({ polygonCoordinates }) => {
       const bounds = new maplibregl.LngLatBounds();
       polygonCoordinates.forEach((coord) => bounds.extend(coord));
       map.fitBounds(bounds, { padding: 20 });
-      map.once("idle", () => {
-        const currentZoom = map.getZoom();
-        map.setZoom(currentZoom - 2);
-      });
     });
 
     return () => {
