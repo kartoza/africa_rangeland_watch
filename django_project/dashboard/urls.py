@@ -2,6 +2,7 @@ from django.urls import path
 from .views import (
     DashboardCreateView,
     DashboardListCreateView,
+    DashboardOwnerListView,
     DashboardRetrieveUpdateDestroyView,
     DashboardShareView,
 )
@@ -27,5 +28,10 @@ urlpatterns = [
         'dashboards/create/',
         DashboardCreateView.as_view(),
         name='dashboard-create'
+    ),
+    path(
+        'dashboard-owners/',
+        DashboardOwnerListView.as_view(),
+        name='dashboard-owner-list'
     ),
 ]

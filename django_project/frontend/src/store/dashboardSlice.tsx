@@ -21,12 +21,26 @@ export interface DashboardData {
   updated_at?: string;
 }
 
+export interface FilterParams {
+  searchTerm?: string;
+  my_resources?: boolean;
+  category?: string;
+  keyword?: string;
+  region?: string;
+  my_organisations?: boolean;
+  my_dashboards?: boolean;
+  favorites?: boolean;
+  datasets?: string[];
+  maps?: boolean;
+  owner?: string;
+}
+
 // Fetch dashboards
 export const fetchDashboards = createAsyncThunk(
   'dashboard/fetchDashboards',
-  async (_, { rejectWithValue }) => {
+  async (filters: FilterParams, { rejectWithValue }) => {
     try {
-      const response = await axios.get('dashboards/');
+      const response = await axios.get('dashboards/', { params: filters });
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response.data);
@@ -47,17 +61,43 @@ export const createDashboard = createAsyncThunk(
   }
 );
 
+export const fetchDashboardOwners = createAsyncThunk(
+  "dashboard/fetchOwners",
+  async () => {
+    try {
+      const response = await axios.get('/dashboard-owners/');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching owners:', error);
+    }
+  }
+);
+
 const dashboardSlice = createSlice({
   name: 'dashboard',
   initialState: {
     dashboards: [],
+    owners: [],           // New variable to store dashboard owners
     loading: false,
     error: null,
-    dashboardCreated: false, // New variable to track dashboard creation status
+    dashboardCreated: false, // Track dashboard creation status
   },
   reducers: {},
   extraReducers: (builder) => {
     builder
+      // Handle fetchDashboardOwners async thunk states
+      .addCase(fetchDashboardOwners.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchDashboardOwners.fulfilled, (state, action) => {
+        state.loading = false;
+        state.owners = action.payload;
+      })
+      .addCase(fetchDashboardOwners.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message;
+      })
       .addCase(fetchDashboards.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -68,7 +108,7 @@ const dashboardSlice = createSlice({
       })
       .addCase(fetchDashboards.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.error.message;
       })
       .addCase(createDashboard.pending, (state) => {
         state.loading = true;
@@ -82,7 +122,7 @@ const dashboardSlice = createSlice({
       })
       .addCase(createDashboard.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.payload;
+        state.error = action.error.message;
         state.dashboardCreated = false;
       });
   },
