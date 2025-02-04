@@ -5,6 +5,7 @@ Africa Rangeland Watch (ARW).
 .. note:: Analysis APIs
 """
 import uuid
+from concurrent.futures import ThreadPoolExecutor
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
@@ -55,32 +56,58 @@ class AnalysisAPI(APIView):
 
     def run_temporal_analysis(self, data):
         """Run the temporal analysis."""
-        analysis_dict = {
-            'landscape': data['landscape'],
-            'analysisType': 'Temporal',
-            'variable': data['variable'],
-            't_resolution': data['temporalResolution'],
-            'Temporal': {
-                'Annual': {
-                    'ref': data['period']['year'],
-                    'test': data['comparisonPeriod']['year']
+        analysis_dict_list = []
+        comp_years = data['comparisonPeriod']['years'].split(',')
+        comp_quarters = data['comparisonPeriod'].get('quarters', '').split(',')
+        if len(comp_years) == 0:
+            comp_quarters = [''] * len(comp_years)
+
+        analysis_dict_list = []
+        for idx, comp_year in enumerate(comp_years):
+            analysis_dict = {
+                'landscape': data['landscape'],
+                'analysisType': 'Temporal',
+                'variable': data['variable'],
+                't_resolution': data['temporalResolution'],
+                'Temporal': {
+                    'Annual': {
+                        'ref': data['period']['year'],
+                        'test': comp_year
+                    },
+                    'Quarterly': {
+                        'ref': data['period'].get('quarter', ''),
+                        'test': (
+                            comp_quarters[idx] if
+                            len(comp_quarters) > 0 else ''
+                        ),
+                    }
                 },
-                'Quarterly': {
-                    'ref': data['period'].get('quarter', ''),
-                    'test': data['comparisonPeriod'].get('quarter', ''),
+                'Spatial': {
+                    'Annual': '',
+                    'Quarterly': ''
                 }
-            },
-            'Spatial': {
-                'Annual': '',
-                'Quarterly': ''
             }
-        }
+            analysis_dict_list.append(analysis_dict)
+
         initialize_engine_analysis()
-        return run_analysis(
-            lon=float(data['longitude']),
-            lat=float(data['latitude']),
-            analysis_dict=analysis_dict
-        )
+
+        results = []
+        # Run analyses in parallel using ThreadPoolExecutor
+        with ThreadPoolExecutor() as executor:
+            # Submit tasks to the executor
+            futures = [
+                executor.submit(
+                    run_analysis,
+                    analysis_dict,
+                    data['longitude'],
+                    data['latitude']
+                ) for analysis_dict in analysis_dict_list
+            ]
+
+            # Collect results as they complete
+            results = [future.result() for future in futures]
+
+        return results
 
     def run_spatial_analysis(self, data):
         """Run the spatial analysis."""
