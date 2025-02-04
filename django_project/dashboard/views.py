@@ -11,42 +11,116 @@ from rest_framework.permissions import (
     IsAuthenticated,
     IsAuthenticatedOrReadOnly
 )
+import json
+from django.db.models import Q
 import logging
 
 logger = logging.getLogger(__name__)
+
+
+class DashboardOwnerListView(generics.ListAPIView):
+    """
+    View to list unique dashboard owners.
+    """
+    serializer_class = DashboardSerializer
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def get_queryset(self):
+        # Get the distinct users who created the dashboards
+        return User.objects.filter(
+            created_dashboards__isnull=False
+        ).distinct()
+
+    def list(self, request, *args, **kwargs):
+        # Fetch the owners
+        queryset = self.get_queryset()
+        owners = [
+            {
+                'id': user.id,
+                'username': user.username
+            } for user in queryset
+        ]
+        return Response(owners)
 
 
 class DashboardListCreateView(generics.ListCreateAPIView):
     """
     View for listing and creating dashboards.
     """
-    queryset = Dashboard.objects.all()
     serializer_class = DashboardSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
 
     def get_queryset(self):
         user = self.request.user
+        queryset = Dashboard.objects.all()
 
+        # Public dashboards for unauthenticated users
         if not user.is_authenticated:
-            return Dashboard.objects.filter(privacy_type='public').distinct()
+            queryset = (
+                Dashboard.objects.filter(privacy_type='public').distinct()
+            )
+        else:
+            queryset = queryset.filter(
+                Q(privacy_type='public') |
+                Q(users=user) |
+                Q(
+                    privacy_type='organisation',
+                    organisations__in=user.profile.organisations.all()
+                ) |
+                Q(created_by=user)
+            ).distinct()
 
-        # If the user is authenticated, filter
-        # dashboards based on their permissions
-        dashboards = Dashboard.objects.filter(
-            models.Q(privacy_type='public') |
-            models.Q(users=user) |
-            models.Q(
-                privacy_type='organisation',
+        # Get filter parameters
+        filters = self.request.query_params
+
+        search_term = filters.get('searchTerm')
+        category = filters.get('category')
+        keyword = filters.get('keyword')
+        region = filters.get('region')
+        owner = filters.get('owner')
+        my_organisations = filters.get('my_organisations') == 'true'
+        my_dashboards = filters.get('my_dashboards') == 'true'
+        maps = filters.get('maps') == 'true'
+        region = filters.get('region')
+
+        if region:
+            # Parse region from stringified JSON
+            region_data = json.loads(region)
+            latitude = region_data.get('lat')
+            longitude = region_data.get('lng')
+
+            if latitude and longitude:
+                queryset = queryset.filter(
+                    analysis_results__data__latitude=latitude,
+                    analysis_results__data__longitude=longitude
+                )
+
+        # Apply text-based filters
+        if search_term:
+            queryset = queryset.filter(title__icontains=search_term)
+        if category:
+            queryset = queryset.filter(config__dashboardName=category)
+        if keyword:
+            queryset = queryset.filter(config__preference=keyword)
+        if region:
+            queryset = queryset.filter(config__chartType=region)
+        if owner:
+            queryset = queryset.filter(created_by__username=owner)
+
+        # Apply boolean filters (handling combinations)
+        if my_organisations:
+            queryset = queryset.filter(
                 organisations__in=user.profile.organisations.all()
-            ) |
-            models.Q(created_by=user)
-        ).distinct()
+            )
+        if my_dashboards:
+            queryset = queryset.filter(created_by=user)
+        if maps:
+            queryset = queryset.filter(config__preference='map')
 
-        return dashboards
+        return queryset
 
     def list(self, request, *args, **kwargs):
         queryset = self.get_queryset()
-        # Serialize the queryset
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
@@ -178,10 +252,8 @@ class DashboardCreateView(APIView):
             )
 
         except Exception as e:
-            logger.error(
-                "An error occurred while creating the dashboard: %s", str(e))
             return Response(
-                {"error": True, "message": "An internal error has occurred."},
+                {"error": True, "message": str(e)},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
