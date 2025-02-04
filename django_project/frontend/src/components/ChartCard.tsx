@@ -7,7 +7,6 @@ import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import { InProgressBadge } from "./InProgressBadge";
 import CONFIG from "../config";
-import { MapLibre } from "./Map/MapLibre";
 import MiniMap from "./DashboardCharts/MapCard";
 
 interface ChartCardProps {
@@ -32,7 +31,6 @@ const ChartCard: React.FC<ChartCardProps> = ({ config, className }) => {
   const [dashboardName, setDashboardName] = useState("");
   const [isSettingsOpen, setSettingsOpen] = useState(false);
   const [chartType, setChartType] = useState("defaultChartType");
-  const mapLibreRef = useRef(null);
   const [polygonCoordinates, setPolygonCoordinates] = useState<[number, number][]>([]);
   const [isRenderFailed, setIsRenderFailed] = useState(false); 
 
@@ -128,7 +126,6 @@ const ChartCard: React.FC<ChartCardProps> = ({ config, className }) => {
 
   return (
     <div ref={containerRef} className={className} style={{ width: "100%", height: "100%", overflow: "hidden" }}>
-     <MapLibre ref={mapLibreRef}/>
       <Card 
         width="100%" 
         height="100%"
