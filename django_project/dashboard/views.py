@@ -252,6 +252,7 @@ class DashboardCreateView(APIView):
             )
 
         except Exception as e:
+            logger.exception(str(e))
             return Response(
                 {"error": True, "message": "An internal error has occurred."},
                 status=status.HTTP_400_BAD_REQUEST
