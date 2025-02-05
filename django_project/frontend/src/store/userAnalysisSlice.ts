@@ -7,6 +7,7 @@ interface AnalysisState {
   data: any[];
   loading: boolean;
   savedAnalysisFlag: boolean;
+  analysisDeleted: boolean;
   error: string | null;
 }
 
@@ -15,6 +16,7 @@ const initialState: AnalysisState = {
   data: [],
   loading: false,
   savedAnalysisFlag: false,
+  analysisDeleted: false,
   error: null,
 };
 
@@ -72,7 +74,6 @@ const userAnalysisSlice = createSlice({
       })
       .addCase(fetchAnalysis.fulfilled, (state, action) => {
         state.loading = false;
-        console.log('action payload ',action.payload)
         state.data = action.payload;
       })
       .addCase(fetchAnalysis.rejected, (state, action) => {
@@ -96,9 +97,11 @@ const userAnalysisSlice = createSlice({
       })
       .addCase(deleteAnalysis.fulfilled, (state, action) => {
         state.data = state.data.filter((item) => item.id !== action.payload);
+        state.analysisDeleted = true;
       })
       .addCase(deleteAnalysis.rejected, (state, action) => {
         state.error = action.payload as string;
+        state.analysisDeleted = false
       });
   },
 });

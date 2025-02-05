@@ -14,6 +14,13 @@ import {
   TagLabel,
   useDisclosure,
   Checkbox,
+  useToast,
+  AlertDialog,
+  AlertDialogOverlay,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogBody,
+  AlertDialogFooter,
 } from "@chakra-ui/react";
 import { FaFilter } from "react-icons/fa";
 import Header from "../../components/Header";
@@ -73,16 +80,56 @@ export default function AnalysisResults() {
   const analysisData = useSelector((state: any) => state.userAnalysis.data);
   const loading = useSelector((state: any) => state.userAnalysis.loading);
   const error = useSelector((state: any) => state.userAnalysis.error);
+  const analysisDeleted = useSelector((state: any) => state.userAnalysis.analysisDeleted);
+  const [showDeletionMessage, setShowDeletionMessage] = useState(false);
+  const toast = useToast();
+  const [isConfrimDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
+  const onConfirmDeleteClose = () => setIsConfirmDeleteOpen(false);
+  const cancelRef = React.useRef();
 
 
   useEffect(() => {
     dispatch(fetchAnalysis());
   }, [dispatch]);
 
-  const handleDelete = () => {
-    console.log('selected analysis ',selectedAnalysis)
-    dispatch(deleteAnalysis(selectedAnalysis[0]));
+
+  const handleDelete = (id: any) => {
+    onConfirmDeleteClose();
+
+    if(selectedAnalysis.length == 0){
+      dispatch(deleteAnalysis(id));
+    }else {
+      selectedAnalysis.forEach((analysisId) => {
+        dispatch(deleteAnalysis(analysisId));
+      });
+    }
+
+    setShowDeletionMessage(true)
   };
+
+  useEffect(() => {
+    dispatch(fetchAnalysis());
+  }, [dispatch]);
+
+  useEffect(() => {
+   if(analysisDeleted && showDeletionMessage){
+    toast({
+      title: "Analysis Results Deleted.",
+      description: "The analysis results have been successfuly deleted and removed from any associated dashboards.",
+      status: "success",
+      duration: 5000,
+      isClosable: true,
+      position: "top-right",
+      containerStyle: {
+        backgroundColor: "#00634b",
+        color: "white",
+      },
+    });
+    setShowDeletionMessage(false);
+    dispatch(fetchAnalysis());
+   }
+  }, [analysisDeleted]);
+  
 
   const getAnalysisSummary = (analysis: AnalysisData): AnalysisSummary => {
     const { analysis_results } = analysis || {};
@@ -321,7 +368,6 @@ export default function AnalysisResults() {
                           </Button>
 
                           <Button
-                              disabled
                             colorScheme="red"
                             variant="solid"
                             backgroundColor="red.500"
@@ -330,10 +376,37 @@ export default function AnalysisResults() {
                             width="auto"
                             borderRadius="0px"
                             h={10}
-                            onClick={() => handleDelete()}
+                            onClick={() => setIsConfirmDeleteOpen(true)}
                           >
                             Delete
                           </Button>
+
+                          <AlertDialog
+                            isOpen={isConfrimDeleteOpen}
+                            leastDestructiveRef={cancelRef}
+                            onClose={onConfirmDeleteClose}
+                          >
+                            <AlertDialogOverlay>
+                              <AlertDialogContent>
+                                <AlertDialogHeader fontSize="lg" fontWeight="bold">
+                                  Delete Analysis
+                                </AlertDialogHeader>
+
+                                <AlertDialogBody>
+                                  Are you sure you want to delete this analysis? This action will remove it from any dashboard it is associated with.
+                                </AlertDialogBody>
+
+                                <AlertDialogFooter>
+                                  <Button ref={cancelRef} onClick={onConfirmDeleteClose}>
+                                    Cancel
+                                  </Button>
+                                  <Button colorScheme="red" onClick={() => handleDelete(analysis?.id)} ml={3}>
+                                    Yes, Delete
+                                  </Button>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialogOverlay>
+                          </AlertDialog>
                         </Flex>
                       </Flex>
                     </CardBody>
