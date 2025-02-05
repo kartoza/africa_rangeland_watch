@@ -18,13 +18,13 @@ from rest_framework.exceptions import ValidationError
 from cloud_native_gis.models import Layer, LayerUpload
 from cloud_native_gis.utils.main import id_generator
 from django.shortcuts import get_object_or_404
-from cloud_native_gis.utils.fiona import (
-    FileType,
-    validate_shapefile_zip,
-    validate_collection_crs,
-    delete_tmp_shapefile,
-    open_fiona_collection
-)
+# from cloud_native_gis.utils.fiona import (
+#     FileType,
+#     validate_shapefile_zip,
+#     validate_collection_crs,
+#     delete_tmp_shapefile,
+#     open_fiona_collection
+# )
 
 from layers.models import InputLayer, DataProvider, LayerGroupType
 from frontend.serializers.layers import LayerSerializer
@@ -75,8 +75,8 @@ class UploadLayerAPI(APIView):
         :return: file type
         :rtype: str
         """
-        if filename.lower().endswith('.zip'):
-            return FileType.SHAPEFILE
+        # if filename.lower().endswith('.zip'):
+        #     return FileType.SHAPEFILE
         return ''
 
     def _check_shapefile_zip(self, file_obj: any) -> str:
@@ -87,12 +87,12 @@ class UploadLayerAPI(APIView):
         :return: list of error
         :rtype: str
         """
-        _, error = validate_shapefile_zip(file_obj)
-        if error:
-            return (
-                'Missing required file(s) inside zip file: \n- ' +
-                '\n- '.join(error)
-            )
+        # _, error = validate_shapefile_zip(file_obj)
+        # if error:
+        #     return (
+        #         'Missing required file(s) inside zip file: \n- ' +
+        #         '\n- '.join(error)
+        #     )
         return ''
 
     def _remove_temp_files(self, file_obj_list: list) -> None:
@@ -105,8 +105,8 @@ class UploadLayerAPI(APIView):
             if isinstance(file_obj, TemporaryUploadedFile):
                 if os.path.exists(file_obj.temporary_file_path()):
                     os.remove(file_obj.temporary_file_path())
-            elif isinstance(file_obj, str):
-                delete_tmp_shapefile(file_obj)
+            # elif isinstance(file_obj, str):
+            #     delete_tmp_shapefile(file_obj)
 
     def _on_validation_error(self, error: str, file_obj_list: list):
         """Handle when there is error on validation."""
@@ -136,26 +136,26 @@ class UploadLayerAPI(APIView):
                 tmp_file_obj_list
             )
 
-        if file_type == FileType.SHAPEFILE:
-            validate_shp_file = self._check_shapefile_zip(file)
-            if validate_shp_file != '':
-                self._on_validation_error(
-                    validate_shp_file, tmp_file_obj_list)
+        # if file_type == FileType.SHAPEFILE:
+        #     validate_shp_file = self._check_shapefile_zip(file)
+        #     if validate_shp_file != '':
+        #         self._on_validation_error(
+        #             validate_shp_file, tmp_file_obj_list)
 
-        # open fiona collection
-        collection = open_fiona_collection(file, file_type)
-        tmp_file_obj_list.append(collection.path)
+        # # open fiona collection
+        # collection = open_fiona_collection(file, file_type)
+        # tmp_file_obj_list.append(collection.path)
 
-        is_valid_crs, crs = validate_collection_crs(collection)
-        if not is_valid_crs:
-            collection.close()
-            self._on_validation_error(
-                f'Incorrect CRS type: {crs}! Please use epsg:4326 (WGS84)!',
-                tmp_file_obj_list
-            )
+        # is_valid_crs, crs = validate_collection_crs(collection)
+        # if not is_valid_crs:
+        #     collection.close()
+        #     self._on_validation_error(
+        #         f'Incorrect CRS type: {crs}! Please use epsg:4326 (WGS84)!',
+        #         tmp_file_obj_list
+        #     )
 
-        # close collection
-        collection.close()
+        # # close collection
+        # collection.close()
 
         # remove temporary uploaded file if any
         self._remove_temp_files(tmp_file_obj_list)

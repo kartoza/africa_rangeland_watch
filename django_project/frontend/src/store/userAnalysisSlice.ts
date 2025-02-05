@@ -31,6 +31,18 @@ export const fetchAnalysis = createAsyncThunk(
   }
 );
 
+export const deleteAnalysis = createAsyncThunk(
+  'analysis/deleteAnalysis',
+  async (id: string, { rejectWithValue }) => {
+    try {
+      await axios.delete(`/user_analysis_results/${id}/`);
+      return id; // Return the deleted ID to remove it from the state
+    } catch (error) {
+      return rejectWithValue('Error deleting analysis');
+    }
+  }
+);
+
 // Async thunk for saving analysis data
 export const saveAnalysis = createAsyncThunk(
   'analysis/saveAnalysis',
@@ -80,6 +92,12 @@ const userAnalysisSlice = createSlice({
       .addCase(saveAnalysis.rejected, (state, action) => {
         state.loading = false;
         state.savedAnalysisFlag = false;
+        state.error = action.payload as string;
+      })
+      .addCase(deleteAnalysis.fulfilled, (state, action) => {
+        state.data = state.data.filter((item) => item.id !== action.payload);
+      })
+      .addCase(deleteAnalysis.rejected, (state, action) => {
         state.error = action.payload as string;
       });
   },

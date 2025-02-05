@@ -25,7 +25,7 @@ import AnalysisSideBar from "../../components/SideBar/AnalysisSideBar";
 import "../../styles/index.css";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "../../store";
-import { fetchAnalysis } from "../../store/userAnalysisSlice";
+import { deleteAnalysis, fetchAnalysis } from "../../store/userAnalysisSlice";
 import "maplibre-gl/dist/maplibre-gl.css"; 
 import CreateDashboardModal from "../../components/CreateDashboard";
 import { format } from 'date-fns';
@@ -78,6 +78,11 @@ export default function AnalysisResults() {
   useEffect(() => {
     dispatch(fetchAnalysis());
   }, [dispatch]);
+
+  const handleDelete = () => {
+    console.log('selected analysis ',selectedAnalysis)
+    dispatch(deleteAnalysis(selectedAnalysis[0]));
+  };
 
   const getAnalysisSummary = (analysis: AnalysisData): AnalysisSummary => {
     const { analysis_results } = analysis || {};
@@ -325,6 +330,7 @@ export default function AnalysisResults() {
                             width="auto"
                             borderRadius="0px"
                             h={10}
+                            onClick={() => handleDelete()}
                           >
                             Delete
                           </Button>
