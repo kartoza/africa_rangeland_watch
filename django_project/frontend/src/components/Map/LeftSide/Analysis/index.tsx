@@ -56,7 +56,6 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
   const [data, setData] = useState<AnalysisData>(
     { analysisType: Types.BASELINE }
   );
-  console.log(data)
   const { loading, referenceLayerDiff } = useSelector((state: RootState) => state.analysis);
   const { mapConfig } = useSelector((state: RootState) => state.mapConfig);
   const [mapInteraction, setMapInteraction] = useState(MapAnalysisInteraction.NO_INTERACTION);
