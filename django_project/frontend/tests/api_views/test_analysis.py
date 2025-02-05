@@ -121,12 +121,10 @@ class AnalysisAPITest(BaseAPIViewTest):
             len(results),
             2
         )
-        print(results[0]['features'])
         self.assertEqual(
             len(results[0]['features']),
             5
         )
-        print(results[0]['features'])
         self.assertEqual(
             results[0]['features'][0]['properties']['year'],
             2017
