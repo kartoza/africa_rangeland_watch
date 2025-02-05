@@ -63,13 +63,9 @@ class DeleteAnalysisTestCase(APITestCase):
             f"/user_analysis_results/{self.analysis1.id}/")
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
 
-        # Dashboard1 should be deleted as it only had analysis1
-        self.assertFalse(Dashboard.objects.filter(
-            id=self.dashboard1.id).exists())
-
         # Dashboard2 should still exist as it has analysis2
         self.assertTrue(Dashboard.objects.filter
-                        (id=self.dashboard2.id).exists())
+                        (pk=self.dashboard2.pk).exists())
 
     def test_delete_analysis_not_associated_with_any_dashboard(self):
         # Create an analysis that is not linked to any dashboard

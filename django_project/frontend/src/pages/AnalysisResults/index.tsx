@@ -386,8 +386,8 @@ export default function AnalysisResults() {
                             leastDestructiveRef={cancelRef}
                             onClose={onConfirmDeleteClose}
                           >
-                            <AlertDialogOverlay>
-                              <AlertDialogContent>
+                            <AlertDialogOverlay bg="rgba(0, 0, 0, 0.5)">
+                              <AlertDialogContent bg="white">
                                 <AlertDialogHeader fontSize="lg" fontWeight="bold">
                                   Delete Analysis
                                 </AlertDialogHeader>
@@ -397,16 +397,33 @@ export default function AnalysisResults() {
                                 </AlertDialogBody>
 
                                 <AlertDialogFooter>
-                                  <Button ref={cancelRef} onClick={onConfirmDeleteClose}>
+                                  <Button 
+                                    backgroundColor="darkorange"
+                                    _hover={{ backgroundColor: "dark_orange.800" }}
+                                    color="white"
+                                    w="auto"
+                                    borderRadius="px"
+                                    ref={cancelRef} 
+                                    onClick={onConfirmDeleteClose}
+                                  >
                                     Cancel
                                   </Button>
-                                  <Button colorScheme="red" onClick={() => handleDelete(analysis?.id)} ml={3}>
+                                  <Button 
+                                    colorScheme="red"
+                                    variant="solid"
+                                    backgroundColor="red.500"
+                                    _hover={{ backgroundColor: "light_green.400" }}
+                                    color="white"
+                                    width="auto"
+                                    borderRadius="5px"
+                                    onClick={() => handleDelete(analysis?.id)} ml={3}>
                                     Yes, Delete
                                   </Button>
                                 </AlertDialogFooter>
                               </AlertDialogContent>
                             </AlertDialogOverlay>
                           </AlertDialog>
+
                         </Flex>
                       </Flex>
                     </CardBody>
