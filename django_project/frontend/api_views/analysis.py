@@ -54,7 +54,7 @@ class AnalysisAPI(APIView):
             lat=float(data['latitude']),
             analysis_dict=analysis_dict
         )
-    
+
     def _combine_temporal_analysis_results(self, years, input_results):
         def merge_and_sort(arrays):
             unique_dict = {}
@@ -62,7 +62,8 @@ class AnalysisAPI(APIView):
             for array in arrays:
                 for item in array['features']:
                     key = (
-                        f"{item['properties']['Name']}-{item['properties']['date']}"
+                        f"{item['properties']['Name']}-"
+                        f"{item['properties']['date']}"
                     )
                     # Overwrites duplicates, ensuring uniqueness
                     unique_dict[key] = item
@@ -74,7 +75,8 @@ class AnalysisAPI(APIView):
                 has_record = len(
                     list(
                         filter(
-                            lambda x: x['properties']['year'] == year, existing_records
+                            lambda x: x['properties']['year'] == year,
+                            existing_records
                         )
                     )
                 ) > 0
@@ -106,10 +108,12 @@ class AnalysisAPI(APIView):
         )
 
         output_results[0]['features'] = sorted(
-            output_results[0]['features'], key=lambda x: x['properties']['date']
+            output_results[0]['features'],
+            key=lambda x: x['properties']['date']
         )
         output_results[1]['features'] = sorted(
-            output_results[1]['features'], key=lambda x: x['properties']['date']
+            output_results[1]['features'],
+            key=lambda x: x['properties']['date']
         )
 
         return output_results
