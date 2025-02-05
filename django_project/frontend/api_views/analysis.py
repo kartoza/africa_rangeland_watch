@@ -5,6 +5,7 @@ Africa Rangeland Watch (ARW).
 .. note:: Analysis APIs
 """
 import uuid
+from copy import deepcopy
 from concurrent.futures import ThreadPoolExecutor
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -53,6 +54,46 @@ class AnalysisAPI(APIView):
             lat=float(data['latitude']),
             analysis_dict=analysis_dict
         )
+    
+    def _combine_temporal_analysis_results(self, years, input_results):
+        def merge_and_sort(arrays):
+            unique_dict = {}
+
+            for array in arrays:
+                for item in array['features']:
+                    key = f"{item['properties']['Name']}-{item['properties']['date']}"
+                    unique_dict[key] = item  # Overwrites duplicates, ensuring uniqueness
+            return list(unique_dict.values())
+        
+        def add_empty_records(existing_records):
+            new_records = {}
+            for year in years:
+                has_record = len(list(filter(lambda x: x['properties']['year'] == year, existing_records))) > 0
+                if not has_record:
+                    for record in existing_records:
+                        key = f'{record["properties"]["Name"]}-{year}'
+                        if not key in new_records:
+                            new_record = deepcopy(record)
+                            new_record['properties']['year'] = year
+                            new_record['properties']['Bare ground'] = None
+                            new_record['properties']['EVI'] = None
+                            new_record['properties']['NDVI'] = None
+                            new_records[key] = new_record
+            return new_records.values()
+
+        output_results = []
+        output_results.append(input_results[0][0])
+        output_results.append(input_results[0][1])
+        output_results[0]['features'] = merge_and_sort([ir[0] for ir in input_results])
+        
+        output_results[0]['features'].extend(add_empty_records(output_results[1]['features']))
+        # add empty result if no data exist for certain year
+        output_results[1]['features'] = merge_and_sort([ir[1] for ir in input_results])
+
+        output_results[0]['features'] = sorted(output_results[0]['features'], key=lambda x: x['properties']['date'])
+        output_results[1]['features'] = sorted(output_results[1]['features'], key=lambda x: x['properties']['date'])        
+
+        return output_results
 
     def run_temporal_analysis(self, data):
         """Run the temporal analysis."""
@@ -60,7 +101,7 @@ class AnalysisAPI(APIView):
         comp_years = data['comparisonPeriod']['year']
         comp_quarters = data['comparisonPeriod'].get('quarter', [])
         if len(comp_years) == 0:
-            comp_quarters = [''] * len(comp_years)
+            comp_quarters = [None] * len(comp_years)
 
         analysis_dict_list = []
         for idx, comp_year in enumerate(comp_years):
@@ -103,10 +144,10 @@ class AnalysisAPI(APIView):
                     analysis_dict
                 ) for analysis_dict in analysis_dict_list
             ]
-
             # Collect results as they complete
             results = [future.result() for future in futures]
 
+        results = self._combine_temporal_analysis_results(comp_years, results)
         return results
 
     def run_spatial_analysis(self, data):

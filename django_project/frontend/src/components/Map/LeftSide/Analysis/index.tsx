@@ -138,7 +138,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
       ...data,
       comparisonPeriod: {
         year: data.comparisonPeriod?.year,
-        quarter: data.temporalResolution == 'Quarterly' ? data.comparisonPeriod?.quarter : data.analysisType == 'Temporal' ? [] : null
+        quarter: data.temporalResolution == 'Quarterly' ? data.comparisonPeriod?.quarter : []
       },
     }
     dispatch(doAnalysis(newData))

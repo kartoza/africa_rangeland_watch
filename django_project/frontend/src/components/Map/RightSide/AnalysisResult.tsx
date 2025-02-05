@@ -11,12 +11,29 @@ import {FeatureCollection} from "geojson";
 import 'chartjs-adapter-date-fns';
 
 import './style.css';
+import { features } from 'process';
+import { rmSync } from 'fs';
+import { colors } from '../../../theme/foundations';
 
 Chart.register(CategoryScale);
 
 interface Props {
   analysis: Analysis;
 }
+
+const COLORS = [
+  "#FF0000", // Red
+  "#0000FF", // Blue
+  "#008000", // Green
+  "#FFA500", // Orange
+  "#800080", // Purple
+  "#00FFFF", // Cyan
+  "#FF00FF", // Magenta
+  "#FFFF00", // Yellow
+  "#00FF00", // Lime
+  "#008080"  // Teal
+];
+
 
 export function BarChart({ analysis }: Props) {
   // Extracting data for the chart
@@ -26,39 +43,31 @@ export function BarChart({ analysis }: Props) {
     return
   }
 
-  let labels: number[] = [jsonData.features[0].properties.year];
-  if (jsonData.features.length > 1) {
-    labels.push(jsonData.features[jsonData.features.length -1].properties.year);
-  }
-  const name1 = jsonData.features[0].properties.Name;
-  const name2 = jsonData.features.length > 1 ? jsonData.features[1].properties.Name : null;
+  let labels: number[] = jsonData.features.map((feature:any) => feature.properties.year);
+  labels = labels.filter((item, index) => labels.indexOf(item) === index)
 
-  const dataBar1 = jsonData.features
-    .filter((feature:any) => feature.properties.Name === name1)
+  let datasets: { [key: string]: any } = {}
+  for (let i = 0; i < jsonData.features.length; i++) {
+    const key: string = `${jsonData.features[i].properties.Name}`;
+    if (datasets[key as string]) {
+      continue;
+    }
+    const data = jsonData.features
+    .filter((feature:any) => feature.properties.Name === jsonData.features[i].properties.Name)
     .map((feature:any) => feature.properties[analysis.data.variable]);
+    const label = jsonData.features[i].properties.Name
+
+    datasets[key] = {
+      label: label,
+      data: data,
+      backgroundColor: COLORS[i % COLORS.length],
+    };
+  }
 
   let chartData:any = {
     labels,
-    datasets: [
-      {
-        label: name1,
-        data: dataBar1,
-        backgroundColor: "blue"
-      }
-    ],
+    datasets: Object.values(datasets),
   };
-
-  if (name2 !== null && name1 != name2) {
-    const dataBar2 = jsonData.features
-    .filter((feature:any) => feature.properties.Name === name2)
-    .map((feature:any) => feature.properties[analysis.data.variable]);
-
-    chartData.datasets.push({
-      label: name2,
-      data: dataBar2,
-      backgroundColor: "red"
-    });
-  }
 
   const options:any = {
     responsive: true,
