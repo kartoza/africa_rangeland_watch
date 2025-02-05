@@ -91,15 +91,6 @@ class AnalysisAPI(APIView):
 
         initialize_engine_analysis()
 
-        # from functools import partial
-        # def some_func(analysis_dict, data):
-        #     initialize_engine_analysis()
-        #     run_analysis(
-        #         analysis_dict=analysis_dict,
-        #         data['longitude'],
-        #         data['latitude']
-        #     )
-
         results = []
         # Run analyses in parallel using ThreadPoolExecutor
         with ThreadPoolExecutor() as executor:
@@ -117,14 +108,6 @@ class AnalysisAPI(APIView):
             results = [future.result() for future in futures]
 
         return results
-
-        # for analysis_dict in analysis_dict_list:
-        #     results.append(run_analysis(
-        #         lon=float(data['longitude']),
-        #         lat=float(data['latitude']),
-        #         analysis_dict=analysis_dict
-        #     ))
-        # return results
 
     def run_spatial_analysis(self, data):
         """Run the spatial analysis."""
