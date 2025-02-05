@@ -271,6 +271,12 @@ class UserAnalysisResults(models.Model):
         null=True,
         blank=True
     )
+    raster_output_path = models.CharField(
+        max_length=512,
+        null=True,
+        blank=True,
+        help_text='Path to the raster output of this analysis.'
+    )
 
     def __str__(self):
         created_by = self.created_by.username if self.created_by else 'Unknown'
