@@ -48,8 +48,8 @@ class AnalysisAPITest(BaseAPIViewTest):
                 'quarter': '1'
             },
             'comparisonPeriod': {
-                'years': '2017,2019,2020',
-                'quarters': '1,2,3'
+                'year': [2019,2017,2020],
+                'quarter': [2,1,3]
             }
         }
         request = self.factory.post(
@@ -68,8 +68,8 @@ class AnalysisAPITest(BaseAPIViewTest):
         self.assertEqual(
             results,
             [
-                [{'year': '2017'}, {'quarter': '1'}], 
-                [{'year': '2019'}, {'quarter': '2'}], 
-                [{'year': '2020'}, {'quarter': '3'}]
+                [{'year': 2019}, {'quarter': 2}], 
+                [{'year': 2017}, {'quarter': 1}], 
+                [{'year': 2020}, {'quarter': 3}]
             ]
         )

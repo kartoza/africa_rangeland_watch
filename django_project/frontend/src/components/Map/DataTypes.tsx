@@ -3,8 +3,8 @@
  */
 
 export interface AnalysisDataPeriod {
-  year?: number;
-  quarter?: number;
+  year?: number | number[];
+  quarter?: number | number[];
 }
 
 export interface AnalysisData {
