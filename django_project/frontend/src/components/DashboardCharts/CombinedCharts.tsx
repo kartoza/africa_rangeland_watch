@@ -5,9 +5,8 @@ import { Bar, Line } from "react-chartjs-2";
 import { CategoryScale } from "chart.js";
 import Chart from "chart.js/auto";
 import ChartDataLabels from "chartjs-plugin-datalabels";
-import {FeatureCollection} from "geojson";
+import { FeatureCollection } from "geojson";
 import 'chartjs-adapter-date-fns';
-
 
 Chart.register(CategoryScale);
 
@@ -16,22 +15,24 @@ interface Props {
 }
 
 export function BarChart({ analysis }: Props) {
-  // Extracting data for the chart
+  const jsonData = analysis.results?.[0];
 
-  const jsonData = analysis.results[0];
-
-  let labels: number[] = [jsonData.features[0].properties.year];
-  if (jsonData.features.length > 1) {
-    labels.push(jsonData.features[jsonData.features.length -1].properties.year);
+  if (!jsonData || !jsonData.features || jsonData.features.length === 0) {
+    return;
   }
-  const name1 = jsonData.features[0].properties.Name;
-  const name2 = jsonData.features.length > 1 ? jsonData.features[1].properties.Name : null;
+
+  const name1 = jsonData.features?.[0]?.properties?.Name;
+  const name2 = jsonData.features?.[1]?.properties?.Name || null;
+
+  const labels: number[] = jsonData.features?.length
+    ? [jsonData.features?.[0]?.properties?.year, jsonData.features?.[jsonData.features.length - 1]?.properties?.year]
+    : [];
 
   const dataBar1 = jsonData.features
-    .filter((feature:any) => feature.properties.Name === name1)
-    .map((feature:any) => feature.properties[analysis.data.variable]);
+    .filter((feature: any) => feature?.properties?.Name === name1)
+    .map((feature: any) => feature?.properties?.[analysis.data.variable] || 0);
 
-  let chartData:any = {
+  let chartData: any = {
     labels,
     datasets: [
       {
@@ -42,10 +43,10 @@ export function BarChart({ analysis }: Props) {
     ],
   };
 
-  if (name2 !== null && name1 != name2) {
+  if (name2 !== null && name1 !== name2) {
     const dataBar2 = jsonData.features
-    .filter((feature:any) => feature.properties.Name === name2)
-    .map((feature:any) => feature.properties[analysis.data.variable]);
+      .filter((feature: any) => feature?.properties?.Name === name2)
+      .map((feature: any) => feature?.properties?.[analysis.data.variable] || 0);
 
     chartData.datasets.push({
       label: name2,
@@ -54,7 +55,7 @@ export function BarChart({ analysis }: Props) {
     });
   }
 
-  const options:any = {
+  const options: any = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
@@ -64,7 +65,7 @@ export function BarChart({ analysis }: Props) {
       title: {
         display: false,
       },
-    }, 
+    },
     scales: {
       y: {
         beginAtZero: true,
@@ -72,25 +73,28 @@ export function BarChart({ analysis }: Props) {
     }
   };
 
-  return <Bar options={options} data={chartData} />
+  return <Bar options={options} data={chartData} />;
 }
 
 export function LineChart({ analysis }: Props) {
-  // Extracting data for the chart
+  const jsonData = analysis.results?.[1];
 
-  const jsonData = analysis.results[1];
+  if (!jsonData || !jsonData.features || jsonData.features.length === 0) {
+    return;
+  }
 
-  const name1 = jsonData.features[0].properties.Name;
-  const name2 = jsonData.features[1].properties.Name;
+  const name1 = jsonData.features?.[0]?.properties?.Name;
+  const name2 = jsonData.features?.[1]?.properties?.Name || null;
+
   const labels: number[] = jsonData.features
-    .filter((feature:any) => feature.properties.Name === name1)
-    .map((feature:any) => feature.properties.date);
+    .filter((feature: any) => feature?.properties?.Name === name1)
+    .map((feature: any) => feature?.properties?.date || '');
 
   const data1 = jsonData.features
-    .filter((feature:any) => feature.properties.Name === name1)
-    .map((feature:any) => feature.properties[analysis.data.variable]);
+    .filter((feature: any) => feature?.properties?.Name === name1)
+    .map((feature: any) => feature?.properties?.[analysis.data.variable] || 0);
 
-  let chartData:any = {
+  let chartData: any = {
     labels,
     datasets: [
       {
@@ -101,10 +105,10 @@ export function LineChart({ analysis }: Props) {
     ],
   };
 
-  if (name1 != name2) {
+  if (name1 !== name2) {
     const data2 = jsonData.features
-    .filter((feature:any) => feature.properties.Name === name2)
-    .map((feature:any) => feature.properties[analysis.data.variable]);
+      .filter((feature: any) => feature?.properties?.Name === name2)
+      .map((feature: any) => feature?.properties?.[analysis.data.variable] || 0);
 
     chartData.datasets.push({
       label: name2,
@@ -113,7 +117,7 @@ export function LineChart({ analysis }: Props) {
     });
   }
 
-  const options:any = {
+  const options: any = {
     responsive: true,
     maintainAspectRatio: false,
     scales: {
@@ -143,25 +147,29 @@ export function LineChart({ analysis }: Props) {
     },
   };
 
-  return <Line options={options} data={chartData}/>
+  return <Line options={options} data={chartData} />;
 }
 
 function SpatialBarChart({ analysis }: Props) {
-  const featureCollection: FeatureCollection = analysis.results;
+  const featureCollection: FeatureCollection | undefined = analysis.results;
 
-  const labels: string[] = featureCollection.features.map((feature) => feature.properties['Name'])
-  let chartData:any = {
+  if (!featureCollection || !featureCollection.features || featureCollection.features.length === 0) {
+    return;
+  }
+
+  const labels: string[] = featureCollection.features.map((feature) => feature?.properties?.['Name'] || 'Unknown');
+  let chartData: any = {
     labels,
     datasets: [
       {
         label: '% difference to reference area',
-        data: featureCollection.features.map((feature) => feature.properties["mean"]),
+        data: featureCollection.features.map((feature) => feature?.properties?.["mean"] || 0),
         backgroundColor: "blue"
       }
     ],
   };
-  
-  const options:any = {
+
+  const options: any = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
@@ -188,71 +196,103 @@ function SpatialBarChart({ analysis }: Props) {
     }
   };
 
-  return <Bar options={options} data={chartData} />
+  return <Bar options={options} data={chartData} />;
 }
-
 
 export function RenderBaseline({ analysis }: Props) {
-  const keys = Object.keys(analysis.results.columns)
-  return <Box overflow="auto" maxW="100%">
-    <Table className='BaselineAnalysisResultTable' cellPadding={8}>
-      <tr>
-        <th>Name</th>
-        {
-          keys.map(
-            (column: string) => <th key={column}>{column}</th>
-          )
-        }
-      </tr>
-      {
-        analysis.results.features.map((feature: any) => {
-          const properties = feature.properties;
-          return <tr>
-            <td>{properties.Name}</td>
-            {
-              keys.map(
-                (column: string) => <td key={column}>
-                  {properties[column]}
-                </td>
-              )
-            }
-          </tr>
-        })
-      }
-    </Table>
-  </Box>
-}
+  if (!analysis.results?.features) {
+    return;
+  }
 
-export function RenderTemporal({ analysis }: Props) {
+  const keys = Object.keys(analysis.results?.columns || {});
   return (
-    <Box display="flex" flexDirection="column" gap="4px" overflow={"auto"}>
-      <Box flex="0 0 auto">
-        <LineChart analysis={analysis} />
-      </Box>
-      <Box flex="0 0 auto">
-        <BarChart analysis={analysis} />
-      </Box>
+    <Box overflow="auto" maxW="100%">
+      <Table className='BaselineAnalysisResultTable' cellPadding={8}>
+        <thead>
+          <tr>
+            <th>Name</th>
+            {keys.map((column: string) => <th key={column}>{column}</th>)}
+          </tr>
+        </thead>
+        <tbody>
+          {analysis.results.features.map((feature: any, index: number) => {
+            const properties = feature?.properties || {};
+            return (
+              <tr key={index}>
+                <td>{properties.Name || 'N/A'}</td>
+                {keys.map((column: string) => (
+                  <td key={column}>{properties[column] || 'N/A'}</td>
+                ))}
+              </tr>
+            );
+          })}
+        </tbody>
+      </Table>
     </Box>
   );
 }
 
-export function RenderSpatial({ analysis }: Props) {
-  return <Box>
-    <Text color='black' marginTop={2}>Relative % difference in {analysis.data.variable} between your reference area and selected camp/s:</Text>
-    <SpatialBarChart analysis={analysis} />
-  </Box>
+export function RenderTemporal({ analysis }: Props) {
+  const jsonDataLine = analysis.results?.[1];
+  const jsonDataBar = analysis.results?.[0];
+
+  const hasLineData = jsonDataLine?.features?.length > 0;
+  const hasBarData = jsonDataBar?.features?.length > 0;
+
+  const charts = [];
+
+  if(hasLineData && hasBarData){
+    charts.push(
+      <Box flex="0 0 auto">
+        <LineChart analysis={analysis} />
+      </Box>
+    );
+    charts.push(
+      <Box flex="0 0 auto">
+           <BarChart key="bar" analysis={analysis} />
+      </Box>
+    );
+  }else if (hasLineData) {
+    charts.push(
+      <LineChart analysis={analysis} />
+    );
+  }else if (hasBarData) {
+    charts.push(
+      <BarChart key="bar" analysis={analysis} />
+    );
+  }
+
+  if (charts.length === 0) {
+    return <Text color="black" marginTop={2}>No chart data available.</Text>;
+  }
+
+  return (
+    <Box display="flex" flexDirection="column" gap="4px" overflow="auto">
+      {charts}
+    </Box>
+  );
 }
 
+
+
+export function RenderSpatial({ analysis }: Props) {
+  return (
+    <Box>
+      <Text color='black' marginTop={2}>Relative % difference in {analysis.data.variable} between your reference area and selected camp/s:</Text>
+      <SpatialBarChart analysis={analysis} />
+    </Box>
+  );
+}
 
 export function RenderResult({ analysis }: Props) {
   switch (analysis.data.analysisType) {
     case "Baseline":
-      return <RenderBaseline analysis={analysis}/>
+      return <RenderBaseline analysis={analysis} />;
     case "Temporal":
-      return <RenderTemporal analysis={analysis}/>
+      return <RenderTemporal analysis={analysis} />;
     case "Spatial":
-      return <RenderSpatial analysis={analysis}/>
+      return <RenderSpatial analysis={analysis} />;
     default:
-      return null
+      return <Text>No analysis type selected.</Text>;
   }
 }
