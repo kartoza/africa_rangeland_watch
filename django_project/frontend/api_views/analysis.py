@@ -61,18 +61,27 @@ class AnalysisAPI(APIView):
 
             for array in arrays:
                 for item in array['features']:
-                    key = f"{item['properties']['Name']}-{item['properties']['date']}"
-                    unique_dict[key] = item  # Overwrites duplicates, ensuring uniqueness
+                    key = (
+                        f"{item['properties']['Name']}-{item['properties']['date']}"
+                    )
+                    # Overwrites duplicates, ensuring uniqueness
+                    unique_dict[key] = item
             return list(unique_dict.values())
-        
+
         def add_empty_records(existing_records):
             new_records = {}
             for year in years:
-                has_record = len(list(filter(lambda x: x['properties']['year'] == year, existing_records))) > 0
+                has_record = len(
+                    list(
+                        filter(
+                            lambda x: x['properties']['year'] == year, existing_records
+                        )
+                    )
+                ) > 0
                 if not has_record:
                     for record in existing_records:
                         key = f'{record["properties"]["Name"]}-{year}'
-                        if not key in new_records:
+                        if key not in new_records:
                             new_record = deepcopy(record)
                             new_record['properties']['year'] = year
                             new_record['properties']['Bare ground'] = None
@@ -84,14 +93,24 @@ class AnalysisAPI(APIView):
         output_results = []
         output_results.append(input_results[0][0])
         output_results.append(input_results[0][1])
-        output_results[0]['features'] = merge_and_sort([ir[0] for ir in input_results])
-        
-        output_results[0]['features'].extend(add_empty_records(output_results[1]['features']))
-        # add empty result if no data exist for certain year
-        output_results[1]['features'] = merge_and_sort([ir[1] for ir in input_results])
+        output_results[0]['features'] = merge_and_sort(
+            [ir[0] for ir in input_results]
+        )
 
-        output_results[0]['features'] = sorted(output_results[0]['features'], key=lambda x: x['properties']['date'])
-        output_results[1]['features'] = sorted(output_results[1]['features'], key=lambda x: x['properties']['date'])        
+        output_results[0]['features'].extend(
+            add_empty_records(output_results[1]['features'])
+        )
+        # add empty result if no data exist for certain year
+        output_results[1]['features'] = merge_and_sort(
+            [ir[1] for ir in input_results]
+        )
+
+        output_results[0]['features'] = sorted(
+            output_results[0]['features'], key=lambda x: x['properties']['date']
+        )
+        output_results[1]['features'] = sorted(
+            output_results[1]['features'], key=lambda x: x['properties']['date']
+        )
 
         return output_results
 
