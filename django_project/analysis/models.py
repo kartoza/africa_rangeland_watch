@@ -278,21 +278,48 @@ class UserAnalysisResults(models.Model):
         return f"Analysis by {created_by} on {created_at}"
 
 
+class GEEAssetType:
+    """GEE asset type."""
+
+    IMAGE = 'image'
+    IMAGE_COLLECTION = 'image_collection'
+    TABLE = 'table'
+    CLASSIFIER = 'classifier'
+    FEATURE_VIEW = 'feature_view'
+    FOLDER = 'folder'
+
+    @classmethod
+    def choices(cls):
+        return (
+            (cls.IMAGE, cls.IMAGE),
+            (cls.IMAGE_COLLECTION, cls.IMAGE_COLLECTION),
+            (cls.TABLE, cls.TABLE),
+            (cls.CLASSIFIER, cls.CLASSIFIER),
+            (cls.FEATURE_VIEW, cls.FEATURE_VIEW),
+            (cls.FOLDER, cls.FOLDER),
+        )
+
+
 class GEEAsset(models.Model):
     """Model to store the GEE Asset that is used in the analysis."""
 
     key = models.CharField(
         max_length=50,
-        help_text="Key to the asset."
+        help_text='Key to the asset.'
     )
     source = models.CharField(
         max_length=512,
         help_text='Source path to the asset.'
+    )
+    type = models.CharField(
+        max_length=20,
+        choices=GEEAssetType.choices(),
+        help_text='Asset type.'
     )
 
     def __str__(self):
         return self.key
 
     class Meta:
-        verbose_name_plural = "GEE Assets"
+        verbose_name_plural = 'GEE Assets'
         db_table = 'analysis_gee_asset'
