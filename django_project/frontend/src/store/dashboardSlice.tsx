@@ -1,9 +1,10 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
+import { Analysis } from './analysisSlice';
 
 export interface Config {
-  dashboardName: string;
-  preference: string;
+  dashboardName?: string;
+  preference?: string;
   chartType?: string | null;
 }
 
@@ -12,7 +13,7 @@ export interface DashboardData {
   title: string | null;
   created_by?: string | null;
   organisations?: string[];
-  analysis_results?: [];
+  analysis_results?: Analysis[];
   groups?: number[];
   users?: number[];
   config: Config | null;
@@ -43,7 +44,7 @@ export const fetchDashboards = createAsyncThunk(
       const response = await axios.get('dashboards/', { params: filters });
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.response.data);
+      return rejectWithValue(error.response?.data || "Error fetching dashboards");
     }
   }
 );
@@ -56,11 +57,26 @@ export const createDashboard = createAsyncThunk(
       const response = await axios.post("/dashboards/create/", dashboardData);
       return response.data;
     } catch (error) {
-      return rejectWithValue(error.response?.data || "An error occurred");
+      return rejectWithValue(error.response?.data || "Error creating dashboard");
     }
   }
 );
 
+// Update dashboard settings
+export const updateDashboard = createAsyncThunk(
+  "dashboard/updateDashboard",
+  async ({ uuid, updates }: { uuid: string; updates: Partial<DashboardData> }, { rejectWithValue }) => {
+    try {
+      const response = await axios.patch(`/dashboards/${uuid}/update`, updates);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || "Error updating dashboard");
+    }
+  }
+);
+
+
+// Fetch dashboard owners
 export const fetchDashboardOwners = createAsyncThunk(
   "dashboard/fetchOwners",
   async () => {
@@ -76,39 +92,34 @@ export const fetchDashboardOwners = createAsyncThunk(
 const dashboardSlice = createSlice({
   name: 'dashboard',
   initialState: {
-    dashboards: [],
-    owners: [],           // New variable to store dashboard owners
+    dashboards: [] as DashboardData[],
+    owners: [],
     loading: false,
-    error: null,
-    dashboardCreated: false, // Track dashboard creation status
+    error: null as string | null,
+    dashboardCreated: false,
+    dashboardUpdated: false,
   },
-  reducers: {},
+  reducers: {
+    resetDashboardUpdated: (state) => {
+      state.dashboardUpdated = false;
+    },
+  },
   extraReducers: (builder) => {
     builder
-      // Handle fetchDashboardOwners async thunk states
-      .addCase(fetchDashboardOwners.pending, (state) => {
-        state.loading = true;
-        state.error = null;
-      })
-      .addCase(fetchDashboardOwners.fulfilled, (state, action) => {
-        state.loading = false;
-        state.owners = action.payload;
-      })
-      .addCase(fetchDashboardOwners.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.error.message;
-      })
       .addCase(fetchDashboards.pending, (state) => {
         state.loading = true;
         state.error = null;
+        state.dashboardUpdated = false;
       })
       .addCase(fetchDashboards.fulfilled, (state, action) => {
         state.loading = false;
         state.dashboards = action.payload;
+        state.dashboardUpdated = false;
       })
       .addCase(fetchDashboards.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message;
+        state.error = action.payload as string;
+        state.dashboardUpdated = false;
       })
       .addCase(createDashboard.pending, (state) => {
         state.loading = true;
@@ -122,10 +133,44 @@ const dashboardSlice = createSlice({
       })
       .addCase(createDashboard.rejected, (state, action) => {
         state.loading = false;
-        state.error = action.error.message;
+        state.error = action.payload as string;
         state.dashboardCreated = false;
+      })
+      .addCase(updateDashboard.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.dashboardUpdated = false;
+      })
+      .addCase(updateDashboard.fulfilled, (state, action) => {
+        state.loading = false;
+        state.dashboardUpdated = true;
+
+        // Find and update the specific dashboard
+        const index = state.dashboards.findIndex((db) => db.uuid === action.payload.uuid);
+        if (index !== -1) {
+          state.dashboards[index] = action.payload;
+        }
+      })
+      .addCase(updateDashboard.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+        state.dashboardUpdated = false;
+      })
+      .addCase(fetchDashboardOwners.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchDashboardOwners.fulfilled, (state, action) => {
+        state.loading = false;
+        state.owners = action.payload;
+      })
+      .addCase(fetchDashboardOwners.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message;
       });
   },
 });
+
+export const { resetDashboardUpdated } = dashboardSlice.actions;
 
 export default dashboardSlice.reducer;

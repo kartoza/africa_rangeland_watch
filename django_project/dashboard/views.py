@@ -14,6 +14,8 @@ from rest_framework.permissions import (
 import json
 from django.db.models import Q
 import logging
+from django.shortcuts import get_object_or_404
+
 
 logger = logging.getLogger(__name__)
 
@@ -351,6 +353,45 @@ class DashboardShareView(APIView):
         return Response(
             {
                 "message": "Dashboard shared successfully."
+            },
+            status=status.HTTP_200_OK
+        )
+
+
+class UpdateDashboardView(APIView):
+    """
+    Manually updates specific fields of a dashboard.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def patch(self, request, uuid):
+        dashboard = get_object_or_404(Dashboard, uuid=uuid)
+
+        # Extract fields from request data
+        title = request.data.get("title", dashboard.title)
+        privacy_type = request.data.get("privacy_type", dashboard.privacy_type)
+        analysis_results = request.data.get("analysis_results", None)
+        config = request.data.get("config", dashboard.config)
+
+        # Update fields
+        dashboard.title = title
+        dashboard.privacy_type = privacy_type
+
+        # Handle analysis_results (ManyToManyField)
+        if analysis_results is not None:
+            dashboard.analysis_results.set(analysis_results)
+
+        # Handle config (JSONField)
+        dashboard.config = (
+            config if isinstance(config, dict) else dashboard.config
+        )
+
+        # Save the changes
+        dashboard.save()
+
+        return Response(
+            {
+                "message": "Dashboard updated successfully"
             },
             status=status.HTTP_200_OK
         )

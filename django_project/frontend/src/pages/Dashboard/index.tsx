@@ -52,7 +52,8 @@ const DashboardPage: React.FC = () => {
   const [itemsPerPage, setItemsPerPage] = useState(6)
   const [startIdx , setStartIdx] = useState(0);
   const [endIdx, setEndIdx] = useState(1);
-  const [filters, setFilters] = useState(null)
+  const [filters, setFilters] = useState(null);
+  const [triggerRefetch, setTriggerRefetch] = useState(false)
 
   const [panelPositions, setPanelPositions] = useState({});
   const [dragPosition, setDragPosition] = useState<DragPosition>({});
@@ -92,6 +93,7 @@ const DashboardPage: React.FC = () => {
         title: dashboard.title,
         uuid: dashboard.uuid,
         owner: dashboard.owner,
+        privacy_type: dashboard.privacy_type
       }));
 
       // Set the state to pass down to the chart cards
@@ -100,8 +102,9 @@ const DashboardPage: React.FC = () => {
   }, [loading, dashboardData]);
 
   useEffect(() => {
+    console.log('called from beyong the grave ')
     dispatch(fetchDashboards(filters));
-  }, [dispatch, filters]);
+  }, [dispatch, filters, triggerRefetch]);
 
   
 
@@ -243,6 +246,7 @@ const DashboardPage: React.FC = () => {
                                     key={config.uuid}
                                     config={config}
                                     className={`draggable-card-${panelKey}`}
+                                    setTriggerRefetch={setTriggerRefetch}
                                   />
                                 </div>
                               )}
@@ -317,6 +321,7 @@ const DashboardPage: React.FC = () => {
                                   key={config.uuid}
                                   config={config}
                                   className={`draggable-card-${panelKey}`}
+                                  setTriggerRefetch={setTriggerRefetch}
                                 />
                             </div>
                             }
@@ -372,7 +377,12 @@ const DashboardPage: React.FC = () => {
                               rounded="lg"
                             >
                               <div style={{ width: "100%", height: "100%" }}>
-                                <ChartCard key={`chart-card-${config?.uuid}-${index}`} config={config} className={`draggable-card-${index}`} />
+                                <ChartCard 
+                                  key={`chart-card-${config?.uuid}-${index}`} 
+                                  config={config} 
+                                  className={`draggable-card-${index}`} 
+                                  setTriggerRefetch={setTriggerRefetch}
+                                />
                               </div>
                             </Flex>
                           </Panel>
@@ -402,7 +412,7 @@ const DashboardPage: React.FC = () => {
                       {mainPanels.length > 0 ? (
                         mainPanels.map((config) => (
                           <div key={`main-panel-${config?.uuid}`} style={{ width: "100%", height: "100%" }}>
-                            <ChartCard config={config} />
+                            <ChartCard config={config} setTriggerRefetch={setTriggerRefetch} />
                           </div>
                         ))
                       ) : (
