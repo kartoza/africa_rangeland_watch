@@ -162,7 +162,9 @@ class InputLayer:
         """
         Get Cropland and urban mask
         """
-        glc_coll = ee.ImageCollection(GEEAsset.fetch_asset_source('globe_land30'))
+        glc_coll = ee.ImageCollection(
+            GEEAsset.fetch_asset_source('globe_land30')
+        )
         glc_img = glc_coll.mosaic()
 
         masked = (glc_img.neq(10)
