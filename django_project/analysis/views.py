@@ -1,3 +1,4 @@
+from dashboard.models import Dashboard
 from rest_framework import viewsets
 from .models import UserAnalysisResults
 from .serializer import UserAnalysisResultsSerializer
@@ -32,3 +33,18 @@ class UserAnalysisResultsViewSet(viewsets.ModelViewSet):
             serializer.save(created_by=request.user)
             return Response(serializer.data, status=201)
         return Response(serializer.errors, status=400)
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+
+        # Remove the analysis from associated dashboards
+        dashboards = Dashboard.objects.filter(analysis_results=instance)
+        for dashboard in dashboards:
+            dashboard.analysis_results.remove(instance)
+
+        # Delete the analysis
+        instance.delete()
+        return Response(
+            {
+                "message": "Analysis deleted successfully"
+            }, status=204)
