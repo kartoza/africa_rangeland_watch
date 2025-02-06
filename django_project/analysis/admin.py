@@ -119,5 +119,6 @@ admin.site.register(UserAnalysisResults, UserAnalysisResultsAdmin)
 class GEEAssetAdmin(admin.ModelAdmin):
     """Admin for GEEAsset model."""
 
-    list_display = ('key', 'source',)
+    list_display = ('key', 'type', 'source',)
     search_fields = ('key', 'source',)
+    list_filter = ('type',)

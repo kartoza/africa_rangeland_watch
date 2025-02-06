@@ -304,6 +304,7 @@ class GEEAsset(models.Model):
     """Model to store the GEE Asset that is used in the analysis."""
 
     key = models.CharField(
+        unique=True,
         max_length=50,
         help_text='Key to the asset.'
     )
