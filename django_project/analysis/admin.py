@@ -188,4 +188,5 @@ class UserAnalysisResultsAdmin(admin.ModelAdmin):
             )
             return response
 
+
 admin.site.register(UserAnalysisResults, UserAnalysisResultsAdmin)
