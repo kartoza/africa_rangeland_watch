@@ -6,6 +6,7 @@ Africa Rangeland Watch (ARW).
 """
 import ee
 
+from analysis.models import GEEAsset
 from layers.models import InputLayer
 from layers.generator.base import BaseLayerGenerator, LayerCacheResult
 
@@ -20,7 +21,7 @@ class ModisVegetationGenerator(BaseLayerGenerator):
 
         # Get MODIS vegetation data
         modis_vegetation = ee.ImageCollection(
-            'MODIS/006/MOD13Q1'
+            GEEAsset.fetch_asset_source('modis_vegetation')
         ).filterDate(
             '2016-01-01', '2020-01-01'
         ).select(

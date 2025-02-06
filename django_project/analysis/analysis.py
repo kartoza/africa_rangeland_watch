@@ -5,13 +5,10 @@ import base64
 import ee
 import os
 
+from analysis.models import GEEAsset
+
 SERVICE_ACCOUNT_KEY = os.environ.get('SERVICE_ACCOUNT_KEY', '')
 SERVICE_ACCOUNT = os.environ.get('SERVICE_ACCOUNT', '')
-
-TRAINING_DATA_ASSET_PATH = os.environ.get(
-    'TRAINING_DATA_ASSET_PATH',
-    ''
-)
 
 # Sentinel-2 bands and names
 S2_BANDS = ['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B11', 'B12']
@@ -45,7 +42,7 @@ class InputLayer:
         Get baseline feature collection for GEE analysis
         """
         baseline_table = ee.FeatureCollection(
-            'projects/ee-yekelaso1818/assets/CSA/Baseline_pre_export_20241007'
+            GEEAsset.fetch_asset_source('baseline_table')
         )
         return baseline_table
 
@@ -55,7 +52,7 @@ class InputLayer:
         """
         # Get the pre-exported time series statistics for project areas
         temporal_table = ee.FeatureCollection(
-            'projects/ee-yekelaso1818/assets/Temporal_pre_export_20241202'
+            GEEAsset.fetch_asset_source('temporal_table')
         )
 
         # Format the table correctly
@@ -137,7 +134,7 @@ class InputLayer:
         Get community feature collection for GEE analysis.
         """
         communities = ee.FeatureCollection(
-            'projects/ee-yekelaso1818/assets/CSA/CSA_master_20241007'
+            GEEAsset.fetch_asset_source('communities')
         )
         communities = communities.map(
             lambda ft: ft.set(
@@ -156,15 +153,18 @@ class InputLayer:
             'NAMIBIA', 'ZIMBABWE', 'BOTSWANA',
             'MOZAMBIQUE', 'ZAMBIA'
         ]
-        countries = (ee.FeatureCollection('USDOS/LSIB/2013').
-                     filter(ee.Filter.inList('name', names)))
+        countries = (ee.FeatureCollection(
+            GEEAsset.fetch_asset_source('countries')).
+            filter(ee.Filter.inList('name', names)))
         return countries
 
     def get_cropland_urban_mask(self):
         """
         Get Cropland and urban mask
         """
-        glc_coll = ee.ImageCollection('users/cgmorton/GlobeLand30')
+        glc_coll = ee.ImageCollection(
+            GEEAsset.fetch_asset_source('globe_land30')
+        )
         glc_img = glc_coll.mosaic()
 
         masked = (glc_img.neq(10)
@@ -194,12 +194,12 @@ class InputLayer:
         Get image for soil carbon mean.
         """
         # Coast fragment fraction 0-1
-        cfvo = (ee.Image('users/zandersamuel/SA_misc/Soilgrids_CFVO')
+        cfvo = (ee.Image(GEEAsset.fetch_asset_source('soc_grids_cfvo'))
                 .selfMask()
                 .rename('soil_cfvo')
                 .divide(1000))
 
-        cfvo2 = (ee.Image("ISDASOIL/Africa/v1/stone_content")
+        cfvo2 = (ee.Image(GEEAsset.fetch_asset_source('soc_stone_content'))
                  .select('mean_0_20')
                  .rename('soil_cfvo')
                  .divide(100))
@@ -211,17 +211,16 @@ class InputLayer:
         # Fill in gaps with SoilGrids
 
         isda = ee.Image(
-            "users/zandersamuel/Africa_misc/"
-            "iSDA_SOC_m_30m_0_20cm_2001_2017_v0_13_wgs84"
+            GEEAsset.fetch_asset_source('soc_isda')
         )
         isda = ee.Image(isda.divide(10)).exp().subtract(1)
         # Soil bulk density (fine earth) g/m³
-        bd = (ee.Image("users/zandersamuel/SA_misc/SoilGrids_BD")
+        bd = (ee.Image(GEEAsset.fetch_asset_source('soc_grids_bd'))
               .rename('soil_bd')
               .selfMask()
               .divide(100))
 
-        bd2 = (ee.Image("ISDASOIL/Africa/v1/bulk_density")
+        bd2 = (ee.Image(GEEAsset.fetch_asset_source('soc_bulk_density'))
                .select('mean_0_20')
                .rename('soil_bd')
                .divide(100))
@@ -252,7 +251,7 @@ class InputLayer:
 
         # Import pre-exported grazing capacity map
         grazing_capacity = ee.Image(
-            'users/zandersamuel/Consult_CSA/grazingCapacity_srnAfrica_LSU_ha'
+            GEEAsset.fetch_asset_source('grazing_capacity')
         )
         grazing_capacity = grazing_capacity.rename('grazingCap')
         grazing_capacity = (grazing_capacity
@@ -268,7 +267,7 @@ class InputLayer:
         # Import soil organic carbon data from Venter et al. 2021
         # https://www.sciencedirect.com/science/article/pii/S0048969721004526
         soc_col = ee.ImageCollection(
-            "users/grazingresearch/Collaboration/Soil_C/predictions2"
+            GEEAsset.fetch_asset_source('soil_carbon')
         )
 
         def process_image(i):
@@ -299,10 +298,14 @@ class InputLayer:
         Get spatial layer dictionary.
         """
         # Get MODIS vegetation data
-        modis_veg = (ee.ImageCollection("MODIS/006/MOD13Q1")
-                     .filterDate('2016-01-01', '2020-01-01')
-                     .select(['NDVI', 'EVI'])
-                     .map(lambda i: i.divide(10000)))
+        modis_veg = (
+            ee.ImageCollection(
+                GEEAsset.fetch_asset_source('modis_vegetation')
+            )
+            .filterDate('2016-01-01', '2020-01-01')
+            .select(['NDVI', 'EVI'])
+            .map(lambda i: i.divide(10000))
+        )
 
         evi_baseline = (modis_veg.select('EVI').
                         median().clipToCollection(self.countries))
@@ -312,7 +315,7 @@ class InputLayer:
         # Get fractional ground cover from CGLS
         cgls_col = (
             ee.ImageCollection(
-                "COPERNICUS/Landcover/100m/Proba-V-C3/Global"
+                GEEAsset.fetch_asset_source('cgls_ground_cover')
             ).select(
                 [
                     'bare-coverfraction', 'crops-coverfraction',
@@ -654,12 +657,16 @@ def get_s2_cloud_masked(aoi, start_date, end_date):
     >>> # Print the number of images retrieved
     >>> print('Number of images:', s2_collection.size().getInfo())
     """
-    s2_sr = ee.ImageCollection('COPERNICUS/S2_SR_HARMONIZED') \
+    s2_sr = ee.ImageCollection(
+        GEEAsset.fetch_asset_source('sentinel2_harmonized')
+    ) \
         .filterBounds(aoi) \
         .filterDate(start_date, end_date) \
         .filter(ee.Filter.lte('CLOUDY_PIXEL_PERCENTAGE', 20))
 
-    s2_clouds = ee.ImageCollection('COPERNICUS/S2_CLOUD_PROBABILITY') \
+    s2_clouds = ee.ImageCollection(
+        GEEAsset.fetch_asset_source('sentinel2_clouds')
+    ) \
         .filterBounds(aoi) \
         .filterDate(start_date, end_date)
 
@@ -863,7 +870,7 @@ def get_sent_quarterly(aoi):
     return sent_quarterly
 
 
-def train_bgt(aoi, training_path=TRAINING_DATA_ASSET_PATH):
+def train_bgt(aoi, training_path):
     """
     Trains a Random Forest classifier to estimate
      bare ground, tree, and grass cover fractions.
@@ -873,7 +880,7 @@ def train_bgt(aoi, training_path=TRAINING_DATA_ASSET_PATH):
     aoi : ee.Geometry
         The area of interest over which to filter the training data.
     training_path : str
-        The training data asset path. Default to TRAINING_DATA_ASSET_PATH.
+        The training data asset path.
 
     Returns
     -------
@@ -889,10 +896,11 @@ def train_bgt(aoi, training_path=TRAINING_DATA_ASSET_PATH):
 
     Example
     -------
+    >>> training_path = ''
     >>> # Define an area of interest
     >>> aoi = ee.Geometry.Rectangle([30.0, -1.0, 30.1, -0.9])
     >>> # Train the classifier
-    >>> classifier = train_bgt(aoi)
+    >>> classifier = train_bgt(aoi, training_path)
     """
     training_testing_master = ee.FeatureCollection(training_path)
     training_testing = training_testing_master.filterBounds(aoi)
@@ -974,7 +982,9 @@ def get_latest_stats(geo, communities_select):
     >>> print(stats.first().getInfo())
     """
     col = get_sent_quarterly(communities_select)
-    classifier = train_bgt(geo)
+    classifier = train_bgt(
+        geo, GEEAsset.fetch_asset_source('random_forest_training')
+    )
 
     def process_image(i):
         bg = classify_bgt(i, classifier).select('bare')

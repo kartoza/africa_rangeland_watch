@@ -9,6 +9,7 @@ import logging
 from typing import List
 from django.core.cache import cache
 
+from analysis.models import GEEAsset
 from layers.models import InputLayer, DataProvider
 
 
@@ -56,7 +57,7 @@ class BaseLayerGenerator:
             'ZAMBIA'
         ]
         return ee.FeatureCollection(
-            'USDOS/LSIB/2013'
+            GEEAsset.fetch_asset_source('countries')
         ).filter(ee.filter.Filter.inList('name', names))
 
     def save_url_to_cache(self, key: str, url: str):
