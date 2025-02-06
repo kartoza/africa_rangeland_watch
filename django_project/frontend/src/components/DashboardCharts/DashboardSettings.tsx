@@ -2,12 +2,11 @@ import { useState, useEffect } from "react";
 import { FiArrowRight, FiArrowLeft } from "react-icons/fi";
 import {
   Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody,
-  VStack, Box, Text, Input, Select, Button, HStack, List, ListItem, IconButton,
-  useToast
+  VStack, Box, Text, Input, Select, Button, HStack, List, ListItem, IconButton
 } from "@chakra-ui/react";
 import { useDispatch, useSelector } from "react-redux"; 
-import { fetchDashboards, resetDashboardUpdated, updateDashboard } from "../../store/dashboardSlice";
-import { AppDispatch, RootState } from "../../store";
+import { updateDashboard } from "../../store/dashboardSlice";
+import { AppDispatch } from "../../store";
 import { Analysis } from "../../store/analysisSlice";
 import CONFIG from "../../config";
 import React from "react";
@@ -16,7 +15,6 @@ import { fetchAnalysis } from "../../store/userAnalysisSlice";
 interface DashboardSettingsProps {
   isSettingsOpen: boolean;
   setSettingsOpen: (isOpen: boolean) => void;
-  setTriggerRefetch: (value: boolean) => void;
   dashboardAnalyses: Analysis[];
   dashboard: {  
     uuid?: string;
@@ -32,7 +30,6 @@ interface DashboardSettingsProps {
 export const DashboardSettingsModal: React.FC<DashboardSettingsProps> = ({
   isSettingsOpen,
   setSettingsOpen,
-  setTriggerRefetch,
   dashboard
 }) => {
   const [dashboardName, setDashboardName] = useState(dashboard?.title || "");
@@ -43,8 +40,6 @@ export const DashboardSettingsModal: React.FC<DashboardSettingsProps> = ({
   const [dashboardConfig, setDashboardConfig] = useState(dashboard?.config);
   const analysisData = useSelector((state: any) => state.userAnalysis.data);
   const [dashboardAnalyses, setDashboardAnalyses] = useState(dashboard?.analysis_results);
-  const { dashboardUpdated, error } = useSelector((state: RootState) => state.dashboard);
-  const toast = useToast();
   const dispatch = useDispatch<AppDispatch>();
 
   
@@ -62,22 +57,6 @@ export const DashboardSettingsModal: React.FC<DashboardSettingsProps> = ({
     setDashboardType(dashboard?.config || "chart");
     setPrivacyType(dashboard?.privacy_type);
     setDashboardAnalyses(dashboard?.analysis_results)
-    if (dashboardUpdated) {
-      dispatch(resetDashboardUpdated());
-      toast({
-        title: "Dashboard updated",
-        description: "Your dashaboard settings have been updated.If changes dont reflect immediately please refresh the page.",
-        status: "success",
-        duration: 5000,
-        isClosable: true,
-        position: "top-right",
-        containerStyle: {
-          backgroundColor: "#00634b",
-          color: "white",
-        },
-      });
-      setTriggerRefetch(true);
-    }
   }, [dashboard]);
 
   const handlePrivacyTypeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
@@ -118,13 +97,13 @@ export const DashboardSettingsModal: React.FC<DashboardSettingsProps> = ({
   const handleSave = () => {
     const analysisResultIds = dashboardAnalyses?.map((analysis: any) => analysis.id) || [];
 
-    console.log('data to submit ',{
-      uuid: dashboard.uuid,
-      title: dashboardName, 
-      privacy_type: privacyType,
-      analysis_results: analysisResultIds,
-      config: { preference: dashboardType } 
-    })
+    // console.log('data to submit ',{
+    //   uuid: dashboard.uuid,
+    //   title: dashboardName, 
+    //   privacy_type: privacyType,
+    //   analysis_results: analysisResultIds,
+    //   config: { preference: dashboardType } 
+    // })
 
     dispatch(
       updateDashboard({

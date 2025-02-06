@@ -9,7 +9,6 @@ import MiniMap from "./DashboardCharts/MapCard";
 import { DashboardSettingsModal } from "./DashboardCharts/DashboardSettings";
 
 interface ChartCardProps {
-  setTriggerRefetch: (value: boolean) => void;
   config: {
     privacy_type: any;
     owner: any;
@@ -31,7 +30,7 @@ interface ChartCardProps {
 
 
 
-const ChartCard: React.FC<ChartCardProps> = ({ setTriggerRefetch, config, className }) => {
+const ChartCard: React.FC<ChartCardProps> = ({ config, className }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isChart, setIsChart] = useState(false);
   const [dashboardName, setDashboardName] = useState("");
@@ -216,7 +215,6 @@ const ChartCard: React.FC<ChartCardProps> = ({ setTriggerRefetch, config, classN
           setSettingsOpen={setSettingsOpen}
           dashboardAnalyses={dashboardSettings?.analysis_results}
           dashboard={dashboardSettings}
-          setTriggerRefetch={setTriggerRefetch}
         />
     </div>
   );

@@ -12,6 +12,7 @@ import {
   MenuButton, 
   MenuList, 
   MenuItem,
+  useToast,
 } from "@chakra-ui/react";
 import { FaFilter } from "react-icons/fa";
 import Header from "../../components/Header";
@@ -21,8 +22,8 @@ import AnalysisSideBar from "../../components/SideBar/AnalysisSideBar";
 import Pagination from "../../components/Pagination";
 import ChartCard from "../../components/ChartCard";
 import { useDispatch, useSelector } from "react-redux";
-import { AppDispatch } from "../../store";
-import { fetchDashboards } from "../../store/dashboardSlice";
+import { AppDispatch, RootState } from "../../store";
+import { fetchDashboards, resetDashboardUpdated } from "../../store/dashboardSlice";
 import {InProgressBadge} from "../../components/InProgressBadge";
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import { DragHandleDots2Icon } from '@radix-ui/react-icons';
@@ -53,7 +54,8 @@ const DashboardPage: React.FC = () => {
   const [startIdx , setStartIdx] = useState(0);
   const [endIdx, setEndIdx] = useState(1);
   const [filters, setFilters] = useState(null);
-  const [triggerRefetch, setTriggerRefetch] = useState(false)
+  const { dashboardUpdated } = useSelector((state: RootState) => state.dashboard);
+  const toast = useToast();
 
   const [panelPositions, setPanelPositions] = useState({});
   const [dragPosition, setDragPosition] = useState<DragPosition>({});
@@ -102,11 +104,28 @@ const DashboardPage: React.FC = () => {
   }, [loading, dashboardData]);
 
   useEffect(() => {
-    console.log('called from beyong the grave ')
     dispatch(fetchDashboards(filters));
-  }, [dispatch, filters, triggerRefetch]);
+  }, [dispatch, filters]);
 
-  
+  useEffect(() => {
+  if (dashboardUpdated) {
+        dispatch(resetDashboardUpdated());
+        dispatch(fetchDashboards(filters));
+        toast({
+          title: "Dashboard updated",
+          description: "Your dashaboard settings have been updated.If changes dont reflect immediately please refresh the page.",
+          status: "success",
+          duration: 5000,
+          isClosable: true,
+          position: "top-right",
+          containerStyle: {
+            backgroundColor: "#00634b",
+            color: "white",
+          },
+        });
+      }
+
+    }, [dashboardUpdated]);
 
   const handleFilterClick = () => {
     if (isOpen) {
@@ -246,7 +265,6 @@ const DashboardPage: React.FC = () => {
                                     key={config.uuid}
                                     config={config}
                                     className={`draggable-card-${panelKey}`}
-                                    setTriggerRefetch={setTriggerRefetch}
                                   />
                                 </div>
                               )}
@@ -321,7 +339,6 @@ const DashboardPage: React.FC = () => {
                                   key={config.uuid}
                                   config={config}
                                   className={`draggable-card-${panelKey}`}
-                                  setTriggerRefetch={setTriggerRefetch}
                                 />
                             </div>
                             }
@@ -380,8 +397,7 @@ const DashboardPage: React.FC = () => {
                                 <ChartCard 
                                   key={`chart-card-${config?.uuid}-${index}`} 
                                   config={config} 
-                                  className={`draggable-card-${index}`} 
-                                  setTriggerRefetch={setTriggerRefetch}
+                                  className={`draggable-card-${index}`}
                                 />
                               </div>
                             </Flex>
@@ -412,7 +428,7 @@ const DashboardPage: React.FC = () => {
                       {mainPanels.length > 0 ? (
                         mainPanels.map((config) => (
                           <div key={`main-panel-${config?.uuid}`} style={{ width: "100%", height: "100%" }}>
-                            <ChartCard config={config} setTriggerRefetch={setTriggerRefetch} />
+                            <ChartCard config={config} />
                           </div>
                         ))
                       ) : (
