@@ -5,6 +5,12 @@ from base.models import Organisation, UserProfile
 from analysis.models import UserAnalysisResults
 from dashboard.models import Dashboard
 from django.urls import reverse
+from django.test import TestCase
+from django.contrib.auth import get_user_model
+from rest_framework.test import APIClient
+from uuid import uuid4
+
+User = get_user_model()
 
 
 class DashboardAPITest(APITestCase):
@@ -182,3 +188,69 @@ class DashboardListTests(APITestCase):
 
         # Verify that the dashboard is deleted from the database
         self.assertFalse(Dashboard.objects.filter(pk=dashboard_to_delete.pk).exists())
+
+
+
+class UpdateDashboardViewTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(username="testuser", password="password")
+        self.client.force_authenticate(user=self.user)
+        self.dashboard = Dashboard.objects.create(
+            uuid=uuid4(), title="Original Title", privacy_type="private", created_by=self.user
+        )
+        self.analysis_result = UserAnalysisResults.objects.create(
+            created_by=self.user, analysis_results={"key": "value"}
+        )
+
+    def test_update_dashboard_title(self):
+        url = f"/dashboards/{self.dashboard.uuid}/update/"
+        data = {"title": "Updated Title"}
+        response = self.client.patch(url, data, format='json')
+        
+        self.dashboard.refresh_from_db()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(self.dashboard.title, "Updated Title")
+
+    def test_update_dashboard_privacy_type(self):
+        url = f"/dashboards/{self.dashboard.uuid}/update/"
+        data = {"privacy_type": "public"}
+        response = self.client.patch(url, data, format='json')
+        
+        self.dashboard.refresh_from_db()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(self.dashboard.privacy_type, "public")
+
+    def test_update_dashboard_analysis_results(self):
+        url = f"/dashboards/{self.dashboard.uuid}/update/"
+        data = {"analysis_results": [self.analysis_result.id]}
+        response = self.client.patch(url, data, format='json')
+        
+        self.dashboard.refresh_from_db()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIn(self.analysis_result, self.dashboard.analysis_results.all())
+
+    def test_update_dashboard_config(self):
+        url = f"/dashboards/{self.dashboard.uuid}/update/"
+        new_config = {"theme": "dark", "layout": "grid"}
+        data = {"config": new_config}
+        response = self.client.patch(url, data, format='json')
+        
+        self.dashboard.refresh_from_db()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(self.dashboard.config, new_config)
+
+    def test_update_dashboard_unauthenticated(self):
+        self.client.logout()
+        url = f"/dashboards/{self.dashboard.uuid}/update/"
+        data = {"title": "Unauthorized Update"}
+        response = self.client.patch(url, data, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_update_non_existent_dashboard(self):
+        url = f"/dashboards/{uuid4()}/update/"
+        data = {"title": "Non-existent Dashboard"}
+        response = self.client.patch(url, data, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
