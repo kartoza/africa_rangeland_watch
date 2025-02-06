@@ -149,8 +149,8 @@ class UserAnalysisResultsAdmin(admin.ModelAdmin):
         if os.path.exists(SERVICE_ACCOUNT_KEY):
             gauth.credentials = (
                 ServiceAccountCredentials.from_json_keyfile_name(
-                SERVICE_ACCOUNT_KEY, scopes=scope
-            )
+                    SERVICE_ACCOUNT_KEY, scopes=scope
+                )
             )
         else:
             gauth.credentials = (

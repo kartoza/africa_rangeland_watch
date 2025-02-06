@@ -54,7 +54,11 @@ def _get_bounds(data):
     selected_geos = selected_geos.merge(
         ee.FeatureCollection([ee.Feature(geo)])
     )
-    return communities.filterBounds(selected_geos).getInfo()['features'][0]['geometry']
+    return (
+        communities.filterBounds(
+            selected_geos
+        ).getInfo()['features'][0]['geometry']
+    )
 
 
 @app.task(name='store_analysis_raster_output')
