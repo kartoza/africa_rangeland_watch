@@ -9,7 +9,6 @@ from django.db.models.signals import pre_delete
 from django.dispatch import receiver
 
 from alerts.models import Indicator
-from analysis.utils import delete_gdrive_file
 
 
 class InterventionArea(models.Model):
@@ -291,6 +290,7 @@ class UserAnalysisResults(models.Model):
 def analysisresults_pre_delete(
         sender, instance: UserAnalysisResults, *args, **kwargs):
     """Delete raster output when the result is deleted."""
+    from analysis.utils import delete_gdrive_file
     if instance.raster_output_path:
         delete_gdrive_file(instance.raster_output_path)
 

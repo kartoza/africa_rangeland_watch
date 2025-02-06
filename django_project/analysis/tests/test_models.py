@@ -13,7 +13,7 @@ class UserAnalysisResultsTest(TestCase):
             raster_output_path='path/to/raster/output'
         )
 
-    @patch('analysis.models.delete_gdrive_file')
+    @patch('analysis.utils.delete_gdrive_file')
     def test_delete_gdrive_file_called_on_delete(
         self, mock_delete_gdrive_file
     ):
