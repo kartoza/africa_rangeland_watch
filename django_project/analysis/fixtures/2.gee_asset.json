@@ -1,0 +1,164 @@
+[
+{
+    "model": "analysis.geeasset",
+    "pk": 1,
+    "fields": {
+        "key": "baseline_table",
+        "source": "projects/ee-yekelaso1818/assets/CSA/Baseline_pre_export_20241007",
+        "type": "table"
+    }
+},
+{
+    "model": "analysis.geeasset",
+    "pk": 2,
+    "fields": {
+        "key": "temporal_table",
+        "source": "projects/ee-yekelaso1818/assets/Temporal_pre_export_20241202",
+        "type": "table"
+    }
+},
+{
+    "model": "analysis.geeasset",
+    "pk": 3,
+    "fields": {
+        "key": "communities",
+        "source": "projects/ee-yekelaso1818/assets/CSA/CSA_master_20241007",
+        "type": "table"
+    }
+},
+{
+    "model": "analysis.geeasset",
+    "pk": 4,
+    "fields": {
+        "key": "countries",
+        "source": "USDOS/LSIB/2013",
+        "type": "table"
+    }
+},
+{
+    "model": "analysis.geeasset",
+    "pk": 5,
+    "fields": {
+        "key": "globe_land30",
+        "source": "users/cgmorton/GlobeLand30",
+        "type": "image_collection"
+    }
+},
+{
+    "model": "analysis.geeasset",
+    "pk": 6,
+    "fields": {
+        "key": "soil_carbon",
+        "source": "users/grazingresearch/Collaboration/Soil_C/predictions2",
+        "type": "image_collection"
+    }
+},
+{
+    "model": "analysis.geeasset",
+    "pk": 7,
+    "fields": {
+        "key": "modis_vegetation",
+        "source": "MODIS/006/MOD13Q1",
+        "type": "image_collection"
+    }
+},
+{
+    "model": "analysis.geeasset",
+    "pk": 8,
+    "fields": {
+        "key": "cgls_ground_cover",
+        "source": "COPERNICUS/Landcover/100m/Proba-V-C3/Global",
+        "type": "image_collection"
+    }
+},
+{
+    "model": "analysis.geeasset",
+    "pk": 9,
+    "fields": {
+        "key": "sentinel2_harmonized",
+        "source": "COPERNICUS/S2_SR_HARMONIZED",
+        "type": "image_collection"
+    }
+},
+{
+    "model": "analysis.geeasset",
+    "pk": 10,
+    "fields": {
+        "key": "sentinel2_clouds",
+        "source": "COPERNICUS/S2_CLOUD_PROBABILITY",
+        "type": "image_collection"
+    }
+},
+{
+    "model": "analysis.geeasset",
+    "pk": 11,
+    "fields": {
+        "key": "soc_grids_cfvo",
+        "source": "users/zandersamuel/SA_misc/Soilgrids_CFVO",
+        "type": "image"
+    }
+},
+{
+    "model": "analysis.geeasset",
+    "pk": 12,
+    "fields": {
+        "key": "soc_stone_content",
+        "source": "ISDASOIL/Africa/v1/stone_content",
+        "type": "image"
+    }
+},
+{
+    "model": "analysis.geeasset",
+    "pk": 13,
+    "fields": {
+        "key": "soc_isda",
+        "source": "users/zandersamuel/Africa_misc/iSDA_SOC_m_30m_0_20cm_2001_2017_v0_13_wgs84",
+        "type": "image"
+    }
+},
+{
+    "model": "analysis.geeasset",
+    "pk": 14,
+    "fields": {
+        "key": "soc_grids_bd",
+        "source": "users/zandersamuel/SA_misc/SoilGrids_BD",
+        "type": "image"
+    }
+},
+{
+    "model": "analysis.geeasset",
+    "pk": 15,
+    "fields": {
+        "key": "soc_bulk_density",
+        "source": "ISDASOIL/Africa/v1/bulk_density",
+        "type": "image"
+    }
+},
+{
+    "model": "analysis.geeasset",
+    "pk": 16,
+    "fields": {
+        "key": "grazing_capacity",
+        "source": "users/zandersamuel/Consult_CSA/grazingCapacity_srnAfrica_LSU_ha",
+        "type": "image"
+    }
+},
+{
+    "model": "analysis.geeasset",
+    "pk": 17,
+    "fields": {
+        "key": "random_forest_training",
+        "source": "users/zandersamuel/Consult_CSA/Training_data_TOA_bg_t_g",
+        "type": "table"
+    }
+},
+{
+    "model": "analysis.geeasset",
+    "pk": 18,
+    "fields": {
+        "key": "fire_freq",
+        "source": "users/zandersamuel/Consult_CSA/fire_freq_SrnAfrica_200m",
+        "type": "image"
+    }
+}
+]

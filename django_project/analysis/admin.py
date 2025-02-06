@@ -9,7 +9,8 @@ from .models import (
     InterventionArea,
     Landscape,
     LandscapeCommunity,
-    UserAnalysisResults
+    UserAnalysisResults,
+    GEEAsset
 )
 from analysis.utils import get_gdrive_file, delete_gdrive_file
 
@@ -171,3 +172,12 @@ class UserAnalysisResultsAdmin(admin.ModelAdmin):
 
 
 admin.site.register(UserAnalysisResults, UserAnalysisResultsAdmin)
+
+
+@admin.register(GEEAsset)
+class GEEAssetAdmin(admin.ModelAdmin):
+    """Admin for GEEAsset model."""
+
+    list_display = ('key', 'type', 'source',)
+    search_fields = ('key', 'source',)
+    list_filter = ('type',)

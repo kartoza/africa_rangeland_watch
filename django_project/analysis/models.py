@@ -293,3 +293,59 @@ def analysisresults_pre_delete(
     """Delete raster output when the result is deleted."""
     if instance.raster_output_path:
         delete_gdrive_file(instance.raster_output_path)
+
+
+class GEEAssetType:
+    """GEE asset type."""
+
+    IMAGE = 'image'
+    IMAGE_COLLECTION = 'image_collection'
+    TABLE = 'table'
+    CLASSIFIER = 'classifier'
+    FEATURE_VIEW = 'feature_view'
+    FOLDER = 'folder'
+
+    @classmethod
+    def choices(cls):
+        return (
+            (cls.IMAGE, cls.IMAGE),
+            (cls.IMAGE_COLLECTION, cls.IMAGE_COLLECTION),
+            (cls.TABLE, cls.TABLE),
+            (cls.CLASSIFIER, cls.CLASSIFIER),
+            (cls.FEATURE_VIEW, cls.FEATURE_VIEW),
+            (cls.FOLDER, cls.FOLDER),
+        )
+
+
+class GEEAsset(models.Model):
+    """Model to store the GEE Asset that is used in the analysis."""
+
+    key = models.CharField(
+        unique=True,
+        max_length=50,
+        help_text='Key to the asset.'
+    )
+    source = models.CharField(
+        max_length=512,
+        help_text='Source path to the asset.'
+    )
+    type = models.CharField(
+        max_length=20,
+        choices=GEEAssetType.choices(),
+        help_text='Asset type.'
+    )
+
+    def __str__(self):
+        return self.key
+
+    @classmethod
+    def fetch_asset_source(cls, asset_key: str) -> str:
+        """Fetch asset source by its key."""
+        asset = GEEAsset.objects.filter(key=asset_key).first()
+        if asset is None:
+            raise KeyError(f'Asset with key {asset_key} not found!')
+        return asset.source
+
+    class Meta:
+        verbose_name_plural = 'GEE Assets'
+        db_table = 'analysis_gee_asset'

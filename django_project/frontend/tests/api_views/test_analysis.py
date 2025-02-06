@@ -6,6 +6,7 @@ Africa Rangeland Watch (ARW).
 """
 
 from django.urls import reverse
+from django.utils import timezone
 from unittest.mock import patch
 
 from analysis.models import Landscape
@@ -27,9 +28,63 @@ class AnalysisAPITest(BaseAPIViewTest):
         def side_effect_func(*args, **kwargs):
             """Side effect function."""
             if args:
+                year = args[2]['Temporal']['Annual']['test']
+                timestamp = timezone.now().replace(year=year).timestamp()
                 return [
-                    {'year': args[0]['Temporal']['Annual']['test']}, 
-                    {'quarter': args[0]['Temporal']['Quarterly']['test']}
+                    {
+                        "type": "FeatureCollection",
+                        "columns": {
+                            "Bare ground": "Float",
+                            "EVI": "Float",
+                            "NDVI": "Float",
+                            "Name": "String",
+                            "date": "Long",
+                            "system:index": "String",
+                            "year": "Integer"
+                        },
+                        "features": [
+                            {
+                                "type": "Feature",
+                                "geometry": None,
+                                "id": "4669",
+                                "properties": {
+                                    "Bare ground": 66.98364803153024,
+                                    "EVI": 0.25931378422899043,
+                                    "NDVI": 0.18172535940724382,
+                                    "Name": "BNP western polygon",
+                                    "date": timestamp,
+                                    "year": year
+                                }
+                            }
+                        ]
+                    },
+                    {
+                        "type": "FeatureCollection",
+                        "columns": {
+                            "Bare ground": "Float",
+                            "EVI": "Float",
+                            "NDVI": "Float",
+                            "Name": "String",
+                            "date": "Long",
+                            "system:index": "String",
+                            "year": "Integer"
+                        },
+                        "features": [
+                            {
+                                "type": "Feature",
+                                "geometry": None,
+                                "id": "4669",
+                                "properties": {
+                                    "Bare ground": 66.98364803153024,
+                                    "EVI": 0.25931378422899043,
+                                    "NDVI": 0.18172535940724382,
+                                    "Name": "BNP western polygon",
+                                    "date": timestamp,
+                                    "year": year
+                                }
+                            }
+                        ]
+                    }
                 ]
         mock_analysis.side_effect = side_effect_func
         mock_init_gee.return_value = None
@@ -48,8 +103,8 @@ class AnalysisAPITest(BaseAPIViewTest):
                 'quarter': '1'
             },
             'comparisonPeriod': {
-                'years': '2017,2019,2020',
-                'quarters': '1,2,3'
+                'year': [2019,2017,2020],
+                'quarter': [2,1,3]
             }
         }
         request = self.factory.post(
@@ -59,17 +114,22 @@ class AnalysisAPITest(BaseAPIViewTest):
         )
         request.user = self.superuser
         response = view(request)
+
         self.assertEqual(response.status_code, 200)
         results = response.data['results']
         self.assertEqual(
             len(results),
-            3
+            2
         )
         self.assertEqual(
-            results,
-            [
-                [{'year': '2017'}, {'quarter': '1'}], 
-                [{'year': '2019'}, {'quarter': '2'}], 
-                [{'year': '2020'}, {'quarter': '3'}]
-            ]
+            len(results[0]['features']),
+            5
+        )
+        self.assertEqual(
+            results[0]['features'][0]['properties']['year'],
+            2017
+        )
+        self.assertEqual(
+            results[0]['features'][-1]['properties']['year'],
+            2020
         )
