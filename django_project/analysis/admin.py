@@ -6,7 +6,8 @@ from .models import (
     InterventionArea,
     Landscape,
     LandscapeCommunity,
-    UserAnalysisResults
+    UserAnalysisResults,
+    GEEAsset
 )
 
 
@@ -112,3 +113,11 @@ class UserAnalysisResultsAdmin(admin.ModelAdmin):
 
 
 admin.site.register(UserAnalysisResults, UserAnalysisResultsAdmin)
+
+
+@admin.register(GEEAsset)
+class GEEAssetAdmin(admin.ModelAdmin):
+    """Admin for GEEAsset model."""
+
+    list_display = ('key', 'source',)
+    search_fields = ('key', 'source',)

@@ -276,3 +276,23 @@ class UserAnalysisResults(models.Model):
         created_by = self.created_by.username if self.created_by else 'Unknown'
         created_at = self.created_at
         return f"Analysis by {created_by} on {created_at}"
+
+
+class GEEAsset(models.Model):
+    """Model to store the GEE Asset that is used in the analysis."""
+
+    key = models.CharField(
+        max_length=50,
+        help_text="Key to the asset."
+    )
+    source = models.CharField(
+        max_length=512,
+        help_text='Source path to the asset.'
+    )
+
+    def __str__(self):
+        return self.key
+
+    class Meta:
+        verbose_name_plural = "GEE Assets"
+        db_table = 'analysis_gee_asset'
