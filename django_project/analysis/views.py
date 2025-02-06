@@ -34,8 +34,8 @@ class UserAnalysisResultsViewSet(viewsets.ModelViewSet):
             serializer.save(created_by=request.user)
 
             # store raster output using background task
-            analysis_results = request.data.get('analysis_results')
-            if analysis_results.get('analysisType', '') == 'Spatial':
+            analysis_data = request.data.get('analysis_results').get('data')
+            if analysis_data.get('analysisType', '') == 'Spatial':
                 store_analysis_raster_output.delay(serializer.data.get('id'))
 
             return Response(serializer.data, status=201)
