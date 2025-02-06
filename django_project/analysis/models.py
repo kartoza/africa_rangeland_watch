@@ -321,6 +321,14 @@ class GEEAsset(models.Model):
     def __str__(self):
         return self.key
 
+    @classmethod
+    def fetch_asset_source(cls, asset_key: str) -> str:
+        """Fetch asset source by its key."""
+        asset = GEEAsset.objects.filter(key=asset_key).first()
+        if asset is None:
+            raise KeyError(f'Asset with key {asset_key} not found!')
+        return asset.source
+
     class Meta:
         verbose_name_plural = 'GEE Assets'
         db_table = 'analysis_gee_asset'
