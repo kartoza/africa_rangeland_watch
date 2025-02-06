@@ -134,7 +134,14 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
       // remove polygon for reference layer diff
       geometrySelectorRef?.current?.removeLayer();
     }
-    dispatch(doAnalysis(data))
+    const newData = {
+      ...data,
+      comparisonPeriod: {
+        year: data.comparisonPeriod?.year,
+        quarter: data.temporalResolution == 'Quarterly' ? data.comparisonPeriod?.quarter : []
+      },
+    }
+    dispatch(doAnalysis(newData))
   }
 
   useEffect(() => {
@@ -208,6 +215,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
   if (loading) {
     disableSubmit = true;
   }
+
 
   return (
     <Box fontSize='13px'>
@@ -419,6 +427,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
             title='6) Select comparison period'
             value={data.comparisonPeriod}
             isQuarter={data.temporalResolution === TemporalResolution.QUARTERLY}
+            multiple={true}
             onSelectedYear={(value: number) => setData({
               ...data,
               comparisonPeriod: {
