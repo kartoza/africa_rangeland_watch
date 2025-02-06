@@ -17,6 +17,7 @@ from analysis.analysis import (
 
 
 def _run_spatial_analysis(data):
+    """Run spatial analysis to get difference of relative layer."""
     input_layers = InputLayer()
     analysis_dict = {
         'landscape': '',
@@ -47,6 +48,7 @@ def _run_spatial_analysis(data):
 
 
 def _get_bounds(data):
+    """Get bounds from a selected community by its latitude and longitude."""
     input_layers = InputLayer()
     selected_geos = input_layers.get_selected_geos()
     communities = input_layers.get_communities()

@@ -1,14 +1,8 @@
-import base64
-import json
-import os
 from django.contrib import admin
 from django.contrib.gis.admin import OSMGeoAdmin
 from django.http import StreamingHttpResponse, Http404
 from django.urls import re_path, reverse
 from django.utils.html import format_html
-from pydrive2.auth import GoogleAuth
-from pydrive2.drive import GoogleDrive
-from oauth2client.service_account import ServiceAccountCredentials
 
 from .models import (
     Analysis,
@@ -17,7 +11,7 @@ from .models import (
     LandscapeCommunity,
     UserAnalysisResults
 )
-from analysis.analysis import SERVICE_ACCOUNT_KEY
+from analysis.utils import get_gdrive_file, delete_gdrive_file
 
 
 @admin.register(Analysis)
@@ -111,10 +105,22 @@ class LandscapeCommunityAdmin(OSMGeoAdmin):
     map_template = 'gis/admin/osm.html'
 
 
+def clear_raster_output(modeladmin, request, queryset):
+    """Clear raster output from analysis results."""
+    for result in queryset:
+        if not result.raster_output_path:
+            continue
+
+        if delete_gdrive_file(result.raster_output_path):
+            result.raster_output_path = None
+            result.save()
+
+
 class UserAnalysisResultsAdmin(admin.ModelAdmin):
     list_display = ('created_by', 'source', 'created_at', 'download_link')
     search_fields = ('created_by__username', 'source',)
     list_filter = ('source',)
+    actions = [clear_raster_output]
 
     def download_link(self, obj: UserAnalysisResults):
         if not obj.raster_output_path:
@@ -143,35 +149,10 @@ class UserAnalysisResultsAdmin(admin.ModelAdmin):
         if not result.raster_output_path:
             raise Http404('File not found')
 
-        # Authenticate to the Google Drive of the Service Account
-        gauth = GoogleAuth()
-        scope = ['https://www.googleapis.com/auth/drive']
-        if os.path.exists(SERVICE_ACCOUNT_KEY):
-            gauth.credentials = (
-                ServiceAccountCredentials.from_json_keyfile_name(
-                    SERVICE_ACCOUNT_KEY, scopes=scope
-                )
-            )
-        else:
-            gauth.credentials = (
-                ServiceAccountCredentials.from_json_keyfile_dict(
-                    json.loads(
-                        base64.b64decode(SERVICE_ACCOUNT_KEY).decode('utf-8')
-                    ),
-                    scopes=scope
-                )
-            )
-        drive = GoogleDrive(gauth)
-        filename = result.raster_output_path
-        file_list = drive.ListFile(
-            {'q': f"title = '{filename}' and trashed = false"}
-        ).GetList()
-
-        if not file_list:
+        file = get_gdrive_file(result.raster_output_path)
+        if not file:
             raise Http404("File not found in Google Drive")
         else:
-            file = file_list[0]
-
             # Download and stream the file
             def file_iterator():
                 file.FetchContent()
@@ -184,7 +165,7 @@ class UserAnalysisResultsAdmin(admin.ModelAdmin):
                 content_type='image/tiff'
             )
             response['Content-Disposition'] = (
-                f'attachment; filename="{filename}"'
+                f'attachment; filename="{result.raster_output_path}"'
             )
             return response
 
