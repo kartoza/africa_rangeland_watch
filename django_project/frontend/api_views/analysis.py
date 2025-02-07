@@ -20,6 +20,15 @@ from analysis.analysis import (
 )
 
 
+def _temporal_analysis(lat, lon, analysis_dict, custom_geom):
+    return run_analysis(
+        lat=lat,
+        lon=lon,
+        analysis_dict=analysis_dict,
+        custom_geom=custom_geom
+    )
+
+
 class AnalysisAPI(APIView):
     """API to do analysis."""
 
@@ -52,7 +61,8 @@ class AnalysisAPI(APIView):
         return run_analysis(
             lon=float(data['longitude']),
             lat=float(data['latitude']),
-            analysis_dict=analysis_dict
+            analysis_dict=analysis_dict,
+            custom_geom=data.get('custom_geom', None)
         )
 
     def _combine_temporal_analysis_results(self, years, input_results):
@@ -161,10 +171,11 @@ class AnalysisAPI(APIView):
             # Submit tasks to the executor
             futures = [
                 executor.submit(
-                    run_analysis,
+                    _temporal_analysis,
                     data['latitude'],
                     data['longitude'],
-                    analysis_dict
+                    analysis_dict,
+                    data.get('custom_geom', None)
                 ) for analysis_dict in analysis_dict_list
             ]
             # Collect results as they complete
@@ -230,7 +241,8 @@ class AnalysisAPI(APIView):
             lon=float(data['longitude']),
             lat=float(data['latitude']),
             analysis_dict=analysis_dict,
-            reference_layer=data['reference_layer']
+            reference_layer=data['reference_layer'],
+            custom_geom=data.get('custom_geom', None)
         )
 
     def post(self, request, *args, **kwargs):
