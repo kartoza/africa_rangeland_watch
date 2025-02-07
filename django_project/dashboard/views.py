@@ -367,6 +367,16 @@ class UpdateDashboardView(APIView):
     def patch(self, request, uuid):
         dashboard = get_object_or_404(Dashboard, uuid=uuid)
 
+        # Check if the request user is the owner of the dashboard
+        if dashboard.created_by != request.user:
+            return Response(
+                {
+                    "error":
+                    "You do not have permission to update this dashboard."
+                },
+                status=status.HTTP_403_FORBIDDEN
+            )
+
         # Extract fields from request data
         title = request.data.get("title", dashboard.title)
         privacy_type = request.data.get("privacy_type", dashboard.privacy_type)
