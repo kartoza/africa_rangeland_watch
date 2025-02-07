@@ -285,7 +285,7 @@ export function RenderSpatial({ analysis }: Props) {
 }
 
 export function RenderResult({ analysis }: Props) {
-  switch (analysis.data.analysisType) {
+  switch (analysis?.data?.analysisType) {
     case "Baseline":
       return <RenderBaseline analysis={analysis} />;
     case "Temporal":

@@ -14,6 +14,7 @@ import { Layer } from './layerSlice';
 export const REFERENCE_LAYER_DIFF_ID = 'spatial_rel_diff'
 
 export interface Analysis {
+  id: string;
   data: AnalysisData;
   results: any;
 }
