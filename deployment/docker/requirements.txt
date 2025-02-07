@@ -61,3 +61,6 @@ Pillow
 
 # fiona
 fiona==1.10.1
+
+# pydrive2 for fetching raster in gdrive
+pydrive2==1.21.3

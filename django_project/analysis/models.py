@@ -5,6 +5,8 @@ import ee
 from django.contrib.auth.models import User
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import GEOSGeometry
+from django.db.models.signals import pre_delete
+from django.dispatch import receiver
 
 from alerts.models import Indicator
 
@@ -271,11 +273,26 @@ class UserAnalysisResults(models.Model):
         null=True,
         blank=True
     )
+    raster_output_path = models.CharField(
+        max_length=512,
+        null=True,
+        blank=True,
+        help_text='Path to the raster output of this analysis.'
+    )
 
     def __str__(self):
         created_by = self.created_by.username if self.created_by else 'Unknown'
         created_at = self.created_at
         return f"Analysis by {created_by} on {created_at}"
+
+
+@receiver(pre_delete, sender=UserAnalysisResults)
+def analysisresults_pre_delete(
+        sender, instance: UserAnalysisResults, *args, **kwargs):
+    """Delete raster output when the result is deleted."""
+    from analysis.utils import delete_gdrive_file
+    if instance.raster_output_path:
+        delete_gdrive_file(instance.raster_output_path)
 
 
 class GEEAssetType:

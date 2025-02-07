@@ -6,6 +6,8 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 
+from analysis.tasks import store_analysis_raster_output
+
 
 class UserAnalysisResultsViewSet(viewsets.ModelViewSet):
     queryset = UserAnalysisResults.objects.all()
@@ -31,6 +33,12 @@ class UserAnalysisResultsViewSet(viewsets.ModelViewSet):
         serializer = self.get_serializer(data=request.data)
         if serializer.is_valid():
             serializer.save(created_by=request.user)
+
+            # store raster output using background task
+            analysis_data = request.data.get('analysis_results').get('data')
+            if analysis_data.get('analysisType', '') == 'Spatial':
+                store_analysis_raster_output.delay(serializer.data.get('id'))
+
             return Response(serializer.data, status=201)
         return Response(serializer.errors, status=400)
 

@@ -1042,6 +1042,7 @@ def export_image_to_drive(
     None
     """
     # Configure the export task
+    no_data_val = -9999
     task = ee.batch.Export.image.toDrive(
         image=image.visualize(**vis_params) if vis_params else image,
         description=description,
@@ -1049,7 +1050,11 @@ def export_image_to_drive(
         fileNamePrefix=file_name_prefix,
         scale=scale,
         region=region,
-        maxPixels=max_pixels
+        maxPixels=max_pixels,
+        formatOptions={
+            'cloudOptimized': True,
+            'noData': no_data_val
+        }
     )
 
     task.start()
