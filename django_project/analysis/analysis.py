@@ -485,9 +485,24 @@ def run_analysis(lat: float, lon: float, analysis_dict: dict, *args, **kwargs):
     selected_geos = selected_geos.merge(
         ee.FeatureCollection([ee.Feature(geo)])
     )
-    select_names = communities.filterBounds(selected_geos).distinct(
-        ['Name']
-    ).reduceColumns(ee.Reducer.toList(), ['Name']).getInfo()['list']
+    select_names = None
+
+    custom_geom = kwargs.get('custom_geom', None)
+    if custom_geom:
+        custom_geom = ee.FeatureCollection([
+            ee.Feature(
+                ee.Geometry.Polygon(custom_geom['coordinates']) if
+                custom_geom['type'] == 'Polygon' else
+                ee.Geometry.MultiPolygon(custom_geom['coordinates'])
+            )
+        ])
+        select_names = communities.filterBounds(custom_geom).distinct(
+            ['Name']
+        ).reduceColumns(ee.Reducer.toList(), ['Name']).getInfo()['list']
+    else:
+        select_names = communities.filterBounds(selected_geos).distinct(
+            ['Name']
+        ).reduceColumns(ee.Reducer.toList(), ['Name']).getInfo()['list']
 
     if analysis_dict['analysisType'] == "Spatial":
         reference_layer = kwargs.get('reference_layer', None)
@@ -499,7 +514,10 @@ def run_analysis(lat: float, lon: float, analysis_dict: dict, *args, **kwargs):
             reference_layer
         )
         reduced = rel_diff.reduceRegions(
-            collection=communities.filterBounds(selected_geos),
+            collection=(
+                custom_geom if custom_geom else
+                communities.filterBounds(selected_geos)
+            ),
             reducer=ee.Reducer.mean(),
             scale=60,
             tileScale=4
@@ -507,7 +525,10 @@ def run_analysis(lat: float, lon: float, analysis_dict: dict, *args, **kwargs):
         return reduced.getInfo()
 
     if analysis_dict['analysisType'] == "Baseline":
-        select = baseline_table.filterBounds(selected_geos)
+        if custom_geom:
+            select = baseline_table.filterBounds(custom_geom)
+        else:
+            select = baseline_table.filterBounds(selected_geos)
         return select.getInfo()
 
     if analysis_dict['analysisType'] == "Temporal":
@@ -524,6 +545,7 @@ def run_analysis(lat: float, lon: float, analysis_dict: dict, *args, **kwargs):
             ):
                 new_stats = get_latest_stats(
                     landscapes_dict[analysis_dict['landscape']],
+                    custom_geom if custom_geom else
                     communities.filterBounds(selected_geos)
                 )
                 new_stats = new_stats.select(
