@@ -6,6 +6,7 @@ Africa Rangeland Watch (ARW).
 """
 import ee
 
+from analysis.models import GEEAsset
 from layers.models import InputLayer
 from layers.generator.base import BaseLayerGenerator, LayerCacheResult
 
@@ -27,7 +28,7 @@ class SoilOrganicCarbonGenerator(BaseLayerGenerator):
         # Import soil organic carbon data from Venter et al 2021
         # https://www.sciencedirect.com/science/article/pii/S0048969721004526
         soil_organic = ee.ImageCollection(
-            'users/grazingresearch/Collaboration/Soil_C/predictions2'
+            GEEAsset.fetch_asset_source('soil_carbon')
         )
         soil_organic = soil_organic.map(self._map_bands)
 
@@ -45,14 +46,13 @@ class SoilOrganicCarbonGenerator(BaseLayerGenerator):
         # Convert to SOC stocks using bulk density, fraction coarse fragments
         # Fill in gaps with SoilGrids
         isda = ee.Image(
-            'users/zandersamuel/Africa_misc/'
-            'iSDA_SOC_m_30m_0_20cm_2001_2017_v0_13_wgs84'
+            GEEAsset.fetch_asset_source('soc_isda')
         )
         isda = ee.Image(ee.Image(isda.divide(10)).exp()).subtract(1)
 
         # Soil bulk density (fine earth) g / m3
         bd = ee.Image(
-            'users/zandersamuel/SA_misc/SoilGrids_BD'
+            GEEAsset.fetch_asset_source('soc_grids_bd')
         ).rename('soil_bd').selfMask().divide(100)
         bd2 = ee.Image(
             'ISDASOIL/Africa/v1/bulk_density'
@@ -63,10 +63,10 @@ class SoilOrganicCarbonGenerator(BaseLayerGenerator):
 
         # Coast fragment fraction 0-1
         cfvo = ee.Image(
-            'users/zandersamuel/SA_misc/Soilgrids_CFVO'
+            GEEAsset.fetch_asset_source('soc_grids_cfvo')
         ).selfMask().rename('soil_cfvo').divide(1000)
         cfvo2 = ee.Image(
-            'ISDASOIL/Africa/v1/stone_content'
+            GEEAsset.fetch_asset_source('soc_stone_content')
         ).select('mean_0_20').rename('soil_cfvo').divide(100)
         cfvo = ee.ImageCollection(
             [cfvo2.float(), cfvo.float()]

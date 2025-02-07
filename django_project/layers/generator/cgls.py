@@ -6,6 +6,7 @@ Africa Rangeland Watch (ARW).
 """
 import ee
 
+from analysis.models import GEEAsset
 from layers.models import InputLayer
 from layers.generator.base import BaseLayerGenerator, LayerCacheResult
 
@@ -33,7 +34,7 @@ class CGLSGenerator(BaseLayerGenerator):
 
         # Get MODIS vegetation data
         cgls_col = ee.ImageCollection(
-            'COPERNICUS/Landcover/100m/Proba-V-C3/Global'
+            GEEAsset.fetch_asset_source('cgls_ground_cover')
         ).select(
             [
                 'bare-coverfraction',
