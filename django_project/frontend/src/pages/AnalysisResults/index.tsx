@@ -36,6 +36,7 @@ import { deleteAnalysis, fetchAnalysis } from "../../store/userAnalysisSlice";
 import "maplibre-gl/dist/maplibre-gl.css"; 
 import CreateDashboardModal from "../../components/CreateDashboard";
 import { format } from 'date-fns';
+import Pagination from "../../components/Pagination";
 
 interface FeatureProperties {
   Project?: string;
@@ -72,6 +73,7 @@ export default function AnalysisResults() {
   const [searchTerm, setSearchTerm] = useState("");
   const [showAll, setShowAll] = useState(false);
   const [selectedAnalysis, setSelectedAnalysis] = useState([]);
+  const [viewAnalysis, setViewAnalysis] = useState(null);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [isCreateDashboardOpen, setCreateDashboard] = useState(false);
   const navigate = useNavigate()
@@ -86,6 +88,8 @@ export default function AnalysisResults() {
   const [isConfrimDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
   const onConfirmDeleteClose = () => setIsConfirmDeleteOpen(false);
   const cancelRef = React.useRef();
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
 
   useEffect(() => {
@@ -166,6 +170,8 @@ export default function AnalysisResults() {
   );
 
   const handleViewClick = (analysis: any) => {
+    console.log('analysis to show ',analysis)
+    setViewAnalysis(analysis)
     onOpen();
   };
 
@@ -189,6 +195,13 @@ export default function AnalysisResults() {
   function handleSave(): void {
     throw new Error("Function not implemented.");
   }
+
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const paginatedData = filteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
   return (
     <>
@@ -299,7 +312,7 @@ export default function AnalysisResults() {
               flexDirection="column"
               gap={4}
             >
-              {filteredData?.map((analysis: any, index: number) => {
+              {paginatedData?.map((analysis: any, index: number) => {
                 let analysisSummary = getAnalysisSummary(analysis)
 
                 return (
@@ -386,7 +399,7 @@ export default function AnalysisResults() {
                             leastDestructiveRef={cancelRef}
                             onClose={onConfirmDeleteClose}
                           >
-                            <AlertDialogOverlay bg="rgba(0, 0, 0, 0.5)">
+                            <AlertDialogOverlay bg="rgba(0, 0, 0, 0.4)">
                               <AlertDialogContent bg="white">
                                 <AlertDialogHeader fontSize="lg" fontWeight="bold">
                                   Delete Analysis
@@ -430,6 +443,7 @@ export default function AnalysisResults() {
                   </Card>
                 );
               })}
+               <Pagination currentPage={currentPage} totalPages={totalPages} handlePageChange={handlePageChange} />
             </Box>
 
             <CreateDashboardModal
@@ -440,7 +454,7 @@ export default function AnalysisResults() {
             />
 
             {/* Right Sidebar */}
-            <AnalysisSideBar isOpen={isOpen} onClose={onClose} selectedAnalysis={selectedAnalysis} />
+            <AnalysisSideBar isOpen={isOpen} onClose={onClose} selectedAnalysis={viewAnalysis} />
           </Box>
         </Flex>
       </Box>

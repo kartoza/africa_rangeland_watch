@@ -14,14 +14,14 @@ interface ChartCardProps {
     owner: any;
     title: any;
     uuid: any;
-    config: {
+    config?: {
       dashboardName: string;
       preference: string;
       chartType: string;
       title: string;
       data: any;
       downloadData: string;
-      owner: boolean;
+      owner?: boolean;
     };
     analysisResults: any[];
   };
@@ -75,7 +75,7 @@ const ChartCard: React.FC<ChartCardProps> = ({ config, className }) => {
 
   const getChartComponent = () => {
     try {
-      return <RenderResult analysis={config.analysisResults[0].analysis_results as Analysis} />;
+      return <RenderResult analysisResults={config.analysisResults} />;
     } catch (error) {
       console.error("Error processing data:", error);
       return (
