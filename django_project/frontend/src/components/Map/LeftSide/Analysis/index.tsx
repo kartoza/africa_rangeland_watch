@@ -19,6 +19,7 @@ import AnalysisLandscapeGeometrySelector
 import { AppDispatch, RootState } from "../../../../store";
 import { doAnalysis, REFERENCE_LAYER_DIFF_ID, resetAnalysisResult } from "../../../../store/analysisSlice";
 import { AnalysisCustomGeometrySelector } from "./AnalysisCustomGeometrySelector";
+import AnalysisUserDefinedLayerSelector from "./AnalysisUserDefinedLayerSelector";
 import { LayerCheckboxProps } from '../Layers';
 import { useSession } from '../../../../sessionProvider';
 import { saveAnalysis } from '../../../../store/userAnalysisSlice';
@@ -228,11 +229,12 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
             ...data,
             landscape: value
           })}
+          hasUserDefinedLayer={layers.some(layer => layer.group === 'user-defined')}
         />
         <AnalysisLandscapeGeometrySelector
           landscape={landscapes.find(landscape => landscape.name === data.landscape)}
           featureId={data.communityFeatureId}
-          enableSelection={mapInteraction === MapAnalysisInteraction.LANDSCAPE_SELECTOR}
+          enableSelection={mapInteraction === MapAnalysisInteraction.LANDSCAPE_SELECTOR && data.landscape !== 'user-defined'}
           onSelected={(value) => {
             setData({
               ...data,
@@ -263,6 +265,12 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
             }
           }}
         />
+        { data.landscape === 'user-defined' &&
+          <AnalysisUserDefinedLayerSelector layers={layers.filter(layer => layer.group === 'user-defined')}
+            enableSelection={mapInteraction === MapAnalysisInteraction.LANDSCAPE_SELECTOR && data.landscape === 'user-defined'}
+            onSelected={(value) => {}}
+          />
+        }
 
         {/* 2) Analysis type */}
         {

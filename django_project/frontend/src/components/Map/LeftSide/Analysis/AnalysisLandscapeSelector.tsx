@@ -15,11 +15,12 @@ interface Props {
   data: AnalysisData;
   landscapes?: Landscape[];
   onSelected: (value: string) => void;
+  hasUserDefinedLayer?: boolean;
 }
 
 /** Landscape selector. */
 export default function AnalysisLandscapeSelector(
-  { data, landscapes, onSelected }: Props
+  { data, landscapes, onSelected, hasUserDefinedLayer }: Props
 ) {
 
   return (
@@ -55,6 +56,14 @@ export default function AnalysisLandscapeSelector(
                 {landscape.name}
               </option>
             })
+          }
+          { hasUserDefinedLayer && 
+            <option
+              key={-1}
+              value={'user-defined'}
+            >
+              User Defined Layer
+            </option>
           }
         </Select>
       </AccordionPanel>
