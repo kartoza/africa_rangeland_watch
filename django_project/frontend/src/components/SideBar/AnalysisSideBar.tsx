@@ -41,18 +41,22 @@ const AnalysisSideBar = ({ isOpen, onClose, selectedAnalysis }: SidebarProps) =>
       {/* Sidebar Panel */}
       <MotionBox
         position="fixed"
-        top="0"
+        top="20%"
         right="0"
+        transform="translateY(-20%)"
         width={{ base: "100%", md: "500px" }}
-        height="100%"
+        maxHeight="90vh"
         bg="white"
         boxShadow="lg"
         zIndex={1000}
         padding={{ base: "15px", md: "20px" }}
+        borderRadius="12px 0 0 12px"
         initial={{ x: "100%" }}
         animate={{ x: isOpen ? "0%" : "100%" }}
         transition={{ duration: 0.3, ease: "easeInOut" }}
+        overflowY="auto"
       >
+
         {/* Close Button */}
         <Button
           position="absolute"
@@ -73,9 +77,10 @@ const AnalysisSideBar = ({ isOpen, onClose, selectedAnalysis }: SidebarProps) =>
         {/* Image */}
         <Box
           w={{ base: "100%", md: "100%" }}
-          h={{ base: "200px", md: "50%" }}
+          h={{ base: "auto", md: "auto" }}
           objectFit="cover"
           borderRadius="md"
+          mt={8}
           mb={4}
           overflow={"auto"}
         >
