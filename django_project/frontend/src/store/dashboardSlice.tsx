@@ -89,6 +89,19 @@ export const fetchDashboardOwners = createAsyncThunk(
   }
 );
 
+// Delete dashboard
+export const deleteDashboard = createAsyncThunk(
+  "dashboard/deleteDashboard",
+  async (uuid: string, { rejectWithValue }) => {
+    try {
+      await axios.delete(`/dashboards/${uuid}/`);
+      return uuid;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || "Error deleting dashboard");
+    }
+  }
+);
+
 const dashboardSlice = createSlice({
   name: 'dashboard',
   initialState: {
@@ -167,6 +180,21 @@ const dashboardSlice = createSlice({
       .addCase(fetchDashboardOwners.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message;
+      })
+      .addCase(deleteDashboard.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.dashboardUpdated = false;
+      })
+      .addCase(deleteDashboard.fulfilled, (state, action) => {
+        state.loading = false;
+        state.dashboards = state.dashboards.filter((db) => db.uuid !== action.payload);
+        state.dashboardUpdated = true;
+      })
+      .addCase(deleteDashboard.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+        state.dashboardUpdated = false;
       });
   },
 });
