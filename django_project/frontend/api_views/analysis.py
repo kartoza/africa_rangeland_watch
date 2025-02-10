@@ -5,6 +5,7 @@ Africa Rangeland Watch (ARW).
 .. note:: Analysis APIs
 """
 import uuid
+from collections import OrderedDict
 from copy import deepcopy
 from concurrent.futures import ThreadPoolExecutor
 from rest_framework import status
@@ -161,7 +162,10 @@ class AnalysisAPI(APIView):
                                 'NDVI': {'min': None, 'max': None, 'mean': None},
                             }
                         }
-
+            
+            results = {year: {name: OrderedDict(sorted(value.items())) for name, value in sorted(group.items())}
+               for year, group in sorted(results.items())}
+            
             return results
 
         output_results = []
