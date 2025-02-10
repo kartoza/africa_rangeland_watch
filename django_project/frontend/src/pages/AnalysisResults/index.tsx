@@ -129,7 +129,6 @@ export default function AnalysisResults() {
     dispatch(fetchAnalysis());
    }
   }, [analysisDeleted]);
-  
 
   const getAnalysisSummary = (analysis: AnalysisData): AnalysisSummary => {
     const { analysis_results } = analysis || {};
@@ -182,6 +181,31 @@ export default function AnalysisResults() {
   };
 
   const handleCreateDashboardClick = () => {
+
+     // Filter analysis data based on selected analysis IDs
+    const matchedAnalysis = analysisData.filter((item: { id: any; }) => selectedAnalysis.includes(item.id));
+
+    // Extract analysis types from the matched analysis objects
+    const analysisTypes = matchedAnalysis.map((item: { analysis_results: { data: { analysisType: any; }; }; }) => item.analysis_results.data?.analysisType);
+
+    // Check if all analysis types are the same
+    const allSameType = analysisTypes.every((type: any) => type === analysisTypes[0]);
+
+    if (!allSameType) {
+      toast({
+        title: "Cannot create dashboard.",
+        description: `Can only create a dashboard from analysis results with the same analysis type! Current selected results have: ${analysisTypes.join(", ")}`,
+        status: "warning",
+        duration: 5000,
+        isClosable: true,
+        position: "top-right",
+        containerStyle: {
+          backgroundColor: "#00634b",
+          color: "white",
+        },
+      });
+      return;
+    }
     // Open the Create Dashboard modal
     setCreateDashboard(true);
   };
