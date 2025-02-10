@@ -210,7 +210,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
     dataError = false
   }
   let disableSubmit = !!dataError;
-  if (!data.community) {
+  if (!data.community && !data.custom_geom) {
     disableSubmit = true
   }
   if (loading) {
@@ -242,7 +242,10 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
               latitude: value?.latitude ? value?.latitude : null,
               longitude: value?.longitude ? value?.longitude : null,
               communityName: value?.name ? value?.name : null,
-              communityFeatureId: value?.featureId ? value?.featureId : null
+              communityFeatureId: value?.featureId ? value?.featureId : null,
+              custom_geom: null,
+              userDefinedFeatureId: null,
+              userDefinedFeatureName: null
             })
           }
           }
@@ -266,9 +269,22 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
           }}
         />
         { data.landscape === 'user-defined' &&
-          <AnalysisUserDefinedLayerSelector layers={layers.filter(layer => layer.group === 'user-defined')}
+          <AnalysisUserDefinedLayerSelector layers={layers}
             enableSelection={mapInteraction === MapAnalysisInteraction.LANDSCAPE_SELECTOR && data.landscape === 'user-defined'}
-            onSelected={(value) => {}}
+            onSelected={(geometry, latitude, longitude, userDefinedFeatureName, userDefinedFeatureId) => {
+              setData({
+                ...data,
+                community: null,
+                latitude: latitude,
+                longitude: longitude,
+                communityName: null,
+                communityFeatureId: null,
+                custom_geom: geometry,
+                userDefinedFeatureId: userDefinedFeatureId,
+                userDefinedFeatureName: userDefinedFeatureName
+              })
+            }}
+            featureId={data.userDefinedFeatureId}
           />
         }
 
@@ -331,7 +347,10 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
                     latitude: null,
                     longitude: null,
                     communityName: null,
-                    communityFeatureId: null
+                    communityFeatureId: null,
+                    custom_geom: null,
+                    userDefinedFeatureId: null,
+                    userDefinedFeatureName: null
                   })
                   setMapInteraction(MapAnalysisInteraction.CUSTOM_GEOMETRY_DRAWING)
                   dispatch(resetAnalysisResult())
@@ -459,7 +478,9 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
             <Box mb={4} color={'green'}>
               Click polygons on the
               map {data?.communityName ?
-              <Box>{data?.communityName}</Box> : null}
+              <Box>{data?.communityName}</Box> :
+              data?.userDefinedFeatureName ? 
+              <Box>{data?.userDefinedFeatureName}</Box> : null}
             </Box> :
             null
         }

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import {FeatureCollection} from "geojson";
+import {Geometry} from "geojson";
 import maplibregl from "maplibre-gl";
 import { Layer } from '../../../../store/layerSlice';
 import { useMap } from '../../../../MapContext';
@@ -7,11 +7,15 @@ import { removeSource } from '../../utils';
 
 const USER_DEFINED_LAYER_ID = 'user-defined-analysis-layer';
 const DEFAULT_FALLBACK_FEATURE_ID = 'id';
+const DEFAULT_FEATURE_NAME = 'name';
+const DEFAULT_EMPTY_NAME = 'User Defined Geometry';
+const DEFAULT_EMPTY_ID = 'User Defined ID';
 
 interface Props {
   layers: Layer[];
   enableSelection: boolean;
-  onSelected: (geometry: FeatureCollection) => void;
+  onSelected: (geometry: Geometry, latitude: number, longitude: number, userDefinedFeatureName: string, userDefinedFeatureId: string) => void;
+  featureId?: string;
 }
 
 type LayerAttributeIdDict = { [key: string]: string };
@@ -88,21 +92,21 @@ const removeEventListener = (map: maplibregl.Map, dict: LayerDict[]) => {
 
 /** User defined layer selector. */
 export default function AnalysisUserDefinedLayerSelector(
-  { layers, enableSelection, onSelected }: Props
+  { layers, enableSelection, onSelected, featureId }: Props
 ) {
   const { map } = useMap();
   const [attributeId, setAttributeId] = useState<LayerAttributeIdDict>({})
-
   useEffect(() => {
     try {
       if (!map) {
         return
       }
-      if (!layers || layers.length === 0) {
+      const userDefinedLayers = layers.filter(layer => layer.group === 'user-defined')
+      if (!userDefinedLayers || userDefinedLayers.length === 0) {
         return
       }
       let _atrribs: LayerAttributeIdDict = {}
-      layers.forEach(layer => {
+      userDefinedLayers.forEach(layer => {
         renderLayer(map, layer)
         _atrribs[layer.id] = layer.metadata?.attributeId ? layer.metadata?.attributeId : DEFAULT_FALLBACK_FEATURE_ID
       });
@@ -114,7 +118,7 @@ export default function AnalysisUserDefinedLayerSelector(
       if (!map) {
         return
       }
-      layers.forEach(layer => {
+      layers.filter(layer => layer.group === 'user-defined').forEach(layer => {
         removeLayer(map, layer);
       });
     }
@@ -135,9 +139,11 @@ export default function AnalysisUserDefinedLayerSelector(
     removeEventListener(map, layerDict)
     layerDict = []
     userDefinedLayers.forEach(layerId => {
+      const originalLayerId = layerId.replace('-fill', '')
+      const attrId = originalLayerId in attributeId ? attributeId[originalLayerId]: DEFAULT_FALLBACK_FEATURE_ID
       if (enableSelection) {
         // Click event
-        let clickFunction: ClickFunction = (e: any) => {
+        let clickFunction: ClickFunction = (e: maplibregl.MapMouseEvent) => {
           const features = map.queryRenderedFeatures(e.point, {
             layers: [layerId],
           });
@@ -145,11 +151,10 @@ export default function AnalysisUserDefinedLayerSelector(
             // get first feature
             const feature = features[0]
             if (feature.geometry.type === "Polygon" || feature.geometry.type === "MultiPolygon") {
-              // TODO: call on selected
-              console.log("Clicked Polygon from Layer:", feature, feature.layer.id, feature.geometry.coordinates);
+              const featureName = feature.properties[DEFAULT_FEATURE_NAME] !== undefined ? feature.properties[DEFAULT_FEATURE_NAME] : DEFAULT_EMPTY_NAME
+              const featureId = feature.properties[attrId] !== undefined ? feature.properties[attrId] : DEFAULT_EMPTY_ID
+              onSelected(feature.geometry, e.lngLat.lat, e.lngLat.lng, featureName, originalLayerId+','+featureId)
             }
-            const originalLayerId = layerId.replace('-fill', '')
-            const attrId = originalLayerId in attributeId ? attributeId[originalLayerId]: DEFAULT_FALLBACK_FEATURE_ID
             if (feature.properties[attrId] !== undefined) {
               map.setFilter(
                 originalLayerId + '-highlight',
@@ -175,6 +180,26 @@ export default function AnalysisUserDefinedLayerSelector(
           layerId: layerId
         })
       }
+
+      if (featureId) {
+        const splits = featureId.split(',')
+        if (splits.length === 2 && splits[1] !== DEFAULT_EMPTY_ID && splits[0] === originalLayerId) {
+          map.setFilter(
+            originalLayerId + '-highlight',
+            ["==", attrId, splits[1]]
+          )
+        } else {
+          map.setFilter(
+            originalLayerId + '-highlight',
+            ["==", attrId, '']
+          )
+        }
+      } else {
+        map.setFilter(
+          originalLayerId + '-highlight',
+          ["==", attrId, '']
+        )
+      }
     })
 
     return () => {
@@ -185,7 +210,7 @@ export default function AnalysisUserDefinedLayerSelector(
       removeEventListener(map, layerDict)
       layerDict = []
     }
-  }, [map, attributeId, enableSelection])
+  }, [map, attributeId, featureId, enableSelection])
 
   return <></>
 }
