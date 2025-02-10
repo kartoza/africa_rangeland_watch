@@ -75,7 +75,7 @@ const ChartCard: React.FC<ChartCardProps> = ({ config, className }) => {
 
   const getChartComponent = () => {
     try {
-      return <RenderResult analysis={config.analysisResults[0].analysis_results as Analysis} />;
+      return <RenderResult analysisResults={config.analysisResults} />;
     } catch (error) {
       console.error("Error processing data:", error);
       return (
