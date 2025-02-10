@@ -5,8 +5,10 @@ import base64
 import ee
 import os
 
-SERVICE_ACCOUNT_KEY = os.environ.get('SERVICE_ACCOUNT_KEY', '')
-SERVICE_ACCOUNT = os.environ.get('SERVICE_ACCOUNT', '')
+# SERVICE_ACCOUNT_KEY = os.environ.get('SERVICE_ACCOUNT_KEY', '')
+# SERVICE_ACCOUNT = os.environ.get('SERVICE_ACCOUNT', '')
+SERVICE_ACCOUNT_KEY = '/home/web/project/django_project/creds_gti.json'
+SERVICE_ACCOUNT = 'kartoza-google-earth-engine@gti-gee.iam.gserviceaccount.com'
 
 TRAINING_DATA_ASSET_PATH = os.environ.get(
     'TRAINING_DATA_ASSET_PATH',

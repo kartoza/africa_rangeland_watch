@@ -7,6 +7,8 @@ import { Bar, Line } from "react-chartjs-2";
 import { CategoryScale } from "chart.js";
 import Chart from "chart.js/auto";
 import ChartDataLabels from "chartjs-plugin-datalabels";
+// import { BoxPlotController, BoxAndWiskers } from '@sgratzl/chartjs-chart-boxplot';
+import { BarWithErrorBarsController, BarWithErrorBar } from 'chartjs-chart-error-bars';
 import {FeatureCollection} from "geojson";
 import 'chartjs-adapter-date-fns';
 
@@ -48,19 +50,23 @@ export function BarChart({ analysis }: Props) {
 
   let datasets: { [key: string]: any } = {}
   for (let i = 0; i < jsonData.features.length; i++) {
-    const key: string = `${jsonData.features[i].properties.Name}`;
+    const key: string = jsonData.features[i].properties.Name;
     if (datasets[key as string]) {
       continue;
     }
     const data = jsonData.features
     .filter((feature:any) => feature.properties.Name === jsonData.features[i].properties.Name)
     .map((feature:any) => feature.properties[analysis.data.variable]);
-    const label = jsonData.features[i].properties.Name
-
+    
     datasets[key] = {
-      label: label,
+      label: key,
       data: data,
       backgroundColor: COLORS[i % COLORS.length],
+      borderColor: "#0000FF",
+      errorBars: {
+        color: 'black',
+        width: 1
+      }
     };
   }
 
