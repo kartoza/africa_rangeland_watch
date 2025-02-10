@@ -117,6 +117,8 @@ class AnalysisAPITest(BaseAPIViewTest):
 
         self.assertEqual(response.status_code, 200)
         results = response.data['results']
+        import json
+        print(json.dumps(results))
         self.assertEqual(
             len(results),
             2
@@ -124,6 +126,14 @@ class AnalysisAPITest(BaseAPIViewTest):
         self.assertEqual(
             len(results[0]['features']),
             5
+        )
+        self.assertEqual(
+            len(results[0]['statistics']),
+            3
+        )
+        self.assertEqual(
+            list(results[0]['statistics'][2019].keys()),
+            ['BNP western polygon']
         )
         self.assertEqual(
             results[0]['features'][0]['properties']['year'],
