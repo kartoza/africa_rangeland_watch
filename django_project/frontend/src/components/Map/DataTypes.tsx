@@ -20,6 +20,9 @@ export interface AnalysisData {
   communityName?: string;
   communityFeatureId?: string;
   reference_layer?: object;
+  custom_geom?: object;
+  userDefinedFeatureName?: string;
+  userDefinedFeatureId?: string;
 }
 
 export const GroupName = {
