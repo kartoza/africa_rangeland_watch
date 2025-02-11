@@ -16,7 +16,8 @@ from analysis.analysis import (
     initialize_engine_analysis,
     run_analysis,
     get_rel_diff,
-    InputLayer
+    InputLayer,
+    spatial_get_date_filter
 )
 
 
@@ -203,15 +204,23 @@ class AnalysisAPI(APIView):
             },
             'Spatial': {
                 'Annual': '',
-                'Quarterly': ''
+                'Quarterly': '',
+                'start_year': data.get('spatial_start_year', None),
+                'end_year': data.get('spatial_end_year', None)
             }
         }
         initialize_engine_analysis()
         if data['longitude'] is None and data['latitude'] is None:
             # return the relative different layer
             input_layers = InputLayer()
+            filter_start_date, filter_end_date = spatial_get_date_filter(
+                analysis_dict
+            )
             rel_diff = get_rel_diff(
-                input_layers.get_spatial_layer_dict(),
+                input_layers.get_spatial_layer_dict(
+                    filter_start_date,
+                    filter_end_date
+                ),
                 analysis_dict,
                 data['reference_layer']
             )

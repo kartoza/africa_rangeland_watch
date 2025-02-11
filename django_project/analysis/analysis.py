@@ -189,9 +189,18 @@ class InputLayer:
                 .copyProperties(col)
                 .set('year', ee.Number.parse(col.get('system:index'))))
 
-    def get_soil_carbon(self):
+    def get_soil_carbon(
+        self, start_date: datetime.date=None, end_date: datetime.date=None
+    ):
         """
         Get image for soil carbon mean.
+
+        Parameters
+        ----------
+        start_date : datetime.date
+            Start date to filter soil carbon asset.
+        end_date: datetime.date
+            End date to filter soil carbon asset.
         """
         # Coast fragment fraction 0-1
         cfvo = (ee.Image(GEEAsset.fetch_asset_source('soc_grids_cfvo'))
@@ -230,7 +239,7 @@ class InputLayer:
                 .multiply(0.6)
                 .rename('SOC'))
 
-        soc_col = self.get_soc_col()
+        soc_col = self.get_soc_col(start_date, end_date)
         lt_mean = (soc_col
                    # Uncomment the following line to filter years if necessary
                    # .filterMetadata('year', 'greater_than', 2000)
@@ -260,9 +269,18 @@ class InputLayer:
                             .clipToCollection(self.countries))
         return grazing_capacity
 
-    def get_soc_col(self):
+    def get_soc_col(
+        self, start_date: datetime.date=None, end_date: datetime.date=None
+    ):
         """
         Get soil organic carbon data.
+
+        Parameters
+        ----------
+        start_date : datetime.date
+            Start date to filter soil carbon asset.
+        end_date: datetime.date
+            End date to filter soil carbon asset.
         """
         # Import soil organic carbon data from Venter et al. 2021
         # https://www.sciencedirect.com/science/article/pii/S0048969721004526
@@ -276,14 +294,32 @@ class InputLayer:
             return ee.Image(year).int().addBands(i).set('year', year)
 
         soc_col = soc_col.map(process_image)
+
+        # filter by year range
+        if start_date and end_date:
+            soc_col = soc_col.filter(
+                ee.Filter.rangeContains(
+                    'year', start_date.year, end_date.year
+                )
+            )
+
         return soc_col
 
-    def get_soil_carbon_change(self):
+    def get_soil_carbon_change(
+        self, start_date: datetime.date=None, end_date: datetime.date=None
+    ):
         """
         Get soil carbon change, clipped by countries.
+
+        Parameters
+        ----------
+        start_date : datetime.date
+            Start date to filter soil carbon asset.
+        end_date: datetime.date
+            End date to filter soil carbon asset.
         """
         # SOC mean
-        soc_col = self.get_soc_col()
+        soc_col = self.get_soc_col(start_date, end_date)
 
         # SOC trend
         trend_sens_img = soc_col.reduce(ee.Reducer.sensSlope())
@@ -293,17 +329,34 @@ class InputLayer:
                         multiply(35).clipToCollection(self.countries))
         return soc_lt_trend
 
-    def get_spatial_layer_dict(self):
+    def get_spatial_layer_dict(
+        self, start_date: datetime.date=None, end_date: datetime.date=None
+    ):
         """
         Get spatial layer dictionary.
+
+        Parameters
+        ----------
+        start_date : datetime.date
+            Start date to filter assets: modis_vegetation,
+            cgls_ground_cover, and soil_carbon.
+        end_date: datetime.date
+            End date to filter assets: modis_vegetation,
+            cgls_ground_cover, and soil_carbon.
         """
         # Get MODIS vegetation data
-        modis_veg = (
-            ee.ImageCollection(
-                GEEAsset.fetch_asset_source('modis_vegetation')
+        modis_veg = ee.ImageCollection(
+            GEEAsset.fetch_asset_source('modis_vegetation')
+        )
+        if start_date and end_date:
+            modis_veg = modis_veg.filterDate(
+                start_date.isoformat(),
+                end_date.isoformat()
             )
-            .filterDate('2016-01-01', '2020-01-01')
-            .select(['NDVI', 'EVI'])
+        else:
+            modis_veg = modis_veg.filterDate('2016-01-01', '2020-01-01')
+        modis_veg = (
+            modis_veg.select(['NDVI', 'EVI'])
             .map(lambda i: i.divide(10000))
         )
 
@@ -313,10 +366,16 @@ class InputLayer:
                          median().clipToCollection(self.countries))
 
         # Get fractional ground cover from CGLS
+        cgls_col = ee.ImageCollection(
+            GEEAsset.fetch_asset_source('cgls_ground_cover')
+        )
+        if start_date and end_date:
+            cgls_col = cgls_col.filterDate(
+                start_date.isoformat(),
+                end_date.isoformat()
+            )
         cgls_col = (
-            ee.ImageCollection(
-                GEEAsset.fetch_asset_source('cgls_ground_cover')
-            ).select(
+            cgls_col.select(
                 [
                     'bare-coverfraction', 'crops-coverfraction',
                     'urban-coverfraction', 'shrub-coverfraction',
@@ -331,8 +390,8 @@ class InputLayer:
         g = cgls.select('g').clipToCollection(self.countries)
 
         grazing_capacity = self.get_grazing_capacity()
-        soc_lt_mean = self.get_soil_carbon()
-        soc_lt_trend = self.get_soil_carbon_change()
+        soc_lt_mean = self.get_soil_carbon(start_date, end_date)
+        soc_lt_trend = self.get_soil_carbon_change(start_date, end_date)
 
         # Dictionary with names for map layers and their ee.Image() objects
         spatial_layer_dict = {
@@ -508,8 +567,13 @@ def run_analysis(lat: float, lon: float, analysis_dict: dict, *args, **kwargs):
         reference_layer = kwargs.get('reference_layer', None)
         if not reference_layer:
             raise ValueError("Reference layer not provided")
+        filter_start_date, filter_end_date = spatial_get_date_filter(
+            analysis_dict
+        )
         rel_diff = get_rel_diff(
-            input_layers.get_spatial_layer_dict(),
+            input_layers.get_spatial_layer_dict(
+                filter_start_date, filter_end_date
+            ),
             analysis_dict,
             reference_layer
         )
@@ -1095,3 +1159,18 @@ def export_image_to_drive(
     else:
         print('Export failed. Details:')
         print(final_status)
+
+
+def spatial_get_date_filter(analysis_dict):
+    """Get spatial date filter from analysis_dict."""
+    filter_start_date = None
+    if analysis_dict['Spatial'].get('start_year', None):
+        filter_start_date = datetime.date(
+            int(analysis_dict['Spatial'].get('start_year')), 1, 1
+        )
+    filter_end_date = None
+    if analysis_dict['Spatial'].get('end_year', None):
+        filter_end_date = datetime.date(
+            int(analysis_dict['Spatial'].get('end_year')), 1, 1
+        )
+    return filter_start_date, filter_end_date
