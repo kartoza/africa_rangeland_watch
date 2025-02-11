@@ -94,11 +94,12 @@ class AnalysisAPI(APIView):
             return new_records.values()
 
         def add_statistics(features):
-            bare_grounds = {}
-            evi = {}
-            ndvi = {}
-            
-            new_features = [a['properties']  for a in filter(lambda x: x['properties']['year'] in years, features)]
+            new_features = [
+                a['properties'] for a in filter(
+                    lambda x: x['properties']['year'] in years,
+                    features
+                )
+            ]
 
             # Process data
             aggregated = {}
@@ -113,7 +114,11 @@ class AnalysisAPI(APIView):
 
                 key = (name, year)
                 if key not in aggregated:
-                    aggregated[key] = {"Bare ground": [], "EVI": [], "NDVI": []}
+                    aggregated[key] = {
+                        "Bare ground": [],
+                        "EVI": [],
+                        "NDVI": []
+                    }
 
                 aggregated[key]["Bare ground"].append(bare_ground)
                 aggregated[key]["EVI"].append(evi)
@@ -133,7 +138,7 @@ class AnalysisAPI(APIView):
                     results[year] = {}
                 if location not in results[year]:
                     results[year][location] = {}
-                
+
                 for category, numbers in values.items():
                     min_val = min(numbers)
                     max_val = max(numbers)
@@ -144,28 +149,35 @@ class AnalysisAPI(APIView):
                         'mean': mean_val
                     }
 
+            empty_data = {
+                'Bare ground': {
+                    'min': None, 'max': None, 'mean': None
+                },
+                'EVI': {
+                    'min': None, 'max': None, 'mean': None
+                },
+                'NDVI': {
+                    'min': None, 'max': None, 'mean': None
+                },
+            }
             for year in unprocessed_years:
                 for name in names:
                     if results.get(year, None):
                         results[year].update({
-                            name: {
-                                'Bare ground': {'min': None, 'max': None, 'mean': None},
-                                'EVI': {'min': None, 'max': None, 'mean': None},
-                                'NDVI': {'min': None, 'max': None, 'mean': None},
-                            }
+                            name: empty_data
                         })
                     else:
                         results[year] = {
-                            name: {
-                                'Bare ground': {'min': None, 'max': None, 'mean': None},
-                                'EVI': {'min': None, 'max': None, 'mean': None},
-                                'NDVI': {'min': None, 'max': None, 'mean': None},
-                            }
+                            name: empty_data
                         }
-            
-            results = {year: {name: OrderedDict(sorted(value.items())) for name, value in sorted(group.items())}
-               for year, group in sorted(results.items())}
-            
+
+            results = {
+                year: {
+                    name: OrderedDict(
+                        sorted(value.items())
+                    ) for name, value in sorted(group.items())
+                } for year, group in sorted(results.items())
+            }
             return results
 
         output_results = []
@@ -191,7 +203,9 @@ class AnalysisAPI(APIView):
             output_results[1]['features'],
             key=lambda x: x['properties']['date']
         )
-        output_results[0]['statistics'] = add_statistics(output_results[1]['features'])
+        output_results[0]['statistics'] = add_statistics(
+            output_results[1]['features']
+        )
 
         return output_results
 
