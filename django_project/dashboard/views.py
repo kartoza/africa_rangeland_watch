@@ -84,10 +84,6 @@ class DashboardListCreateView(generics.ListCreateAPIView):
         maps = filters.get('maps') == 'true'
         region = filters.get("region")
 
-        if region:
-            queryset = queryset.filter(
-                analysis_results__data__landscape=region
-            )
 
         # Apply text-based filters
         if search_term:
@@ -97,7 +93,11 @@ class DashboardListCreateView(generics.ListCreateAPIView):
         if keyword:
             queryset = queryset.filter(config__preference=keyword)
         if region:
-            queryset = queryset.filter(config__chartType=region)
+            queryset = queryset.filter(
+                analysis_results__analysis_results__contains={
+                    "data": {"landscape": region}
+                }
+            )
         if owner:
             queryset = queryset.filter(created_by__username=owner)
 
