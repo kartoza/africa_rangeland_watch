@@ -10,7 +10,8 @@ from .models import (
     Landscape,
     LandscapeCommunity,
     UserAnalysisResults,
-    GEEAsset
+    GEEAsset,
+    AnalysisResultsCache
 )
 from analysis.utils import get_gdrive_file, delete_gdrive_file
 
@@ -181,3 +182,5 @@ class GEEAssetAdmin(admin.ModelAdmin):
     list_display = ('key', 'type', 'source',)
     search_fields = ('key', 'source',)
     list_filter = ('type',)
+
+admin.site.register(AnalysisResultsCache)

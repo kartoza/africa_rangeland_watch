@@ -267,6 +267,10 @@ class UserAnalysisResults(models.Model):
         null=True,
         blank=True
     )
+    # analysis_inputs = models.JSONField(
+    #     null=True,
+    #     blank=True
+    # )
     created_at = models.DateTimeField(auto_now_add=True)
     source = models.CharField(
         max_length=255,
@@ -349,3 +353,15 @@ class GEEAsset(models.Model):
     class Meta:
         verbose_name_plural = 'GEE Assets'
         db_table = 'analysis_gee_asset'
+
+
+class AnalysisResultsCache(models.Model):
+    analysis_results = models.JSONField(
+        null=True,
+        blank=True
+    )
+    analysis_inputs = models.JSONField(
+        null=True,
+        blank=True
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
