@@ -11,7 +11,6 @@ from rest_framework.permissions import (
     IsAuthenticated,
     IsAuthenticatedOrReadOnly
 )
-import json
 from django.db.models import Q
 import logging
 from django.shortcuts import get_object_or_404
@@ -83,19 +82,12 @@ class DashboardListCreateView(generics.ListCreateAPIView):
         my_organisations = filters.get('my_organisations') == 'true'
         my_dashboards = filters.get('my_dashboards') == 'true'
         maps = filters.get('maps') == 'true'
-        region = filters.get('region')
+        region = filters.get("region")
 
         if region:
-            # Parse region from stringified JSON
-            region_data = json.loads(region)
-            latitude = region_data.get('lat')
-            longitude = region_data.get('lng')
-
-            if latitude and longitude:
-                queryset = queryset.filter(
-                    analysis_results__data__latitude=latitude,
-                    analysis_results__data__longitude=longitude
-                )
+            queryset = queryset.filter(
+                analysis_results__data__landscape=region
+            )
 
         # Apply text-based filters
         if search_term:
