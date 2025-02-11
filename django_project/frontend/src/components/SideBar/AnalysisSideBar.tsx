@@ -1,7 +1,9 @@
 import React from "react";
-import { Box, Image, Heading, Button, Tabs, TabList, Tab, TabPanels, TabPanel, Table, Thead, Tbody, Tr, Th, Td, Flex, Divider, Text } from "@chakra-ui/react";
+import { Box, Button, Tabs, TabList, Tab, TabPanels, TabPanel, Table, Thead, Tbody, Tr, Th, Td, Flex, Divider, Text, Heading } from "@chakra-ui/react";
 import { FaTimes } from "react-icons/fa";
-import {InProgressBadge} from "../InProgressBadge";
+import { motion } from "framer-motion";
+import { InProgressBadge } from "../InProgressBadge";
+import { RenderResult } from "../DashboardCharts/CombinedCharts";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -9,145 +11,195 @@ interface SidebarProps {
   selectedAnalysis: any;
 }
 
+const MotionBox = motion(Box);
+const MotionOverlay = motion(Box);
+
 const AnalysisSideBar = ({ isOpen, onClose, selectedAnalysis }: SidebarProps) => {
   if (!selectedAnalysis) return null;
+
   return (
-    <Box
-      position="fixed"
-      top="0"
-      right="0"
-      width={{ base: "100%", md: "500px" }}
-      height="100%"
-      bg="white"
-      boxShadow="lg"
-      display={isOpen ? "block" : "none"}
-      zIndex={1000}
-      padding={{ base: "15px", md: "20px" }}
-      transform={isOpen ? "translateX(0)" : "translateX(100%)"}
-      transition="transform 0.3s ease-in-out"
-    >
-      {/* Close Icon Button */}
-      <Button
-        position="absolute"
-        top="20px"
-        right="20px"
-        onClick={onClose}
-        colorScheme="red"
-        borderRadius="50%"
-        padding="5px"
-        minWidth="auto"
-        height="auto"
-        width="auto"
-        boxShadow="md"
-      >
-        <FaTimes size={20} color="red" />
-      </Button>
+    <>
+      {/* Overlay (Blur + Fade Effect) */}
+      {isOpen && (
+        <MotionOverlay
+          position="fixed"
+          top="0"
+          left="0"
+          width="100vw"
+          height="100vh"
+          bg="rgba(0, 0, 0, 0.4)"
+          backdropFilter="blur(5px)"
+          zIndex={999} 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.3, ease: "easeInOut" }}
+          onClick={onClose}
+        />
+      )}
 
-      {/* Image */}
-      <Image
-        src={selectedAnalysis.image}
-        alt={selectedAnalysis.heading}
-        w={{ base: "100%", md: "100%" }} 
-        h={{ base: "200px", md: "50%" }}
-        objectFit="cover"
-        borderRadius="md"
-        mb={4}
-      />
-
-      {/* Title and View Analysis Button */}
-      <Flex
-        direction={{ base: "column", md: "row" }}
-        justify="space-between"
-        align="center"
-        mb={4}
+      {/* Sidebar Panel */}
+      <MotionBox
+        position="fixed"
+        top="20%"
+        right="0"
+        transform="translateY(-20%)"
+        width={{ base: "100%", md: "500px" }}
+        maxHeight="90vh"
+        bg="white"
+        boxShadow="lg"
+        zIndex={1000}
+        padding={{ base: "15px", md: "20px" }}
+        borderRadius="12px 0 0 12px"
+        initial={{ x: "100%" }}
+        animate={{ x: isOpen ? "0%" : "100%" }}
+        transition={{ duration: 0.3, ease: "easeInOut" }}
+        overflowY="auto"
       >
-        <Heading size="md" color="black" fontWeight="bold" mb={{ base: 2, md: 0 }}>
-          {selectedAnalysis.heading}
-        </Heading>
+
+        {/* Close Button */}
         <Button
-          colorScheme="green"
-          variant="solid"
-          backgroundColor="dark_green.800"
-          _hover={{ backgroundColor: "light_green.400" }}
-          w="auto"
-          borderRadius="2px"
-          h={8}
-          disabled
+          position="absolute"
+          top="20px"
+          right="20px"
+          onClick={onClose}
+          colorScheme="red"
+          borderRadius="50%"
+          padding="5px"
+          minWidth="auto"
+          height="auto"
+          width="auto"
+          boxShadow="md"
         >
-          View Analysis
+          <FaTimes size={20} color="green" />
         </Button>
-      </Flex>
 
-      <Divider mb={4} borderColor="gray.300" />
+        {/* Image */}
+        <Box
+          w={{ base: "100%", md: "100%" }}
+          h={{ base: "auto", md: "auto" }}
+          objectFit="cover"
+          borderRadius="md"
+          mt={8}
+          mb={4}
+          overflow={"auto"}
+        >
+          <RenderResult analysisResults={[selectedAnalysis?.analysis_results]} />
+        </Box>
 
-      <InProgressBadge/>
+        {/* Title and View Analysis Button */}
+        <Flex justify="space-between" align="center" mb={4}>
+          <Heading size="md" color="black" fontWeight="bold">
+            {selectedAnalysis?.heading}
+          </Heading>
+          <Button colorScheme="green" variant="solid" backgroundColor="dark_green.800" _hover={{ backgroundColor: "light_green.400" }} borderRadius="2px" h={8} disabled>
+            View Analysis
+          </Button>
+        </Flex>
 
-      {/* Tabs */}
-      <Tabs variant="enclosed" isLazy>
-        <TabList>
-          <Tab fontWeight="bold" color="black" _selected={{ color: "white", bg: "dark_green.800" }}>
-            Info
-          </Tab>
-          <Tab fontWeight="bold" color="black" _selected={{ color: "white", bg: "dark_green.800" }}>
-            Location
-          </Tab>
-          <Tab fontWeight="bold" color="black" _selected={{ color: "white", bg: "dark_green.800" }}>
-            Linked Resources
-          </Tab>
-        </TabList>
+        <Divider mb={4} borderColor="gray.300" />
 
-        <TabPanels>
-          {/* Info Tab */}
-          <TabPanel>
-            <Table variant="striped" colorScheme="gray" size="sm">
-              <Thead>
-                <Tr>
-                  <Th color="black" fontWeight="bold">Title</Th>
-                  <Th color="black" fontWeight="bold">Value</Th>
-                </Tr>
-              </Thead>
-              <Tbody>
-                <Tr>
-                  <Td color="black">Owner</Td>
-                  <Td color="black">{selectedAnalysis.owner}</Td>
-                </Tr>
-                <Tr>
-                  <Td color="black">Publication</Td>
-                  <Td color="black">{selectedAnalysis.publication}</Td>
-                </Tr>
-                <Tr>
-                  <Td color="black">Source</Td>
-                  <Td color="black">{selectedAnalysis.source}</Td>
-                </Tr>
-                <Tr>
-                  <Td color="black">Resource Type</Td>
-                  <Td color="black">{selectedAnalysis.source}</Td>
-                </Tr>
-                <Tr>
-                  <Td color="black">Added to catalogue</Td>
-                  <Td color="black">{selectedAnalysis.source}</Td>
-                </Tr>
-                <Tr>
-                  <Td color="black">Last catalogue modification</Td>
-                  <Td color="black">{selectedAnalysis.source}</Td>
-                </Tr>
-                {/* More rows here */}
-              </Tbody>
-            </Table>
-          </TabPanel>
+        {/* Tabs */}
+        <Tabs variant="enclosed">
+          <TabList>
+            <Tab fontWeight="bold" color="black" _selected={{ color: "white", bg: "dark_green.800" }}>
+              Info
+            </Tab>
+            <Tab fontWeight="bold" color="black" _selected={{ color: "white", bg: "dark_green.800" }}>
+              Location
+            </Tab>
+            <Tab fontWeight="bold" color="black" _selected={{ color: "white", bg: "dark_green.800" }}>
+              Linked Resources
+            </Tab>
+          </TabList>
 
-          {/* Location Tab */}
-          <TabPanel>
-            <Text color="black">Location details will go here...</Text>
-          </TabPanel>
+          <TabPanels>
+            {/* Info Tab */}
+            <TabPanel>
+              <Table variant="striped" colorScheme="gray" size="sm">
+                <Thead>
+                  <Tr>
+                    <Th color="black">Title</Th>
+                    <Th color="black">Value</Th>
+                  </Tr>
+                </Thead>
+                <Tbody>
+                  <Tr>
+                    <Td color="black">Owner</Td>
+                    <Td color="black">{selectedAnalysis?.created_by?.name}</Td>
+                  </Tr>
+                  <Tr>
+                    <Td color="black">Publication</Td>
+                    <Td color="black">{selectedAnalysis?.dashboards && selectedAnalysis.dashboards.length > 0 && ('Dashboard')}</Td>
+                  </Tr>
+                  <Tr>
+                    <Td color="black">Source</Td>
+                    <Td color="black">{selectedAnalysis?.source}</Td>
+                  </Tr>
+                  <Tr>
+                    <Td color="black">Resource Type</Td>
+                    <Td color="black">{selectedAnalysis?.analysis_results?.data?.analysisType}</Td>
+                  </Tr>
+                </Tbody>
+              </Table>
+            </TabPanel>
 
-          {/* Linked Resources Tab */}
-          <TabPanel>
-            <Text color="black">Linked resources will go here...</Text>
-          </TabPanel>
-        </TabPanels>
-      </Tabs>
-    </Box>
+            {/* Location Tab */}
+            <TabPanel>
+              <Table variant="striped" colorScheme="gray" size="sm">
+                <Thead>
+                  <Tr>
+                    <Th color="black">Title</Th>
+                    <Th color="black">Value</Th>
+                  </Tr>
+                </Thead>
+                <Tbody>
+                  <Tr>
+                    <Td color="black">Community Name</Td>
+                    <Td color="black">{selectedAnalysis?.analysis_results?.data?.communityName || "N/A"}</Td>
+                  </Tr>
+                  <Tr>
+                    <Td color="black">Landscape</Td>
+                    <Td color="black">{selectedAnalysis?.analysis_results?.data?.landscape || "N/A"}</Td>
+                  </Tr>
+                  <Tr>
+                    <Td color="black">Latitude</Td>
+                    <Td color="black">{selectedAnalysis?.analysis_results?.data?.latitude?.toFixed(6) || "N/A"}</Td>
+                  </Tr>
+                  <Tr>
+                    <Td color="black">Longitude</Td>
+                    <Td color="black">{selectedAnalysis?.analysis_results?.data?.longitude?.toFixed(6) || "N/A"}</Td>
+                  </Tr>
+                </Tbody>
+              </Table>
+            </TabPanel>
+
+            {/* Linked Resources Tab */}
+            <TabPanel>
+              {selectedAnalysis?.dashboards && selectedAnalysis.dashboards.length > 0 ? (
+                <Table variant="striped" colorScheme="gray" size="sm">
+                  <Thead>
+                    <Tr>
+                      <Th color="black">Dashboards</Th>
+                    </Tr>
+                  </Thead>
+                  <Tbody>
+                    {selectedAnalysis.dashboards.map((dashboard: { id: string; title: string }) => (
+                      <Tr key={dashboard.id}>
+                        <Td color="black">{dashboard.title}</Td>
+                      </Tr>
+                    ))}
+                  </Tbody>
+                </Table>
+              ) : (
+                <Text color="black">No linked resources found.</Text>
+              )}
+            </TabPanel>
+
+          </TabPanels>
+        </Tabs>
+      </MotionBox>
+    </>
   );
 };
 

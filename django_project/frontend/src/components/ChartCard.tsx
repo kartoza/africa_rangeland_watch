@@ -18,14 +18,14 @@ interface ChartCardProps {
     owner: any;
     title: any;
     uuid: any;
-    config: {
+    config?: {
       dashboardName: string;
       preference: string;
       chartType: string;
       title: string;
       data: any;
       downloadData: string;
-      owner: boolean;
+      owner?: boolean;
     };
     analysisResults: any[];
   };
