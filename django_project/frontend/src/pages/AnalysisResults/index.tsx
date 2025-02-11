@@ -15,12 +15,6 @@ import {
   useDisclosure,
   Checkbox,
   useToast,
-  AlertDialog,
-  AlertDialogOverlay,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogBody,
-  AlertDialogFooter,
 } from "@chakra-ui/react";
 import { FaFilter } from "react-icons/fa";
 import Header from "../../components/Header";
@@ -37,6 +31,7 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import CreateDashboardModal from "../../components/CreateDashboard";
 import { format } from 'date-fns';
 import Pagination from "../../components/Pagination";
+import ConfirmDeleteDialog from "../../components/ConfirmDeleteDialog";
 
 interface FeatureProperties {
   Project?: string;
@@ -71,7 +66,6 @@ interface AnalysisSummary {
 
 export default function AnalysisResults() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [showAll, setShowAll] = useState(false);
   const [selectedAnalysis, setSelectedAnalysis] = useState([]);
   const [viewAnalysis, setViewAnalysis] = useState(null);
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -133,7 +127,6 @@ export default function AnalysisResults() {
     dispatch(fetchAnalysis());
    }
   }, [analysisDeleted]);
-  
 
   const getAnalysisSummary = (analysis: AnalysisData): AnalysisSummary => {
     const { analysis_results } = analysis || {};
@@ -188,6 +181,31 @@ export default function AnalysisResults() {
   };
 
   const handleCreateDashboardClick = () => {
+
+     // Filter analysis data based on selected analysis IDs
+    const matchedAnalysis = analysisData.filter((item: { id: any; }) => selectedAnalysis.includes(item.id));
+
+    // Extract analysis types from the matched analysis objects
+    const analysisTypes = matchedAnalysis.map((item: { analysis_results: { data: { analysisType: any; }; }; }) => item.analysis_results.data?.analysisType);
+
+    // Check if all analysis types are the same
+    const allSameType = analysisTypes.every((type: any) => type === analysisTypes[0]);
+
+    if (!allSameType) {
+      toast({
+        title: "Cannot create dashboard.",
+        description: `Can only create a dashboard from analysis results with the same analysis type! Current selected results have: ${analysisTypes.join(", ")}`,
+        status: "warning",
+        duration: 5000,
+        isClosable: true,
+        position: "top-right",
+        containerStyle: {
+          backgroundColor: "#00634b",
+          color: "white",
+        },
+      });
+      return;
+    }
     // Open the Create Dashboard modal
     setCreateDashboard(true);
   };
@@ -394,48 +412,13 @@ export default function AnalysisResults() {
                             Delete
                           </Button>
 
-                          <AlertDialog
+                          <ConfirmDeleteDialog 
                             isOpen={isConfrimDeleteOpen}
-                            leastDestructiveRef={cancelRef}
                             onClose={onConfirmDeleteClose}
-                          >
-                            <AlertDialogOverlay bg="rgba(0, 0, 0, 0.4)">
-                              <AlertDialogContent bg="white">
-                                <AlertDialogHeader fontSize="lg" fontWeight="bold">
-                                  Delete Analysis
-                                </AlertDialogHeader>
-
-                                <AlertDialogBody>
-                                  Are you sure you want to delete this analysis? This action will remove it from any dashboard it is associated with.
-                                </AlertDialogBody>
-
-                                <AlertDialogFooter>
-                                  <Button 
-                                    backgroundColor="darkorange"
-                                    _hover={{ backgroundColor: "dark_orange.800" }}
-                                    color="white"
-                                    w="auto"
-                                    borderRadius="px"
-                                    ref={cancelRef} 
-                                    onClick={onConfirmDeleteClose}
-                                  >
-                                    Cancel
-                                  </Button>
-                                  <Button 
-                                    colorScheme="red"
-                                    variant="solid"
-                                    backgroundColor="red.500"
-                                    _hover={{ backgroundColor: "light_green.400" }}
-                                    color="white"
-                                    width="auto"
-                                    borderRadius="5px"
-                                    onClick={() => handleDelete(analysis?.id)} ml={3}>
-                                    Yes, Delete
-                                  </Button>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialogOverlay>
-                          </AlertDialog>
+                            onConfirm={() => handleDelete(analysis?.id)}
+                            title="Delete Dashboard"
+                            description="Are you sure you want to delete this analysis? This action will remove it from any dashboard it is associated with."
+                          />
 
                         </Flex>
                       </Flex>
