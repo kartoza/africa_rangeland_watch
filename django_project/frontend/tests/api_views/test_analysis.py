@@ -21,7 +21,7 @@ class AnalysisAPITest(BaseAPIViewTest):
         '1.landscape.json'
     ]
 
-    @patch('frontend.api_views.analysis._temporal_analysis')
+    @patch('frontend.api_views.analysis.run_analysis')
     @patch('frontend.api_views.analysis.initialize_engine_analysis')
     def test_temporal_analysis(self, mock_init_gee, mock_analysis):
         """Test temporal analysis list."""
@@ -124,6 +124,14 @@ class AnalysisAPITest(BaseAPIViewTest):
         self.assertEqual(
             len(results[0]['features']),
             5
+        )
+        self.assertEqual(
+            len(results[0]['statistics']),
+            3
+        )
+        self.assertEqual(
+            list(results[0]['statistics'][2019].keys()),
+            ['BNP western polygon']
         )
         self.assertEqual(
             results[0]['features'][0]['properties']['year'],

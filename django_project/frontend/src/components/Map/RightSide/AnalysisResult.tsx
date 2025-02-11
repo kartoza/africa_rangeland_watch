@@ -6,14 +6,10 @@ import { Analysis } from "../../../store/analysisSlice";
 import { Bar, Line } from "react-chartjs-2";
 import { CategoryScale } from "chart.js";
 import Chart from "chart.js/auto";
-import ChartDataLabels from "chartjs-plugin-datalabels";
 import {FeatureCollection} from "geojson";
 import 'chartjs-adapter-date-fns';
 
 import './style.css';
-import { features } from 'process';
-import { rmSync } from 'fs';
-import { colors } from '../../../theme/foundations';
 
 Chart.register(CategoryScale);
 
@@ -34,6 +30,49 @@ const COLORS = [
   "#008080"  // Teal
 ];
 
+export function StatisticTable({analysis}: Props) {
+  const statistics = analysis.results[0].statistics;
+  const variable = analysis.data.variable;
+
+  const renderRows = () => {
+    const rows: any[] = [];
+    Object.keys(statistics).forEach(year => {
+      Object.keys(statistics[year]).forEach(area => {
+        const data = statistics[year][area][variable];
+        rows.push(
+          <tr key={`${year}-${area}`}>
+            <td>{year}</td>
+            <td>{area}</td>
+            <td>{data.min !== null ? data.min.toFixed(3) : 'N/A'}</td>
+            <td>{data.max !== null ? data.max.toFixed(3) : 'N/A'}</td>
+            <td>{data.mean !== null ? data.mean.toFixed(3) : 'N/A'}</td>
+          </tr>
+        );
+      });
+    });
+    return rows;
+  };
+
+  return (
+    <Box>
+      <table id="Temporal-Statistics-Table" border={1}>
+        <thead>
+          <tr>
+            <th>Year</th>
+            <th>Area</th>
+            <th>Min</th>
+            <th>Max</th>
+            <th>Avg</th>
+          </tr>
+        </thead>
+        <tbody>
+          {renderRows()}
+        </tbody>
+      </table>
+    </Box>
+  );
+}
+
 
 export function BarChart({ analysis }: Props) {
   // Extracting data for the chart
@@ -48,19 +87,23 @@ export function BarChart({ analysis }: Props) {
 
   let datasets: { [key: string]: any } = {}
   for (let i = 0; i < jsonData.features.length; i++) {
-    const key: string = `${jsonData.features[i].properties.Name}`;
+    const key: string = jsonData.features[i].properties.Name;
     if (datasets[key as string]) {
       continue;
     }
     const data = jsonData.features
     .filter((feature:any) => feature.properties.Name === jsonData.features[i].properties.Name)
     .map((feature:any) => feature.properties[analysis.data.variable]);
-    const label = jsonData.features[i].properties.Name
-
+    
     datasets[key] = {
-      label: label,
+      label: key,
       data: data,
       backgroundColor: COLORS[i % COLORS.length],
+      borderColor: "#0000FF",
+      errorBars: {
+        color: 'black',
+        width: 1
+      }
     };
   }
 
@@ -249,6 +292,7 @@ export function RenderTemporal({ analysis }: Props) {
   return <Box maxWidth={400} overflowX={"auto"}>
     <BarChart analysis={analysis}></BarChart>
     <LineChart analysis={analysis}></LineChart>
+    <StatisticTable analysis={analysis}/>
   </Box>
 }
 
