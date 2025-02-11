@@ -90,6 +90,14 @@ const removeEventListener = (map: maplibregl.Map, dict: LayerDict[]) => {
   })
 }
 
+const getIdValue = (value: string) => {
+  if (/^-?\d+$/.test(value)) {
+    return parseInt(value);
+  }
+  return value;
+}
+
+
 /** User defined layer selector. */
 export default function AnalysisUserDefinedLayerSelector(
   { layers, enableSelection, onSelected, featureId }: Props
@@ -135,7 +143,6 @@ export default function AnalysisUserDefinedLayerSelector(
     if (userDefinedLayers.length === 0) {
       return
     }
-
     removeEventListener(map, layerDict)
     layerDict = []
     userDefinedLayers.forEach(layerId => {
@@ -154,12 +161,6 @@ export default function AnalysisUserDefinedLayerSelector(
               const featureName = feature.properties[DEFAULT_FEATURE_NAME] !== undefined ? feature.properties[DEFAULT_FEATURE_NAME] : DEFAULT_EMPTY_NAME
               const featureId = feature.properties[attrId] !== undefined ? feature.properties[attrId] : DEFAULT_EMPTY_ID
               onSelected(feature.geometry, e.lngLat.lat, e.lngLat.lng, featureName, originalLayerId+','+featureId)
-            }
-            if (feature.properties[attrId] !== undefined) {
-              map.setFilter(
-                originalLayerId + '-highlight',
-                ["==", attrId, feature.properties[attrId]]
-              )
             }
           }
         }
@@ -186,9 +187,9 @@ export default function AnalysisUserDefinedLayerSelector(
         if (splits.length === 2 && splits[1] !== DEFAULT_EMPTY_ID && splits[0] === originalLayerId) {
           map.setFilter(
             originalLayerId + '-highlight',
-            ["==", attrId, splits[1]]
+            ["==", attrId, getIdValue(splits[1].trim())]
           )
-        } else {
+        } else if (splits.length === 2 && splits[0] !== originalLayerId) {
           map.setFilter(
             originalLayerId + '-highlight',
             ["==", attrId, '']
