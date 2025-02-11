@@ -15,16 +15,10 @@ import {
   useDisclosure,
   Checkbox,
   useToast,
-  AlertDialog,
-  AlertDialogOverlay,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogBody,
-  AlertDialogFooter,
   Collapse,
   IconButton,
-  Select,
   SimpleGrid,
+  Select,
 } from "@chakra-ui/react";
 import { FaFilter } from "react-icons/fa";
 import Header from "../../components/Header";
@@ -42,6 +36,7 @@ import CreateDashboardModal from "../../components/CreateDashboard";
 import { format } from 'date-fns';
 import { IoCloseSharp } from "react-icons/io5";
 import { ChevronUpIcon } from "@chakra-ui/icons";
+import ConfirmDeleteDialog from "../../components/ConfirmDeleteDialog";
 
 interface FeatureProperties {
   Project?: string;
@@ -499,48 +494,13 @@ export default function AnalysisResults() {
                             Delete
                           </Button>
 
-                          <AlertDialog
+                          <ConfirmDeleteDialog 
                             isOpen={isConfrimDeleteOpen}
-                            leastDestructiveRef={cancelRef}
                             onClose={onConfirmDeleteClose}
-                          >
-                            <AlertDialogOverlay bg="rgba(0, 0, 0, 0.5)">
-                              <AlertDialogContent bg="white">
-                                <AlertDialogHeader fontSize="lg" fontWeight="bold">
-                                  Delete Analysis
-                                </AlertDialogHeader>
-
-                                <AlertDialogBody>
-                                  Are you sure you want to delete this analysis? This action will remove it from any dashboard it is associated with.
-                                </AlertDialogBody>
-
-                                <AlertDialogFooter>
-                                  <Button 
-                                    backgroundColor="darkorange"
-                                    _hover={{ backgroundColor: "dark_orange.800" }}
-                                    color="white"
-                                    w="auto"
-                                    borderRadius="px"
-                                    ref={cancelRef} 
-                                    onClick={onConfirmDeleteClose}
-                                  >
-                                    Cancel
-                                  </Button>
-                                  <Button 
-                                    colorScheme="red"
-                                    variant="solid"
-                                    backgroundColor="red.500"
-                                    _hover={{ backgroundColor: "light_green.400" }}
-                                    color="white"
-                                    width="auto"
-                                    borderRadius="5px"
-                                    onClick={() => handleDelete(analysis?.id)} ml={3}>
-                                    Yes, Delete
-                                  </Button>
-                                </AlertDialogFooter>
-                              </AlertDialogContent>
-                            </AlertDialogOverlay>
-                          </AlertDialog>
+                            onConfirm={() => handleDelete(analysis?.id)}
+                            title="Delete Dashboard"
+                            description="Are you sure you want to delete this analysis? This action will remove it from any dashboard it is associated with."
+                          />
 
                         </Flex>
                       </Flex>
