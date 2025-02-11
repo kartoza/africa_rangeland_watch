@@ -447,12 +447,13 @@ class AnalysisResultsCacheUtils:
             return cache.analysis_results
         return None
 
-    def create_analysis_cache(self, results):
+    def create_analysis_cache(self, results, ttl: int = None):
         """Create analysis cache."""
         from analysis.utils import sort_nested_structure
 
         results = sort_nested_structure(results)
-        cache = AnalysisResultsCache.objects.create(
+        cache = AnalysisResultsCache.save_cache_with_ttl(
+            ttl=ttl,
             analysis_inputs=self.inputs,
             analysis_results=results
         )

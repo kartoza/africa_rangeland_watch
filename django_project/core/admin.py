@@ -32,6 +32,11 @@ class PreferencesAdmin(admin.ModelAdmin):
                 'worker_layer_api_key',
             )
         }),
+        ('Analysis', {
+            'fields': (
+                'result_cache_ttl',
+            )
+        }),
     )
 
     def has_add_permission(self, request, obj=None):

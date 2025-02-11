@@ -13,6 +13,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from core.models import Preferences
 from analysis.analysis import (
     initialize_engine_analysis,
     run_analysis,
@@ -328,7 +329,8 @@ class AnalysisAPI(APIView):
                 })['tile_fetcher'].url_format,
                 'style': None
             }
-            return analysis_cache.create_analysis_cache(results)
+            preferences = Preferences.load()
+            return analysis_cache.create_analysis_cache(results, preferences.result_cache_ttl)
 
         return run_analysis(
             lon=float(data['longitude']),
