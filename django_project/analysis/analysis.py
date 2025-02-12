@@ -432,7 +432,7 @@ class InputLayer:
 
 class AnalysisResultsCacheUtils:
     """Analysis results cache utilities."""
-    
+
     def __init__(self, inputs):
         from analysis.utils import sort_nested_structure
         self.inputs = sort_nested_structure(inputs)
@@ -452,7 +452,7 @@ class AnalysisResultsCacheUtils:
         from analysis.utils import sort_nested_structure
 
         results = sort_nested_structure(results)
-        cache = AnalysisResultsCache.save_cache_with_ttl(
+        AnalysisResultsCache.save_cache_with_ttl(
             ttl=ttl,
             analysis_inputs=self.inputs,
             analysis_results=results
@@ -639,7 +639,12 @@ def run_analysis(lat: float, lon: float, analysis_dict: dict, *args, **kwargs):
             ee.Filter.inList('Name', select_names)
         )
         to_plot_ts = to_plot_ts.sort('Name').sort('date')
-        return analysis_cache.create_analysis_cache((to_plot.getInfo(), to_plot_ts.getInfo()))
+        return analysis_cache.create_analysis_cache(
+            (
+                to_plot.getInfo(),
+                to_plot_ts.getInfo()
+            )
+        )
 
 
 def initialize_engine_analysis():

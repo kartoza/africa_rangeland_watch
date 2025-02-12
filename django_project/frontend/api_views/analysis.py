@@ -330,7 +330,10 @@ class AnalysisAPI(APIView):
                 'style': None
             }
             preferences = Preferences.load()
-            return analysis_cache.create_analysis_cache(results, preferences.result_cache_ttl)
+            return analysis_cache.create_analysis_cache(
+                results,
+                preferences.result_cache_ttl
+            )
 
         return run_analysis(
             lon=float(data['longitude']),

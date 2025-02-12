@@ -183,9 +183,9 @@ class GEEAssetAdmin(admin.ModelAdmin):
     search_fields = ('key', 'source',)
     list_filter = ('type',)
 
+
 @admin.register(AnalysisResultsCache)
 class AnalysisResultsCacheAdmin(admin.ModelAdmin):
     """Admin for AnalysisResultsCache model."""
 
     list_display = ('id', 'expired_at',)
-    

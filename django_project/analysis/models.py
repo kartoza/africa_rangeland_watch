@@ -367,7 +367,7 @@ class AnalysisResultsCache(models.Model):
     @classmethod
     def save_cache_with_ttl(cls, ttl, **kwargs):
         """Save AnalysisResultsCache with ttl."""
-        obj =  AnalysisResultsCache.objects.create(**kwargs)
+        obj = AnalysisResultsCache.objects.create(**kwargs)
         obj.expired_at = obj.created_at + timezone.timedelta(
             hours=ttl
         )
