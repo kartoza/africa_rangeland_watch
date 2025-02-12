@@ -18,7 +18,6 @@ import { InProgressBadge } from './InProgressBadge';
 import { fetchDashboardOwners, FilterParams } from '../store/dashboardSlice';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch } from '../store';
-import axios from 'axios';
 
 interface DashboardFiltersProps {
   isOpen: boolean;
@@ -26,54 +25,29 @@ interface DashboardFiltersProps {
   setSearchTerm: React.Dispatch<React.SetStateAction<string>>;
   setFilters: React.Dispatch<React.SetStateAction<FilterParams>>;
   filters: FilterParams;
+  landscapes: string[];
 }
 
 
 
-const DashboardFilters: React.FC<DashboardFiltersProps> = ({ isOpen, onClose, setSearchTerm, setFilters, filters }) => {
+const DashboardFilters: React.FC<DashboardFiltersProps> = ({ isOpen, onClose, setSearchTerm, setFilters, filters, landscapes }) => {
 
   const dispatch = useDispatch<AppDispatch>();
 
   const { owners, loading, error } = useSelector((state: any) => state.dashboard)
-  const dashboardData = useSelector((state: any) => state.dashboard.dashboards);
   const [selectedOwner, setSelectedOwner] = useState<string>('');
-  const [regions, setRegions] = useState<string[]>([]);
+  const [regions, setRegions] = useState(landscapes);
   const [selectedRegion, setSelectedRegion] = useState<string>('');
-  const [selectedRegionLatLng, setSelectedRegionLatLng] = useState<{ lat: number; lng: number } | null>(null);
   
 
   useEffect(() => {
     dispatch(fetchDashboardOwners());
   }, [dispatch]);
 
-  // TODO current method inefficient ,won't work
-  // useEffect(() => {
-  //   const fetchRegions = async () => {
-  //     const regionSet: Set<string> = new Set();
-
-  //     // Iterate over dashboard data
-  //     for (const dashboard of dashboardData) {
-  //       if (Array.isArray(dashboard.analysis_results)) {
-  //         // Iterate over all analysis results if it's an array
-  //         for (const analysisResult of dashboard.analysis_results) {
-  //           const { data } = analysisResult.analysis_results;
-  //           if (data && data.latitude && data.longitude) {
-  //             const { latitude, longitude } = data;
-  //             const region = await getRegionFromCoordinates(latitude, longitude);
-  //             if (region) regionSet.add(region);
-  //           }
-  //         }
-  //       }
-  //     }
-
-  //     // Set the regions
-  //     setRegions(Array.from(regionSet));
-  //   };
-
-  //   if (!loading) {
-  //     fetchRegions();
-  //   }
-  // }, [dashboardData, loading]);
+  useEffect(() => {
+    if(landscapes.length > 0)
+      setRegions(landscapes)
+  }, [landscapes]);
 
 
   const handleOwnerChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -83,17 +57,6 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({ isOpen, onClose, se
 
   // Update filters when any change occurs
   const updateFilter = <K extends keyof FilterParams>(key: K, value: FilterParams[K]) => {
-    if (key === 'region' && typeof value === 'string') {
-      const selectedRegionData = findRegionLatLng(value);
-  
-      if (selectedRegionData) {
-        setSelectedRegionLatLng(selectedRegionData);
-        setFilters((prevFilters) => ({
-          ...prevFilters,
-          region: JSON.stringify(selectedRegionData),
-        }));
-      }
-    }
   
     setFilters((prevFilters) => ({
       ...prevFilters,
@@ -102,33 +65,7 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({ isOpen, onClose, se
   };
   
 
-  const findRegionLatLng = (regionName: string) => {
-    const regionData = dashboardData.find((dashboard: { analysis_results: any[]; }) => {
-      return dashboard.analysis_results.some(async (analysisResult) => {
-        const { data } = analysisResult.analysis_results;
-        return await getRegionFromCoordinates(data.latitude, data.longitude) === regionName;
-      });
-    });
-
-    if (regionData) {
-      const { latitude, longitude } = regionData.analysis_results[0].analysis_results.data;
-      return { lat: latitude, lng: longitude };
-    }
-
-    return null;
-  };
-
-  const getRegionFromCoordinates = async (latitude: number, longitude: number) => {
-    const url = `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`;
-    try {
-      const response = await axios.get(url);
-      const region = response.data.address?.region;
-      return region || "Unknown Region";
-    } catch (error) {
-      return "Unknown Region";
-    }
-  };
-
+  
   return (
     <Drawer isOpen={isOpen} placement="left" onClose={onClose}>
       <DrawerOverlay />
@@ -151,8 +88,8 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({ isOpen, onClose, se
             width="40%"
             borderRadius="md"
             onClick={() => {
-              setSelectedRegionLatLng(null)
               setSelectedOwner('');
+              setSelectedRegion('');
               setFilters({
                 searchTerm: '',
                 my_resources: false,
@@ -255,8 +192,8 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({ isOpen, onClose, se
               value={selectedRegion}
               onChange={(e) => {
                 updateFilter("region", e.target.value)
+                setSelectedRegion(e.target.value)
               }}
-              isDisabled={true}
             >
               {regions.length > 0 ? (
                 regions.map((region, index) => (
