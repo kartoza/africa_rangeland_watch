@@ -64,7 +64,8 @@ class AnalysisAPI(APIView):
         return run_analysis(
             lon=float(data['longitude']),
             lat=float(data['latitude']),
-            analysis_dict=analysis_dict
+            analysis_dict=analysis_dict,
+            custom_geom=data.get('custom_geom', None)
         )
 
     def _combine_temporal_analysis_results(self, years, input_results):
