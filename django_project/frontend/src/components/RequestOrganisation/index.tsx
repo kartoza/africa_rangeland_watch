@@ -184,7 +184,7 @@ export default function RequestOrganisation({ isOpen, onClose }: Props) {
                         value={selectedOrganisationId}
                         onChange={(e) => setSelectedOrganisationId(e.target.value)}
                       >
-                        {organisations.map((org) => (
+                        {Array.isArray(organisations) && organisations.map((org) => (
                           <option key={org.id} value={org.id}>
                             {org.name}
                           </option>
