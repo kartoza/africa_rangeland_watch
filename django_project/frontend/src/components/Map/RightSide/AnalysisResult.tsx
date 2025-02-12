@@ -236,7 +236,7 @@ function SpatialBarChart({ analysis }: Props) {
       },
       subtitle: {
         display: true,
-        text: 'Feature (labeled by',
+        text: 'Feature (labeled by Name)',
         position: 'bottom'
       }
     },

@@ -55,6 +55,7 @@ const DashboardPage: React.FC = () => {
   const [endIdx, setEndIdx] = useState(1);
   const [filters, setFilters] = useState(null);
   const { dashboardUpdated } = useSelector((state: RootState) => state.dashboard);
+  const [landscapes, setLandscapes] = useState<string[]>([]);
   const toast = useToast();
 
   const [panelPositions, setPanelPositions] = useState({});
@@ -100,6 +101,24 @@ const DashboardPage: React.FC = () => {
 
       // Set the state to pass down to the chart cards
       setChartsConfig(updatedChartsConfig);
+
+      if (dashboardData && Array.isArray(dashboardData)) {
+        const extractedLandscapes = dashboardData.flatMap((data) => {
+          if (data.analysis_results) {
+            return data.analysis_results.flatMap((result: any) => {
+              if (result.analysis_results) {
+                return [result.analysis_results.data.landscape];
+              }
+              return [];
+            });
+          }
+          return [];
+        });
+      
+        // Remove duplicates
+        const uniqueLandscapes = Array.from(new Set(extractedLandscapes));
+        setLandscapes(uniqueLandscapes);
+      }
     }
   }, [loading, dashboardData]);
 
@@ -113,7 +132,7 @@ const DashboardPage: React.FC = () => {
         dispatch(fetchDashboards(filters));
         toast({
           title: "Dashboard updated",
-          description: "Your dashaboard settings have been updated.If changes dont reflect immediately please refresh the page.",
+          description: "Action has been completed.If changes dont reflect immediately please refresh the page.",
           status: "success",
           duration: 5000,
           isClosable: true,
@@ -653,6 +672,7 @@ const DashboardPage: React.FC = () => {
         setSearchTerm={(searchTerm) => setFilters((prev: any) => ({ ...prev, searchTerm }))}
         setFilters={setFilters}
         filters={filters}
+        landscapes={landscapes}
       />
 
       {/* Analysis sidebar */}

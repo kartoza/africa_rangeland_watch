@@ -7,6 +7,10 @@ import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import MiniMap from "./DashboardCharts/MapCard";
 import { DashboardSettingsModal } from "./DashboardCharts/DashboardSettings";
+import { deleteDashboard } from "../store/dashboardSlice";
+import { useDispatch } from "react-redux";
+import { AppDispatch } from "../store";
+import ConfirmDeleteDialog from "./ConfirmDeleteDialog";
 
 interface ChartCardProps {
   config: {
@@ -14,14 +18,14 @@ interface ChartCardProps {
     owner: any;
     title: any;
     uuid: any;
-    config: {
+    config?: {
       dashboardName: string;
       preference: string;
       chartType: string;
       title: string;
       data: any;
       downloadData: string;
-      owner: boolean;
+      owner?: boolean;
     };
     analysisResults: any[];
   };
@@ -39,6 +43,8 @@ const ChartCard: React.FC<ChartCardProps> = ({ config, className }) => {
   const [isRenderFailed, setIsRenderFailed] = useState(false);
 
   const [dashboardSettings, setDashboardSettings] = useState(null);
+  const dispatch = useDispatch<AppDispatch>();
+  const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
 
 
   useEffect(() => {
@@ -75,7 +81,7 @@ const ChartCard: React.FC<ChartCardProps> = ({ config, className }) => {
 
   const getChartComponent = () => {
     try {
-      return <RenderResult analysis={config.analysisResults[0].analysis_results as Analysis} />;
+      return <RenderResult analysisResults={config.analysisResults} />;
     } catch (error) {
       console.error("Error processing data:", error);
       return (
@@ -141,9 +147,17 @@ const ChartCard: React.FC<ChartCardProps> = ({ config, className }) => {
     pdf.save(`${dashboardName}_chart.pdf`);
   };
 
-  function handleDeleteDashboard(dashboardId: any): void {
-    throw new Error("Function not implemented.");
-  }
+  const handleDeleteDashboard = (uuid: string) => {
+      dispatch(deleteDashboard(uuid));
+  };
+
+  const handleOpenDeleteDialog = (dashboardId: string) => {
+    setIsConfirmDeleteOpen(true);
+  };
+
+  const handleCloseDeleteDialog = () => {
+    setIsConfirmDeleteOpen(false);
+  };
 
   
 
@@ -183,12 +197,20 @@ const ChartCard: React.FC<ChartCardProps> = ({ config, className }) => {
                {dashboardSettings?.created_by && (
                 <IconButton 
                   icon={<FiTrash2 />} 
-                  onClick={() => handleDeleteDashboard(1)} 
+                  onClick={() => handleOpenDeleteDialog("dashboard-uuid")} 
                   colorScheme="red" 
                   aria-label="Delete Dashboard" 
                   size="sm" 
                 />
               )}
+
+              <ConfirmDeleteDialog 
+                isOpen={isConfirmDeleteOpen}
+                onClose={handleCloseDeleteDialog}
+                onConfirm={() => handleDeleteDashboard(config?.uuid)}
+                title="Delete Dashboard"
+                description="Are you sure you want to delete this dashboard? This action cannot be undone."
+              />
             </HStack>
           </Flex>
 
