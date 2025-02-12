@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Box,
   Flex,
@@ -32,7 +32,14 @@ import { FaCog } from "react-icons/fa";
 import Draggable, { DraggableData } from "react-draggable";
 
 
-type DragPosition = { [key: number]: { x: number; y: number } };
+type DragPosition = {
+  [key: number]: { x: number; y: number };
+};
+
+type CardPosition = {
+  row: number;
+  col: number;
+};
 
 const DashboardPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState("");
@@ -58,24 +65,8 @@ const DashboardPage: React.FC = () => {
   const toast = useToast();
 
   const [panelPositions, setPanelPositions] = useState({});
-  const [dragPosition, setDragPosition] = useState<DragPosition>({});
-
-
-  const handleDragMove = (data: DraggableData, panelKey: number) => {
-    setDragPosition(prevState => ({
-      ...prevState,
-      [panelKey]: { x: data.x, y: data.y },
-    }));
-  };
-
+  const [landscapes, setLandscapes] = useState<string[]>([]);
   
-
-  const handleDragStop = (panelKey: any, data: { x: any; y: any; }) => {
-    setPanelPositions((prevState) => ({
-      ...prevState,
-      [panelKey]: { x: data.x, y: data.y },
-    }));
-  };
 
   const toggleMenu = () => {
     setIsLayoutMenuOpen(prevState => !prevState);
@@ -100,6 +91,26 @@ const DashboardPage: React.FC = () => {
 
       // Set the state to pass down to the chart cards
       setChartsConfig(updatedChartsConfig);
+
+      if (dashboardData && Array.isArray(dashboardData)) {
+        const extractedLandscapes = dashboardData.flatMap((data) => {
+          if (data.analysis_results) {
+            return data.analysis_results.flatMap((result: any) => {
+              if (result.analysis_results) {
+                return [result.analysis_results.data.landscape];
+              }
+              return [];
+            });
+          }
+          return [];
+        });
+      
+        // Remove duplicates
+        const uniqueLandscapes = Array.from(new Set(extractedLandscapes));
+        setLandscapes(uniqueLandscapes);
+      }
+      
+      
     }
   }, [loading, dashboardData]);
 
@@ -199,6 +210,118 @@ const DashboardPage: React.FC = () => {
 
   var render = 0;
 
+  const [dragPosition, setDragPosition] = useState<DragPosition>({});
+const [cards, setCards] = useState<{ id: number; position: CardPosition }[]>([]); // Store card positions
+
+// Initialize cards with positions
+const initialized = useRef(false);
+
+useEffect(() => {
+  if (!initialized.current && filteredData.length > 0) {
+    const initialCards = filteredData.map((_, index) => ({
+      id: index,
+      position: { row: Math.floor(index / 3), col: index % 3 },
+    }));
+    setCards(initialCards);
+    initialized.current = true; // Prevents re-initialization
+  }
+}, [filteredData]); 
+
+// Handler for dragging move (during dragging)
+const handleDragMove = (data: DraggableData, panelKey: number) => {
+  setDragPosition((prevState) => ({
+    ...prevState,
+    [panelKey]: { x: data.x, y: data.y },
+  }));
+};
+
+const handleDragStop = (panelKey: number, data: any) => {
+  const newX = data.x;
+  const newY = data.y;
+
+  // Logic to check the new position and swap cards
+  const currentCard = cards.find((card) => card.id === panelKey);
+  if (!currentCard) return;
+
+  // Calculate the target row and column based on the drag position
+  let targetRow = Math.floor(newY / 200);  // Assuming each card height is 200px
+  let targetCol = Math.floor(newX / 200);  // Assuming each card width is 200px
+
+  // Ensure we stay within bounds of the grid
+  const maxRows = Math.ceil(cards.length / 3); // assuming 3 cards per row
+  const maxCols = 3; // 3 columns per row
+
+  if (targetRow >= maxRows) targetRow = maxRows - 1;
+  if (targetCol >= maxCols) targetCol = maxCols - 1;
+
+  // Find the card at the target position
+  const targetCard = cards.find(
+    (card) => card.position.row === targetRow && card.position.col === targetCol
+  );
+
+  if (targetCard && currentCard.id !== targetCard.id) {
+    // Swap positions of the cards
+    setCards((prevCards) => {
+      const updatedCards = [...prevCards];
+      const currentIndex = updatedCards.findIndex((card) => card.id === panelKey);
+      const targetIndex = updatedCards.findIndex((card) => card.id === targetCard.id);
+
+      if (currentIndex >= 0 && targetIndex >= 0) {
+        // Swap the positions of the two cards
+        updatedCards[currentIndex].position = targetCard.position;
+        updatedCards[targetIndex].position = currentCard.position;
+      }
+
+      return updatedCards;
+    });
+  }
+
+  // Reset the drag position after moving
+  setDragPosition((prevState) => ({
+    ...prevState,
+    [panelKey]: { x: 0, y: 0 },
+  }));
+};
+
+const moveCard = (panelKey: number, direction: string) => {
+  setCards((prevCards) => {
+    const updatedCards = [...prevCards];
+    const currentIndex = updatedCards.findIndex((card) => card.id === panelKey);
+
+    if (currentIndex === -1) return prevCards;
+
+    const currentCard = updatedCards[currentIndex];
+    let targetRow = currentCard.position.row;
+    let targetCol = currentCard.position.col;
+
+    // Determine new position based on direction
+    if (direction === "left") targetCol -= 1;
+    if (direction === "right") targetCol += 1;
+    if (direction === "up") targetRow -= 1;
+    if (direction === "down") targetRow += 1;
+
+    // Find target card
+    const targetIndex = updatedCards.findIndex(
+      (card) => card.position.row === targetRow && card.position.col === targetCol
+    );
+
+    if (targetIndex !== -1) {
+      // Clone cards to ensure state updates correctly
+      const newCards = updatedCards.map((card, index) =>
+        index === currentIndex
+          ? { ...card, position: { row: targetRow, col: targetCol } } // Swap current card
+          : index === targetIndex
+          ? { ...card, position: { row: currentCard.position.row, col: currentCard.position.col } } // Swap target card
+          : card
+      );
+
+      return newCards; // ✅ Return a new array reference to trigger a re-render
+    }
+
+    return prevCards; // No change if target position is invalid
+  });
+};
+
  
 
   const renderPanels = () => {
@@ -218,36 +341,23 @@ const DashboardPage: React.FC = () => {
               // Create an array with original panels + dummy panels
               const balancedPanels = [...rowPanels, ...Array(extraPanels).fill(null)];
             
+              console.log("Current Card Positions:", cards);
+
+              const sortedCards = [...cards].sort((a, b) => 
+                a.position.row === b.position.row 
+                  ? a.position.col - b.position.col 
+                  : a.position.row - b.position.row
+              );
+          
               return (
-                <PanelGroup
-                  key={rowIndex}
-                  direction="horizontal"
-                  style={{ display: "flex", justifyContent: "center", gap: "6px" }}
-                >
-                  {balancedPanels.map((config, index) => {
-                    const panelKey = rowIndex * 3 + index;
-                    const isDummy = config === null;
-            
+                <VStack spacing={6} align="stretch">
+                  {Array.from({ length: rows }).map((_, rowIndex) => {
+                    const rowPanels = sortedCards.slice(rowIndex * 3, rowIndex * 3 + 3);
+          
                     return (
-                      <Draggable
-                        key={`panel-${panelKey}`}
-                        axis="x"
-                        position={dragPosition[panelKey] || { x: 0, y: 0 }}  // Dynamically set position
-                        onStop={(e, data) => handleDragStop(panelKey, data)}
-                        onDrag={(e, data) => handleDragMove(data, panelKey)}
-                      >
-                        <React.Fragment key={panelKey}>
-                          <Panel
-                            key={`panel-${panelKey}`}
-                            defaultSize={33.33}
-                            minSize={20}
-                            style={{
-                              height: "400px",
-                              padding: "0px",
-                              opacity: isDummy ? 0 : 1,
-                              pointerEvents: isDummy ? "none" : "auto",
-                            }}
-                          >
+                      <PanelGroup key={rowIndex} direction="horizontal" style={{ display: "flex", gap: "6px" }}>
+                        {rowPanels.map((card, index) => (
+                          <Box key={`panel-${card.id}`} width="33.33%" minHeight="200px" position="relative">
                             <Flex
                               bg="gray.200"
                               border="1px solid"
@@ -256,31 +366,28 @@ const DashboardPage: React.FC = () => {
                               rounded="lg"
                               align="center"
                               justify="center"
-                              h="100%"
-                              p={2}
+                              height="100%"
+                              direction="column"
                             >
-                              {!isDummy && (
-                                <div style={{ width: "100%", height: "100%" }}>
-                                  <ChartCard
-                                    key={config.uuid}
-                                    config={config}
-                                    className={`draggable-card-${panelKey}`}
-                                  />
-                                </div>
-                              )}
+                              <div style={{ width: "100%", height: "100%" }}>
+                                {/* <ChartCard config={card} /> */}
+                                {card.id}
+                              </div>
+          
+                              {/* Arrows for moving the card */}
+                              <Flex justify="center" gap="2" mt="2">
+                                <Button size="xs" onClick={() => moveCard(card.id, "left")}>⬅️</Button>
+                                <Button size="xs" onClick={() => moveCard(card.id, "right")}>➡️</Button>
+                                <Button size="xs" onClick={() => moveCard(card.id, "up")}>⬆️</Button>
+                                <Button size="xs" onClick={() => moveCard(card.id, "down")}>⬇️</Button>
+                              </Flex>
                             </Flex>
-                          </Panel>
-              
-                          {/* Add resize handle only for non-dummy panels */}
-                          {!isDummy && index !== balancedPanels.length - 1 && (
-                            <PanelResizeHandle key={`resize-handle-${panelKey}`}>
-                            </PanelResizeHandle>
-                          )}
-                        </React.Fragment>
-                      </Draggable>
+                          </Box>
+                        ))}
+                      </PanelGroup>
                     );
                   })}
-                </PanelGroup>
+                </VStack>
               );
             }
             
@@ -322,6 +429,13 @@ const DashboardPage: React.FC = () => {
                             pointerEvents: isDummy ? "none" : "auto",
                           }}
                         >
+                          <Box
+                          key={`panel-${panelKey}`}
+                          minHeight="200px"
+                          opacity={isDummy ? 0 : 1}
+                          pointerEvents={isDummy ? "none" : "auto"}
+                          position="relative"
+                        >
                           <Flex
                             bg="gray.200"
                             border="1px solid"
@@ -343,6 +457,7 @@ const DashboardPage: React.FC = () => {
                             </div>
                             }
                           </Flex>
+                          </Box>
                         </Panel>
             
                         {!isDummy && index !== balancedPanels.length - 1 && (
@@ -653,6 +768,7 @@ const DashboardPage: React.FC = () => {
         setSearchTerm={(searchTerm) => setFilters((prev: any) => ({ ...prev, searchTerm }))}
         setFilters={setFilters}
         filters={filters}
+        landscapes={landscapes}
       />
 
       {/* Analysis sidebar */}
