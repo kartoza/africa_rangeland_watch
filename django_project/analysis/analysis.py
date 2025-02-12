@@ -1174,3 +1174,36 @@ def spatial_get_date_filter(analysis_dict):
             int(analysis_dict['Spatial'].get('end_year')), 1, 1
         )
     return filter_start_date, filter_end_date
+
+
+def validate_spatial_date_range_filter(
+    variable: str, start_date: datetime.date, end_date: datetime.date
+):
+    """Validate whether the date range filter is valid."""
+    if start_date is None or end_date is None:
+        return True, None, None
+
+    spatial_dict = {
+        'EVI': ['modis_vegetation'],
+        'NDVI': ['modis_vegetation'],
+        'Bare ground': ['cgls_ground_cover'],
+        'Grass cover': ['cgls_ground_cover'],
+        'Woody cover': ['cgls_ground_cover'],
+        'Soil carbon change': ['soil_carbon']
+    }
+
+    if variable not in spatial_dict:
+        return True, None, None
+
+    assets = spatial_dict[variable]
+    for asset_key in assets:
+        valid_start_date = GEEAsset.is_date_within_asset_period(
+            asset_key, start_date.isoformat()
+        )
+        valid_end_date = GEEAsset.is_date_within_asset_period(
+            asset_key, end_date.isoformat()
+        )
+        if not valid_start_date or not valid_end_date:
+            metadata = GEEAsset.fetch_asset_metadata(asset_key)
+            return False, metadata.get('start_date'), metadata.get('end_date')
+    return True, None, None
