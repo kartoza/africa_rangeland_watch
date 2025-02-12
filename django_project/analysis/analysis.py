@@ -190,7 +190,7 @@ class InputLayer:
                 .set('year', ee.Number.parse(col.get('system:index'))))
 
     def get_soil_carbon(
-        self, start_date: datetime.date=None, end_date: datetime.date=None
+        self, start_date: datetime.date = None, end_date: datetime.date = None
     ):
         """
         Get image for soil carbon mean.
@@ -270,7 +270,7 @@ class InputLayer:
         return grazing_capacity
 
     def get_soc_col(
-        self, start_date: datetime.date=None, end_date: datetime.date=None
+        self, start_date: datetime.date = None, end_date: datetime.date = None
     ):
         """
         Get soil organic carbon data.
@@ -306,7 +306,7 @@ class InputLayer:
         return soc_col
 
     def get_soil_carbon_change(
-        self, start_date: datetime.date=None, end_date: datetime.date=None
+        self, start_date: datetime.date = None, end_date: datetime.date = None
     ):
         """
         Get soil carbon change, clipped by countries.
@@ -330,7 +330,7 @@ class InputLayer:
         return soc_lt_trend
 
     def get_spatial_layer_dict(
-        self, start_date: datetime.date=None, end_date: datetime.date=None
+        self, start_date: datetime.date = None, end_date: datetime.date = None
     ):
         """
         Get spatial layer dictionary.
