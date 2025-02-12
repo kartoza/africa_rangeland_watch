@@ -583,6 +583,7 @@ def run_analysis(lat: float, lon: float, analysis_dict: dict, *args, **kwargs):
                     analysis_dict['Temporal']['Annual']['test'] == 2023
             ):
                 new_stats = get_latest_stats(
+                    custom_geom if custom_geom else
                     landscapes_dict[analysis_dict['landscape']],
                     custom_geom if custom_geom else
                     communities.filterBounds(selected_geos)

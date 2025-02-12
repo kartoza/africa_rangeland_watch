@@ -113,7 +113,7 @@ const DashboardPage: React.FC = () => {
         dispatch(fetchDashboards(filters));
         toast({
           title: "Dashboard updated",
-          description: "Your dashaboard settings have been updated.If changes dont reflect immediately please refresh the page.",
+          description: "Action has been completed.If changes dont reflect immediately please refresh the page.",
           status: "success",
           duration: 5000,
           isClosable: true,

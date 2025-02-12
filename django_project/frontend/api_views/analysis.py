@@ -335,12 +335,24 @@ class AnalysisAPI(APIView):
                 preferences.result_cache_ttl
             )
 
-        return run_analysis(
+        results = run_analysis(
             lon=float(data['longitude']),
             lat=float(data['latitude']),
             analysis_dict=analysis_dict,
             reference_layer=data['reference_layer']
         )
+
+        if data.get('custom_geom', None):
+            # add Name to the results
+            name = data.get('userDefinedFeatureName', 'User Defined Geometry')
+            for feature in results.get('features', []):
+                if 'properties' not in feature:
+                    continue
+                if 'Name' in feature['properties']:
+                    continue
+                feature['properties']['Name'] = name
+
+        return results
 
     def post(self, request, *args, **kwargs):
         """Fetch list of Landscape."""
