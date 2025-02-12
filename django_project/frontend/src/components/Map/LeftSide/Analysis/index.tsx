@@ -328,11 +328,24 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
           <AnalysisSpatialYearFilter
             initialStartYear={data.spatialStartYear}
             initialEndYear={data.spatialEndYear}
-            onYearChange={(startYear, endYear) => setData({
-              ...data,
-              spatialStartYear: startYear,
-              spatialEndYear: endYear
-            })}
+            onYearChange={(startYear, endYear) => {
+              // set spatial year filter and reset results
+              setData({
+                ...data,
+                community: null,
+                latitude: null,
+                longitude: null,
+                communityName: null,
+                communityFeatureId: null,
+                custom_geom: null,
+                userDefinedFeatureId: null,
+                userDefinedFeatureName: null,
+                spatialStartYear: startYear,
+                spatialEndYear: endYear
+              })
+              dispatch(resetAnalysisResult())
+              setMapInteraction(MapAnalysisInteraction.NO_INTERACTION)
+            }}
           />
         }
         {/* Draw buttons for spatial */}
