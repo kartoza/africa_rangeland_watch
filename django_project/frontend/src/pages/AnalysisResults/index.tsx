@@ -169,15 +169,24 @@ export default function AnalysisResults() {
 
   // Filtering based on search term
   const filteredData = analysisData.filter((analysis: any) => {
-    const titleMatches = getAnalysisSummary(analysis).title.toLowerCase().includes(searchTerm.toLowerCase());
-    const typeMatches = type ? analysis.analysis_results.data?.analysisType.toLowerCase() === type : true;
+    const title = getAnalysisSummary(analysis)?.title?.toLowerCase() || "";
+    const titleMatches = title.includes(searchTerm.toLowerCase());
+  
+    const typeMatches = type
+      ? analysis?.analysis_results?.data?.analysisType?.toLowerCase() === type
+      : true;
+  
     const dateMatches = date
-      ? format(new Date(analysis?.created_at), "yyyy-MM-dd") === date
-      : true; // Filter only if a date is selected
-    const regionMatches = region ? analysis.analysis_results.data?.landscape === region : true;
+      ? format(new Date(analysis?.created_at || ""), "yyyy-MM-dd") === date
+      : true;
+  
+    const regionMatches = region
+      ? analysis?.analysis_results?.data?.landscape === region
+      : true;
   
     return titleMatches && typeMatches && dateMatches && regionMatches;
   });
+
   
   
 
