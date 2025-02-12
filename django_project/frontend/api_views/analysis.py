@@ -205,8 +205,8 @@ class AnalysisAPI(APIView):
             'Spatial': {
                 'Annual': '',
                 'Quarterly': '',
-                'start_year': data.get('spatial_start_year', None),
-                'end_year': data.get('spatial_end_year', None)
+                'start_year': data.get('spatialStartYear', None),
+                'end_year': data.get('spatialEndYear', None)
             }
         }
         initialize_engine_analysis()
