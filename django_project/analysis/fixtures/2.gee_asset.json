@@ -5,7 +5,8 @@
     "fields": {
         "key": "baseline_table",
         "source": "projects/ee-yekelaso1818/assets/CSA/Baseline_pre_export_20241007",
-        "type": "table"
+        "type": "table",
+        "metadata": {}
     }
 },
 {
@@ -14,7 +15,8 @@
     "fields": {
         "key": "temporal_table",
         "source": "projects/ee-yekelaso1818/assets/Temporal_pre_export_20241202",
-        "type": "table"
+        "type": "table",
+        "metadata": {}
     }
 },
 {
@@ -23,7 +25,8 @@
     "fields": {
         "key": "communities",
         "source": "projects/ee-yekelaso1818/assets/CSA/CSA_master_20241007",
-        "type": "table"
+        "type": "table",
+        "metadata": {}
     }
 },
 {
@@ -32,7 +35,8 @@
     "fields": {
         "key": "countries",
         "source": "USDOS/LSIB/2013",
-        "type": "table"
+        "type": "table",
+        "metadata": {}
     }
 },
 {
@@ -41,7 +45,8 @@
     "fields": {
         "key": "globe_land30",
         "source": "users/cgmorton/GlobeLand30",
-        "type": "image_collection"
+        "type": "image_collection",
+        "metadata": {}
     }
 },
 {
@@ -50,7 +55,11 @@
     "fields": {
         "key": "soil_carbon",
         "source": "users/grazingresearch/Collaboration/Soil_C/predictions2",
-        "type": "image_collection"
+        "type": "image_collection",
+        "metadata": {
+            "start_date": "1984-01-01",
+            "end_date": "2019-01-01"
+        }
     }
 },
 {
@@ -59,7 +68,11 @@
     "fields": {
         "key": "modis_vegetation",
         "source": "MODIS/006/MOD13Q1",
-        "type": "image_collection"
+        "type": "image_collection",
+        "metadata": {
+            "start_date": "2000-02-18",
+            "end_date": "2023-02-18"
+        }
     }
 },
 {
@@ -68,7 +81,11 @@
     "fields": {
         "key": "cgls_ground_cover",
         "source": "COPERNICUS/Landcover/100m/Proba-V-C3/Global",
-        "type": "image_collection"
+        "type": "image_collection",
+        "metadata": {
+            "start_date": "2015-01-01",
+            "end_date": "2020-01-01"
+        }
     }
 },
 {
@@ -77,7 +94,8 @@
     "fields": {
         "key": "sentinel2_harmonized",
         "source": "COPERNICUS/S2_SR_HARMONIZED",
-        "type": "image_collection"
+        "type": "image_collection",
+        "metadata": {}
     }
 },
 {
@@ -86,7 +104,8 @@
     "fields": {
         "key": "sentinel2_clouds",
         "source": "COPERNICUS/S2_CLOUD_PROBABILITY",
-        "type": "image_collection"
+        "type": "image_collection",
+        "metadata": {}
     }
 },
 {
@@ -95,7 +114,8 @@
     "fields": {
         "key": "soc_grids_cfvo",
         "source": "users/zandersamuel/SA_misc/Soilgrids_CFVO",
-        "type": "image"
+        "type": "image",
+        "metadata": {}
     }
 },
 {
@@ -104,7 +124,8 @@
     "fields": {
         "key": "soc_stone_content",
         "source": "ISDASOIL/Africa/v1/stone_content",
-        "type": "image"
+        "type": "image",
+        "metadata": {}
     }
 },
 {
@@ -113,7 +134,8 @@
     "fields": {
         "key": "soc_isda",
         "source": "users/zandersamuel/Africa_misc/iSDA_SOC_m_30m_0_20cm_2001_2017_v0_13_wgs84",
-        "type": "image"
+        "type": "image",
+        "metadata": {}
     }
 },
 {
@@ -122,7 +144,8 @@
     "fields": {
         "key": "soc_grids_bd",
         "source": "users/zandersamuel/SA_misc/SoilGrids_BD",
-        "type": "image"
+        "type": "image",
+        "metadata": {}
     }
 },
 {
@@ -131,7 +154,8 @@
     "fields": {
         "key": "soc_bulk_density",
         "source": "ISDASOIL/Africa/v1/bulk_density",
-        "type": "image"
+        "type": "image",
+        "metadata": {}
     }
 },
 {
@@ -140,7 +164,8 @@
     "fields": {
         "key": "grazing_capacity",
         "source": "users/zandersamuel/Consult_CSA/grazingCapacity_srnAfrica_LSU_ha",
-        "type": "image"
+        "type": "image",
+        "metadata": {}
     }
 },
 {
@@ -149,7 +174,8 @@
     "fields": {
         "key": "random_forest_training",
         "source": "users/zandersamuel/Consult_CSA/Training_data_TOA_bg_t_g",
-        "type": "table"
+        "type": "table",
+        "metadata": {}
     }
 },
 {
@@ -158,7 +184,8 @@
     "fields": {
         "key": "fire_freq",
         "source": "users/zandersamuel/Consult_CSA/fire_freq_SrnAfrica_200m",
-        "type": "image"
+        "type": "image",
+        "metadata": {}
     }
 }
 ]

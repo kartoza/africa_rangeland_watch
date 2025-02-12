@@ -334,6 +334,12 @@ class GEEAsset(models.Model):
         choices=GEEAssetType.choices(),
         help_text='Asset type.'
     )
+    metadata = models.JSONField(
+        default=dict,
+        null=True,
+        blank=True,
+        help_text='Asset metadata.'
+    )
 
     def __str__(self):
         return self.key
@@ -345,6 +351,32 @@ class GEEAsset(models.Model):
         if asset is None:
             raise KeyError(f'Asset with key {asset_key} not found!')
         return asset.source
+
+    @classmethod
+    def fetch_asset_metadata(cls, asset_key: str) -> str:
+        """Fetch asset metadata by its key."""
+        asset = GEEAsset.objects.filter(key=asset_key).first()
+        if asset is None:
+            raise KeyError(f'Asset with key {asset_key} not found!')
+        return asset.metadata
+
+    @classmethod
+    def is_date_within_asset_period(cls, asset_key: str, date: str) -> bool:
+        """Check if the given date is within the asset's start and end date."""
+        asset = cls.objects.filter(key=asset_key).first()
+        if asset is None:
+            raise KeyError(f'Asset with key {asset_key} not found!')
+
+        metadata = asset.metadata
+        start_date = metadata.get('start_date')
+        end_date = metadata.get('end_date')
+
+        if not start_date or not end_date:
+            raise ValueError(
+                'Asset metadata must contain start_date and end_date.'
+            )
+
+        return start_date <= date < end_date
 
     class Meta:
         verbose_name_plural = 'GEE Assets'

@@ -5,6 +5,7 @@ Africa Rangeland Watch (ARW).
 .. note:: Analysis APIs
 """
 import uuid
+from datetime import date
 from copy import deepcopy
 from concurrent.futures import ThreadPoolExecutor
 from rest_framework import status
@@ -16,7 +17,9 @@ from analysis.analysis import (
     initialize_engine_analysis,
     run_analysis,
     get_rel_diff,
-    InputLayer
+    InputLayer,
+    spatial_get_date_filter,
+    validate_spatial_date_range_filter
 )
 
 
@@ -203,15 +206,37 @@ class AnalysisAPI(APIView):
             },
             'Spatial': {
                 'Annual': '',
-                'Quarterly': ''
+                'Quarterly': '',
+                'start_year': data.get('spatialStartYear', None),
+                'end_year': data.get('spatialEndYear', None)
             }
         }
+        filter_start_date, filter_end_date = spatial_get_date_filter(
+            analysis_dict
+        )
+
+        valid_filters, start_meta, end_meta = (
+            validate_spatial_date_range_filter(
+                data['variable'], filter_start_date, filter_end_date
+            )
+        )
+        if not valid_filters:
+            # validate the filter is within asset date ranges
+            raise ValueError(
+                f'{data['variable']} year range filter must be between '
+                f'{date.fromisoformat(start_meta).year} to '
+                f'{date.fromisoformat(end_meta).year}'
+            )
+
         initialize_engine_analysis()
         if data['longitude'] is None and data['latitude'] is None:
             # return the relative different layer
             input_layers = InputLayer()
             rel_diff = get_rel_diff(
-                input_layers.get_spatial_layer_dict(),
+                input_layers.get_spatial_layer_dict(
+                    filter_start_date,
+                    filter_end_date
+                ),
                 analysis_dict,
                 data['reference_layer']
             )
