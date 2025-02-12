@@ -372,7 +372,9 @@ class GEEAsset(models.Model):
         end_date = metadata.get('end_date')
 
         if not start_date or not end_date:
-            raise ValueError('Asset metadata must contain start_date and end_date.')
+            raise ValueError(
+                'Asset metadata must contain start_date and end_date.'
+            )
 
         return start_date <= date < end_date
 
