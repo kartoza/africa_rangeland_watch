@@ -115,7 +115,6 @@ class AnalysisAPITest(BaseAPIViewTest):
         )
         request.user = self.superuser
         response = view(request)
-
         self.assertEqual(response.status_code, 200)
         results = response.data['results']
         self.assertEqual(
