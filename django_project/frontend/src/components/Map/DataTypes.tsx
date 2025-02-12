@@ -23,6 +23,8 @@ export interface AnalysisData {
   custom_geom?: object;
   userDefinedFeatureName?: string;
   userDefinedFeatureId?: string;
+  spatialStartYear?: number;
+  spatialEndYear?: number;
 }
 
 export const GroupName = {

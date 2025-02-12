@@ -20,6 +20,7 @@ import { AppDispatch, RootState } from "../../../../store";
 import { doAnalysis, REFERENCE_LAYER_DIFF_ID, resetAnalysisResult } from "../../../../store/analysisSlice";
 import { AnalysisCustomGeometrySelector } from "./AnalysisCustomGeometrySelector";
 import AnalysisUserDefinedLayerSelector from "./AnalysisUserDefinedLayerSelector";
+import AnalysisSpatialYearFilter from "./AnalysisSpatialYearFilter";
 import { LayerCheckboxProps } from '../Layers';
 import { useSession } from '../../../../sessionProvider';
 import { saveAnalysis } from '../../../../store/userAnalysisSlice';
@@ -318,6 +319,19 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
             onSelected={(value) => setData({
               ...data,
               variable: value
+            })}
+          />
+        }
+        {/* 4) Select year range filter for spatial*/}
+        {
+          data.analysisType === Types.SPATIAL && data.variable &&
+          <AnalysisSpatialYearFilter
+            initialStartYear={data.spatialStartYear}
+            initialEndYear={data.spatialEndYear}
+            onYearChange={(startYear, endYear) => setData({
+              ...data,
+              spatialStartYear: startYear,
+              spatialEndYear: endYear
             })}
           />
         }
