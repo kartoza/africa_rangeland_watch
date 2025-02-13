@@ -177,12 +177,6 @@ class UploadLayerAPI(APIView):
                 tmp_file_obj_list
             )
 
-        # close collection
-        collection.close()
-
-        # remove temporary uploaded file if any
-        self._remove_temp_files(tmp_file_obj_list)
-
         # create layer
         layer = Layer.objects.create(
             created_by=request.user
@@ -213,6 +207,12 @@ class UploadLayerAPI(APIView):
             )
             input_layer.save()
         instance.save()
+
+        # close collection
+        collection.close()
+
+        # remove temporary uploaded file if any
+        self._remove_temp_files(tmp_file_obj_list)
 
         # trigger task import the layer
         import_layer.delay(layer.unique_id, instance.id, file_url)
