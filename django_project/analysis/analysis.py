@@ -4,8 +4,7 @@ import base64
 
 import ee
 import os
-
-from analysis.models import GEEAsset
+from analysis.models import AnalysisResultsCache, GEEAsset
 
 SERVICE_ACCOUNT_KEY = os.environ.get('SERVICE_ACCOUNT_KEY', '')
 SERVICE_ACCOUNT = os.environ.get('SERVICE_ACCOUNT', '')
@@ -490,6 +489,36 @@ class InputLayer:
         return landscapesDict
 
 
+class AnalysisResultsCacheUtils:
+    """Analysis results cache utilities."""
+
+    def __init__(self, inputs):
+        from analysis.utils import sort_nested_structure
+        self.inputs = sort_nested_structure(inputs)
+
+    def get_analysis_cache(self):
+        """Get analysis cache."""
+        cache = AnalysisResultsCache.objects.filter(
+            analysis_inputs=self.inputs
+        )
+        if cache.exists():
+            cache = cache.first()
+            return cache.analysis_results
+        return None
+
+    def create_analysis_cache(self, results, ttl: int = None):
+        """Create analysis cache."""
+        from analysis.utils import sort_nested_structure
+
+        results = sort_nested_structure(results)
+        AnalysisResultsCache.save_cache_with_ttl(
+            ttl=ttl,
+            analysis_inputs=self.inputs,
+            analysis_results=results
+        )
+        return results
+
+
 def get_rel_diff(
         spatial_layer_dict: dict,
         analysis_dict: dict,
@@ -535,6 +564,16 @@ def run_analysis(lat: float, lon: float, analysis_dict: dict, *args, **kwargs):
     :param lon: Longitude
     :param analysis_dict: Analysis Dictionary
     """
+    analysis_cache = AnalysisResultsCacheUtils({
+        'lat': lat,
+        'lon': lon,
+        'analysis_dict': analysis_dict,
+        'args': args,
+        'kwargs': kwargs
+    })
+    output = analysis_cache.get_analysis_cache()
+    if output:
+        return output
     input_layers = InputLayer()
     selected_geos = input_layers.get_selected_geos()
     communities = input_layers.get_communities()
@@ -586,14 +625,14 @@ def run_analysis(lat: float, lon: float, analysis_dict: dict, *args, **kwargs):
             scale=60,
             tileScale=4
         )
-        return reduced.getInfo()
+        return analysis_cache.create_analysis_cache(reduced.getInfo())
 
     if analysis_dict['analysisType'] == "Baseline":
         if custom_geom:
             select = baseline_table.filterBounds(custom_geom)
         else:
             select = baseline_table.filterBounds(selected_geos)
-        return select.getInfo()
+        return analysis_cache.create_analysis_cache(select.getInfo())
 
     if analysis_dict['analysisType'] == "Temporal":
         res = analysis_dict['t_resolution']
@@ -665,7 +704,12 @@ def run_analysis(lat: float, lon: float, analysis_dict: dict, *args, **kwargs):
             ee.Filter.inList('Name', select_names)
         )
         to_plot_ts = to_plot_ts.sort('Name').sort('date')
-        return to_plot.getInfo(), to_plot_ts.getInfo()
+        return analysis_cache.create_analysis_cache(
+            (
+                to_plot.getInfo(),
+                to_plot_ts.getInfo()
+            )
+        )
 
 
 def initialize_engine_analysis():

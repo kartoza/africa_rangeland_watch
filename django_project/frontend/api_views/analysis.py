@@ -14,11 +14,13 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from core.models import Preferences
 from analysis.analysis import (
     initialize_engine_analysis,
     run_analysis,
     get_rel_diff,
     InputLayer,
+    AnalysisResultsCacheUtils,
     spatial_get_date_filter,
     validate_spatial_date_range_filter
 )
@@ -302,6 +304,20 @@ class AnalysisAPI(APIView):
                 'end_year': data.get('spatialEndYear', None)
             }
         }
+        analysis_cache = AnalysisResultsCacheUtils({
+            'lat': data['latitude'],
+            'lon': data['longitude'],
+            'analysis_dict': analysis_dict,
+            'args': [analysis_dict],
+            'kwargs': {
+                'reference_layer': data['reference_layer'],
+                'custom_geom': data.get('custom_geom', None)
+            }
+        })
+        output = analysis_cache.get_analysis_cache()
+        if output:
+            return output
+
         filter_start_date, filter_end_date = spatial_get_date_filter(
             analysis_dict
         )
@@ -337,7 +353,7 @@ class AnalysisAPI(APIView):
                 'colors': ['#f9837b', '#fffcb9', '#fffcb9', '#32c2c8'],
                 'opacity': 0.7
             }
-            return {
+            results = {
                 'id': 'spatial_analysis_rel_diff',
                 'uuid': str(uuid.uuid4()),
                 'name': '% difference in ' + data['variable'],
@@ -352,6 +368,11 @@ class AnalysisAPI(APIView):
                 })['tile_fetcher'].url_format,
                 'style': None
             }
+            preferences = Preferences.load()
+            return analysis_cache.create_analysis_cache(
+                results,
+                preferences.result_cache_ttl
+            )
 
         results = run_analysis(
             lon=float(data['longitude']),

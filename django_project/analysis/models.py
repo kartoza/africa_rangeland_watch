@@ -2,6 +2,7 @@ import json
 import uuid
 
 import ee
+from django.utils import timezone
 from django.contrib.auth.models import User
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import GEOSGeometry
@@ -381,3 +382,26 @@ class GEEAsset(models.Model):
     class Meta:
         verbose_name_plural = 'GEE Assets'
         db_table = 'analysis_gee_asset'
+
+
+class AnalysisResultsCache(models.Model):
+    analysis_results = models.JSONField(
+        null=True,
+        blank=True
+    )
+    analysis_inputs = models.JSONField(
+        null=True,
+        blank=True
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    expired_at = models.DateTimeField(null=True, blank=True)
+
+    @classmethod
+    def save_cache_with_ttl(cls, ttl, **kwargs):
+        """Save AnalysisResultsCache with ttl."""
+        obj = AnalysisResultsCache.objects.create(**kwargs)
+        obj.expired_at = obj.created_at + timezone.timedelta(
+            hours=ttl
+        )
+        obj.save()
+        return obj
