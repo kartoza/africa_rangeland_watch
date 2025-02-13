@@ -26,9 +26,6 @@ from cloud_native_gis.utils.fiona import (
     open_fiona_collection,
     list_layers
 )
-from django.core.files.uploadedfile import (
-    TemporaryUploadedFile
-)
 
 from layers.models import InputLayer, DataProvider, LayerGroupType
 from frontend.serializers.layers import LayerSerializer
