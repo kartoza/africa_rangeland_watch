@@ -35,3 +35,5 @@ docker-compose.override.yml
 
 webpack-stats.dev.json
 webpack-stats.prod.json
+
+frontend/package-lock.json

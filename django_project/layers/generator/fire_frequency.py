@@ -6,6 +6,7 @@ Africa Rangeland Watch (ARW).
 """
 import ee
 
+from analysis.models import GEEAsset
 from layers.models import InputLayer
 from layers.generator.base import BaseLayerGenerator, LayerCacheResult
 
@@ -20,7 +21,7 @@ class FireFrequencyGenerator(BaseLayerGenerator):
 
         # Import pre-exported fire frequency map
         fire_freq = ee.Image(
-            'users/zandersamuel/Consult_CSA/fire_freq_SrnAfrica_200m'
+            GEEAsset.fetch_asset_source('fire_freq')
         ).divide(18)
         fire_freq = fire_freq.clipToCollection(countries)
 

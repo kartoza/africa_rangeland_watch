@@ -1,38 +1,51 @@
 import React, { useEffect, useRef, useState } from "react";
-import { Card, CardBody, Text, Box, IconButton, VStack, Flex, HStack, Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, Input, Select, Button} from "@chakra-ui/react";
-import { FiDownload, FiSettings } from "react-icons/fi"; 
+import { Card, CardBody, Text, Box, IconButton, VStack, Flex, HStack} from "@chakra-ui/react";
+import { FiDownload, FiSettings, FiTrash2 } from "react-icons/fi"; 
 import { RenderResult } from "./DashboardCharts/CombinedCharts";
 import { Analysis } from "../store/analysisSlice";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
-import { InProgressBadge } from "./InProgressBadge";
-import CONFIG from "../config";
 import MiniMap from "./DashboardCharts/MapCard";
+import { DashboardSettingsModal } from "./DashboardCharts/DashboardSettings";
+import { deleteDashboard } from "../store/dashboardSlice";
+import { useDispatch } from "react-redux";
+import { AppDispatch } from "../store";
+import ConfirmDeleteDialog from "./ConfirmDeleteDialog";
 
 interface ChartCardProps {
   config: {
-    config: {
+    privacy_type: any;
+    owner: any;
+    title: any;
+    uuid: any;
+    config?: {
       dashboardName: string;
       preference: string;
       chartType: string;
       title: string;
       data: any;
       downloadData: string;
-      owner: boolean;
+      owner?: boolean;
     };
     analysisResults: any[];
   };
   className?: string;
 }
 
+
+
 const ChartCard: React.FC<ChartCardProps> = ({ config, className }) => {
   const containerRef = useRef<HTMLDivElement>(null);
   const [isChart, setIsChart] = useState(false);
   const [dashboardName, setDashboardName] = useState("");
   const [isSettingsOpen, setSettingsOpen] = useState(false);
-  const [chartType, setChartType] = useState("defaultChartType");
   const [polygonCoordinates, setPolygonCoordinates] = useState<[number, number][]>([]);
-  const [isRenderFailed, setIsRenderFailed] = useState(false); 
+  const [isRenderFailed, setIsRenderFailed] = useState(false);
+
+  const [dashboardSettings, setDashboardSettings] = useState(null);
+  const dispatch = useDispatch<AppDispatch>();
+  const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
+
 
   useEffect(() => {
     if (config?.config) {
@@ -49,6 +62,16 @@ const ChartCard: React.FC<ChartCardProps> = ({ config, className }) => {
         }
         else setIsRenderFailed(true);
       }
+
+      setDashboardSettings({
+        uuid: config.uuid,
+        title: config.title,
+        created_by: config.owner,
+        organisations: [],
+        analysis_results: config.analysisResults, 
+        config: config.config.preference,
+        privacy_type: config.privacy_type
+      });
         
     }
 
@@ -58,7 +81,7 @@ const ChartCard: React.FC<ChartCardProps> = ({ config, className }) => {
 
   const getChartComponent = () => {
     try {
-      return <RenderResult analysis={config.analysisResults[0].analysis_results as Analysis} />;
+      return <RenderResult analysisResults={config.analysisResults} />;
     } catch (error) {
       console.error("Error processing data:", error);
       return (
@@ -124,6 +147,21 @@ const ChartCard: React.FC<ChartCardProps> = ({ config, className }) => {
     pdf.save(`${dashboardName}_chart.pdf`);
   };
 
+  const handleDeleteDashboard = (uuid: string) => {
+      dispatch(deleteDashboard(uuid));
+  };
+
+  const handleOpenDeleteDialog = (dashboardId: string) => {
+    setIsConfirmDeleteOpen(true);
+  };
+
+  const handleCloseDeleteDialog = () => {
+    setIsConfirmDeleteOpen(false);
+  };
+
+  
+
+
   return (
     <div ref={containerRef} className={className} style={{ width: "100%", height: "100%", overflow: "hidden" }}>
       <Card 
@@ -132,64 +170,74 @@ const ChartCard: React.FC<ChartCardProps> = ({ config, className }) => {
         position="relative"
         bg="gray.200"
       >
-        <CardBody p={0} m={0} width="100%" height="100%" display="flex" flexDirection="column">
-          <VStack spacing={2} width="100%" height="100%" align="stretch">
-            {/* Header with Name and Icons */}
-            <Flex width="100%" align="center" justify="space-between" p={2}>
-              <Text fontSize="xl" fontWeight="bold" color="black" id="dashboard-name">
-                {dashboardName} {config.config.owner && "(Owner)"}
-              </Text>
-              <HStack spacing={2} id="dashboard-icons">
-                <IconButton icon={<FiSettings />} onClick={() => setSettingsOpen(true)} colorScheme="teal" aria-label="Settings" size="sm" />
-                <IconButton icon={<FiDownload />} onClick={downloadPDF} colorScheme="teal" aria-label="Download" size="sm" />
-              </HStack>
-            </Flex>
-
-            {/* Chart Component */}
-            <Box width="100%" height="100%">
-              {isRenderFailed ? (
-                <Text color="red.500" fontSize="sm">
-                  Analysis results saved on the dashboard cannot be rendered on the map. It should have polygon coordinates.
-                </Text>
-              ) : !isChart ? (
-                <MiniMap polygonCoordinates={polygonCoordinates} />
-              ) : (
-                getChartComponent()
+       <CardBody p={0} m={0} width="100%" height="100%" display="flex" flexDirection="column">
+        <VStack spacing={2} width="100%" height="100%" align="stretch">
+          {/* Header with Name and Icons */}
+          <Flex width="100%" align="center" justify="space-between" p={2}>
+            <Text fontSize="xl" fontWeight="bold" color="black" id="dashboard-name">
+              {dashboardName} {config.config.owner && "(Owner)"}
+            </Text>
+            <HStack spacing={2} id="dashboard-icons">
+              {dashboardSettings?.created_by && (
+                <IconButton 
+                  icon={<FiSettings />} 
+                  onClick={() => setSettingsOpen(true)} 
+                  colorScheme="teal" 
+                  aria-label="Settings" 
+                  size="sm" 
+                />
               )}
-            </Box>
+              <IconButton 
+                icon={<FiDownload />} 
+                onClick={downloadPDF} 
+                colorScheme="teal" 
+                aria-label="Download" 
+                size="sm" 
+              />
+               {dashboardSettings?.created_by && (
+                <IconButton 
+                  icon={<FiTrash2 />} 
+                  onClick={() => handleOpenDeleteDialog("dashboard-uuid")} 
+                  colorScheme="red" 
+                  aria-label="Delete Dashboard" 
+                  size="sm" 
+                />
+              )}
 
-          </VStack>
-        </CardBody>
+              <ConfirmDeleteDialog 
+                isOpen={isConfirmDeleteOpen}
+                onClose={handleCloseDeleteDialog}
+                onConfirm={() => handleDeleteDashboard(config?.uuid)}
+                title="Delete Dashboard"
+                description="Are you sure you want to delete this dashboard? This action cannot be undone."
+              />
+            </HStack>
+          </Flex>
+
+          {/* Chart Component */}
+          <Box width="100%" height="100%">
+            {isRenderFailed ? (
+              <Text color="red.500" fontSize="sm">
+                Analysis results saved on the dashboard cannot be rendered on the map. It should have polygon coordinates.
+              </Text>
+            ) : !isChart ? (
+              <MiniMap polygonCoordinates={polygonCoordinates} />
+            ) : (
+              getChartComponent()
+            )}
+          </Box>
+        </VStack>
+      </CardBody>
       </Card>
 
+
        {/* Settings Modal */}
-       <Modal isOpen={isSettingsOpen} onClose={() => setSettingsOpen(false)}>
-          <ModalOverlay />
-          <ModalContent bg="white" p={6}>
-            <ModalHeader>Dashboard Settings</ModalHeader>
-            <ModalCloseButton />
-            <ModalBody>
-              <InProgressBadge />
-              <VStack spacing={4}>
-                <Box width="100%">
-                  <Text fontSize="sm" color="black">Dashboard Name</Text>
-                  <Input value={dashboardName} onChange={(e) => setDashboardName(e.target.value)} placeholder="Enter dashboard name" />
-                </Box>
-                {CONFIG.ENABLE_CHART_TYPE && (
-                  <Box width="100%">
-                    <Text fontSize="sm" color="black">Chart Type</Text>
-                    <Select value={chartType} onChange={(e) => setChartType(e.target.value)}>
-                      <option value="line">Line Chart</option>
-                      <option value="bar">Bar Chart</option>
-                      <option value="pie">Pie Chart</option>
-                    </Select>
-                  </Box>
-                )}
-                <Button colorScheme="blue" onClick={() => setSettingsOpen(false)} mt={4}>Save Changes</Button>
-              </VStack>
-            </ModalBody>
-          </ModalContent>
-        </Modal>
+       <DashboardSettingsModal
+          isSettingsOpen={isSettingsOpen}
+          setSettingsOpen={setSettingsOpen}
+          dashboardAnalyses={dashboardSettings?.analysis_results}
+          dashboard={dashboardSettings}
+        />
     </div>
   );
 };

@@ -7,7 +7,7 @@ Africa Rangeland Watch (ARW).
 import logging
 import ee
 
-from analysis.models import Landscape
+from analysis.models import Landscape, GEEAsset
 from analysis.analysis import get_nrt_sentinel, train_bgt, classify_bgt
 from layers.models import InputLayer
 from layers.generator.base import BaseLayerGenerator, LayerCacheResult
@@ -28,39 +28,53 @@ class NearRealTimeGenerator(BaseLayerGenerator):
 
     def _generate_evi_layer(self, nrt_img, landscape: Landscape):
         """Generate EVI layer for a landscape."""
-        evi_img = nrt_img.select('evi')
+        try:
+            evi_img = nrt_img.select('evi')
 
-        evi_layer = InputLayer.objects.get(
-            name='EVI',
-            data_provider=self.get_provider(),
-            group__name='near-real-time'
-        )
+            evi_layer = InputLayer.objects.get(
+                name='EVI',
+                data_provider=self.get_provider(),
+                group__name='near-real-time'
+            )
 
-        return LayerCacheResult(
-            evi_layer,
-            evi_img.getMapId(
-                self.metadata_to_vis_params(evi_layer)
-            )['tile_fetcher'].url_format,
-            f'{landscape.id}'
-        )
+            return LayerCacheResult(
+                evi_layer,
+                evi_img.getMapId(
+                    self.metadata_to_vis_params(evi_layer)
+                )['tile_fetcher'].url_format,
+                f'{landscape.id}'
+            )
+        except Exception as ex:
+            logger.error(
+                f'_generate_evi_layer is failed on {landscape}'
+            )
+            logger.error(ex)
+            return None
 
     def _generate_ndvi_layer(self, nrt_img, landscape: Landscape):
         """Generate NDVI layer for a landscape."""
-        ndvi_img = nrt_img.select('ndvi')
+        try:
+            ndvi_img = nrt_img.select('ndvi')
 
-        ndvi_layer = InputLayer.objects.get(
-            name='NDVI',
-            data_provider=self.get_provider(),
-            group__name='near-real-time'
-        )
+            ndvi_layer = InputLayer.objects.get(
+                name='NDVI',
+                data_provider=self.get_provider(),
+                group__name='near-real-time'
+            )
 
-        return LayerCacheResult(
-            ndvi_layer,
-            ndvi_img.getMapId(
-                self.metadata_to_vis_params(ndvi_layer)
-            )['tile_fetcher'].url_format,
-            f'{landscape.id}'
-        )
+            return LayerCacheResult(
+                ndvi_layer,
+                ndvi_img.getMapId(
+                    self.metadata_to_vis_params(ndvi_layer)
+                )['tile_fetcher'].url_format,
+                f'{landscape.id}'
+            )
+        except Exception as ex:
+            logger.error(
+                f'_generate_ndvi_layer is failed on {landscape}'
+            )
+            logger.error(ex)
+            return None
 
     def _generate_bare_ground_layer(self, nrt_img, aoi, landscape: Landscape):
         """Generate bare ground layer for a landscape."""
@@ -68,9 +82,7 @@ class NearRealTimeGenerator(BaseLayerGenerator):
         try:
             classifier = train_bgt(
                 aoi,
-                training_path=(
-                    'users/zandersamuel/Consult_CSA/Training_data_TOA_bg_t_g'
-                )
+                GEEAsset.fetch_asset_source('random_forest_training')
             )
             bg = classify_bgt(nrt_img, classifier).select('bare')
 
@@ -104,12 +116,12 @@ class NearRealTimeGenerator(BaseLayerGenerator):
                 aoi,
                 self.DEFAULT_MONTHS
             )
-            results.append(
-                self._generate_evi_layer(nrt_img, landscape)
-            )
-            results.append(
-                self._generate_ndvi_layer(nrt_img, landscape)
-            )
+            evi = self._generate_evi_layer(nrt_img, landscape)
+            if evi:
+                results.append(evi)
+            ndvi = self._generate_ndvi_layer(nrt_img, landscape)
+            if ndvi:
+                results.append(ndvi)
             bg = self._generate_bare_ground_layer(nrt_img, aoi, landscape)
             if bg:
                 results.append(bg)

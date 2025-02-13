@@ -5,6 +5,7 @@ from .views import (
     DashboardOwnerListView,
     DashboardRetrieveUpdateDestroyView,
     DashboardShareView,
+    UpdateDashboardView,
 )
 
 
@@ -33,5 +34,10 @@ urlpatterns = [
         'dashboard-owners/',
         DashboardOwnerListView.as_view(),
         name='dashboard-owner-list'
+    ),
+    path(
+        'dashboards/<uuid:uuid>/update/',
+        UpdateDashboardView.as_view(),
+        name='update-dashboard'
     ),
 ]

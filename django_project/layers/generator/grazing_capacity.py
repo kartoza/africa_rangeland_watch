@@ -6,6 +6,7 @@ Africa Rangeland Watch (ARW).
 """
 import ee
 
+from analysis.models import GEEAsset
 from layers.models import InputLayer
 from layers.generator.base import BaseLayerGenerator, LayerCacheResult
 
@@ -16,7 +17,7 @@ class GrazingCapacityGenerator(BaseLayerGenerator):
     def _get_masked(self):
         """Get masked layer."""
         glc_coll = ee.ImageCollection(
-            'users/cgmorton/GlobeLand30'
+            GEEAsset.fetch_asset_source('globe_land30')
         )
         glc_img = glc_coll.mosaic()
         return glc_img.neq(10).And(
@@ -39,7 +40,7 @@ class GrazingCapacityGenerator(BaseLayerGenerator):
 
         # Import pre-exported grazing capacity map
         grazing_capacity = ee.Image(
-            'users/zandersamuel/Consult_CSA/grazingCapacity_srnAfrica_LSU_ha'
+            GEEAsset.fetch_asset_source('grazing_capacity')
         )
         grazing_capacity = grazing_capacity.rename('grazingCap')
         grazing_capacity = grazing_capacity.updateMask(

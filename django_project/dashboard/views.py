@@ -11,9 +11,10 @@ from rest_framework.permissions import (
     IsAuthenticated,
     IsAuthenticatedOrReadOnly
 )
-import json
 from django.db.models import Q
 import logging
+from django.shortcuts import get_object_or_404
+
 
 logger = logging.getLogger(__name__)
 
@@ -81,19 +82,8 @@ class DashboardListCreateView(generics.ListCreateAPIView):
         my_organisations = filters.get('my_organisations') == 'true'
         my_dashboards = filters.get('my_dashboards') == 'true'
         maps = filters.get('maps') == 'true'
-        region = filters.get('region')
+        region = filters.get("region")
 
-        if region:
-            # Parse region from stringified JSON
-            region_data = json.loads(region)
-            latitude = region_data.get('lat')
-            longitude = region_data.get('lng')
-
-            if latitude and longitude:
-                queryset = queryset.filter(
-                    analysis_results__data__latitude=latitude,
-                    analysis_results__data__longitude=longitude
-                )
 
         # Apply text-based filters
         if search_term:
@@ -103,7 +93,11 @@ class DashboardListCreateView(generics.ListCreateAPIView):
         if keyword:
             queryset = queryset.filter(config__preference=keyword)
         if region:
-            queryset = queryset.filter(config__chartType=region)
+            queryset = queryset.filter(
+                analysis_results__analysis_results__contains={
+                    "data": {"landscape": region}
+                }
+            )
         if owner:
             queryset = queryset.filter(created_by__username=owner)
 
@@ -351,6 +345,55 @@ class DashboardShareView(APIView):
         return Response(
             {
                 "message": "Dashboard shared successfully."
+            },
+            status=status.HTTP_200_OK
+        )
+
+
+class UpdateDashboardView(APIView):
+    """
+    Manually updates specific fields of a dashboard.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+
+    def patch(self, request, uuid):
+        dashboard = get_object_or_404(Dashboard, uuid=uuid)
+
+        # Check if the request user is the owner of the dashboard
+        if dashboard.created_by != request.user:
+            return Response(
+                {
+                    "error":
+                    "You do not have permission to update this dashboard."
+                },
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # Extract fields from request data
+        title = request.data.get("title", dashboard.title)
+        privacy_type = request.data.get("privacy_type", dashboard.privacy_type)
+        analysis_results = request.data.get("analysis_results", None)
+        config = request.data.get("config", dashboard.config)
+
+        # Update fields
+        dashboard.title = title
+        dashboard.privacy_type = privacy_type
+
+        # Handle analysis_results (ManyToManyField)
+        if analysis_results is not None:
+            dashboard.analysis_results.set(analysis_results)
+
+        # Handle config (JSONField)
+        dashboard.config = (
+            config if isinstance(config, dict) else dashboard.config
+        )
+
+        # Save the changes
+        dashboard.save()
+
+        return Response(
+            {
+                "message": "Dashboard updated successfully"
             },
             status=status.HTTP_200_OK
         )

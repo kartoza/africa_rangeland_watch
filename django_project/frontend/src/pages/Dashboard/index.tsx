@@ -12,6 +12,7 @@ import {
   MenuButton, 
   MenuList, 
   MenuItem,
+  useToast,
 } from "@chakra-ui/react";
 import { FaFilter } from "react-icons/fa";
 import Header from "../../components/Header";
@@ -21,8 +22,8 @@ import AnalysisSideBar from "../../components/SideBar/AnalysisSideBar";
 import Pagination from "../../components/Pagination";
 import ChartCard from "../../components/ChartCard";
 import { useDispatch, useSelector } from "react-redux";
-import { AppDispatch } from "../../store";
-import { fetchDashboards } from "../../store/dashboardSlice";
+import { AppDispatch, RootState } from "../../store";
+import { fetchDashboards, resetDashboardUpdated } from "../../store/dashboardSlice";
 import {InProgressBadge} from "../../components/InProgressBadge";
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import { DragHandleDots2Icon } from '@radix-ui/react-icons';
@@ -52,7 +53,10 @@ const DashboardPage: React.FC = () => {
   const [itemsPerPage, setItemsPerPage] = useState(6)
   const [startIdx , setStartIdx] = useState(0);
   const [endIdx, setEndIdx] = useState(1);
-  const [filters, setFilters] = useState(null)
+  const [filters, setFilters] = useState(null);
+  const { dashboardUpdated } = useSelector((state: RootState) => state.dashboard);
+  const [landscapes, setLandscapes] = useState<string[]>([]);
+  const toast = useToast();
 
   const [panelPositions, setPanelPositions] = useState({});
   const [dragPosition, setDragPosition] = useState<DragPosition>({});
@@ -92,10 +96,29 @@ const DashboardPage: React.FC = () => {
         title: dashboard.title,
         uuid: dashboard.uuid,
         owner: dashboard.owner,
+        privacy_type: dashboard.privacy_type
       }));
 
       // Set the state to pass down to the chart cards
       setChartsConfig(updatedChartsConfig);
+
+      if (dashboardData && Array.isArray(dashboardData)) {
+        const extractedLandscapes = dashboardData.flatMap((data) => {
+          if (data.analysis_results) {
+            return data.analysis_results.flatMap((result: any) => {
+              if (result.analysis_results) {
+                return [result.analysis_results.data.landscape];
+              }
+              return [];
+            });
+          }
+          return [];
+        });
+      
+        // Remove duplicates
+        const uniqueLandscapes = Array.from(new Set(extractedLandscapes));
+        setLandscapes(uniqueLandscapes);
+      }
     }
   }, [loading, dashboardData]);
 
@@ -103,7 +126,25 @@ const DashboardPage: React.FC = () => {
     dispatch(fetchDashboards(filters));
   }, [dispatch, filters]);
 
-  
+  useEffect(() => {
+  if (dashboardUpdated) {
+        dispatch(resetDashboardUpdated());
+        dispatch(fetchDashboards(filters));
+        toast({
+          title: "Dashboard updated",
+          description: "Action has been completed.If changes dont reflect immediately please refresh the page.",
+          status: "success",
+          duration: 5000,
+          isClosable: true,
+          position: "top-right",
+          containerStyle: {
+            backgroundColor: "#00634b",
+            color: "white",
+          },
+        });
+      }
+
+    }, [dashboardUpdated]);
 
   const handleFilterClick = () => {
     if (isOpen) {
@@ -372,7 +413,11 @@ const DashboardPage: React.FC = () => {
                               rounded="lg"
                             >
                               <div style={{ width: "100%", height: "100%" }}>
-                                <ChartCard key={`chart-card-${config?.uuid}-${index}`} config={config} className={`draggable-card-${index}`} />
+                                <ChartCard 
+                                  key={`chart-card-${config?.uuid}-${index}`} 
+                                  config={config} 
+                                  className={`draggable-card-${index}`}
+                                />
                               </div>
                             </Flex>
                           </Panel>
@@ -627,6 +672,7 @@ const DashboardPage: React.FC = () => {
         setSearchTerm={(searchTerm) => setFilters((prev: any) => ({ ...prev, searchTerm }))}
         setFilters={setFilters}
         filters={filters}
+        landscapes={landscapes}
       />
 
       {/* Analysis sidebar */}

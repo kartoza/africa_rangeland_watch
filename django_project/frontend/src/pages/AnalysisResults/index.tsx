@@ -14,6 +14,11 @@ import {
   TagLabel,
   useDisclosure,
   Checkbox,
+  useToast,
+  Collapse,
+  IconButton,
+  SimpleGrid,
+  Select,
 } from "@chakra-ui/react";
 import { FaFilter } from "react-icons/fa";
 import Header from "../../components/Header";
@@ -25,10 +30,14 @@ import AnalysisSideBar from "../../components/SideBar/AnalysisSideBar";
 import "../../styles/index.css";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "../../store";
-import { fetchAnalysis } from "../../store/userAnalysisSlice";
+import { deleteAnalysis, fetchAnalysis } from "../../store/userAnalysisSlice";
 import "maplibre-gl/dist/maplibre-gl.css"; 
 import CreateDashboardModal from "../../components/CreateDashboard";
 import { format } from 'date-fns';
+import { IoCloseSharp } from "react-icons/io5";
+import { ChevronUpIcon } from "@chakra-ui/icons";
+import Pagination from "../../components/Pagination";
+import ConfirmDeleteDialog from "../../components/ConfirmDeleteDialog";
 
 interface FeatureProperties {
   Project?: string;
@@ -63,8 +72,8 @@ interface AnalysisSummary {
 
 export default function AnalysisResults() {
   const [searchTerm, setSearchTerm] = useState("");
-  const [showAll, setShowAll] = useState(false);
   const [selectedAnalysis, setSelectedAnalysis] = useState([]);
+  const [viewAnalysis, setViewAnalysis] = useState(null);
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [isCreateDashboardOpen, setCreateDashboard] = useState(false);
   const navigate = useNavigate()
@@ -73,47 +82,117 @@ export default function AnalysisResults() {
   const analysisData = useSelector((state: any) => state.userAnalysis.data);
   const loading = useSelector((state: any) => state.userAnalysis.loading);
   const error = useSelector((state: any) => state.userAnalysis.error);
+  const analysisDeleted = useSelector((state: any) => state.userAnalysis.analysisDeleted);
+  const [showDeletionMessage, setShowDeletionMessage] = useState(false);
+  const toast = useToast();
+  const [isConfrimDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
+  const onConfirmDeleteClose = () => setIsConfirmDeleteOpen(false);
+  const cancelRef = React.useRef();
+  const [region, setRegion] = useState("");
+  const [date, setDate] = useState("");
+  const [type, setType] = useState("");
+  const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 4;
 
 
   useEffect(() => {
     dispatch(fetchAnalysis());
   }, [dispatch]);
 
-  const getAnalysisSummary = (analysis: AnalysisData): AnalysisSummary => {
+
+  const handleDelete = (id: any) => {
+    onConfirmDeleteClose();
+
+    if(selectedAnalysis.length == 0){
+      dispatch(deleteAnalysis(id));
+    }else {
+      selectedAnalysis.forEach((analysisId) => {
+        dispatch(deleteAnalysis(analysisId));
+      });
+    }
+
+    setShowDeletionMessage(true)
+  };
+
+  useEffect(() => {
+    dispatch(fetchAnalysis());
+  }, [dispatch]);
+
+  useEffect(() => {
+   if(analysisDeleted && showDeletionMessage){
+    toast({
+      title: "Analysis Results Deleted.",
+      description: "The analysis results have been successfuly deleted and removed from any associated dashboards.",
+      status: "success",
+      duration: 5000,
+      isClosable: true,
+      position: "top-right",
+      containerStyle: {
+        backgroundColor: "#00634b",
+        color: "white",
+      },
+    });
+    setShowDeletionMessage(false);
+    dispatch(fetchAnalysis());
+   }
+  }, [analysisDeleted]);
+
+  const getAnalysisSummary = (analysis: any): AnalysisSummary => {
     const { analysis_results } = analysis || {};
     const { results, data } = analysis_results || {};
-
+  
     const features = results?.[0]?.features || [];
-    const { analysisType = "Analysis", latitude, longitude } = data || {};
-
+    const { analysisType = "Analysis", latitude, longitude, landscape } = data || {};
+  
     // Extract properties safely
     const projectName = features?.[0]?.properties?.Project || "Unknown Project";
-    const locationName = features?.[0]?.properties?.Name || "Coordinates Location";
-
+  
     // Construct a meaningful title
     const title =
-      locationName === "Coordinates Location" && projectName === "Unknown Project"
-        ? `${analysisType} Results from Area`
+      landscape && landscape !== "Unknown Landscape" 
+        ? `${analysisType} Analysis of ${landscape}`
         : projectName === "Unknown Project"
-          ? `${analysisType} Analysis of ${locationName} in the Area`
-          : `${analysisType} Analysis of ${locationName} in the ${projectName} Landscape.`;
-
+        ? `${analysisType} Results from Area`
+        : `${analysisType} Analysis of ${landscape} in the ${projectName} Landscape.`;
+    
     return {
       title,
       projectName,
-      locationName,
+      locationName: landscape,
       analysisType,
       latitude,
       longitude,
     };
   };
+  
 
   // Filtering based on search term
-  const filteredData = analysisData.filter((analysis: AnalysisData) =>
-      getAnalysisSummary(analysis).title.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredData = analysisData.filter((analysis: any) => {
+    const title = getAnalysisSummary(analysis)?.title?.toLowerCase() || "";
+    const titleMatches = title.includes(searchTerm.toLowerCase());
+  
+    const typeMatches = type
+      ? analysis?.analysis_results?.data?.analysisType?.toLowerCase() === type
+      : true;
+  
+    const dateMatches = date
+      ? format(new Date(analysis?.created_at || ""), "yyyy-MM-dd") === date
+      : true;
+  
+    const regionMatches = region
+      ? analysis?.analysis_results?.data?.landscape === region
+      : true;
+  
+    return titleMatches && typeMatches && dateMatches && regionMatches;
+  });
+
+  
+  
 
   const handleViewClick = (analysis: any) => {
+    console.log('analysis to show ',analysis)
+    setViewAnalysis(analysis)
     onOpen();
   };
 
@@ -130,6 +209,31 @@ export default function AnalysisResults() {
   };
 
   const handleCreateDashboardClick = () => {
+
+     // Filter analysis data based on selected analysis IDs
+    const matchedAnalysis = analysisData.filter((item: { id: any; }) => selectedAnalysis.includes(item.id));
+
+    // Extract analysis types from the matched analysis objects
+    const analysisTypes = matchedAnalysis.map((item: { analysis_results: { data: { analysisType: any; }; }; }) => item.analysis_results.data?.analysisType);
+
+    // Check if all analysis types are the same
+    const allSameType = analysisTypes.every((type: any) => type === analysisTypes[0]);
+
+    if (!allSameType) {
+      toast({
+        title: "Cannot create dashboard.",
+        description: `Can only create a dashboard from analysis results with the same analysis type! Current selected results have: ${analysisTypes.join(", ")}`,
+        status: "warning",
+        duration: 5000,
+        isClosable: true,
+        position: "top-right",
+        containerStyle: {
+          backgroundColor: "#00634b",
+          color: "white",
+        },
+      });
+      return;
+    }
     // Open the Create Dashboard modal
     setCreateDashboard(true);
   };
@@ -137,6 +241,18 @@ export default function AnalysisResults() {
   function handleSave(): void {
     throw new Error("Function not implemented.");
   }
+
+
+  const landscapeOptions = Array.from(
+    new Set(analysisData.map((analysis: any) => analysis.analysis_results.data?.landscape))
+  ).filter(Boolean); // Remove null/undefined values
+
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const paginatedData = filteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
 
   return (
     <>
@@ -169,8 +285,8 @@ export default function AnalysisResults() {
                 <Flex direction={{ base: "column", md: "row" }} gap={4} align="center">
                   {/* Filter Button */}
                   <Button
-                      disabled
-                    leftIcon={<FaFilter />}
+                    leftIcon={isFilterOpen ? undefined : <FaFilter />}
+                    rightIcon={isFilterOpen ? <ChevronUpIcon boxSize={6} /> : undefined}
                     colorScheme="green"
                     variant="solid"
                     backgroundColor="dark_green.800"
@@ -178,10 +294,12 @@ export default function AnalysisResults() {
                     fontWeight={700}
                     w={{ base: "100%", md: "auto" }}
                     h={10}
-                    color="white.a700"
-                    borderRadius="0px"
+                    color="white"
+                    borderRadius="5px"
+                    onClick={() => setIsFilterOpen(!isFilterOpen)}
+                    transition="all 0.3s ease-in-out"
                   >
-                    Filter
+                    {!isFilterOpen ? "Filter" : ""}
                   </Button>
 
                   {/* Search Input */}
@@ -231,8 +349,78 @@ export default function AnalysisResults() {
               </Box>
             </Flex>
 
+            {/* Filter Section */}
+            <Collapse in={isFilterOpen} animateOpacity>
+              <Box
+                bg="gray.100"
+                p={4}
+                borderRadius="10px"
+                boxShadow="md"
+                width={{ base: "90%", md: "50%" }} // Reduced width
+                alignSelf="flex-start" 
+              >
+                <Flex justify="space-between" align="center" mb={3}>
+                  <Text fontSize="lg" fontWeight="bold" color="gray.700">
+                    Filter Analysis
+                  </Text>
+                  <IconButton
+                    icon={<IoCloseSharp />}
+                    size="sm"
+                    onClick={() => setIsFilterOpen(!isFilterOpen)}
+                    aria-label="Close filters"
+                    variant="ghost"
+                    color="gray.600"
+                    _hover={{ color: "red.500" }}
+                  />
+                </Flex>
+
+                {/* 2-column layout for fields */}
+                <SimpleGrid columns={2} spacing={4}>
+                  {/* Region Dropdown */}
+                  <Select 
+                    placeholder="Select Region" 
+                    value={region} 
+                    onChange={(e) => setRegion(e.target.value)} 
+                    borderColor="gray.400"
+                  >
+                    {landscapeOptions.map((landscape, index) => (
+                      <option key={index} value={String(landscape)}>
+                        {String(landscape)}
+                      </option>
+                    ))}
+                  </Select>
+
+                  {/* Date Field */}
+                  <Input
+                    type="date"
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
+                    borderColor="gray.400"
+                  />
+
+                  {/* Type Filter */}
+                  <Select placeholder="Select Type" value={type} onChange={(e) => setType(e.target.value)} borderColor="gray.400">
+                    <option value="baseline">Baseline</option>
+                    <option value="temporal">Temporal</option>
+                    <option value="spatial">Spatial</option>
+                  </Select>
+
+
+                  {/* Apply Filters Button */}
+                  <Button variant="ghost" onClick={() => {
+                    setRegion("");
+                    setDate("");
+                    setType("");
+                  }}>
+                    Clear Filters
+                  </Button>
+
+                </SimpleGrid>
+              </Box>
+            </Collapse>
+
             {/* Content Section */}
-            <Divider mb={6} borderColor="black" borderWidth="1px" width="calc(100% - 10px)" />
+            <Divider mb={6} borderColor="black" borderWidth="1px" width="calc(100% - 10px)" mt={4}/>
 
             {loading && <Text>Loading...</Text>}
             {!loading && !filteredData?.length && <Text>No analysis data available.</Text>}
@@ -247,7 +435,7 @@ export default function AnalysisResults() {
               flexDirection="column"
               gap={4}
             >
-              {filteredData?.map((analysis: any, index: number) => {
+              {paginatedData?.map((analysis: any, index: number) => {
                 let analysisSummary = getAnalysisSummary(analysis)
 
                 return (
@@ -316,7 +504,6 @@ export default function AnalysisResults() {
                           </Button>
 
                           <Button
-                              disabled
                             colorScheme="red"
                             variant="solid"
                             backgroundColor="red.500"
@@ -325,15 +512,26 @@ export default function AnalysisResults() {
                             width="auto"
                             borderRadius="0px"
                             h={10}
+                            onClick={() => setIsConfirmDeleteOpen(true)}
                           >
                             Delete
                           </Button>
+
+                          <ConfirmDeleteDialog 
+                            isOpen={isConfrimDeleteOpen}
+                            onClose={onConfirmDeleteClose}
+                            onConfirm={() => handleDelete(analysis?.id)}
+                            title="Delete Dashboard"
+                            description="Are you sure you want to delete this analysis? This action will remove it from any dashboard it is associated with."
+                          />
+
                         </Flex>
                       </Flex>
                     </CardBody>
                   </Card>
                 );
               })}
+               <Pagination currentPage={currentPage} totalPages={totalPages} handlePageChange={handlePageChange} />
             </Box>
 
             <CreateDashboardModal
@@ -344,7 +542,7 @@ export default function AnalysisResults() {
             />
 
             {/* Right Sidebar */}
-            <AnalysisSideBar isOpen={isOpen} onClose={onClose} selectedAnalysis={selectedAnalysis} />
+            <AnalysisSideBar isOpen={isOpen} onClose={onClose} selectedAnalysis={viewAnalysis} />
           </Box>
         </Flex>
       </Box>

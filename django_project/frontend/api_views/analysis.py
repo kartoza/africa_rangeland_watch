@@ -5,6 +5,9 @@ Africa Rangeland Watch (ARW).
 .. note:: Analysis APIs
 """
 import uuid
+from collections import OrderedDict
+from datetime import date
+from copy import deepcopy
 from concurrent.futures import ThreadPoolExecutor
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -15,8 +18,19 @@ from analysis.analysis import (
     initialize_engine_analysis,
     run_analysis,
     get_rel_diff,
-    InputLayer
+    InputLayer,
+    spatial_get_date_filter,
+    validate_spatial_date_range_filter
 )
+
+
+def _temporal_analysis(lat, lon, analysis_dict, custom_geom):
+    return run_analysis(
+        lat=lat,
+        lon=lon,
+        analysis_dict=analysis_dict,
+        custom_geom=custom_geom
+    )
 
 
 class AnalysisAPI(APIView):
@@ -51,8 +65,162 @@ class AnalysisAPI(APIView):
         return run_analysis(
             lon=float(data['longitude']),
             lat=float(data['latitude']),
-            analysis_dict=analysis_dict
+            analysis_dict=analysis_dict,
+            custom_geom=data.get('custom_geom', None)
         )
+
+    def _combine_temporal_analysis_results(self, years, input_results):
+        def merge_and_sort(arrays):
+            unique_dict = {}
+
+            for array in arrays:
+                for item in array['features']:
+                    key = (
+                        f"{item['properties']['Name']}-"
+                        f"{item['properties']['date']}"
+                    )
+                    # Overwrites duplicates, ensuring uniqueness
+                    unique_dict[key] = item
+            return list(unique_dict.values())
+
+        def add_empty_records(existing_records):
+            new_records = {}
+            for year in years:
+                has_record = len(
+                    list(
+                        filter(
+                            lambda x: x['properties']['year'] == year,
+                            existing_records
+                        )
+                    )
+                ) > 0
+                if not has_record:
+                    for record in existing_records:
+                        key = f'{record["properties"]["Name"]}-{year}'
+                        if key not in new_records:
+                            new_record = deepcopy(record)
+                            new_record['properties']['year'] = year
+                            new_record['properties']['Bare ground'] = None
+                            new_record['properties']['EVI'] = None
+                            new_record['properties']['NDVI'] = None
+                            new_records[key] = new_record
+            return new_records.values()
+
+        def add_statistics(features):
+            new_features = [
+                a['properties'] for a in filter(
+                    lambda x: x['properties']['year'] in years,
+                    features
+                )
+            ]
+
+            # Process data
+            aggregated = {}
+
+            for row in new_features:
+                name, year = row["Name"], int(row["year"])
+
+                # Convert numeric values
+                bare_ground = row["Bare ground"]
+                evi = row["EVI"]
+                ndvi = row["NDVI"]
+
+                key = (name, year)
+                if key not in aggregated:
+                    aggregated[key] = {
+                        "Bare ground": [],
+                        "EVI": [],
+                        "NDVI": []
+                    }
+
+                aggregated[key]["Bare ground"].append(bare_ground)
+                aggregated[key]["EVI"].append(evi)
+                aggregated[key]["NDVI"].append(ndvi)
+
+            # Compute min, max, and mean
+            results = {}
+            unprocessed_years = years
+            names = set()
+
+            for location_year, values in aggregated.items():
+                location, year = location_year
+                if year in unprocessed_years:
+                    unprocessed_years.remove(year)
+                names.add(location)
+                if year not in results:
+                    results[year] = {}
+                if location not in results[year]:
+                    results[year][location] = {}
+
+                for category, numbers in values.items():
+                    min_val = min(numbers)
+                    max_val = max(numbers)
+                    mean_val = sum(numbers) / len(numbers)
+                    results[year][location][category] = {
+                        'min': min_val,
+                        'max': max_val,
+                        'mean': mean_val
+                    }
+
+            empty_data = {
+                'Bare ground': {
+                    'min': None, 'max': None, 'mean': None
+                },
+                'EVI': {
+                    'min': None, 'max': None, 'mean': None
+                },
+                'NDVI': {
+                    'min': None, 'max': None, 'mean': None
+                },
+            }
+            for year in unprocessed_years:
+                for name in names:
+                    if results.get(year, None):
+                        results[year].update({
+                            name: empty_data
+                        })
+                    else:
+                        results[year] = {
+                            name: empty_data
+                        }
+
+            results = {
+                year: {
+                    name: OrderedDict(
+                        sorted(value.items())
+                    ) for name, value in sorted(group.items())
+                } for year, group in sorted(results.items())
+            }
+            return results
+
+        output_results = []
+        output_results.append(input_results[0][0])
+        output_results.append(input_results[0][1])
+        output_results[0]['features'] = merge_and_sort(
+            [ir[0] for ir in input_results]
+        )
+
+        output_results[0]['features'].extend(
+            add_empty_records(output_results[1]['features'])
+        )
+        # add empty result if no data exist for certain year
+        output_results[1]['features'] = merge_and_sort(
+            [ir[1] for ir in input_results]
+        )
+
+        output_results[0]['features'] = sorted(
+            output_results[0]['features'],
+            key=lambda x: x['properties']['date']
+        )
+        output_results[1]['features'] = sorted(
+            output_results[1]['features'],
+            key=lambda x: x['properties']['date']
+        )
+        output_results[0]['statistics'] = add_statistics(
+            output_results[1]['features']
+        )
+
+        return output_results
 
     def run_temporal_analysis(self, data):
         """Run the temporal analysis."""
@@ -60,7 +228,7 @@ class AnalysisAPI(APIView):
         comp_years = data['comparisonPeriod']['year']
         comp_quarters = data['comparisonPeriod'].get('quarter', [])
         if len(comp_years) == 0:
-            comp_quarters = [''] * len(comp_years)
+            comp_quarters = [None] * len(comp_years)
 
         analysis_dict_list = []
         for idx, comp_year in enumerate(comp_years):
@@ -97,16 +265,17 @@ class AnalysisAPI(APIView):
             # Submit tasks to the executor
             futures = [
                 executor.submit(
-                    run_analysis,
+                    _temporal_analysis,
                     data['latitude'],
                     data['longitude'],
-                    analysis_dict
+                    analysis_dict,
+                    data.get('custom_geom', None)
                 ) for analysis_dict in analysis_dict_list
             ]
-
             # Collect results as they complete
             results = [future.result() for future in futures]
 
+        results = self._combine_temporal_analysis_results(comp_years, results)
         return results
 
     def run_spatial_analysis(self, data):
@@ -128,15 +297,37 @@ class AnalysisAPI(APIView):
             },
             'Spatial': {
                 'Annual': '',
-                'Quarterly': ''
+                'Quarterly': '',
+                'start_year': data.get('spatialStartYear', None),
+                'end_year': data.get('spatialEndYear', None)
             }
         }
+        filter_start_date, filter_end_date = spatial_get_date_filter(
+            analysis_dict
+        )
+
+        valid_filters, start_meta, end_meta = (
+            validate_spatial_date_range_filter(
+                data['variable'], filter_start_date, filter_end_date
+            )
+        )
+        if not valid_filters:
+            # validate the filter is within asset date ranges
+            raise ValueError(
+                f'{data['variable']} year range filter must be between '
+                f'{date.fromisoformat(start_meta).year} to '
+                f'{date.fromisoformat(end_meta).year}'
+            )
+
         initialize_engine_analysis()
         if data['longitude'] is None and data['latitude'] is None:
             # return the relative different layer
             input_layers = InputLayer()
             rel_diff = get_rel_diff(
-                input_layers.get_spatial_layer_dict(),
+                input_layers.get_spatial_layer_dict(
+                    filter_start_date,
+                    filter_end_date
+                ),
                 analysis_dict,
                 data['reference_layer']
             )
@@ -162,12 +353,25 @@ class AnalysisAPI(APIView):
                 'style': None
             }
 
-        return run_analysis(
+        results = run_analysis(
             lon=float(data['longitude']),
             lat=float(data['latitude']),
             analysis_dict=analysis_dict,
-            reference_layer=data['reference_layer']
+            reference_layer=data['reference_layer'],
+            custom_geom=data.get('custom_geom', None)
         )
+
+        if data.get('custom_geom', None):
+            # add Name to the results
+            name = data.get('userDefinedFeatureName', 'User Defined Geometry')
+            for feature in results.get('features', []):
+                if 'properties' not in feature:
+                    continue
+                if 'Name' in feature['properties']:
+                    continue
+                feature['properties']['Name'] = name
+
+        return results
 
     def post(self, request, *args, **kwargs):
         """Fetch list of Landscape."""
