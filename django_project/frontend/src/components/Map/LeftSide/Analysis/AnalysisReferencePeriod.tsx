@@ -39,12 +39,12 @@ export default function AnalysisReferencePeriod(
   // State to manage multiple AccordionPanels
   
   let defaultPanels: DefaultPanel[] = [];
-  if (multiple && Array.isArray(value.year) && Array.isArray(value.quarter)) {
+  if (multiple && Array.isArray(value?.year) && Array.isArray(value?.quarter)) {
     for (let i = 0; i < value.year.length; i++) {
       defaultPanels.push({ id: i, year: value.year[i], quarter: value.quarter[i] });
     }
-  } else if (!Array.isArray(value.year) && !Array.isArray(value.quarter)){
-    defaultPanels = [{ id: 0, year: value.year, quarter: value.quarter }]
+  } else if (!Array.isArray(value?.year) && !Array.isArray(value?.quarter)){
+    defaultPanels = [{ id: 0, year: value?.year ? value?.year : null, quarter: value?.quarter ? value?.quarter : null }]
   }
   const [panels, setPanels] = useState<DefaultPanel[]>(defaultPanels);
 
