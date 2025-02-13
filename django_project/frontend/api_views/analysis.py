@@ -5,6 +5,7 @@ Africa Rangeland Watch (ARW).
 .. note:: Analysis APIs
 """
 import uuid
+from collections import OrderedDict
 from datetime import date
 from copy import deepcopy
 from concurrent.futures import ThreadPoolExecutor
@@ -105,6 +106,93 @@ class AnalysisAPI(APIView):
                             new_records[key] = new_record
             return new_records.values()
 
+        def add_statistics(features):
+            new_features = [
+                a['properties'] for a in filter(
+                    lambda x: x['properties']['year'] in years,
+                    features
+                )
+            ]
+
+            # Process data
+            aggregated = {}
+
+            for row in new_features:
+                name, year = row["Name"], int(row["year"])
+
+                # Convert numeric values
+                bare_ground = row["Bare ground"]
+                evi = row["EVI"]
+                ndvi = row["NDVI"]
+
+                key = (name, year)
+                if key not in aggregated:
+                    aggregated[key] = {
+                        "Bare ground": [],
+                        "EVI": [],
+                        "NDVI": []
+                    }
+
+                aggregated[key]["Bare ground"].append(bare_ground)
+                aggregated[key]["EVI"].append(evi)
+                aggregated[key]["NDVI"].append(ndvi)
+
+            # Compute min, max, and mean
+            results = {}
+            unprocessed_years = years
+            names = set()
+
+            for location_year, values in aggregated.items():
+                location, year = location_year
+                if year in unprocessed_years:
+                    unprocessed_years.remove(year)
+                names.add(location)
+                if year not in results:
+                    results[year] = {}
+                if location not in results[year]:
+                    results[year][location] = {}
+
+                for category, numbers in values.items():
+                    min_val = min(numbers)
+                    max_val = max(numbers)
+                    mean_val = sum(numbers) / len(numbers)
+                    results[year][location][category] = {
+                        'min': min_val,
+                        'max': max_val,
+                        'mean': mean_val
+                    }
+
+            empty_data = {
+                'Bare ground': {
+                    'min': None, 'max': None, 'mean': None
+                },
+                'EVI': {
+                    'min': None, 'max': None, 'mean': None
+                },
+                'NDVI': {
+                    'min': None, 'max': None, 'mean': None
+                },
+            }
+            for year in unprocessed_years:
+                for name in names:
+                    if results.get(year, None):
+                        results[year].update({
+                            name: empty_data
+                        })
+                    else:
+                        results[year] = {
+                            name: empty_data
+                        }
+
+            results = {
+                year: {
+                    name: OrderedDict(
+                        sorted(value.items())
+                    ) for name, value in sorted(group.items())
+                } for year, group in sorted(results.items())
+            }
+            return results
+
         output_results = []
         output_results.append(input_results[0][0])
         output_results.append(input_results[0][1])
@@ -127,6 +215,9 @@ class AnalysisAPI(APIView):
         output_results[1]['features'] = sorted(
             output_results[1]['features'],
             key=lambda x: x['properties']['date']
+        )
+        output_results[0]['statistics'] = add_statistics(
+            output_results[1]['features']
         )
 
         return output_results
