@@ -107,8 +107,13 @@ class UploadLayerAPI(APIView):
             elif isinstance(file_obj, str):
                 if file_obj.endswith('.zip'):
                     delete_tmp_shapefile(file_obj)
-                elif os.path.exists(file_obj):
-                    os.remove(file_obj)
+                else:
+                    normalized_path = os.path.normpath(file_obj)
+                    if (
+                        normalized_path.startswith('/tmp') and
+                        os.path.exists(normalized_path)
+                    ):
+                        os.remove(normalized_path)
 
     def _on_validation_error(self, error: str, file_obj_list: list):
         """Handle when there is error on validation."""
