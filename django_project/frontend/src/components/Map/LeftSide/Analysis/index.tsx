@@ -20,6 +20,7 @@ import { AppDispatch, RootState } from "../../../../store";
 import { doAnalysis, REFERENCE_LAYER_DIFF_ID, resetAnalysisResult } from "../../../../store/analysisSlice";
 import { AnalysisCustomGeometrySelector } from "./AnalysisCustomGeometrySelector";
 import AnalysisUserDefinedLayerSelector from "./AnalysisUserDefinedLayerSelector";
+import AnalysisSpatialYearFilter from "./AnalysisSpatialYearFilter";
 import { LayerCheckboxProps } from '../Layers';
 import { useSession } from '../../../../sessionProvider';
 import { saveAnalysis } from '../../../../store/userAnalysisSlice';
@@ -319,6 +320,32 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
               ...data,
               variable: value
             })}
+          />
+        }
+        {/* 4) Select year range filter for spatial*/}
+        {
+          data.analysisType === Types.SPATIAL && data.variable &&
+          <AnalysisSpatialYearFilter
+            initialStartYear={data.spatialStartYear}
+            initialEndYear={data.spatialEndYear}
+            onYearChange={(startYear, endYear) => {
+              // set spatial year filter and reset results
+              setData({
+                ...data,
+                community: null,
+                latitude: null,
+                longitude: null,
+                communityName: null,
+                communityFeatureId: null,
+                custom_geom: null,
+                userDefinedFeatureId: null,
+                userDefinedFeatureName: null,
+                spatialStartYear: startYear,
+                spatialEndYear: endYear
+              })
+              dispatch(resetAnalysisResult())
+              setMapInteraction(MapAnalysisInteraction.NO_INTERACTION)
+            }}
           />
         }
         {/* Draw buttons for spatial */}

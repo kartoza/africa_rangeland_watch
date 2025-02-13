@@ -126,6 +126,14 @@ class AnalysisAPITest(BaseAPIViewTest):
             5
         )
         self.assertEqual(
+            len(results[0]['statistics']),
+            3
+        )
+        self.assertEqual(
+            list(results[0]['statistics'][2019].keys()),
+            ['BNP western polygon']
+        )
+        self.assertEqual(
             results[0]['features'][0]['properties']['year'],
             2017
         )
