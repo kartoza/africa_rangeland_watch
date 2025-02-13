@@ -400,6 +400,9 @@ class AnalysisResultsCache(models.Model):
     def save_cache_with_ttl(cls, ttl, **kwargs):
         """Save AnalysisResultsCache with ttl."""
         obj = AnalysisResultsCache.objects.create(**kwargs)
+        if ttl is None:
+            # default to 1 hour
+            ttl = 1
         obj.expired_at = obj.created_at + timezone.timedelta(
             hours=ttl
         )

@@ -97,7 +97,7 @@ def store_analysis_raster_output(analysis_result_id: int):
     analysis_result.save()
 
 
-@app.task(name='clear_analysis_results_cache')
+@app.task(name='clear_analysis_results_cache', ignore_result=True)
 def clear_analysis_results_cache():
     """Trigger task to generate layers using GEE."""
     AnalysisResultsCache.objects.filter(
