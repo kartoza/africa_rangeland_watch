@@ -24,6 +24,7 @@ EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', 'docker')
 EMAIL_USE_TLS = ast.literal_eval(os.environ.get('EMAIL_USE_TLS', 'False'))
 EMAIL_USE_SSL = ast.literal_eval(os.environ.get('EMAIL_USE_SSL', 'False'))
 EMAIL_SUBJECT_PREFIX = os.environ.get('EMAIL_SUBJECT_PREFIX', '')
+SUPPORT_EMAIL = os.environ.get('SUPPORT_EMAIL', 'support@kartoza.com')
 
 # Make sure static files storage is set to default
 STATIC_FILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'

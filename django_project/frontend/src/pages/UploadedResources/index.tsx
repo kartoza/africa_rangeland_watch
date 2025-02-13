@@ -140,73 +140,78 @@ export default function UploadedResults() {
             {error && <Text>{error}</Text>}
 
             {/* Display user-defined layers */}
-            <Box
-              maxHeight="calc(100vh - 250px)"
-              overflowY="hidden"
-              mb={6}
-              display="flex"
-              flexDirection="column"
-              gap={4}
-            >
-               {currentLayers.map((layer: Layer, index: number) => (
-                <Card key={index} boxShadow="md" borderRadius="md">
-                  <CardBody>
-                    <Flex
-                      direction={{ base: "column", md: "row" }}
-                      align="stretch" 
-                      gap={4}
-                      justify="space-between"
-                    >
-                      {/* Image */}
-                      <Image
-                        src={layer.image || "https://via.placeholder.com/150"}
-                        alt={layer.name}
-                        borderRadius="md"
-                        boxSize={{ base: "100%", md: "150px" }}
-                        mb={{ base: 4, md: 0 }}
-                      />
-                      
-                      {/* Content */}
-                      <Box flex="1" display="flex" flexDirection="column" justifyContent="space-between">
-                        <Heading size="md" fontWeight="bold" color="black" mb={2}>
-                          {layer.name || "No Name"}
-                        </Heading>
-                        
-                        <Text mt={2} color="black" mb={4}>
-                          {layer.description || "No Description Available"}
-                        </Text>
-                        
-                        <Box mt={4} display="flex" flexWrap="wrap" gap={2}>
-                          <Tag colorScheme="green" mr={2}>
-                            <TagLabel>{layer.data_provider || "Unknown"}</TagLabel>
-                          </Tag>
-                        </Box>
-                      </Box>
-                
-                      {/* View Button */}
-                      <Flex justify="flex-end" mt="auto">
-                        <Button
-                          colorScheme="green"
-                          variant="solid"
-                          backgroundColor="dark_green.800"
-                          _hover={{ backgroundColor: "light_green.400" }}
-                          color="white"
-                          width="auto"
-                          borderRadius="0px"
-                          h={10}
+              <Box
+                maxHeight="calc(100vh - 250px)"
+                overflowY="hidden"
+                mb={6}
+                display="flex"
+                flexDirection="column"
+                gap={4}
+              >
+                {currentLayers.length === 0 ? (
+                  <Flex justify="center" align="center" height="200px">
+                    <Text fontSize="lg" fontWeight="bold" color="gray.500">
+                      No data available
+                    </Text>
+                  </Flex>
+                ) : (
+                  currentLayers.map((layer: Layer, index: number) => (
+                    <Card key={index} boxShadow="md" borderRadius="md">
+                      <CardBody>
+                        <Flex
+                          direction={{ base: "column", md: "row" }}
+                          align="stretch"
+                          gap={4}
+                          justify="space-between"
                         >
-                          View
-                        </Button>
-                      </Flex>
-                    </Flex>
-                  </CardBody>
-                </Card>
-              ))}
+                          {/* Image */}
+                          <Image
+                            src={layer.image || "https://via.placeholder.com/150"}
+                            alt={layer.name}
+                            borderRadius="md"
+                            boxSize={{ base: "100%", md: "150px" }}
+                            mb={{ base: 4, md: 0 }}
+                          />
 
+                          {/* Content */}
+                          <Box flex="1" display="flex" flexDirection="column" justifyContent="space-between">
+                            <Heading size="md" fontWeight="bold" color="black" mb={2}>
+                              {layer.name || "No Name"}
+                            </Heading>
 
-              
-              
-            </Box>
+                            <Text mt={2} color="black" mb={4}>
+                              {layer.description || "No Description Available"}
+                            </Text>
+
+                            <Box mt={4} display="flex" flexWrap="wrap" gap={2}>
+                              <Tag colorScheme="green" mr={2}>
+                                <TagLabel>{layer.data_provider || "Unknown"}</TagLabel>
+                              </Tag>
+                            </Box>
+                          </Box>
+
+                          {/* View Button */}
+                          <Flex justify="flex-end" mt="auto">
+                            <Button
+                              colorScheme="green"
+                              variant="solid"
+                              backgroundColor="dark_green.800"
+                              _hover={{ backgroundColor: "light_green.400" }}
+                              color="white"
+                              width="auto"
+                              borderRadius="0px"
+                              h={10}
+                            >
+                              View
+                            </Button>
+                          </Flex>
+                        </Flex>
+                      </CardBody>
+                    </Card>
+                  ))
+                )}
+</Box>
+
             {filteredLayers.length >= 3 && (
                   <Flex justifyContent="center" mb={5}>
                       <Pagination

@@ -24,7 +24,7 @@ class UserAnalysisResultsViewSet(viewsets.ModelViewSet):
     def fetch_analysis_results(self, request):
         analysis_results = UserAnalysisResults.objects.filter(
             created_by=request.user
-        )
+        ).order_by('-created_at')
         serializer = self.get_serializer(analysis_results, many=True)
         return Response(serializer.data)
 

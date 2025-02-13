@@ -14,7 +14,6 @@ import {
   Text,
 } from '@chakra-ui/react';
 import { FaFilter } from 'react-icons/fa';
-import { InProgressBadge } from './InProgressBadge';
 import { fetchDashboardOwners, FilterParams } from '../store/dashboardSlice';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch } from '../store';
@@ -113,7 +112,6 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({ isOpen, onClose, se
 
         <Box borderBottom="1px solid gray" mb="4" />
         <DrawerBody>
-          <InProgressBadge />
 
           {/* Search Field */}
           <Input

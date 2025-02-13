@@ -19,6 +19,7 @@ import {
   TabPanels,
   TabPanel,
   Divider,
+  Text
 } from "@chakra-ui/react";
 import { FaPlus, FaTrash } from "react-icons/fa";
 import Header from "../../components/Header";
@@ -160,129 +161,87 @@ export default function OrganisationInformation() {
               My Organisations
             </Heading>
 
-            {/* {loading && <p>Loading...</p>} */}
-            {/* {error && <p>{error}</p>} */}
+            {loading && <p>Loading...</p>}
 
-            {/* Organisation Tabs */}
-            <Tabs variant="unstyled">
-              <Box
-                width="fit-content"
-                border="1px solid"
-                borderColor="gray.300"
-                borderBottom="none"
-                borderRadius="5px"
-                overflow="hidden"
-              >
-                <TabList>
-                  {Object.keys(organizations).map((orgKey, idx) => (
-                    <Tab
-                      key={idx}
-                      _selected={{ color: "white", bg: "dark_green.800" }}
-                      _hover={{ bg: "light_green.400" }}
-                      px={6}
-                      py={2}
-                      onClick={() => setSelectedOrgKey(orgKey)}
-                    >
-                      {orgKey}
-                    </Tab>
-                  ))}
-                </TabList>
-              </Box>
+            {Object.keys(organizations).length === 0 ? (
+              <Flex justify="center" align="center" height="200px">
+                <Text fontSize="lg" fontWeight="bold" color="gray.500">
+                  No data available
+                </Text>
+              </Flex>
+            ) : (
+              <Tabs variant="unstyled">
+                <Box
+                  width="fit-content"
+                  border="1px solid"
+                  borderColor="gray.300"
+                  borderBottom="none"
+                  borderRadius="5px"
+                  overflow="hidden"
+                >
+                  <TabList>
+                    {Object.keys(organizations).map((orgKey, idx) => (
+                      <Tab
+                        key={idx}
+                        _selected={{ color: "white", bg: "dark_green.800" }}
+                        _hover={{ bg: "light_green.400" }}
+                        px={6}
+                        py={2}
+                        onClick={() => setSelectedOrgKey(orgKey)}
+                      >
+                        {orgKey}
+                      </Tab>
+                    ))}
+                  </TabList>
+                </Box>
 
-              <Divider mb={6} borderColor="black" borderWidth="1px" width={{ base: "auto", md: "99%" }} />
+                <Divider mb={6} borderColor="black" borderWidth="1px" width={{ base: "auto", md: "99%" }} />
 
-              <TabPanels>
-                {Object.values(organizations).map((organization: any, index: number) => (
-                  <TabPanel key={index}>
-                    {/* Organisation Members Section */}
-                    <Heading size="md" mb={4} color="black">
-                      Organisation Members
-                    </Heading>
-                    <Flex align="center" mb={4} justify="space-between">
-                      <Flex align="center" w="auto" position="relative">
-                        <Input
-                          placeholder="Search organisation members"
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                          borderColor="gray.400"
-                          mr={2}
-                          w={{ base: "full", md: 80 }}
-                        />
-                      </Flex>
-                      
-                      {organization.is_manager && (
-                      <>
-                        <Button
-                          leftIcon={<FaPlus />}
-                          colorScheme="green"
-                          variant="solid"
-                          backgroundColor="dark_green.800"
-                          _hover={{ backgroundColor: "light_green.400" }}
-                          fontWeight={700}
-                          w="auto"
-                          h={10}
-                          color="white.a700"
-                          borderRadius="0px"
-                          onClick={openInviteModal}
-                        >
-                          Add People
-                        </Button>
-                        <InviteMember 
-                          isOpen={isInviteModalOpen} 
-                          onClose={closeInviteModal} 
-                          orgKey={organization.org_id}
-                          organizationName={selectedOrgKey || "Unknown"} 
-                        />
-                      </>
-                      )}
-                    </Flex>
-
-                    <Divider mb={6} borderColor="black" borderWidth="1px" />
-
-                    <Box overflowX="auto">
-                      <Table variant="unstyled" size="sm">
-                        <Thead borderBottom="1px solid" borderColor="gray.400">
-                          <Tr>
-                            <Td fontWeight="bold">User</Td>
-                            <Td fontWeight="bold">Role</Td>
-                            <Td fontWeight="bold" textAlign="center">Actions</Td>
-                          </Tr>
-                        </Thead>
-                        <Tbody>
-                          {paginatedMembers.map((member: any, idx: number) => (
-                            <Tr key={idx}>
-                              <Td color={"black"}>{member.user_profile__user__email}</Td>
-                              <Td color={"black"}>{member.user_type}</Td>
-                              {organization.is_manager && (
-                              <>
-                                <Td textAlign="center" display="flex" justifyContent="center">
-                                  <IconButton
-                                    aria-label="Delete member"
-                                    icon={<FaTrash />}
-                                    colorScheme="red"
-                                    variant="ghost"
-                                    onClick={() => handleDelete(organization.org_id, member)}
-                                  />
-                                </Td>
-                              </>
-                              )}
-                            </Tr>
-                          ))}
-                        </Tbody>
-                      </Table>
-                      <Pagination
-                        currentPage={currentPage}
-                        totalPages={Math.ceil(filteredMembersList.length / itemsPerPage)}
-                        handlePageChange={handlePageChange}
-                      />
-                    </Box>
-
-
-                  {organization.is_manager && (
-                    <>
-                      <Heading size="md" mt={8} mb={4} color="black">
-                        Invitations
+                <TabPanels>
+                  {Object.values(organizations).map((organization: any, index: number) => (
+                    <TabPanel key={index}>
+                      {/* Organisation Members Section */}
+                      <Heading size="md" mb={4} color="black">
+                        Organisation Members
                       </Heading>
+                      <Flex align="center" mb={4} justify="space-between">
+                        <Flex align="center" w="auto" position="relative">
+                          <Input
+                            placeholder="Search organisation members"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            borderColor="gray.400"
+                            mr={2}
+                            w={{ base: "full", md: 80 }}
+                          />
+                        </Flex>
+                        
+                        {organization.is_manager && (
+                        <>
+                          <Button
+                            leftIcon={<FaPlus />}
+                            colorScheme="green"
+                            variant="solid"
+                            backgroundColor="dark_green.800"
+                            _hover={{ backgroundColor: "light_green.400" }}
+                            fontWeight={700}
+                            w="auto"
+                            h={10}
+                            color="white.a700"
+                            borderRadius="0px"
+                            onClick={openInviteModal}
+                          >
+                            Add People
+                          </Button>
+                          <InviteMember 
+                            isOpen={isInviteModalOpen} 
+                            onClose={closeInviteModal} 
+                            orgKey={organization.org_id}
+                            organizationName={selectedOrgKey || "Unknown"} 
+                          />
+                        </>
+                        )}
+                      </Flex>
 
                       <Divider mb={6} borderColor="black" borderWidth="1px" />
 
@@ -290,46 +249,98 @@ export default function OrganisationInformation() {
                         <Table variant="unstyled" size="sm">
                           <Thead borderBottom="1px solid" borderColor="gray.400">
                             <Tr>
-                              <Td fontWeight="bold">Email</Td>
-                              <Td fontWeight="bold">Status</Td>
+                              <Td fontWeight="bold">User</Td>
+                              <Td fontWeight="bold">Role</Td>
+                              <Td fontWeight="bold" textAlign="center">Actions</Td>
                             </Tr>
                           </Thead>
                           <Tbody>
-                            {paginatedInvitations.map((invite: any, idx: number) => (
+                            {paginatedMembers.map((member: any, idx: number) => (
                               <Tr key={idx}>
-                                <Td>{invite.invitation__email}</Td>
-                                <Td>
-                                  <Badge
-                                    backgroundColor={
-                                      invite.accepted
-                                        ? "light_green.400"
-                                        : "#3e3e3e"
-                                    }
-                                    color="white"
-                                    variant="solid"
-                                    px={4}
-                                    py={2}
-                                    borderRadius="full"
-                                  >
-                                    {invite.accepted ? "Joined": "Pending"}
-                                  </Badge>
-                                </Td>
+                                <Td color={"black"}>{member.user_profile__user__email}</Td>
+                                <Td color={"black"}>{member.user_type}</Td>
+                                {organization.is_manager && (
+                                <>
+                                  <Td textAlign="center" display="flex" justifyContent="center">
+                                    <IconButton
+                                      aria-label="Delete member"
+                                      icon={<FaTrash />}
+                                      colorScheme="red"
+                                      variant="ghost"
+                                      onClick={() => handleDelete(organization.org_id, member)}
+                                    />
+                                  </Td>
+                                </>
+                                )}
                               </Tr>
                             ))}
                           </Tbody>
                         </Table>
-                        <Pagination
-                          currentPage={currentInvitationPage}
-                          totalPages={Math.ceil(paginatedInvitations.length / itemsPerPage)}
-                          handlePageChange={handleInvitationPageChange}
-                        />
+                        {filteredMembersList.length > 5 && (
+                          <Pagination
+                            currentPage={currentPage}
+                            totalPages={Math.ceil(filteredMembersList.length / itemsPerPage)}
+                            handlePageChange={handlePageChange}
+                          />
+                        )}
                       </Box>
-                  </>
-                  )}
-                  </TabPanel>
-                ))}
-              </TabPanels>
-            </Tabs>
+
+
+                    {organization.is_manager && (
+                      <>
+                        <Heading size="md" mt={8} mb={4} color="black">
+                          Invitations
+                        </Heading>
+
+                        <Divider mb={6} borderColor="black" borderWidth="1px" />
+
+                        <Box overflowX="auto">
+                          <Table variant="unstyled" size="sm">
+                            <Thead borderBottom="1px solid" borderColor="gray.400">
+                              <Tr>
+                                <Td fontWeight="bold">Email</Td>
+                                <Td fontWeight="bold">Status</Td>
+                              </Tr>
+                            </Thead>
+                            <Tbody>
+                              {paginatedInvitations.map((invite: any, idx: number) => (
+                                <Tr key={idx}>
+                                  <Td>{invite.invitation__email}</Td>
+                                  <Td>
+                                    <Badge
+                                      backgroundColor={
+                                        invite.accepted
+                                          ? "light_green.400"
+                                          : "#3e3e3e"
+                                      }
+                                      color="white"
+                                      variant="solid"
+                                      px={4}
+                                      py={2}
+                                      borderRadius="full"
+                                    >
+                                      {invite.accepted ? "Joined": "Pending"}
+                                    </Badge>
+                                  </Td>
+                                </Tr>
+                              ))}
+                            </Tbody>
+                          </Table>
+                          {paginatedInvitations.length > 5 && (
+                             <Pagination
+                              currentPage={currentInvitationPage}
+                              totalPages={Math.ceil(paginatedInvitations.length / itemsPerPage)}
+                              handlePageChange={handleInvitationPageChange}
+                            />
+                          )}
+                        </Box>
+                    </>
+                    )}
+                    </TabPanel>
+                  ))}
+                </TabPanels>
+              </Tabs>
+            )}
           </Box>
         </Flex>
       </Box>

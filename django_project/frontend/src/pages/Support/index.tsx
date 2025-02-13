@@ -239,12 +239,6 @@ export default function SupportPage() {
 
             {showFilters && !creatingTicket && (
               <Collapse in={showFilters} animateOpacity>
-                <motion.div 
-                  initial={{ opacity: 0, height: 0 }} 
-                  animate={{ opacity: 1, height: "auto" }} 
-                  exit={{ opacity: 0, height: 0 }} 
-                  transition={{ duration: 0.3 }}
-                >
                   <Box 
                     bg="gray.100" 
                     w="50%" 
@@ -287,7 +281,6 @@ export default function SupportPage() {
                       </Button>
                     </Flex>
                   </Box>
-                </motion.div>
               </Collapse>
             )}
 
@@ -309,54 +302,60 @@ export default function SupportPage() {
                 gap={4}
                 bg="gray.50"
               >
-                {(searchTerm !== '' ? filteredTickets : currentTickets).map((ticket, index) => (
-                <Box key={index} boxShadow="md" borderRadius="md" p={4} border="1px" borderColor="gray.300">
-                    <Flex direction="column" gap={2} position="relative">
-                    {/* Badge (Status) */}
-                    <Tag
-                        style={{
-                        backgroundColor:
-                            ticket.status === "open"
-                            ? "#91e05e"
-                            : ticket.status === "in_progress"
-                            ? "yellow" 
-                            : ticket.status === "resolved"
-                            ? "#c4c4c4" 
-                            : "#c4c4c4",
-                        }}
-                        position="absolute"
-                        top="0"
-                        right="0"
-                        borderRadius="full"
-                    >
-                        <TagLabel>{ticket.status}</TagLabel> 
-                    </Tag>
-
-                    {/* Title */}
-                    <Heading size="md" fontWeight="bold" color="black">
-                        {ticket.title}
-                    </Heading>
-
-                    {/* Description */}
-                    <Text mt={2} color="black">
-                        {ticket.description}
+                {filteredTickets.length === 0 ? (
+                  <Flex justify="center" align="center" height="200px">
+                    <Text fontSize="lg" fontWeight="bold" color="gray.500">
+                      No data available
                     </Text>
+                  </Flex>
+                ) : (
+                  (searchTerm !== '' ? filteredTickets : currentTickets).map((ticket, index) => (
+                  <Box key={index} boxShadow="md" borderRadius="md" p={4} border="1px" borderColor="gray.300">
+                      <Flex direction="column" gap={2} position="relative">
+                      {/* Badge (Status) */}
+                      <Tag
+                          style={{
+                          backgroundColor:
+                              ticket.status === "open"
+                              ? "#91e05e"
+                              : ticket.status === "in_progress"
+                              ? "yellow" 
+                              : ticket.status === "resolved"
+                              ? "#c4c4c4" 
+                              : "#c4c4c4",
+                          }}
+                          position="absolute"
+                          top="0"
+                          right="0"
+                          borderRadius="full"
+                      >
+                          <TagLabel>{ticket.status}</TagLabel> 
+                      </Tag>
 
-                    {/* Created Timestamp */}
-                    <Text mt={2} color="gray.500" fontSize="sm">
-                        {new Date(ticket.created_at).toLocaleString()}
-                    </Text>
+                      {/* Title */}
+                      <Heading size="md" fontWeight="bold" color="black">
+                          {ticket.title}
+                      </Heading>
 
-                    </Flex>
-                </Box>
-                ))}
+                      {/* Description */}
+                      <Text mt={2} color="black">
+                          {ticket.description}
+                      </Text>
+
+                      {/* Created Timestamp */}
+                      <Text mt={2} color="gray.500" fontSize="sm">
+                          {new Date(ticket.created_at).toLocaleString()}
+                      </Text>
+
+                      </Flex>
+                  </Box>
+                  )))}
                 {tickets.length > 5 && (
-                  <Flex justifyContent="center" mb={5}>
                       <Pagination
                           currentPage={currentPage}
                           totalPages={totalPages}
-                          handlePageChange={handlePageChange} />
-                  </Flex>
+                          handlePageChange={handlePageChange}
+                      />
                 )}
               </Box>
             )}

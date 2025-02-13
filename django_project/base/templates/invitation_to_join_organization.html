@@ -40,8 +40,9 @@
                     Once you complete your signup, you’ll have access to all of <a href="[Organisation]" style="color: #FFA500;">{{ organisation }}</a> resources on the Africa Rangeland Watch platform.
                 </p>
                 <p style="font-size: 16px; color: #333333;">
-                    If you have any questions along the way, please reach out to our support team at <a href="mailto:[Support Email]" style="color: #FFA500;">[Support Email]</a>.
-                </p>
+                    If you have any questions along the way, please reach out to our support team at 
+                    <a href="mailto:{{ support_email }}" style="color: #FFA500;">{{ support_email }}</a>.
+                </p>                
                 <p style="font-size: 16px; color: #333333;">
                     Welcome to the team!
                 </p>
@@ -51,9 +52,17 @@
                 </p>
             </td>
         </tr>
-            <td style="padding: 10px; text-align: center; font-size: 14px; color: #999999;">
-                <p>Find the platform here <a href="{{ django_backend_url }}" style="color: #FFA500;">Africa Rangeland Watch</a>. Not interested in emails from us? <a href="[Unsubscribe Link]" style="color: #FFA500;">Unsubscribe here</a>.</p>
-            </td>
+        <td style="padding: 10px; text-align: center; font-size: 14px; color: #999999;">
+            <p>Find the platform here 
+                <a href="{{ django_backend_url }}" style="color: #FFA500; text-decoration: underline;">
+                    Africa Rangeland Watch
+                </a>.
+                Not interested in emails from us? 
+                <a href="[Unsubscribe Link]" style="color: #FFA500; text-decoration: underline;">
+                    Unsubscribe here
+                </a>.
+            </p>
+        </td>        
         </tr>
     </table>
 </body>

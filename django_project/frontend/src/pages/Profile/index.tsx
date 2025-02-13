@@ -13,7 +13,9 @@ import {
   Tbody,
   Tr,
   Td,
-  useToast
+  useToast,
+  Tooltip,
+  Text
 } from "@chakra-ui/react";
 import React, { ChangeEvent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -196,42 +198,62 @@ export default function ProfileInformationPage() {
               flexDirection={{ md: "row", base: "column" }}
               w="100%"
             >
-              {/* Left Column: Profile Picture */}
-              <Box
-                bg="gray.200"
-                w={{ base: "100%", md: "220px" }}
-                h={{ base: "200px", md: "220px" }}
-                borderRadius="md"
-                overflow="hidden"
-                p="50px"
-                mb={{ base: "20px", md: "0" }}
-                display="flex"
-                justifyContent="center"
-                alignItems="center"
-                cursor="pointer"
-              >
-                <label htmlFor="fileInput" style={{ width: "100%", height: "100%", cursor: "pointer" }}>
-                  <Image
-                    src={image}
-                    alt="User Profile Avatar"
-                    w="100%"
-                    h="100%"
-                    objectFit="cover"
-                  />
-                </label>
-                <Input
-                  id="fileInput"
-                  type="file"
-                  onChange={(e) => {
-                    if (e.target.files) {
-                      const file = e.target.files[0];
-                      setImage(URL.createObjectURL(file));
-                      setUpdatePicture(true)
-                    }else setUpdatePicture(false)
-                  }}
-                  style={{ display: "none" }}
-                />
-              </Box>
+             
+                {/* Left Column: Profile Picture and Upload Text */}
+                <Flex flexDirection="column" alignItems="center">
+                    <Box
+                      bg="gray.200"
+                      w={{ base: "100%", md: "220px" }}
+                      h={{ base: "200px", md: "220px" }}
+                      borderRadius="md"
+                      overflow="hidden"
+                      p="50px"
+                      mb="10px" // Added margin to separate from text
+                      display="flex"
+                      justifyContent="center"
+                      alignItems="center"
+                      cursor="pointer"
+                    >
+                      <label htmlFor="fileInput" style={{ width: "100%", height: "100%", cursor: "pointer" }}>
+                        <Image
+                          src={image}
+                          alt="User Profile Avatar"
+                          w="100%"
+                          h="100%"
+                          objectFit="cover"
+                        />
+                      </label>
+                      <Input
+                        id="fileInput"
+                        type="file"
+                        onChange={(e) => {
+                          if (e.target.files) {
+                            const file = e.target.files[0];
+                            setImage(URL.createObjectURL(file));
+                            setUpdatePicture(true);
+                          } else {
+                            setUpdatePicture(false);
+                          }
+                        }}
+                        style={{ display: "none" }}
+                      />
+                    </Box>
+
+                  {/* Message Below Avatar */}
+                  <Box
+                    bg="gray.100"
+                    w={{ base: "100%", md: "220px" }}
+                    p="2"
+                    borderRadius="md"
+                    textAlign="center"
+                  >
+                    <Text fontSize="sm" color="gray.600">
+                      Click on avatar to choose profile picture
+                    </Text>
+                  </Box>
+                </Flex>
+
+              
 
               {/* Middle Column: Input Fields */}
               <Flex
@@ -337,15 +359,21 @@ export default function ProfileInformationPage() {
                   <Flex flexDirection="column" flex={1}>
                     <Heading as="h6" size="xs" mb="2" color="black">Organisations</Heading>
                     <Box p="2">
-                      <Table variant="striped" colorScheme="gray" size="sm" width="100%">
-                        <Tbody>
-                          {organisations.map((org, index) => (
-                            <Tr key={index}>
-                              <Td>{org}</Td>
-                            </Tr>
-                          ))}
-                        </Tbody>
-                      </Table>
+                      {Array.isArray(organisations) && organisations.length > 0 ? (
+                        <Table variant="striped" colorScheme="gray" size="sm" width="100%">
+                          <Tbody>
+                            {organisations.map((org, index) => (
+                              <Tr key={index}>
+                                <Td>{org}</Td>
+                              </Tr>
+                            ))}
+                          </Tbody>
+                        </Table>
+                      ) : (
+                        <Text fontSize="sm" color="gray.600">
+                          None
+                        </Text>
+                      )}
                     </Box>
                   </Flex>
                   <Flex flexDirection="column" flex={1}>
@@ -380,126 +408,129 @@ export default function ProfileInformationPage() {
               </Flex>
 
               {/* Right Column: Action Buttons */}
-              <Flex
-                flexDirection="column"
-                alignItems="center"
-                w={{ md: "18%", base: "100%" }}
-                border="2px solid darkgreen"
-                borderRadius="none"
-                gap="0"
-                mt={{ base: "4", md: "0" }}
-              >
-                <Button
-                  size="sm"
-                  fontWeight={700}
-                  w="100%"
-                  color={`${updatePicture ? 'white' : 'darkgreen'}`}
-                  borderBottom="2px solid darkgreen"
-                  borderRadius={0}
-                  backgroundColor={`${updatePicture ? 'darkgreen' : 'transparent'}`}
-                  p={4}
-                  onClick={() => {
-                    const fileInput = document.getElementById("fileInput") as HTMLInputElement;
-                    if (fileInput?.files?.[0]) {
-                      const formData = new FormData();
-                      formData.append("profile_image", fileInput.files[0]);
 
-                      dispatch(updateProfileImage(formData))
-                        .then(() => {
-                          toast({
-                            title: "Profile image updated.",
-                            description: "Your profile image has been updated successfully.",
-                            status: "success",
-                            duration: 5000,
-                            isClosable: true,
-                            position: "top-right",
-                            containerStyle: {
-                              backgroundColor: "#00634b",
-                              color: "white",
-                            },
-                          });
-                        })
-                        .catch(() => {
-                          toast({
-                            title: "Error updating image.",
-                            description: "There was an error updating your profile image.",
-                            status: "error",
-                            duration: 5000,
-                            isClosable: true,
-                            position: "top-right",
-                            containerStyle: {
-                              backgroundColor: "red",
-                              color: "white",
-                            },
-                          });
-                        });
-                    } else {
-                      toast({
-                        title: "No image selected.",
-                        description: "Please choose an image to upload.",
-                        status: "warning",
-                        duration: 5000,
-                        isClosable: true,
-                        position: "top-right",
-                      });
-                    }
-
-                  }}
+              <Tooltip label="Click an action to perform" hasArrow placement="top">
+                <Flex
+                  flexDirection="column"
+                  alignItems="center"
+                  w={{ md: "18%", base: "100%" }}
+                  border="2px solid darkgreen"
+                  borderRadius="none"
+                  gap="0"
+                  mt={{ base: "4", md: "0" }}
                 >
-                  Update Profile Image
-                </Button>
-                <Button
-                  size="sm"
-                  fontWeight={700}
-                  w="100%"
-                  color="darkgreen"
-                  borderBottom="2px solid darkgreen"
-                  borderRadius={0}
-                  p={4}
-                  onClick={toggleEmailEditable}
-                >
-                  Change Associated Email
-                </Button>
-                <Button
-                  size="sm"
-                  fontWeight={700}
-                  w="100%"
-                  color={`${isPasswordModalOpen ? 'white' : 'darkgreen'}`}
-                  borderBottom="2px solid darkgreen"
-                  borderRadius={0}
-                  backgroundColor={`${isPasswordModalOpen ? 'darkgreen' : 'transparent'}`}
-                  p={4}
-                  onClick={() => setIsPasswordModalOpen(true)}
-                >
-                  Change Password
-                </Button>
-                <Button
-                  size="sm"
-                  fontWeight={700}
-                  w="100%"
-                  color="darkgreen"
-                  borderRadius={0}
-                  p={4}
-                  onClick={openRequestModal}
-                >
-                  Request Organisation
-                </Button>
-                {isChanged && (
                   <Button
                     size="sm"
                     fontWeight={700}
                     w="100%"
-                    color={`${isChanged ? 'white' : 'darkgreen'}`}
+                    color={`${updatePicture ? 'white' : 'darkgreen'}`}
                     borderBottom="2px solid darkgreen"
                     borderRadius={0}
-                    backgroundColor={`${isChanged ? 'darkgreen' : 'transparent'}`}
+                    backgroundColor={`${updatePicture ? 'darkgreen' : 'transparent'}`}
                     p={4}
-                    onClick={handleUpdate}
+                    onClick={() => {
+                      const fileInput = document.getElementById("fileInput") as HTMLInputElement;
+                      if (fileInput?.files?.[0]) {
+                        const formData = new FormData();
+                        formData.append("profile_image", fileInput.files[0]);
+
+                        dispatch(updateProfileImage(formData))
+                          .then(() => {
+                            toast({
+                              title: "Profile image updated.",
+                              description: "Your profile image has been updated successfully.",
+                              status: "success",
+                              duration: 5000,
+                              isClosable: true,
+                              position: "top-right",
+                              containerStyle: {
+                                backgroundColor: "#00634b",
+                                color: "white",
+                              },
+                            });
+                          })
+                          .catch(() => {
+                            toast({
+                              title: "Error updating image.",
+                              description: "There was an error updating your profile image.",
+                              status: "error",
+                              duration: 5000,
+                              isClosable: true,
+                              position: "top-right",
+                              containerStyle: {
+                                backgroundColor: "red",
+                                color: "white",
+                              },
+                            });
+                          });
+                      } else {
+                        toast({
+                          title: "No image selected.",
+                          description: "Please choose an image to upload.",
+                          status: "warning",
+                          duration: 5000,
+                          isClosable: true,
+                          position: "top-right",
+                        });
+                      }
+
+                    }}
                   >
-                    Update Info
+                    Update Profile Image
                   </Button>
-                )}
-              </Flex>
+                  <Button
+                    size="sm"
+                    fontWeight={700}
+                    w="100%"
+                    color="darkgreen"
+                    borderBottom="2px solid darkgreen"
+                    borderRadius={0}
+                    p={4}
+                    onClick={toggleEmailEditable}
+                  >
+                    Change Associated Email
+                  </Button>
+                  <Button
+                    size="sm"
+                    fontWeight={700}
+                    w="100%"
+                    color={`${isPasswordModalOpen ? 'white' : 'darkgreen'}`}
+                    borderBottom="2px solid darkgreen"
+                    borderRadius={0}
+                    backgroundColor={`${isPasswordModalOpen ? 'darkgreen' : 'transparent'}`}
+                    p={4}
+                    onClick={() => setIsPasswordModalOpen(true)}
+                  >
+                    Change Password
+                  </Button>
+                  <Button
+                    size="sm"
+                    fontWeight={700}
+                    w="100%"
+                    color="darkgreen"
+                    borderRadius={0}
+                    p={4}
+                    onClick={openRequestModal}
+                  >
+                    Request Organisation
+                  </Button>
+                  {isChanged && (
+                    <Button
+                      size="sm"
+                      fontWeight={700}
+                      w="100%"
+                      color={`${isChanged ? 'white' : 'darkgreen'}`}
+                      borderBottom="2px solid darkgreen"
+                      borderRadius={0}
+                      backgroundColor={`${isChanged ? 'darkgreen' : 'transparent'}`}
+                      p={4}
+                      onClick={handleUpdate}
+                    >
+                      Update Info
+                    </Button>
+                  )}
+                </Flex>
+              </Tooltip>
             </Flex>
           </Flex>
         </Flex>
