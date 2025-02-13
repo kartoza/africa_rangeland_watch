@@ -23,7 +23,11 @@ from cloud_native_gis.utils.fiona import (
     validate_shapefile_zip,
     validate_collection_crs,
     delete_tmp_shapefile,
-    open_fiona_collection
+    open_fiona_collection,
+    list_layers
+)
+from django.core.files.uploadedfile import (
+    TemporaryUploadedFile
 )
 
 from layers.models import InputLayer, DataProvider, LayerGroupType
@@ -75,9 +79,7 @@ class UploadLayerAPI(APIView):
         :return: file type
         :rtype: str
         """
-        if filename.lower().endswith('.zip'):
-            return FileType.SHAPEFILE
-        return ''
+        return FileType.guess_type(filename)
 
     def _check_shapefile_zip(self, file_obj: any) -> str:
         """Validate if zip shapefile has complete files.
@@ -106,7 +108,10 @@ class UploadLayerAPI(APIView):
                 if os.path.exists(file_obj.temporary_file_path()):
                     os.remove(file_obj.temporary_file_path())
             elif isinstance(file_obj, str):
-                delete_tmp_shapefile(file_obj)
+                if file_obj.endswith('.zip'):
+                    delete_tmp_shapefile(file_obj)
+                elif os.path.exists(file_obj):
+                    os.remove(file_obj)
 
     def _on_validation_error(self, error: str, file_obj_list: list):
         """Handle when there is error on validation."""
@@ -130,9 +135,11 @@ class UploadLayerAPI(APIView):
 
         # validate uploaded file
         file_type = self._check_file_type(file.name)
-        if file_type == '':
+        if not file_type:
             self._on_validation_error(
-                'Unrecognized file type! Please upload the zip of shapefile!',
+                'Unrecognized file type! '
+                'Please upload one of the supported format: '
+                '.json, .geojson, .zip, .gpkg, .kml',
                 tmp_file_obj_list
             )
 
@@ -141,6 +148,14 @@ class UploadLayerAPI(APIView):
             if validate_shp_file != '':
                 self._on_validation_error(
                     validate_shp_file, tmp_file_obj_list)
+
+        # validate has a layer
+        layers = list_layers(file, file_type)
+        if not layers:
+            self._on_validation_error(
+                'The uploaded file must have at least 1 layer!',
+                tmp_file_obj_list
+            )
 
         # open fiona collection
         collection = open_fiona_collection(file, file_type)
@@ -151,6 +166,14 @@ class UploadLayerAPI(APIView):
             collection.close()
             self._on_validation_error(
                 f'Incorrect CRS type: {crs}! Please use epsg:4326 (WGS84)!',
+                tmp_file_obj_list
+            )
+
+        # validate feature count > 0
+        if len(collection) == 0:
+            collection.close()
+            self._on_validation_error(
+                'The uploaded file does not have any feature!',
                 tmp_file_obj_list
             )
 
