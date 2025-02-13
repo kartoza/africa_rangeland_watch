@@ -244,8 +244,12 @@ export default function AnalysisResults() {
 
 
   const landscapeOptions = Array.from(
-    new Set(analysisData.map((analysis: any) => analysis.analysis_results.data?.landscape))
-  ).filter(Boolean); // Remove null/undefined values
+    new Set(
+      analysisData
+        .map((analysis: any) => analysis?.analysis_results?.data?.landscape)
+        .filter(Boolean) // Remove undefined/null values
+    )
+  );
 
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
   const paginatedData = filteredData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
