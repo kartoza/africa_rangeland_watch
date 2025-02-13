@@ -181,7 +181,7 @@ export default function AnalysisResults() {
       : true;
   
     const regionMatches = region
-      ? analysis?.analysis_results?.data?.landscape === region
+      ? analysis?.analysis_results?.data?.landscape.toLowerCase() === region.toLowerCase()
       : true;
   
     return titleMatches && typeMatches && dateMatches && regionMatches;
@@ -191,7 +191,6 @@ export default function AnalysisResults() {
   
 
   const handleViewClick = (analysis: any) => {
-    console.log('analysis to show ',analysis)
     setViewAnalysis(analysis)
     onOpen();
   };
