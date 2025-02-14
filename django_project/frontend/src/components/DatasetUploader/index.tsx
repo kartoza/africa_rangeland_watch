@@ -86,7 +86,7 @@ const DatasetUploader: React.FC = () => {
         <PopoverHeader>Add Data</PopoverHeader>
         <PopoverBody>
           {!file ? (
-            <Text color="black">Supported file format: zip</Text>
+            <Text color="black">Supported file format: .zip, .geojson, .gpkg, .kml</Text>
           ) : (
             <VStack align="start" spacing={3}>
               <Text color="black"><strong>File Name:</strong> {file.name}</Text>
@@ -110,18 +110,18 @@ const DatasetUploader: React.FC = () => {
           <Box mt={3}>
             {!file && status === 'idle' && (
                 <Button
-                as="label"
-                size="sm"
-                colorScheme="dark_green_800"
-                width="full"
+                  as="label"
+                  size="sm"
+                  colorScheme="dark_green_800"
+                  width="full"
                 >
-                Select File
-                <input
+                  Select File
+                  <input
                     type="file"
                     hidden
-                    accept=".zip"
+                    accept=".zip,.geojson,.gpkg,.kml"
                     onChange={handleFileChange}
-                />
+                  />
                 </Button>
             )}
             {file && (
