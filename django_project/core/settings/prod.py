@@ -26,6 +26,7 @@ EMAIL_USE_SSL = ast.literal_eval(os.environ.get('EMAIL_USE_SSL', 'False'))
 EMAIL_SUBJECT_PREFIX = os.environ.get('EMAIL_SUBJECT_PREFIX', '')
 
 SERVER_EMAIL = os.environ.get('ADMIN_EMAIL', 'noreply@kartoza.com')
+SUPPORT_EMAIL = os.environ.get('SUPPORT_EMAIL', 'support@kartoza.com')
 DEFAULT_FROM_EMAIL = os.environ.get(
     'DEFAULT_FROM_EMAIL', 'noreply@kartoza.com')
 

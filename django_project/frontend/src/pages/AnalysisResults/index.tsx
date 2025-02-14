@@ -181,7 +181,7 @@ export default function AnalysisResults() {
       : true;
   
     const regionMatches = region
-      ? analysis?.analysis_results?.data?.landscape === region
+      ? analysis?.analysis_results?.data?.landscape.toLowerCase() === region.toLowerCase()
       : true;
   
     return titleMatches && typeMatches && dateMatches && regionMatches;
@@ -191,7 +191,6 @@ export default function AnalysisResults() {
   
 
   const handleViewClick = (analysis: any) => {
-    console.log('analysis to show ',analysis)
     setViewAnalysis(analysis)
     onOpen();
   };
@@ -439,108 +438,120 @@ export default function AnalysisResults() {
               flexDirection="column"
               gap={4}
             >
-              {paginatedData?.map((analysis: any, index: number) => {
-                let analysisSummary = getAnalysisSummary(analysis)
+              {paginatedData?.length === 0 ? (
+                <Flex justify="center" align="center" height="200px">
+                  <Text fontSize="lg" fontWeight="bold" color="gray.500">
+                    No data available
+                  </Text>
+                </Flex>
+                ) : (
+                  paginatedData?.map((analysis: any, index: number) => {
+                    let analysisSummary = getAnalysisSummary(analysis)
 
-                return (
-                  <Card key={index} boxShadow="md" borderRadius="md">
-                    <CardBody>
-                      <Flex
-                        direction={{ base: "column", md: "row" }}
-                        align="stretch"
-                        gap={4}
-                        justify="space-between"
-                      >
-                        <Checkbox
-                          isChecked={selectedAnalysis.includes(analysis?.id)}
-                          onChange={(e) =>
-                            handleCheckboxChange(e.target.checked, analysis?.id)
-                          }
-                        />
-
-                        {/* Content */}
-                        <Box
-                            flex="1"
-                            display="flex"
-                            flexDirection="column"
-                            justifyContent="space-between"
-                            onClick={() => handleCheckboxChange(!selectedAnalysis.includes(analysis?.id), analysis?.id)}
-                            cursor="pointer"
+                    return (
+                      <Card key={index} boxShadow="md" borderRadius="md">
+                        <CardBody>
+                          <Flex
+                            direction={{ base: "column", md: "row" }}
+                            align="stretch"
+                            gap={4}
+                            justify="space-between"
                           >
+                            <Checkbox
+                              isChecked={selectedAnalysis.includes(analysis?.id)}
+                              onChange={(e) =>
+                                handleCheckboxChange(e.target.checked, analysis?.id)
+                              }
+                            />
 
-                          <Heading size="md" fontWeight="bold" color="black" mb={2}>
-                            {analysisSummary.title}
-                          </Heading>
+                            {/* Content */}
+                            <Box
+                                flex="1"
+                                display="flex"
+                                flexDirection="column"
+                                justifyContent="space-between"
+                                onClick={() => handleCheckboxChange(!selectedAnalysis.includes(analysis?.id), analysis?.id)}
+                                cursor="pointer"
+                              >
 
-                          { analysisSummary.latitude &&
-                              <Flex><FaLocationDot/><Text color={'black'} textStyle="xs">{analysisSummary.latitude}, {analysisSummary.longitude}</Text></Flex>
-                          }
+                              <Heading size="md" fontWeight="bold" color="black" mb={2}>
+                                {analysisSummary.title}
+                              </Heading>
 
-                          <Box mt={4} display="flex" flexWrap="wrap" gap={2}>
-                            <Tag colorScheme="green" mr={2}>
-                              <TagLabel>
-                                {format(new Date(analysis?.created_at), "MMMM dd, yyyy HH:mm:ss")}
-                              </TagLabel>
-                            </Tag>
-                            <Tag colorScheme="blue" mr={2}>
-                              <TagLabel>{analysisSummary.projectName}</TagLabel>
-                            </Tag>
-                            <Tag colorScheme="teal">
-                              <TagLabel>{analysisSummary.locationName}</TagLabel>
-                            </Tag>
-                          </Box>
-                        </Box>
+                              { analysisSummary.latitude &&
+                                  <Flex><FaLocationDot/><Text color={'black'} textStyle="xs">{analysisSummary.latitude}, {analysisSummary.longitude}</Text></Flex>
+                              }
 
-                        {/* View Button */}
-                        <Flex justify="flex-end" mt={{ base: 4, md: 8 }} >
-                          <Button
-                            colorScheme="green"
-                            variant="solid"
-                            backgroundColor="dark_green.800"
-                            _hover={{ backgroundColor: "light_green.400" }}
-                            color="white"
-                            width="auto"
-                            borderRadius="0px"
-                            h={10}
-                            onClick={() => handleViewClick(analysis)}
-                          >
-                            View
-                          </Button>
+                              <Box mt={4} display="flex" flexWrap="wrap" gap={2}>
+                                <Tag colorScheme="green" mr={2}>
+                                  <TagLabel>
+                                    {format(new Date(analysis?.created_at), "MMMM dd, yyyy HH:mm:ss")}
+                                  </TagLabel>
+                                </Tag>
+                                <Tag colorScheme="blue" mr={2}>
+                                  <TagLabel>{analysisSummary.projectName}</TagLabel>
+                                </Tag>
+                                <Tag colorScheme="teal">
+                                  <TagLabel>{analysisSummary.locationName}</TagLabel>
+                                </Tag>
+                              </Box>
+                            </Box>
 
-                          <Button
-                            colorScheme="red"
-                            variant="solid"
-                            backgroundColor="red.500"
-                            _hover={{ backgroundColor: "light_green.400" }}
-                            color="white"
-                            width="auto"
-                            borderRadius="0px"
-                            h={10}
-                            onClick={() => setIsConfirmDeleteOpen(true)}
-                          >
-                            Delete
-                          </Button>
+                            {/* View Button */}
+                            <Flex justify="flex-end" mt={{ base: 4, md: 8 }} >
+                              <Button
+                                colorScheme="green"
+                                variant="solid"
+                                backgroundColor="dark_green.800"
+                                _hover={{ backgroundColor: "light_green.400" }}
+                                color="white"
+                                width="auto"
+                                borderRadius="0px"
+                                h={10}
+                                onClick={() => handleViewClick(analysis)}
+                              >
+                                View
+                              </Button>
 
-                          <ConfirmDeleteDialog 
-                            isOpen={isConfrimDeleteOpen}
-                            onClose={onConfirmDeleteClose}
-                            onConfirm={() => handleDelete(analysis?.id)}
-                            title="Delete Dashboard"
-                            description="Are you sure you want to delete this analysis? This action will remove it from any dashboard it is associated with."
-                          />
+                              <Button
+                                colorScheme="red"
+                                variant="solid"
+                                backgroundColor="red.500"
+                                _hover={{ backgroundColor: "light_green.400" }}
+                                color="white"
+                                width="auto"
+                                borderRadius="0px"
+                                h={10}
+                                onClick={() => setIsConfirmDeleteOpen(true)}
+                              >
+                                Delete
+                              </Button>
 
-                        </Flex>
-                      </Flex>
-                    </CardBody>
-                  </Card>
-                );
-              })}
-               <Pagination currentPage={currentPage} totalPages={totalPages} handlePageChange={handlePageChange} />
+                              <ConfirmDeleteDialog 
+                                isOpen={isConfrimDeleteOpen}
+                                onClose={onConfirmDeleteClose}
+                                onConfirm={() => handleDelete(analysis?.id)}
+                                title="Delete Dashboard"
+                                description="Are you sure you want to delete this analysis? This action will remove it from any dashboard it is associated with."
+                              />
+
+                            </Flex>
+                          </Flex>
+                        </CardBody>
+                      </Card>
+                    );
+                  }
+                )
+              )
+            }
+            {paginatedData?.length === 4 && (
+              <Pagination currentPage={currentPage} totalPages={totalPages} handlePageChange={handlePageChange} />
+            )}
             </Box>
 
             <CreateDashboardModal
               onClose={() => setCreateDashboard(false)}
-              selectedAnalysis={selectedAnalysis} // Pass selected analysis data to the modal
+              selectedAnalysis={selectedAnalysis}
               onSave={handleSave}
               isOpen={isCreateDashboardOpen}
             />
