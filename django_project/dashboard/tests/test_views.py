@@ -257,7 +257,6 @@ class UpdateDashboardViewTests(TestCase):
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
 
-
 class DashboardFilterTests(TestCase):
     def setUp(self):
         self.client = APIClient()
@@ -324,3 +323,5 @@ class DashboardFilterTests(TestCase):
         response = self.client.get("/dashboards/", {"owner": "testuser"})
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 3)
+
+

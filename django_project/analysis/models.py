@@ -2,6 +2,7 @@ import json
 import uuid
 
 import ee
+from django.utils import timezone
 from django.contrib.auth.models import User
 from django.contrib.gis.db import models
 from django.contrib.gis.geos import GEOSGeometry
@@ -334,6 +335,12 @@ class GEEAsset(models.Model):
         choices=GEEAssetType.choices(),
         help_text='Asset type.'
     )
+    metadata = models.JSONField(
+        default=dict,
+        null=True,
+        blank=True,
+        help_text='Asset metadata.'
+    )
 
     def __str__(self):
         return self.key
@@ -346,6 +353,58 @@ class GEEAsset(models.Model):
             raise KeyError(f'Asset with key {asset_key} not found!')
         return asset.source
 
+    @classmethod
+    def fetch_asset_metadata(cls, asset_key: str) -> str:
+        """Fetch asset metadata by its key."""
+        asset = GEEAsset.objects.filter(key=asset_key).first()
+        if asset is None:
+            raise KeyError(f'Asset with key {asset_key} not found!')
+        return asset.metadata
+
+    @classmethod
+    def is_date_within_asset_period(cls, asset_key: str, date: str) -> bool:
+        """Check if the given date is within the asset's start and end date."""
+        asset = cls.objects.filter(key=asset_key).first()
+        if asset is None:
+            raise KeyError(f'Asset with key {asset_key} not found!')
+
+        metadata = asset.metadata
+        start_date = metadata.get('start_date')
+        end_date = metadata.get('end_date')
+
+        if not start_date or not end_date:
+            raise ValueError(
+                'Asset metadata must contain start_date and end_date.'
+            )
+
+        return start_date <= date < end_date
+
     class Meta:
         verbose_name_plural = 'GEE Assets'
         db_table = 'analysis_gee_asset'
+
+
+class AnalysisResultsCache(models.Model):
+    analysis_results = models.JSONField(
+        null=True,
+        blank=True
+    )
+    analysis_inputs = models.JSONField(
+        null=True,
+        blank=True
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    expired_at = models.DateTimeField(null=True, blank=True)
+
+    @classmethod
+    def save_cache_with_ttl(cls, ttl, **kwargs):
+        """Save AnalysisResultsCache with ttl."""
+        obj = AnalysisResultsCache.objects.create(**kwargs)
+        if ttl is None:
+            # default to 1 hour
+            ttl = 1
+        obj.expired_at = obj.created_at + timezone.timedelta(
+            hours=ttl
+        )
+        obj.save()
+        return obj

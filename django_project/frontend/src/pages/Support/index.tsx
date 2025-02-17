@@ -15,6 +15,7 @@ import {
   Textarea,
   useToast,
   Icon,
+  Collapse,
 } from "@chakra-ui/react";
 import { FaFilter, FaPlus, FaCloudUploadAlt, FaTrash } from "react-icons/fa";
 import Header from "../../components/Header";
@@ -26,6 +27,8 @@ import { AppDispatch, RootState } from "../../store";
 import { selectUserEmail } from "../../store/authSlice";
 import Pagination from "../../components/Pagination";
 import SearchInput from "../../components/SearchInput";
+import { ChevronUpIcon } from "@chakra-ui/icons";
+import { motion } from "framer-motion";
 
 
 export default function SupportPage() {
@@ -131,7 +134,22 @@ export default function SupportPage() {
     }
   };
 
- 
+  const [showFilters, setShowFilters] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState(""); // Status filter
+  const [selectedDate, setSelectedDate] = useState("");
+
+  useEffect(() => {
+    setFilteredTickets(
+      tickets.filter(ticket => {
+        const matchesStatus = selectedStatus ? ticket.status === selectedStatus : true;
+        const matchesDate = selectedDate 
+          ? new Date(ticket.created_at).toISOString().split("T")[0] === selectedDate 
+          : true;
+        return matchesStatus && matchesDate;
+      })
+    );
+  }, [tickets, selectedStatus, selectedDate])
+  
 
   return (
     <>
@@ -166,19 +184,22 @@ export default function SupportPage() {
                   <Flex direction={{ base: "column", md: "row" }} gap={4} align="center">
                     {/* Filter Button */}
                     <Button
-                      leftIcon={<FaFilter />}
-                      colorScheme="green"
-                      variant="solid"
-                      backgroundColor="dark_green.800"
-                      _hover={{ backgroundColor: "light_green.400" }}
-                      fontWeight={700}
-                      w={{base: "100%",md:"auto"}}
-                      h={10}
-                      color="white.a700"
-                      borderRadius="0px"
-                      isDisabled={creatingTicket}
-                    >
-                      Filter
+                        leftIcon={showFilters ? undefined : <FaFilter />}
+                        rightIcon={showFilters ? <ChevronUpIcon boxSize={6} /> : undefined}
+                        colorScheme="green"
+                        variant="solid"
+                        backgroundColor="dark_green.800"
+                        _hover={{ backgroundColor: "light_green.400" }}
+                        fontWeight={700}
+                        w={{ base: "100%", md: "auto" }}
+                        h={10}
+                        color="white"
+                        borderRadius="5px"
+                        onClick={() => setShowFilters(!showFilters)} 
+                        transition="all 0.3s ease-in-out"
+                        isDisabled={creatingTicket}
+                      >
+                        {!showFilters ? "Filter" : ""}
                     </Button>
 
                     {/* Search Input */}
@@ -192,6 +213,9 @@ export default function SupportPage() {
                     
                   </Flex>
                 </Box>
+
+                
+
 
                 {/* Create Ticket Button */}
                 <Box display="flex" gap={2} width={{ base: "100%", md: "auto" }} mb={{ base: 4, md: 0 }} flexDirection={{ base: "column", md: "row" }}>
@@ -213,8 +237,56 @@ export default function SupportPage() {
               </Flex>
             )}
 
+            {showFilters && !creatingTicket && (
+              <Collapse in={showFilters} animateOpacity>
+                  <Box 
+                    bg="gray.100" 
+                    w="50%" 
+                    p={4} 
+                    borderRadius="md" 
+                    boxShadow="sm"
+                  >
+                    {/* First Row: Status & Date */}
+                    <Flex gap={4} mb={4} wrap="wrap">
+                      {/* Status Dropdown */}
+                      <Select 
+                        placeholder="Filter by Status" 
+                        value={selectedStatus} 
+                        onChange={(e) => setSelectedStatus(e.target.value)}
+                        flex="1"
+                      >
+                        <option value="open">Open</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="resolved">Resolved</option>
+                      </Select>
+
+                      {/* Date Picker */}
+                      <Input 
+                        type="date" 
+                        value={selectedDate} 
+                        onChange={(e) => setSelectedDate(e.target.value)}
+                        flex="1"
+                      />
+                    </Flex>
+
+                    {/* Second Row: Clear Filters Button (Left-aligned) */}
+                    <Flex justifyContent="flex-start">
+                      <Button 
+                        onClick={() => { setSelectedStatus(""); setSelectedDate(""); }} 
+                        colorScheme="red"
+                        transition="all 0.3s ease-in-out"
+                        _hover={{ opacity: 0.8 }}
+                      >
+                        Clear Filters
+                      </Button>
+                    </Flex>
+                  </Box>
+              </Collapse>
+            )}
+
+
             {/* Content Section */}
-            <Divider mb={6} borderColor="black" borderWidth="1px" width="calc(100% - 10px)" />
+            <Divider mb={6} borderColor="black" borderWidth="1px" width="calc(100% - 10px)" mt={4}/>
 
             {loading && <Text>Loading...</Text>}
             {error && <Text>{error}</Text>}
@@ -228,55 +300,62 @@ export default function SupportPage() {
                 display="flex"
                 flexDirection="column"
                 gap={4}
+                bg="gray.50"
               >
-                {(searchTerm !== '' ? filteredTickets : currentTickets).map((ticket, index) => (
-                <Box key={index} boxShadow="md" borderRadius="md" p={4} border="1px" borderColor="gray.300">
-                    <Flex direction="column" gap={2} position="relative">
-                    {/* Badge (Status) */}
-                    <Tag
-                        style={{
-                        backgroundColor:
-                            ticket.status === "open"
-                            ? "#91e05e"
-                            : ticket.status === "in_progress"
-                            ? "yellow" 
-                            : ticket.status === "resolved"
-                            ? "#c4c4c4" 
-                            : "#c4c4c4",
-                        }}
-                        position="absolute"
-                        top="0"
-                        right="0"
-                        borderRadius="full"
-                    >
-                        <TagLabel>{ticket.status}</TagLabel> 
-                    </Tag>
-
-                    {/* Title */}
-                    <Heading size="md" fontWeight="bold" color="black">
-                        {ticket.title}
-                    </Heading>
-
-                    {/* Description */}
-                    <Text mt={2} color="black">
-                        {ticket.description}
+                {filteredTickets.length === 0 ? (
+                  <Flex justify="center" align="center" height="200px">
+                    <Text fontSize="lg" fontWeight="bold" color="gray.500">
+                      No data available
                     </Text>
+                  </Flex>
+                ) : (
+                  (searchTerm !== '' ? filteredTickets : currentTickets).map((ticket, index) => (
+                  <Box key={index} boxShadow="md" borderRadius="md" p={4} border="1px" borderColor="gray.300">
+                      <Flex direction="column" gap={2} position="relative">
+                      {/* Badge (Status) */}
+                      <Tag
+                          style={{
+                          backgroundColor:
+                              ticket.status === "open"
+                              ? "#91e05e"
+                              : ticket.status === "in_progress"
+                              ? "yellow" 
+                              : ticket.status === "resolved"
+                              ? "#c4c4c4" 
+                              : "#c4c4c4",
+                          }}
+                          position="absolute"
+                          top="0"
+                          right="0"
+                          borderRadius="full"
+                      >
+                          <TagLabel>{ticket.status}</TagLabel> 
+                      </Tag>
 
-                    {/* Created Timestamp */}
-                    <Text mt={2} color="gray.500" fontSize="sm">
-                        {new Date(ticket.created_at).toLocaleString()}
-                    </Text>
+                      {/* Title */}
+                      <Heading size="md" fontWeight="bold" color="black">
+                          {ticket.title}
+                      </Heading>
 
-                    </Flex>
-                </Box>
-                ))}
+                      {/* Description */}
+                      <Text mt={2} color="black">
+                          {ticket.description}
+                      </Text>
+
+                      {/* Created Timestamp */}
+                      <Text mt={2} color="gray.500" fontSize="sm">
+                          {new Date(ticket.created_at).toLocaleString()}
+                      </Text>
+
+                      </Flex>
+                  </Box>
+                  )))}
                 {tickets.length > 5 && (
-                  <Flex justifyContent="center" mb={5}>
                       <Pagination
                           currentPage={currentPage}
                           totalPages={totalPages}
-                          handlePageChange={handlePageChange} />
-                  </Flex>
+                          handlePageChange={handlePageChange}
+                      />
                 )}
               </Box>
             )}
@@ -293,18 +372,23 @@ export default function SupportPage() {
                         What issues are you experiencing?
                     </Text>
                     <Select
-                        value={issueType}
-                        onChange={(e) => setIssueType(e.target.value)}
-                        placeholder="Select issue type"
-                        isRequired
-                        width={{base:"100%" ,md:"45%"}}
+                      value={issueType}
+                      onChange={(e) => setIssueType(e.target.value)}
+                      placeholder="Select issue type"
+                      isRequired
+                      width={{ base: "100%", md: "45%" }}
+                      border="2px solid"  
+                      borderColor="gray.500"  
+                      borderRadius="md" 
+                      _focus={{ borderColor: "green.500", boxShadow: "0 0 0 2px rgba(72,187,120,0.5)" }} 
                     >
-                        {issueTypes.map((issue) => (
+                      {issueTypes.map((issue) => (
                         <option key={issue.id} value={issue.id}>
-                            {issue.name}
+                          {issue.name}
                         </option>
-                        ))}
+                      ))}
                     </Select>
+
                 </Box>
 
                   {/* Issue Title */}
@@ -316,6 +400,7 @@ export default function SupportPage() {
                       placeholder="Describe your issue"
                       isRequired
                       width={{base:"100%" ,md:"45%"}}
+                      _focus={{ borderColor: "green.500", boxShadow: "0 0 0 2px rgba(72,187,120,0.5)" }}
                     />
                   </Box>
 
@@ -340,6 +425,7 @@ export default function SupportPage() {
                         onChange={(e) => setScreenshot(e.target.files[0])}
                         accept="image/*"
                         display="none"
+                        _focus={{ borderColor: "green.500", boxShadow: "0 0 0 2px rgba(72,187,120,0.5)" }}
                       />
                     </Box>
                     {screenshot && (
@@ -367,6 +453,7 @@ export default function SupportPage() {
                       placeholder="Provide more details"
                       isRequired
                       height="150px"
+                      _focus={{ borderColor: "green.500", boxShadow: "0 0 0 2px rgba(72,187,120,0.5)" }}
                     />
                   </Box>
 

@@ -194,7 +194,6 @@ def import_layer(layer_id, upload_id, file_url):
         )
 
         if filename:
-            input_layer.name = filename
             input_layer.layer_type = detect_file_type_by_extension(filename)
             input_layer.save()
             # reset the status of layer_upload
@@ -234,7 +233,6 @@ def import_layer(layer_id, upload_id, file_url):
             if not is_success:
                 logger.warning(
                     f'PMTile upload for layer {layer_id} failed!')
-                layer.is_ready = False
                 layer.pmtile.delete(save=True)
 
                 # fallback to use vector tile

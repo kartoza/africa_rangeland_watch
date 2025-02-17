@@ -197,7 +197,9 @@ class LayerAPITest(BaseAPIViewTest):
         response = view(request)
         self._check_error(
             response,
-            'Unrecognized file type! Please upload the zip of shapefile!',
+            'Unrecognized file type! '
+            'Please upload one of the supported format: '
+            '.json, .geojson, .zip, .gpkg, .kml',
             400
         )
 
@@ -226,3 +228,55 @@ class LayerAPITest(BaseAPIViewTest):
             'Incorrect CRS type: epsg:3857! Please use epsg:4326 (WGS84)!',
             400
         )
+    
+    @mock.patch('frontend.api_views.layers.list_layers', return_value=[])
+    def test_upload_layer_no_layers(self, mock_list_layers):
+        """Test upload layer with no layers in the file."""
+        view = UploadLayerAPI.as_view()
+        file_path = absolute_path(
+            'frontend', 'tests', 'data', 'polygons.zip'
+        )
+        request = self._get_request(file_path)
+        response = view(request)
+        self._check_error(
+            response,
+            'The uploaded file must have at least 1 layer!',
+            400
+        )
+        mock_list_layers.assert_called_once()
+
+    def test_upload_layer_no_features(self):
+        """Test upload layer with no features in the file."""
+        view = UploadLayerAPI.as_view()
+        file_path = absolute_path(
+            'frontend', 'tests', 'data', 'empty_test.gpkg'
+        )
+        request = self._get_request(file_path)
+        response = view(request)
+        self._check_error(
+            response,
+            'The uploaded file does not have any feature!',
+            400
+        )
+
+    @mock.patch('layers.tasks.import_layer.import_layer.delay')
+    def test_upload_layer_gpkg(self, mock_import_layer):
+        """Test upload layer using gpkg."""
+        view = UploadLayerAPI.as_view()
+        file_path = absolute_path(
+            'frontend', 'tests', 'data', 'data_test.gpkg'
+        )
+        request = self._get_request(file_path)
+        response = view(request)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('id', response.data)
+        self.assertIn('layer_id', response.data)
+        self.assertIn('upload_id', response.data)
+        input_layer = InputLayer.objects.filter(
+            uuid=response.data['id']
+        ).first()
+        self.assertTrue(input_layer)
+        self.assertEqual(input_layer.layer_type, InputLayerType.VECTOR)
+        self.assertEqual(input_layer.group.name, 'user-defined')
+        self.assertEqual(input_layer.name, 'data_test.gpkg')
+        mock_import_layer.assert_called_once()

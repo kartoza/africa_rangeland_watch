@@ -106,16 +106,19 @@ def join_organisation(request):
 
     manager_email = manager_user.email
     link = (
-        f"{settings.DJANGO_BACKEND_URL}/admin/base/organisationinvitation/"
+        f"{settings.DJANGO_BACKEND_URL}"
+        "/admin/base/organisationinvitationdetail/"
     )
-    logo_url = f"{settings.DJANGO_BACKEND_URL}/static/images/main_logo.svg"
+    logo_url = f"{settings.DJANGO_BACKEND_URL}//static/images/arw_logo.png"
+    support_email = settings.SUPPORT_EMAIL
     email_body = render_to_string(
         "join_organization_request.html",
         {
             "user": request.user,
             "organisation": selected_org.name,
             "link": link,
-            "logo_url": logo_url
+            "logo_url": logo_url,
+            "support_email": support_email
         },
     )
 
@@ -203,6 +206,8 @@ def add_organisation(request):
                     "email": data.get("organisationEmail", ""),
                     "industry": data.get("industry", ""),
                 },
+                "support_email": settings.SUPPORT_EMAIL,
+                "site_link": settings.DJANGO_BACKEND_URL
             },
         )
 

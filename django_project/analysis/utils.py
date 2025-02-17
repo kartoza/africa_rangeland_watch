@@ -56,3 +56,12 @@ def delete_gdrive_file(filename: str):
         print(ex)
         print(f'Failed to delete file {filename} from gdrive!')
     return False
+
+
+def sort_nested_structure(d):
+    """Sort nested dictionary."""
+    if isinstance(d, dict):
+        return {k: sort_nested_structure(v) for k, v in sorted(d.items())}
+    elif isinstance(d, list):
+        return [sort_nested_structure(item) for item in d]
+    return d

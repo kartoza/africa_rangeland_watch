@@ -62,10 +62,9 @@ const DashboardPage: React.FC = () => {
   const [endIdx, setEndIdx] = useState(1);
   const [filters, setFilters] = useState(null);
   const { dashboardUpdated } = useSelector((state: RootState) => state.dashboard);
-  const toast = useToast();
-
-  const [panelPositions, setPanelPositions] = useState({});
   const [landscapes, setLandscapes] = useState<string[]>([]);
+  const toast = useToast();
+  const [panelPositions, setPanelPositions] = useState({});
   
 
   const toggleMenu = () => {
@@ -554,12 +553,6 @@ const moveCard = (panelKey: number, direction: string) => {
                 </PanelGroup>
               );
             }
-            
-            
-            
-
-            
-            
             
             return null;
           })}

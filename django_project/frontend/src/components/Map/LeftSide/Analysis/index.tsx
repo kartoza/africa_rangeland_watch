@@ -19,6 +19,8 @@ import AnalysisLandscapeGeometrySelector
 import { AppDispatch, RootState } from "../../../../store";
 import { doAnalysis, REFERENCE_LAYER_DIFF_ID, resetAnalysisResult } from "../../../../store/analysisSlice";
 import { AnalysisCustomGeometrySelector } from "./AnalysisCustomGeometrySelector";
+import AnalysisUserDefinedLayerSelector from "./AnalysisUserDefinedLayerSelector";
+import AnalysisSpatialYearFilter from "./AnalysisSpatialYearFilter";
 import { LayerCheckboxProps } from '../Layers';
 import { useSession } from '../../../../sessionProvider';
 import { saveAnalysis } from '../../../../store/userAnalysisSlice';
@@ -138,7 +140,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
       ...data,
       comparisonPeriod: {
         year: data.comparisonPeriod?.year,
-        quarter: data.temporalResolution == 'Quarterly' ? data.comparisonPeriod?.quarter : []
+        quarter: data.temporalResolution == 'Quarterly' ? data.comparisonPeriod?.quarter : data.analysisType == 'Temporal' ? [] : null
       },
     }
     dispatch(doAnalysis(newData))
@@ -209,7 +211,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
     dataError = false
   }
   let disableSubmit = !!dataError;
-  if (!data.community) {
+  if (!data.community && !data.custom_geom) {
     disableSubmit = true
   }
   if (loading) {
@@ -228,11 +230,12 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
             ...data,
             landscape: value
           })}
+          hasUserDefinedLayer={layers.some(layer => layer.group === 'user-defined')}
         />
         <AnalysisLandscapeGeometrySelector
           landscape={landscapes.find(landscape => landscape.name === data.landscape)}
           featureId={data.communityFeatureId}
-          enableSelection={mapInteraction === MapAnalysisInteraction.LANDSCAPE_SELECTOR}
+          enableSelection={mapInteraction === MapAnalysisInteraction.LANDSCAPE_SELECTOR && data.landscape !== 'user-defined'}
           onSelected={(value) => {
             setData({
               ...data,
@@ -240,7 +243,10 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
               latitude: value?.latitude ? value?.latitude : null,
               longitude: value?.longitude ? value?.longitude : null,
               communityName: value?.name ? value?.name : null,
-              communityFeatureId: value?.featureId ? value?.featureId : null
+              communityFeatureId: value?.featureId ? value?.featureId : null,
+              custom_geom: null,
+              userDefinedFeatureId: null,
+              userDefinedFeatureName: null
             })
           }
           }
@@ -263,6 +269,25 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
             }
           }}
         />
+        { data.landscape === 'user-defined' &&
+          <AnalysisUserDefinedLayerSelector layers={layers}
+            enableSelection={mapInteraction === MapAnalysisInteraction.LANDSCAPE_SELECTOR && data.landscape === 'user-defined'}
+            onSelected={(geometry, latitude, longitude, userDefinedFeatureName, userDefinedFeatureId) => {
+              setData({
+                ...data,
+                community: null,
+                latitude: latitude,
+                longitude: longitude,
+                communityName: null,
+                communityFeatureId: null,
+                custom_geom: geometry,
+                userDefinedFeatureId: userDefinedFeatureId,
+                userDefinedFeatureName: userDefinedFeatureName
+              })
+            }}
+            featureId={data.userDefinedFeatureId}
+          />
+        }
 
         {/* 2) Analysis type */}
         {
@@ -297,6 +322,32 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
             })}
           />
         }
+        {/* 4) Select year range filter for spatial*/}
+        {
+          data.analysisType === Types.SPATIAL && data.variable &&
+          <AnalysisSpatialYearFilter
+            initialStartYear={data.spatialStartYear}
+            initialEndYear={data.spatialEndYear}
+            onYearChange={(startYear, endYear) => {
+              // set spatial year filter and reset results
+              setData({
+                ...data,
+                community: null,
+                latitude: null,
+                longitude: null,
+                communityName: null,
+                communityFeatureId: null,
+                custom_geom: null,
+                userDefinedFeatureId: null,
+                userDefinedFeatureName: null,
+                spatialStartYear: startYear,
+                spatialEndYear: endYear
+              })
+              dispatch(resetAnalysisResult())
+              setMapInteraction(MapAnalysisInteraction.NO_INTERACTION)
+            }}
+          />
+        }
         {/* Draw buttons for spatial */}
         {
           data.analysisType === Types.SPATIAL && data.variable &&
@@ -323,7 +374,10 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
                     latitude: null,
                     longitude: null,
                     communityName: null,
-                    communityFeatureId: null
+                    communityFeatureId: null,
+                    custom_geom: null,
+                    userDefinedFeatureId: null,
+                    userDefinedFeatureName: null
                   })
                   setMapInteraction(MapAnalysisInteraction.CUSTOM_GEOMETRY_DRAWING)
                   dispatch(resetAnalysisResult())
@@ -451,7 +505,9 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
             <Box mb={4} color={'green'}>
               Click polygons on the
               map {data?.communityName ?
-              <Box>{data?.communityName}</Box> : null}
+              <Box>{data?.communityName}</Box> :
+              data?.userDefinedFeatureName ? 
+              <Box>{data?.userDefinedFeatureName}</Box> : null}
             </Box> :
             null
         }

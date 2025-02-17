@@ -63,6 +63,15 @@ class Preferences(SingletonModel):
         )
     )
 
+    result_cache_ttl = models.FloatField(
+        null=True,
+        blank=True,
+        help_text=(
+            "The number of hours before the result cache expires."
+        ),
+        default=1
+    )
+
 
 class UserSession(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)

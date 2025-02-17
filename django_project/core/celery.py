@@ -38,4 +38,9 @@ app.conf.beat_schedule = {
         # Run everyday at 00:00 UTC
         'schedule': crontab(minute='00', hour='00'),
     },
+    'clear-analysis-results-cache': {
+        'task': 'clear_analysis_results_cache',
+        # Run every hour
+        'schedule': crontab(minute='00', hour='*'),
+    },
 }

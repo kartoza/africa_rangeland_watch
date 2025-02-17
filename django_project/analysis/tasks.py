@@ -8,7 +8,8 @@ from core.celery import app
 import uuid
 import ee
 
-from analysis.models import UserAnalysisResults
+from django.utils import timezone
+from analysis.models import UserAnalysisResults, AnalysisResultsCache
 from analysis.analysis import (
     export_image_to_drive,
     initialize_engine_analysis, InputLayer,
@@ -94,3 +95,11 @@ def store_analysis_raster_output(analysis_result_id: int):
     print(f'filename: {filename}.tif')
     analysis_result.raster_output_path = f'{filename}.tif'
     analysis_result.save()
+
+
+@app.task(name='clear_analysis_results_cache', ignore_result=True)
+def clear_analysis_results_cache():
+    """Trigger task to generate layers using GEE."""
+    AnalysisResultsCache.objects.filter(
+        expired_at__lt=timezone.now()
+    ).delete()

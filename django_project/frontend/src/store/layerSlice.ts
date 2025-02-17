@@ -15,6 +15,7 @@ export interface Layer {
     unit?: string;
     colors: string[];
     opacity: number;
+    attributeId?: string;
   };
   style?: object;
   data_provider?: string;

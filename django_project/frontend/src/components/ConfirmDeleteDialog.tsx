@@ -28,7 +28,7 @@ const ConfirmDeleteDialog: React.FC<ConfirmDeleteDialogProps> = ({
 
   return (
     <AlertDialog isOpen={isOpen} leastDestructiveRef={cancelRef} onClose={onClose}>
-      <AlertDialogOverlay bg="rgba(0, 0, 0, 0.4)">
+      <AlertDialogOverlay bg="rgba(36, 30, 30, 0.3)">
         <AlertDialogContent bg="white">
           <AlertDialogHeader fontSize="lg" fontWeight="bold">
             {title}

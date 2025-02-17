@@ -5,6 +5,8 @@ Africa Rangeland Watch (ARW).
 .. note:: Analysis APIs
 """
 import uuid
+from collections import OrderedDict
+from datetime import date
 from copy import deepcopy
 from concurrent.futures import ThreadPoolExecutor
 from rest_framework import status
@@ -12,11 +14,15 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from core.models import Preferences
 from analysis.analysis import (
     initialize_engine_analysis,
     run_analysis,
     get_rel_diff,
-    InputLayer
+    InputLayer,
+    AnalysisResultsCacheUtils,
+    spatial_get_date_filter,
+    validate_spatial_date_range_filter
 )
 
 
@@ -102,6 +108,93 @@ class AnalysisAPI(APIView):
                             new_records[key] = new_record
             return new_records.values()
 
+        def add_statistics(features):
+            new_features = [
+                a['properties'] for a in filter(
+                    lambda x: x['properties']['year'] in years,
+                    features
+                )
+            ]
+
+            # Process data
+            aggregated = {}
+
+            for row in new_features:
+                name, year = row["Name"], int(row["year"])
+
+                # Convert numeric values
+                bare_ground = row["Bare ground"]
+                evi = row["EVI"]
+                ndvi = row["NDVI"]
+
+                key = (name, year)
+                if key not in aggregated:
+                    aggregated[key] = {
+                        "Bare ground": [],
+                        "EVI": [],
+                        "NDVI": []
+                    }
+
+                aggregated[key]["Bare ground"].append(bare_ground)
+                aggregated[key]["EVI"].append(evi)
+                aggregated[key]["NDVI"].append(ndvi)
+
+            # Compute min, max, and mean
+            results = {}
+            unprocessed_years = years
+            names = set()
+
+            for location_year, values in aggregated.items():
+                location, year = location_year
+                if year in unprocessed_years:
+                    unprocessed_years.remove(year)
+                names.add(location)
+                if year not in results:
+                    results[year] = {}
+                if location not in results[year]:
+                    results[year][location] = {}
+
+                for category, numbers in values.items():
+                    min_val = min(numbers)
+                    max_val = max(numbers)
+                    mean_val = sum(numbers) / len(numbers)
+                    results[year][location][category] = {
+                        'min': min_val,
+                        'max': max_val,
+                        'mean': mean_val
+                    }
+
+            empty_data = {
+                'Bare ground': {
+                    'min': None, 'max': None, 'mean': None
+                },
+                'EVI': {
+                    'min': None, 'max': None, 'mean': None
+                },
+                'NDVI': {
+                    'min': None, 'max': None, 'mean': None
+                },
+            }
+            for year in unprocessed_years:
+                for name in names:
+                    if results.get(year, None):
+                        results[year].update({
+                            name: empty_data
+                        })
+                    else:
+                        results[year] = {
+                            name: empty_data
+                        }
+
+            results = {
+                year: {
+                    name: OrderedDict(
+                        sorted(value.items())
+                    ) for name, value in sorted(group.items())
+                } for year, group in sorted(results.items())
+            }
+            return results
+
         output_results = []
         output_results.append(input_results[0][0])
         output_results.append(input_results[0][1])
@@ -124,6 +217,9 @@ class AnalysisAPI(APIView):
         output_results[1]['features'] = sorted(
             output_results[1]['features'],
             key=lambda x: x['properties']['date']
+        )
+        output_results[0]['statistics'] = add_statistics(
+            output_results[1]['features']
         )
 
         return output_results
@@ -203,15 +299,51 @@ class AnalysisAPI(APIView):
             },
             'Spatial': {
                 'Annual': '',
-                'Quarterly': ''
+                'Quarterly': '',
+                'start_year': data.get('spatialStartYear', None),
+                'end_year': data.get('spatialEndYear', None)
             }
         }
+        analysis_cache = AnalysisResultsCacheUtils({
+            'lat': data['latitude'],
+            'lon': data['longitude'],
+            'analysis_dict': analysis_dict,
+            'args': [analysis_dict],
+            'kwargs': {
+                'reference_layer': data['reference_layer'],
+                'custom_geom': data.get('custom_geom', None)
+            }
+        })
+        output = analysis_cache.get_analysis_cache()
+        if output:
+            return output
+
+        filter_start_date, filter_end_date = spatial_get_date_filter(
+            analysis_dict
+        )
+
+        valid_filters, start_meta, end_meta = (
+            validate_spatial_date_range_filter(
+                data['variable'], filter_start_date, filter_end_date
+            )
+        )
+        if not valid_filters:
+            # validate the filter is within asset date ranges
+            raise ValueError(
+                f'{data['variable']} year range filter must be between '
+                f'{date.fromisoformat(start_meta).year} to '
+                f'{date.fromisoformat(end_meta).year}'
+            )
+
         initialize_engine_analysis()
         if data['longitude'] is None and data['latitude'] is None:
             # return the relative different layer
             input_layers = InputLayer()
             rel_diff = get_rel_diff(
-                input_layers.get_spatial_layer_dict(),
+                input_layers.get_spatial_layer_dict(
+                    filter_start_date,
+                    filter_end_date
+                ),
                 analysis_dict,
                 data['reference_layer']
             )
@@ -221,7 +353,7 @@ class AnalysisAPI(APIView):
                 'colors': ['#f9837b', '#fffcb9', '#fffcb9', '#32c2c8'],
                 'opacity': 0.7
             }
-            return {
+            results = {
                 'id': 'spatial_analysis_rel_diff',
                 'uuid': str(uuid.uuid4()),
                 'name': '% difference in ' + data['variable'],
@@ -236,14 +368,31 @@ class AnalysisAPI(APIView):
                 })['tile_fetcher'].url_format,
                 'style': None
             }
+            preferences = Preferences.load()
+            return analysis_cache.create_analysis_cache(
+                results,
+                preferences.result_cache_ttl
+            )
 
-        return run_analysis(
+        results = run_analysis(
             lon=float(data['longitude']),
             lat=float(data['latitude']),
             analysis_dict=analysis_dict,
             reference_layer=data['reference_layer'],
             custom_geom=data.get('custom_geom', None)
         )
+
+        if data.get('custom_geom', None):
+            # add Name to the results
+            name = data.get('userDefinedFeatureName', 'User Defined Geometry')
+            for feature in results.get('features', []):
+                if 'properties' not in feature:
+                    continue
+                if 'Name' in feature['properties']:
+                    continue
+                feature['properties']['Name'] = name
+
+        return results
 
     def post(self, request, *args, **kwargs):
         """Fetch list of Landscape."""
