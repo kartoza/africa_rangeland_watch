@@ -177,16 +177,24 @@ class AnalysisAPITest(BaseAPIViewTest):
             "analysisType": "Spatial",
             "communityName": None,
             "reference_layer": {
-                "type": "MultiPolygon", 
-                "coordinates": [
-                    [
-                        [
-                            [33.130976011125426,-22.754645737587296], 
-                            [33.13474680471998,-22.75802902557068],
-                            [33.12944731101908,-22.757465150059744], 
-                            [33.130976011125426,-22.754645737587296]
-                        ]
-                    ]
+                "type": "FeatureCollection",
+                "features": [
+                    {
+                        "type": "feature",
+                        "geometry": {
+                            "type": "MultiPolygon", 
+                            "coordinates": [
+                                [
+                                    [
+                                        [33.130976011125426,-22.754645737587296], 
+                                        [33.13474680471998,-22.75802902557068],
+                                        [33.12944731101908,-22.757465150059744], 
+                                        [33.130976011125426,-22.754645737587296]
+                                    ]
+                                ]
+                            ]
+                        }
+                    }
                 ]
             },
             "comparisonPeriod": {
@@ -233,3 +241,54 @@ class AnalysisAPITest(BaseAPIViewTest):
 
         # Check cache
         self.assertTrue(AnalysisResultsCache.objects.exists())
+
+    @patch('frontend.api_views.analysis.get_reference_layer_geom')
+    def test_get_reference_layer_geom_none(self, mock_get_reference_layer_geom):
+        """Test get_reference_layer_geom method when geom is None."""
+        mock_get_reference_layer_geom.return_value = None
+
+        view = AnalysisAPI.as_view()
+
+        payload = {
+            "period": {
+                "year": 2015,
+                "quarter": 1
+            },
+            "latitude": None,
+            "longitude": None,
+            "variable": "EVI",
+            "community": None,
+            "landscape": "Bahine NP",
+            "analysisType": "Spatial",
+            "communityName": None,
+            "reference_layer": {
+                "type": "MultiPolygon",
+                "coordinates": [
+                    [
+                        [
+                            [33.130976011125426, -22.754645737587296],
+                            [33.13474680471998, -22.75802902557068],
+                            [33.12944731101908, -22.757465150059744],
+                            [33.130976011125426, -22.754645737587296]
+                        ]
+                    ]
+                ]
+            },
+            "comparisonPeriod": {
+                "year": [],
+                "quarter": []
+            },
+            "communityFeatureId": None,
+            "temporalResolution": "Annual"
+        }
+
+        request = self.factory.post(
+            reverse('frontend-api:analysis'),
+            payload,
+            format='json'
+        )
+        request.user = self.superuser
+        response = view(request)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('Invalid reference_layer with id', response.data['error'])

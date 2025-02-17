@@ -35,6 +35,21 @@ def _temporal_analysis(lat, lon, analysis_dict, custom_geom):
     )
 
 
+def get_reference_layer_geom(data):
+    """Retrieve selected reference layer and return its geom."""
+    layers = data['reference_layer']
+    features = layers.get('features', [])
+    feature_id = data.get('reference_layer_id', None)
+    if not feature_id and len(features) > 0:
+        return features[0]['geometry']
+
+    for feature in features:
+        if feature['properties']['id'] == feature_id:
+            return feature['geometry']
+
+    return None
+
+
 class AnalysisAPI(APIView):
     """API to do analysis."""
 
@@ -282,6 +297,13 @@ class AnalysisAPI(APIView):
 
     def run_spatial_analysis(self, data):
         """Run the spatial analysis."""
+        reference_layer_geom = get_reference_layer_geom(data)
+        if reference_layer_geom is None:
+            raise ValueError(
+                'Invalid reference_layer with id '
+                f'{data.get('reference_layer_id')}!'
+            )
+
         analysis_dict = {
             'landscape': '',
             'analysisType': 'Spatial',
@@ -310,7 +332,7 @@ class AnalysisAPI(APIView):
             'analysis_dict': analysis_dict,
             'args': [analysis_dict],
             'kwargs': {
-                'reference_layer': data['reference_layer'],
+                'reference_layer': reference_layer_geom,
                 'custom_geom': data.get('custom_geom', None)
             }
         })
@@ -345,7 +367,7 @@ class AnalysisAPI(APIView):
                     filter_end_date
                 ),
                 analysis_dict,
-                data['reference_layer']
+                reference_layer_geom
             )
             metadata = {
                 'minValue': -25,
@@ -378,7 +400,7 @@ class AnalysisAPI(APIView):
             lon=float(data['longitude']),
             lat=float(data['latitude']),
             analysis_dict=analysis_dict,
-            reference_layer=data['reference_layer'],
+            reference_layer=reference_layer_geom,
             custom_geom=data.get('custom_geom', None)
         )
 
