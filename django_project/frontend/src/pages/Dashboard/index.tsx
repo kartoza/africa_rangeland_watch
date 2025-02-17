@@ -77,41 +77,7 @@ const DashboardPage: React.FC = () => {
 
 
 
-  useEffect(() => {
-    if (!loading && Array.isArray(dashboardData)) {
-      const updatedChartsConfig = dashboardData.map((dashboard) => ({
-        config: dashboard.config,
-        analysisResults: dashboard.analysis_results,
-        title: dashboard.title,
-        uuid: dashboard.uuid,
-        owner: dashboard.owner,
-        privacy_type: dashboard.privacy_type
-      }));
-
-      // Set the state to pass down to the chart cards
-      setChartsConfig(updatedChartsConfig);
-
-      if (dashboardData && Array.isArray(dashboardData)) {
-        const extractedLandscapes = dashboardData.flatMap((data) => {
-          if (data.analysis_results) {
-            return data.analysis_results.flatMap((result: any) => {
-              if (result.analysis_results) {
-                return [result.analysis_results.data.landscape];
-              }
-              return [];
-            });
-          }
-          return [];
-        });
-      
-        // Remove duplicates
-        const uniqueLandscapes = Array.from(new Set(extractedLandscapes));
-        setLandscapes(uniqueLandscapes);
-      }
-      
-      
-    }
-  }, [loading, dashboardData]);
+  
 
   useEffect(() => {
     dispatch(fetchDashboards(filters));
@@ -323,6 +289,54 @@ const moveCard = (panelKey: number, direction: string) => {
 
  
 
+useEffect(() => {
+  if (!loading && Array.isArray(dashboardData)) {
+
+   
+
+    const updatedChartsConfig = dashboardData.map((dashboard, index) => {
+
+      const matchingCard = cards.find((card) => card.id === index + 1) || {
+        id: index + 1,
+        position: { row: Math.floor(index / 3), col: index % 3 },
+      };
+
+      return {
+        config: dashboard.config,
+        analysisResults: dashboard.analysis_results,
+        title: dashboard.title,
+        uuid: dashboard.uuid,
+        owner: dashboard.owner,
+        privacy_type: dashboard.privacy_type,
+        card: matchingCard
+      }
+    });
+
+    // Set the state to pass down to the chart cards
+    setChartsConfig(updatedChartsConfig);
+
+    if (dashboardData && Array.isArray(dashboardData)) {
+      const extractedLandscapes = dashboardData.flatMap((data) => {
+        if (data.analysis_results) {
+          return data.analysis_results.flatMap((result: any) => {
+            if (result.analysis_results) {
+              return [result.analysis_results.data.landscape];
+            }
+            return [];
+          });
+        }
+        return [];
+      });
+    
+      // Remove duplicates
+      const uniqueLandscapes = Array.from(new Set(extractedLandscapes));
+      setLandscapes(uniqueLandscapes);
+    }
+    
+    
+  }
+}, [loading, dashboardData, cards]);
+
   const renderPanels = () => {
     try {
       const paginatedData = filteredData.slice(startIdx, endIdx);
@@ -334,29 +348,30 @@ const moveCard = (panelKey: number, direction: string) => {
 
             if (layoutMode === "horizontal") {
               render = 0;
-              const remainder = rowPanels.length % 3;
+              const remainder = chartsConfig.length % 3;
               const extraPanels = remainder === 0 ? 0 : 3 - remainder;
             
-              // Create an array with original panels + dummy panels
-              const balancedPanels = [...rowPanels, ...Array(extraPanels).fill(null)];
+              // Create an array with original charts + dummy panels to maintain grid layout
+              const balancedPanels = [...chartsConfig, ...Array(extraPanels).fill(null)];
             
-              console.log("Current Card Positions:", cards);
-
-              const sortedCards = [...cards].sort((a, b) => 
-                a.position.row === b.position.row 
-                  ? a.position.col - b.position.col 
-                  : a.position.row - b.position.row
+              console.log("Current Card Positions:", chartsConfig);
+            
+              // Sort charts based on card positions
+              const sortedCharts = [...balancedPanels].filter(Boolean).sort((a, b) => 
+                a.card.position.row === b.card.position.row
+                  ? a.card.position.col - b.card.position.col
+                  : a.card.position.row - b.card.position.row
               );
-          
+            
               return (
                 <VStack spacing={6} align="stretch">
                   {Array.from({ length: rows }).map((_, rowIndex) => {
-                    const rowPanels = sortedCards.slice(rowIndex * 3, rowIndex * 3 + 3);
-          
+                    const rowPanels = sortedCharts.slice(rowIndex * 3, rowIndex * 3 + 3);
+            
                     return (
                       <PanelGroup key={rowIndex} direction="horizontal" style={{ display: "flex", gap: "6px" }}>
-                        {rowPanels.map((card, index) => (
-                          <Box key={`panel-${card.id}`} width="33.33%" minHeight="200px" position="relative">
+                        {rowPanels.map((chart, index) => (
+                          <Box key={`panel-${chart.card.id}`} width="33.33%" minHeight="200px" position="relative">
                             <Flex
                               bg="gray.200"
                               border="1px solid"
@@ -369,16 +384,16 @@ const moveCard = (panelKey: number, direction: string) => {
                               direction="column"
                             >
                               <div style={{ width: "100%", height: "100%" }}>
-                                {/* <ChartCard config={card} /> */}
-                                {card.id}
+                                <ChartCard config={chart} />
+                                {chart.card.id}
                               </div>
-          
+            
                               {/* Arrows for moving the card */}
                               <Flex justify="center" gap="2" mt="2">
-                                <Button size="xs" onClick={() => moveCard(card.id, "left")}>⬅️</Button>
-                                <Button size="xs" onClick={() => moveCard(card.id, "right")}>➡️</Button>
-                                <Button size="xs" onClick={() => moveCard(card.id, "up")}>⬆️</Button>
-                                <Button size="xs" onClick={() => moveCard(card.id, "down")}>⬇️</Button>
+                                <Button size="xs" onClick={() => moveCard(chart.card.id, "left")}>⬅️</Button>
+                                <Button size="xs" onClick={() => moveCard(chart.card.id, "right")}>➡️</Button>
+                                <Button size="xs" onClick={() => moveCard(chart.card.id, "up")}>⬆️</Button>
+                                <Button size="xs" onClick={() => moveCard(chart.card.id, "down")}>⬇️</Button>
                               </Flex>
                             </Flex>
                           </Box>
@@ -389,6 +404,7 @@ const moveCard = (panelKey: number, direction: string) => {
                 </VStack>
               );
             }
+            
             
 
             if (layoutMode === "vertical") {
