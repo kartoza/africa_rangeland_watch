@@ -281,22 +281,22 @@ class PMTileLayerAPI(APIView):
             id=kwargs.get('upload_id')
         )
 
-        shapefile_path = None
+        file_path = None
         for file in instance.files:
-            if file.endswith('.zip'):
-                shapefile_path = instance.filepath(file)
+            if FileType.guess_type(file):
+                file_path = instance.filepath(file)
                 break
 
-        if shapefile_path is None or not os.path.exists(shapefile_path):
+        if file_path is None or not os.path.exists(file_path):
             return Response(
                 status=404,
-                data='Missing uploaded zip shapefile!'
+                data='Missing uploaded file!'
             )
 
         response = FileResponse(
-            open(shapefile_path, 'rb'),
+            open(file_path, 'rb'),
             as_attachment=True,
-            filename=f'{id_generator()}.zip'
+            filename=os.path.basename(file_path)
         )
 
         return response
