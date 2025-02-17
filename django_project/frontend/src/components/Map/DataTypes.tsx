@@ -20,6 +20,7 @@ export interface AnalysisData {
   communityName?: string;
   communityFeatureId?: string;
   reference_layer?: object;
+  reference_layer_id?: string|number;
   custom_geom?: object;
   userDefinedFeatureName?: string;
   userDefinedFeatureId?: string;
