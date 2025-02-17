@@ -106,13 +106,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
       setData(session.analysisState)
       if (session.analysisState.analysisType === Types.SPATIAL && session.analysisState.reference_layer) {
         // draw reference layer for spatial analysis
-        geometrySelectorRef?.current?.drawLayer({
-          'type': 'FeatureCollection',
-          'features': [{
-            'type': 'Feature',
-            'geometry': session.analysisState.reference_layer
-          }]
-        });
+        geometrySelectorRef?.current?.drawLayer(session.analysisState.reference_layer, session.analysisState.reference_layer_id);
         // trigger relative layer diff
         dispatch(doAnalysis({
           ...session.analysisState,
@@ -254,7 +248,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
         <AnalysisCustomGeometrySelector
           ref={geometrySelectorRef}
           isDrawing={mapInteraction === MapAnalysisInteraction.CUSTOM_GEOMETRY_DRAWING}
-          onSelected={(geometry, area) => {
+          onSelected={(geometry, area, selected_id) => {
             if (area > mapConfig.spatial_reference_layer_max_area) {
               console.warn('Area is bigger than configuration', area)
               // reset the geom selector
@@ -264,7 +258,8 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
               setGeomError(false)
               setData({
                 ...data,
-                reference_layer: geometry['features'][0]['geometry']
+                reference_layer: geometry,
+                reference_layer_id: selected_id
               })
             }
           }}
@@ -370,6 +365,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
                   setData({
                     ...data,
                     reference_layer: null,
+                    reference_layer_id: null,
                     community: null,
                     latitude: null,
                     longitude: null,

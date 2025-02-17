@@ -1,18 +1,18 @@
 import React, { useEffect, useRef, forwardRef, useImperativeHandle } from 'react';
-import {FeatureCollection} from "geojson";
-import { combine } from "@turf/combine";
+import { GeoJSONSource } from 'maplibre-gl';
+import {FeatureCollection, Feature} from "geojson";
 import { area } from "@turf/area";
 import MapboxDraw from "@mapbox/mapbox-gl-draw";
 import '@mapbox/mapbox-gl-draw/dist/mapbox-gl-draw.css';
 import {CUSTOM_GEOM_ID} from "../../DataTypes";
-import { removeSource } from '../../utils';
+import { hasSource, removeSource } from '../../utils';
 import { useMap } from '../../../../MapContext';
 
 export const CUSTOM_GEOM_FILL_ID = CUSTOM_GEOM_ID + "-fill";
 
 interface Props {
   isDrawing: boolean;
-  onSelected: (geometry: FeatureCollection, area: number) => void;
+  onSelected: (geometry: FeatureCollection, area: number, selected_id: string|number) => void;
 }
 
 const styles = [
@@ -40,6 +40,17 @@ const styles = [
         "fill-color": "#D20C0C",
         "fill-outline-color": "#D20C0C",
         "fill-opacity": 0.1
+      }
+    },
+    // polygon fill selected active
+    {
+      "id": "gl-draw-polygon-fill-active",
+      "type": "fill",
+      "filter": ["all", ["==", "$type", "Polygon"], ["==", "active", "true"]],
+      "paint": {
+        "fill-color": "#D20C0C",
+        "fill-outline-color": "#D20C0C",
+        "fill-opacity": 0.5
       }
     },
     // polygon mid points
@@ -98,7 +109,7 @@ export const AnalysisCustomGeometrySelector = forwardRef((
     const { map } = useMap();
     const drawingRef = useRef(null);
 
-    const drawGeom = (geom: FeatureCollection) => {
+    const drawGeom = (geom: FeatureCollection, selectedId?: string|number) => {
       // add geom to map
       map.addSource(
         CUSTOM_GEOM_ID, {
@@ -125,6 +136,43 @@ export const AnalysisCustomGeometrySelector = forwardRef((
           "fill-opacity": 0.1
         }
       });
+      map.addLayer({
+        'id': CUSTOM_GEOM_FILL_ID + '-highlight',
+        'type': 'fill',
+        'source': CUSTOM_GEOM_ID,
+        'paint': {
+          "fill-color": "#D20C0C",
+          "fill-outline-color": "#D20C0C",
+          'fill-opacity': 0.5
+        },
+        "filter": ["==", "id", 0]
+      });
+      if (selectedId) {
+        map.setFilter(
+          CUSTOM_GEOM_FILL_ID + '-highlight',
+          ["==", "id", selectedId]
+        )
+      }
+    }
+
+    const getSelectedId = () => {
+      const filter = map.getFilter(CUSTOM_GEOM_FILL_ID + "-highlight");
+      let featureId: string|number = '';
+      if (filter && Array.isArray(filter) && filter.length === 3) {
+        featureId = filter[2] as string
+      }
+
+      return featureId;
+    }
+
+    const getFeatureCollection = () => {  
+      const source = map.getSource(CUSTOM_GEOM_ID) as GeoJSONSource;
+      let data = null;
+      if (source) {
+        data = source.serialize().data as GeoJSON.FeatureCollection;
+      }
+
+      return data;
     }
 
     useImperativeHandle(ref, () => ({
@@ -134,14 +182,14 @@ export const AnalysisCustomGeometrySelector = forwardRef((
             removeSource(map, CUSTOM_GEOM_ID);
           }
         },
-        drawLayer(geom: FeatureCollection) {
+        drawLayer(geom: FeatureCollection, selectedId?: string) {
           if (map) {
-            drawGeom(geom);
+            drawGeom(geom, selectedId);
           }
         }
       }));
 
-    const checkArea = (geom: FeatureCollection) => {
+    const checkArea = (geom: FeatureCollection | Feature) => {
       try {
         return area(geom)
       } catch(err) {
@@ -156,7 +204,16 @@ export const AnalysisCustomGeometrySelector = forwardRef((
         }
 
         if (isDrawing) {
-            removeSource(map, CUSTOM_GEOM_ID);
+            let existingFeatureCollection: FeatureCollection = null;
+            let existingSelectedId: string|number = null;
+            if (hasSource(map, CUSTOM_GEOM_ID)) {
+              // get the pre-defined FeatureCollection (could be from saved session)
+              existingFeatureCollection = getFeatureCollection()
+              if (existingFeatureCollection) {
+                existingSelectedId = getSelectedId()
+              }
+              removeSource(map, CUSTOM_GEOM_ID)
+            }
 
             // workaround for control issue
             // https://github.com/maplibre/maplibre-gl-js/issues/2601#issuecomment-1564747778
@@ -186,20 +243,45 @@ export const AnalysisCustomGeometrySelector = forwardRef((
                 return controlContainer;
             };
             map.addControl(drawingRef.current, 'bottom-left');
+
+            // add existing feature collection
+            if (existingFeatureCollection) {
+              drawingRef.current.set(existingFeatureCollection)
+              if (existingSelectedId) {
+                drawingRef.current.changeMode('simple_select', {
+                  featureIds: [existingSelectedId]
+                })
+              }
+            }
         } else if (drawingRef.current) {
-            // get geometry
-            let geom = combine(drawingRef.current.getAll())
-            let area = checkArea(geom)
+            const drawingObj: MapboxDraw = drawingRef.current
+            let allDrawing = drawingObj.getAll()
+            const selectedIds = drawingObj.getSelectedIds()
+            let selectedId: string|number = ''
+            if (selectedIds.length > 0) {
+              selectedId = selectedIds[0]
+            } else if (allDrawing.features.length > 0) {
+              selectedId = allDrawing.features[0].id
+            }
+
+            let area = 0
+            for (let feature of allDrawing.features) {
+              if (feature.id === selectedId) {
+                area = checkArea(feature)
+              }
+              // add id in feature properties
+              feature.properties.id = feature.id
+            }
 
             // remove control
             map.removeControl(drawingRef.current)
             drawingRef.current = null
 
             if (area === 0) {
-              onSelected(null, 0)
+              onSelected(null, 0, selectedId)
             } else {
-              drawGeom(geom);
-              onSelected(geom, area);
+              drawGeom(allDrawing, selectedId);
+              onSelected(allDrawing, area, selectedId);
             }
         }
     }, [map, isDrawing])
