@@ -142,7 +142,6 @@ const DashboardPage: React.FC = () => {
 
   // PAGINATION
   useEffect(() => {
-    setCurrentPage(1)
     const itemsPerPage = layoutMode === "horizontal" ? 6 : layoutMode === "vertical" ? 2 : 4;
     const totalPages = Math.ceil(filteredData.length / itemsPerPage);
     const startIdx = (currentPage - 1) * itemsPerPage;
