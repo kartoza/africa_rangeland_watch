@@ -250,7 +250,7 @@ const DashboardPage: React.FC = () => {
                   {(provided) => (
                     <Grid
                       templateColumns="repeat(3, 1fr)"
-                      gap={4}
+                      gap={2}
                       ref={provided.innerRef}
                       {...provided.droppableProps}
                     >
@@ -308,7 +308,7 @@ const DashboardPage: React.FC = () => {
                       ref={provided.innerRef}
                       {...provided.droppableProps}
                       style={{ display: "flex", flexDirection: "column", overflowY: "auto" }}
-                      gap={4}
+                      gap={2}
                     >
                       {balancedPanels.map((config, index) => {
                         const isDummy = config === null;
