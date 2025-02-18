@@ -142,8 +142,7 @@ const DashboardPage: React.FC = () => {
 
   // PAGINATION
   useEffect(() => {
-    setCurrentPage(1)
-    const itemsPerPage = layoutMode === "horizontal" ? 6 : layoutMode === "vertical" ? 2 : 4;
+    const itemsPerPage = layoutMode === "horizontal" ? 6 : layoutMode === "vertical" ? 3 : 4;
     const totalPages = Math.ceil(filteredData.length / itemsPerPage);
     const startIdx = (currentPage - 1) * itemsPerPage;
     const endIdx = startIdx + itemsPerPage;
@@ -164,7 +163,65 @@ const DashboardPage: React.FC = () => {
 
 
   const [dragPosition, setDragPosition] = useState<DragPosition>({});
-  const [cards, setCards] = useState<{ id: number; position: CardPosition }[]>([]);
+  const [cards, setCards] = useState<{ id: number; position: CardPosition }[]>([]); // Store card positions
+
+  // Initialize cards with positions
+  const initialized = useRef(false);
+
+  useEffect(() => {
+    if (!initialized.current && filteredData.length > 0) {
+      const initialCards = filteredData.map((_, index) => ({
+        id: index,
+        position: { row: Math.floor(index / 3), col: index % 3 },
+      }));
+      setCards(initialCards);
+      initialized.current = true; // Prevents re-initialization
+    }
+  }, [filteredData]); 
+
+
+
+
+  const moveCard = (cardId: any, direction: string) => {
+    setChartsConfig((prevConfig) => {
+      const index = prevConfig.findIndex((chart) => chart.card.id === cardId);
+      if (index === -1) return prevConfig;
+
+      const rowSize = 3; // Assuming 3 columns per row
+      let newIndex = index;
+
+      switch (direction) {
+        case "left":
+          if (index % rowSize !== 0) newIndex = index - 1;
+          break;
+        case "right":
+          if (index % rowSize !== rowSize - 1 && index + 1 < prevConfig.length)
+            newIndex = index + 1;
+          break;
+        case "up":
+          if (index - rowSize >= 0) newIndex = index - rowSize;
+          break;
+        case "down":
+          if (index + rowSize < prevConfig.length) newIndex = index + rowSize;
+          break;
+        default:
+          return prevConfig;
+      }
+
+      if (newIndex !== index) {
+        const updatedConfig = [...prevConfig];
+        [updatedConfig[index], updatedConfig[newIndex]] = [updatedConfig[newIndex], updatedConfig[index]];
+        return updatedConfig.map((chart, i) => ({
+          ...chart,
+          card: {
+            ...chart.card,
+            position: { row: Math.floor(i / rowSize), col: i % rowSize },
+          },
+        }));
+      }
+      return prevConfig;
+    });
+  };
 
  
   // INTIALIZE CARDS 
@@ -235,6 +292,15 @@ const DashboardPage: React.FC = () => {
     });
   };
 
+  const onResize = (id: any, event: any, { size }: any) => {
+    setChartsConfig((prevConfig) =>
+      prevConfig.map((chart) =>
+        chart.card.id === id
+          ? { ...chart, card: { ...chart.card, size: { width: size?.width, height: size?.height } } }
+          : chart
+      )
+    );
+  };
 
   const renderPanels = () => {
     try {
@@ -243,6 +309,10 @@ const DashboardPage: React.FC = () => {
       return (
         <VStack spacing={6} align="stretch">
           {layoutMode === "horizontal" && (() => {
+            const remainder = chartsConfig.length % 3;
+            const extraPanels = remainder === 0 ? 0 : 3 - remainder;
+            const balancedPanels = [...chartsConfig, ...Array(extraPanels).fill(null)];
+
 
             return (
               <DragDropContext onDragEnd={onDragEnd}>
@@ -250,11 +320,11 @@ const DashboardPage: React.FC = () => {
                   {(provided) => (
                     <Grid
                       templateColumns="repeat(3, 1fr)"
-                      gap={4}
+                      gap={6}
                       ref={provided.innerRef}
                       {...provided.droppableProps}
                     >
-                      {paginatedData.map((chart, index) => (
+                      {chartsConfig.map((chart, index) => (
                         <Draggable key={chart.card.id.toString()} draggableId={chart.card.id.toString()} index={index}>
                           {(provided) => (
                             <GridItem
@@ -270,20 +340,7 @@ const DashboardPage: React.FC = () => {
                               minW="450px"
                               p={2}
                             >
-                              <PanelGroup direction="vertical">
-                                <Panel defaultSize={50} minSize={20}>
-                                  <Panel
-                                    minSize={20}
-                                    style={{
-                                      width: '100%',
-                                      transition: 'opacity 0.3s ease',
-                                    }}
-                                  >
-                                    <ChartCard config={chart} />
-                                  </Panel>
-                                  <PanelResizeHandle />
-                                </Panel>
-                              </PanelGroup>
+                              <ChartCard config={chart} />
                             </GridItem>
                           )}
                         </Draggable>
@@ -297,56 +354,39 @@ const DashboardPage: React.FC = () => {
           })()}
 
           {layoutMode === "vertical" && (() => {
-            const extraPanels = paginatedData.length % 2 === 0 ? 0 : 2 - (paginatedData.length % 2);
+            const extraPanels = paginatedData.length % 3 === 0 ? 0 : 3 - (paginatedData.length % 3);
             const balancedPanels = [...paginatedData, ...Array(extraPanels).fill(null)];
 
             return (
-              <DragDropContext onDragEnd={onDragEnd}>
-                <Droppable droppableId="dashboard" direction="vertical">
-                  {(provided) => (
-                    <Box
-                      ref={provided.innerRef}
-                      {...provided.droppableProps}
-                      style={{ display: "flex", flexDirection: "column", overflowY: "auto" }}
-                      gap={4}
-                    >
-                      {balancedPanels.map((config, index) => {
-                        const isDummy = config === null;
-                        return (
-                          <React.Fragment key={index}>
-                            <Draggable draggableId={config ? config.card.id.toString() : `dummy-${index}`} index={index}>
-                              {(provided) => (
-                                <Box
-                                  ref={provided.innerRef}
-                                  {...provided.draggableProps}
-                                  {...provided.dragHandleProps}
-                                  bg="gray.200"
-                                  border="1px solid"
-                                  borderColor="gray.300"
-                                  shadow="lg"
-                                  rounded="lg"
-                                  maxHeight="400px"
-                                  maxWidth="100%"
-                                  overflow="auto"
-                                  p={6}
-                                  opacity={isDummy ? 0 : 1}
-                                  pointerEvents={isDummy ? "none" : "auto"}
-                                >
-                                  {!isDummy && <ChartCard config={config} />}
-                                </Box>
-                              )}
-                            </Draggable>
-                            {provided.placeholder}
-                          </React.Fragment>
-                        );
-                      })}
-                    </Box>
-                  )}
-                </Droppable>
-              </DragDropContext>
+              <PanelGroup direction="vertical" style={{ display: "flex", gap: "6px", flexDirection: "column", overflowY: "auto" }}>
+                {balancedPanels.map((config, index) => {
+                  const isDummy = config === null;
+                  return (
+                    <React.Fragment key={index}>
+                      <Panel defaultSize={100 / balancedPanels.length} minSize={20} style={{ padding: "4px", flex: "1", opacity: isDummy ? 0 : 1, pointerEvents: isDummy ? "none" : "auto" }}>
+                        <Box minHeight="200px" opacity={isDummy ? 0 : 1} pointerEvents={isDummy ? "none" : "auto"} position="relative">
+                          <Flex
+                            bg="gray.200"
+                            border="1px solid"
+                            borderColor="gray.200"
+                            shadow="lg"
+                            rounded="lg"
+                            align="center"
+                            justify="center"
+                            h="100%"
+                            p={2}
+                          >
+                            {!isDummy && <ChartCard key={config.uuid} config={config} />}
+                          </Flex>
+                        </Box>
+                      </Panel>
+                      {!isDummy && index !== balancedPanels.length - 1 && <PanelResizeHandle />}
+                    </React.Fragment>
+                  );
+                })}
+              </PanelGroup>
             );
           })()}
-
 
           {layoutMode === "nested" && (() => {
             const smallPanels: any[] = [];
@@ -354,122 +394,67 @@ const DashboardPage: React.FC = () => {
 
             paginatedData.forEach((config, index) => {
               if (index % 4 === 0) {
-                mainPanels.push(config); // Main panel (1 per 4)
+                mainPanels.push(config);
               } else {
-                smallPanels.push(config); // Small panels (3 rows)
+                smallPanels.push(config);
               }
             });
 
             return (
               <PanelGroup direction="horizontal" style={{ height: "80vh" }}>
-                <DragDropContext onDragEnd={onDragEnd}>
-                  
-                  {/* First column (small panels) */}
-                  <Droppable droppableId="smallPanels" direction="vertical">
-                    {(provided) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.droppableProps}
-                        style={{ display: "flex", flexDirection: "column", width: "50%" }}
-                      >
-                        <Panel defaultSize={50} minSize={20}>
-                          <PanelGroup direction="vertical">
-                            {smallPanels.map((config, index) => (
-                              <Draggable key={`small-panel-${config?.uuid}`} draggableId={config?.uuid.toString()} index={index}>
-                                {(provided) => {
-                                  return (
-                                    <React.Fragment>
-                                      <Panel
-                                        defaultSize={100 / smallPanels.length}
-                                        minSize={20}
-                                        style={{
-                                          marginBottom: "8px",
-                                          transition: "opacity 0.3s ease",
-                                        }}
-                                      >
-                                        <Flex
-                                          bg={config?.bg || "gray.200"}
-                                          h="100%"
-                                          align="center"
-                                          justify="center"
-                                          p={2}
-                                          border="1px solid"
-                                          borderColor="gray.200"
-                                          shadow="lg"
-                                          rounded="lg"
-                                          ref={provided.innerRef}
-                                          {...provided.draggableProps}
-                                          {...provided.dragHandleProps}
-                                        >
-                                          <ChartCard key={`chart-card-${config?.uuid}`} config={config} />
-                                        </Flex>
-                                      </Panel>
-                                      {index !== smallPanels.length - 1 && <PanelResizeHandle />}
-                                    </React.Fragment>
-                                  );
-                                }}
-                              </Draggable>
-                            ))}
-                          </PanelGroup>
+                <Panel defaultSize={50} minSize={20}>
+                  <PanelGroup direction="vertical">
+                    {smallPanels.map((config, index) => (
+                      <React.Fragment key={`small-panel-${config?.uuid}-${index}`}>
+                        <Panel defaultSize={100 / smallPanels.length} minSize={20} style={{ marginBottom: "8px" }}>
+                          <Flex
+                            bg={config?.bg || "gray.200"}
+                            h="100%"
+                            align="center"
+                            justify="center"
+                            p={2}
+                            border="1px solid"
+                            borderColor="gray.200"
+                            shadow="lg"
+                            rounded="lg"
+                          >
+                            <ChartCard key={`chart-card-${config?.uuid}-${index}`} config={config} />
+                          </Flex>
                         </Panel>
-                        {provided.placeholder}
-                      </div>
-                    )}
-                  </Droppable>
+                        {index !== smallPanels.length - 1 && <PanelResizeHandle />}
+                      </React.Fragment>
+                    ))}
+                  </PanelGroup>
+                </Panel>
 
-                  <PanelResizeHandle />
+                <PanelResizeHandle />
 
-                  {/* Main panel (second column) */}
-                  <Droppable droppableId="mainPanel" direction="horizontal">
-                    {(provided) => (
-                      <div
-                        ref={provided.innerRef}
-                        {...provided.droppableProps}
-                        style={{ display: "flex", flexDirection: "column", width: "50%", marginLeft: "10px" }}
-                      >
-                        <Draggable draggableId={mainPanels[0]?.uuid.toString()} index={0}>
-                          {(provided) => (
-                            <Panel
-                              defaultSize={50}
-                              minSize={20}
-                              style={{
-                                transition: "opacity 0.3s ease",
-                              }}
-                            >
-                              <Flex
-                                bg="gray.200"
-                                h="100%"
-                                align="center"
-                                justify="center"
-                                p={2}
-                                border="1px solid"
-                                borderColor="gray.200"
-                                shadow="lg"
-                                rounded="lg"
-                                ref={provided.innerRef}
-                                {...provided.draggableProps}
-                                {...provided.dragHandleProps}
-                              >
-                                {mainPanels.length > 0 ? (
-                                  <ChartCard key={`main-panel-${mainPanels[0]?.uuid}`} config={mainPanels[0]} />
-                                ) : (
-                                  <span>No main panels to display</span>
-                                )}
-                              </Flex>
-                            </Panel>
-                          )}
-                        </Draggable>
-                        {provided.placeholder}
-                      </div>
+                <Panel defaultSize={50} minSize={20}>
+                  <Flex
+                    bg="gray.200"
+                    h="100%"
+                    align="center"
+                    justify="center"
+                    flexWrap="wrap"
+                    p={2}
+                    border="1px solid"
+                    borderColor="gray.200"
+                    shadow="lg"
+                    rounded="lg"
+                    ml={3}
+                  >
+                    {mainPanels.length > 0 ? (
+                      mainPanels.map((config) => (
+                        <ChartCard key={`main-panel-${config?.uuid}`} config={config} />
+                      ))
+                    ) : (
+                      <span>No main panels to display</span>
                     )}
-                  </Droppable>
-                </DragDropContext>
+                  </Flex>
+                </Panel>
               </PanelGroup>
             );
           })()}
-
-
-
 
           {/* Pagination controls */}
           <Pagination
@@ -532,7 +517,7 @@ const DashboardPage: React.FC = () => {
         w="100%"
         gap={{ base: "4", md: "4" }}
         padding={5}
-        ml={{ base: 0, md: 0 }}
+        ml={{ base: 0, md: 2 }}
       >
           {/* Filter Button */}
           <Flex
@@ -592,7 +577,7 @@ const DashboardPage: React.FC = () => {
               New
             </Button>
             <Image src="static/images/toggle_icon.svg" alt="toggle" h="15px" w="20px" />
-            <Text fontSize="lg" color="gray.400" opacity={0.6} pointerEvents="none" whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis" cursor="pointer" ml={-2}>
+            <Text color="gray.400" opacity={0.6} pointerEvents="none" whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis">
               Organise by
             </Text>
 
@@ -606,7 +591,7 @@ const DashboardPage: React.FC = () => {
           <MenuButton as="div" onClick={toggleMenu} aria-label="Layout Settings">
             <FaCog size={24} style={{ color: 'green' }} />
           </MenuButton>
-          <Text fontSize="lg" color="black" whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis" onClick={toggleMenu} cursor="pointer" ml={-2}>
+          <Text color="black" whiteSpace="nowrap" overflow="hidden" textOverflow="ellipsis">
             Layout
           </Text>
           <MenuList>

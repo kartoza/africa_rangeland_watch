@@ -11,6 +11,7 @@ import { deleteDashboard } from "../store/dashboardSlice";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "../store";
 import ConfirmDeleteDialog from "./ConfirmDeleteDialog";
+import { DragHandleDots2Icon } from "@radix-ui/react-icons";
 
 interface ChartCardProps {
   config: {
@@ -203,6 +204,12 @@ const ChartCard: React.FC<ChartCardProps> = ({ config, className }) => {
                   size="sm" 
                 />
               )}
+              <IconButton 
+                icon={<DragHandleDots2Icon />}
+                colorScheme="teal" 
+                aria-label="Move Card" 
+                size="sm" 
+              />
 
               <ConfirmDeleteDialog 
                 isOpen={isConfirmDeleteOpen}
