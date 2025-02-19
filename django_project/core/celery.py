@@ -71,6 +71,7 @@ def get_dynamic_schedule():
         logger.warning(f"Database not ready: {e}")
         return {}
 
+
 @app.on_after_finalize.connect
 def setup_periodic_tasks(sender, **kwargs):
     """Update beat schedule after Celery is fully initialized."""
