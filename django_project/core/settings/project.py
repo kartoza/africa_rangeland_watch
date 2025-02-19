@@ -39,7 +39,8 @@ PROJECT_APPS = (
     'dashboard',
     'analysis',
     'layers',
-    'support'
+    'support',
+    'earthranger',
 )
 INSTALLED_APPS = INSTALLED_APPS + PROJECT_APPS
 
