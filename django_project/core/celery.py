@@ -1,9 +1,8 @@
-"""Celery initialization."""
 from __future__ import absolute_import, unicode_literals
-
 import os
 from celery import Celery
 from celery.schedules import crontab
+from earthranger.models import APISchedule
 
 # set the default Django settings module for the 'celery' program.
 # this is also used in manage.py
@@ -17,7 +16,7 @@ BASE_REDIS_URL = (
 
 app = Celery('africa-rangeland-watch')
 
-# Using a string here means the worker don't have to serialize
+# Using a string here means the worker doesn't have to serialize
 # the configuration object to child processes.
 # - namespace='CELERY' means all celery-related configuration keys
 #   should have a `CELERY_` prefix.
@@ -31,7 +30,7 @@ app.conf.broker_url = BASE_REDIS_URL
 # this allows you to schedule items in the Django admin.
 app.conf.beat_scheduler = 'django_celery_beat.schedulers.DatabaseScheduler'
 
-# Task cron job schedules
+# Static schedule tasks (your predefined tasks)
 app.conf.beat_schedule = {
     'generate-baseline-nrt-layers': {
         'task': 'generate_baseline_nrt_layers',
@@ -44,3 +43,26 @@ app.conf.beat_schedule = {
         'schedule': crontab(minute='00', hour='*'),
     },
 }
+
+
+# Function to get dynamic schedules based on APISchedule model
+def get_dynamic_schedule():
+    """Fetch all active schedules and configure Celery Beat dynamically."""
+    schedules = (
+        APISchedule.objects.filter(run_every_minutes__gt=0) |
+        APISchedule.objects.filter(custom_interval__gt=0)
+    )
+
+    schedule_config = {}
+    for schedule in schedules:
+        interval = schedule.get_effective_interval()
+        schedule_config[f"task-{schedule.id}"] = {
+            "task": "earthranger.tasks.scheduled_fetch",
+            "schedule": crontab(minute=f"*/{interval}"),
+        }
+
+    return schedule_config
+
+
+# Merge static and dynamic schedules
+app.conf.beat_schedule.update(get_dynamic_schedule())

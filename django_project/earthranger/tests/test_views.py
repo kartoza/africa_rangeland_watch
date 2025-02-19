@@ -2,7 +2,7 @@ from django.test import TestCase
 from django.utils.timezone import now
 from unittest.mock import patch, MagicMock
 from earthranger.models import EarthRangerObservation
-from earthranger.utils import fetch_and_store_earth_ranger_data
+from earthranger.utils import fetch_and_store_data
 
 
 class EarthRangerFetchTest(TestCase):
@@ -27,7 +27,7 @@ class EarthRangerFetchTest(TestCase):
         self.assertEqual(EarthRangerObservation.objects.count(), 0)
 
         # Run the function
-        fetch_and_store_earth_ranger_data()
+        fetch_and_store_data()
 
         # Ensure a record was created
         self.assertEqual(EarthRangerObservation.objects.count(), 1)
@@ -47,7 +47,7 @@ class EarthRangerFetchTest(TestCase):
         mock_get.return_value = mock_response
 
         # Run the function (should not store anything)
-        fetch_and_store_earth_ranger_data()
+        fetch_and_store_data()
 
         # Ensure no data was stored in case of API failure
         self.assertEqual(EarthRangerObservation.objects.count(), 0)
@@ -75,7 +75,7 @@ class EarthRangerFetchTest(TestCase):
         mock_get.return_value = mock_response
 
         # Run the function again
-        fetch_and_store_earth_ranger_data()
+        fetch_and_store_data()
 
         # Ensure we still have only one record
         self.assertEqual(EarthRangerObservation.objects.count(), 1)
