@@ -35,7 +35,7 @@ app.conf.broker_url = BASE_REDIS_URL
 # this allows you to schedule items in the Django admin.
 app.conf.beat_scheduler = 'django_celery_beat.schedulers.DatabaseScheduler'
 
-# Static schedule tasks (your predefined tasks)
+# Task cron job schedules
 app.conf.beat_schedule = {
     'generate-baseline-nrt-layers': {
         'task': 'generate_baseline_nrt_layers',

@@ -1,10 +1,7 @@
 from django.contrib import admin
 from .models import (
     APISchedule,
-    EarthRangerFeature,
-    EarthRangerLayer,
-    EarthRangerMapping,
-    EarthRangerObservation
+    EarthRangerEvents
 )
 from django.forms import ModelForm
 
@@ -51,21 +48,6 @@ class APIScheduleAdmin(admin.ModelAdmin):
     get_effective_interval.short_description = "Effective Interval (min)"
 
 
-@admin.register(EarthRangerObservation)
-class EarthRangerObservationAdmin(admin.ModelAdmin):
-    list_display = ("name", "last_updated")
-
-
-@admin.register(EarthRangerFeature)
-class EarthRangerFeatureAdmin(admin.ModelAdmin):
-    list_display = ("name", "last_updated")
-
-
-@admin.register(EarthRangerLayer)
-class EarthRangerLayerAdmin(admin.ModelAdmin):
-    list_display = ("name", "last_updated")
-
-
-@admin.register(EarthRangerMapping)
-class EarthRangerMappingAdmin(admin.ModelAdmin):
+@admin.register(EarthRangerEvents)
+class EarthRangerEventsAdmin(admin.ModelAdmin):
     list_display = ("name", "last_updated")
