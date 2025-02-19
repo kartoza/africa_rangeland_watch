@@ -2,10 +2,7 @@ import requests
 from django.utils.timezone import now
 from .models import (
     APISchedule,
-    EarthRangerFeature,
-    EarthRangerLayer,
-    EarthRangerMapping,
-    EarthRangerObservation
+    EarthRangerEvents
 )
 from django.conf import settings
 import logging
@@ -41,13 +38,14 @@ def fetch_and_store_data(endpoint, model_class, name):
 
 # Function to fetch all Earth Ranger data
 def fetch_all_earth_ranger_data():
-    fetch_and_store_data(
-        "observations",
-        EarthRangerObservation, "Observations"
-    )
-    fetch_and_store_data("features", EarthRangerFeature, "Features")
-    fetch_and_store_data("layers", EarthRangerLayer, "Layers")
-    fetch_and_store_data("mapping", EarthRangerMapping, "Mapping")
+    # fetch_and_store_data(
+    #     "observations",
+    #     EarthRangerObservation, "Observations"
+    # )
+    # fetch_and_store_data("features", EarthRangerFeature, "Features")
+    # fetch_and_store_data("layers", EarthRangerLayer, "Layers")
+    # fetch_and_store_data("mapping", EarthRangerMapping, "Mapping")
+    fetch_and_store_data("activity/events", EarthRangerEvents, "Events")
 
     # Update the schedule log
     APISchedule.objects.update_or_create(

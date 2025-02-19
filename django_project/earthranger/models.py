@@ -83,3 +83,9 @@ class EarthRangerMapping(models.Model):
     name = models.CharField(max_length=255, unique=True, default="Mapping")
     data = models.JSONField(default=dict)
     last_updated = models.DateTimeField(auto_now=True)
+
+
+class EarthRangerEvents(models.Model):
+    name = models.CharField(max_length=255, unique=True, default="Events")
+    data = models.JSONField(default=dict)
+    last_updated = models.DateTimeField(auto_now=True)
