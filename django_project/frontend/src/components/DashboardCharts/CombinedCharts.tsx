@@ -265,11 +265,9 @@ export function RenderTemporal({ analysisResults }: Props) {
 
   const charts = [];
 
-  console.log('hasbar data ',hasBarData)
-
   if(hasLineData && hasBarData){
     charts.push(
-      <Box flex="0 0 auto">
+      <Box flex="0 0 auto" overflow="auto" maxW="100%">
         <LineChart analysisResults={analysisResults} />
       </Box>
     );
