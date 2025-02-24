@@ -2,7 +2,6 @@ from __future__ import absolute_import, unicode_literals
 import os
 from celery import Celery
 from celery.schedules import crontab
-from earthranger.models import APISchedule
 from django.db import OperationalError
 import logging
 
@@ -52,6 +51,7 @@ app.conf.beat_schedule = {
 
 def get_dynamic_schedule():
     """Fetch all active schedules and configure Celery Beat dynamically."""
+    from earthranger.models import APISchedule
     try:
         schedules = (
             APISchedule.objects.filter(run_every_minutes__gt=0) |
