@@ -1,5 +1,6 @@
 import { ChakraProps, Text, Link, UnorderedList, ListItem, Image, Flex, Heading, Box } from "@chakra-ui/react";
 import React from "react";
+import { Link as RouterLink } from "react-router-dom";
 
 interface Props extends ChakraProps {
   className?: string;
@@ -28,14 +29,29 @@ export default function Footer(props: Props) {
             HELP
           </Heading>
           <UnorderedList styleType="none" spacing={1}>
+            {/* Internal navigation using React Router */}
             <ListItem>
-              <Link href="#" fontSize="14px" fontWeight="bold" color="white">
-                Dummy Link 1
+              <Link 
+                as={RouterLink} 
+                to="/support" 
+                fontSize="14px" 
+                fontWeight="bold" 
+                color="white"
+              >
+                Visit Support Page
               </Link>
             </ListItem>
+
+            {/* External link opening in a new tab */}
             <ListItem>
-              <Link href="#" fontSize="14px" fontWeight="bold" color="white">
-                Dummy Link 2
+              <Link 
+                href="https://www.herding4health.net/contact" 
+                fontSize="14px" 
+                fontWeight="bold" 
+                color="white" 
+                isExternal
+              >
+                Contact Herding for Health
               </Link>
             </ListItem>
           </UnorderedList>
@@ -114,7 +130,7 @@ export default function Footer(props: Props) {
 
         <UnorderedList styleType="none" display="flex" justifyContent="center" flexWrap="wrap" gap="20px">
           <ListItem>
-            <Link href="#" fontSize="14px">Contact Us</Link>
+            <Link href="https://www.herding4health.net/contact" fontSize="14px">Contact Us</Link>
           </ListItem>
           <ListItem>
             <Link href="#" fontSize="14px">Terms of Use</Link>

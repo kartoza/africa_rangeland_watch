@@ -144,13 +144,21 @@ export default function Header(props: any) {
                     {isAuthenticated && (
                         <>
                             <Link href="#">
-                                <Image src="static/images/search_icon.svg" alt="search" h="24px" w="24px" />
+                            <Image src="static/images/search_icon.svg" alt="search" h="24px" w="24px" />
                             </Link>
-                            <Link href="#">
-                                <Image src="static/images/notifications_icon.svg" alt="Notif" h="24px" w="24px" />
+                            <Link href="#" pointerEvents="none">
+                            <Image 
+                                src="static/images/notifications_icon.svg" 
+                                alt="Notif" 
+                                h="24px" 
+                                w="24px" 
+                                opacity="0.5" 
+                                cursor="not-allowed"
+                            />
                             </Link>
                         </>
-                    )}
+                        )}
+
 
                     {/* User Avatar - Conditionally rendered based on login status */}
                     {isAuthenticated ? (
