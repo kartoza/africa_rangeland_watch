@@ -32,6 +32,12 @@ class InputLayer:
     Class to prepare all input layer necessary for analysis.
     """
 
+    DEFAULT_COUNTRY_NAMES = [
+        'SOUTH AFRICA', 'LESOTHO', 'SWAZILAND',
+        'NAMIBIA', 'ZIMBABWE', 'BOTSWANA',
+        'MOZAMBIQUE', 'ZAMBIA'
+    ]
+
     def __init__(self):
         self.countries = self.get_countries()
 
@@ -143,15 +149,11 @@ class InputLayer:
         communities = communities.select(['Name', 'Project', 'area'])
         return communities
 
-    def get_countries(self):
+    def get_countries(self, country_names = None):
         """
         Get countries for clipping images
         """
-        names = [
-            'SOUTH AFRICA', 'LESOTHO', 'SWAZILAND',
-            'NAMIBIA', 'ZIMBABWE', 'BOTSWANA',
-            'MOZAMBIQUE', 'ZAMBIA'
-        ]
+        names = country_names or self.DEFAULT_COUNTRY_NAMES
         countries = (ee.FeatureCollection(
             GEEAsset.fetch_asset_source('countries')).
             filter(ee.Filter.inList('name', names)))
@@ -189,7 +191,8 @@ class InputLayer:
                 .set('year', ee.Number.parse(col.get('system:index'))))
 
     def get_soil_carbon(
-        self, start_date: datetime.date = None, end_date: datetime.date = None
+        self, start_date: datetime.date = None, end_date: datetime.date = None,
+        clip_to_countries = True
     ):
         """
         Get image for soil carbon mean.
@@ -248,7 +251,8 @@ class InputLayer:
         soc_lt_mean = ee.ImageCollection(
             [isda.float(), lt_mean.float()]
         ).mean()
-        soc_lt_mean = soc_lt_mean.clipToCollection(self.countries)
+        if clip_to_countries:
+            soc_lt_mean = soc_lt_mean.clipToCollection(self.countries)
         return soc_lt_mean
 
     def get_grazing_capacity(self):
@@ -305,7 +309,8 @@ class InputLayer:
         return soc_col
 
     def get_soil_carbon_change(
-        self, start_date: datetime.date = None, end_date: datetime.date = None
+        self, start_date: datetime.date = None, end_date: datetime.date = None,
+        clip_to_countries = True
     ):
         """
         Get soil carbon change, clipped by countries.
@@ -325,7 +330,9 @@ class InputLayer:
         trend_sens_img = trend_sens_img.rename(['scale', 'offset'])
 
         soc_lt_trend = (trend_sens_img.select('scale').
-                        multiply(35).clipToCollection(self.countries))
+                        multiply(35))
+        if clip_to_countries:
+            soc_lt_trend = soc_lt_trend.clipToCollection(self.countries)
         return soc_lt_trend
 
     def get_spatial_layer_dict(
@@ -1251,3 +1258,262 @@ def validate_spatial_date_range_filter(
             metadata = GEEAsset.fetch_asset_metadata(asset_key)
             return False, metadata.get('start_date'), metadata.get('end_date')
     return True, None, None
+
+
+# Note: this function exceeds computational limit
+# TODO: investigate whether we can reduce to aoi in the training data
+# TODO: investigate and RnD to store the classifier model and load later
+def calculate_grazing_capacity(aoi, start_date, end_date):
+    input_layer = InputLayer()
+    
+    sampling_area = input_layer.get_countries(
+        country_names=[
+            'SOUTH AFRICA', 'LESOTHO', 'SWAZILAND',
+            'NAMIBIA', 'ZIMBABWE', 'BOTSWANA',
+            'MOZAMBIQUE'
+        ]
+    )
+
+    gp = ee.FeatureCollection(
+        GEEAsset.fetch_asset_source('grazing_capacity_ref')
+    )
+
+    # Create a mask of non-natural lands
+    glc_coll = ee.ImageCollection(
+        GEEAsset.fetch_asset_source('globe_land30')
+    )
+    glc_img = ee.Image(glc_coll.mosaic())
+    masked = (glc_img.neq(10)
+            .And(glc_img.neq(20))
+            .And(glc_img.neq(50))
+            .And(glc_img.neq(60))
+            .And(glc_img.neq(80))
+            .And(glc_img.neq(100))
+            .And(glc_img.neq(255)))
+
+    # MODIS
+    ndwi = (ee.ImageCollection(
+                GEEAsset.fetch_asset_source('modis_ndwi')
+            )
+            .filterBounds(sampling_area)
+            .filterDate(start_date, end_date)
+            .median())
+
+    evi = (ee.ImageCollection(
+                GEEAsset.fetch_asset_source('modis_vegetation')
+            )
+            .filterBounds(sampling_area)
+            .filterDate(start_date, end_date)
+            .select('EVI'))
+    evi_med = evi.median()
+
+    # Calculate variance in EVI over time
+    evi_var = evi.reduce(ee.Reducer.variance())
+
+    # Get surface reflectance data as well
+    srf = (ee.ImageCollection(
+                GEEAsset.fetch_asset_source('modis_surface_reflect')
+            )
+            .filterBounds(sampling_area)
+            .filterDate(start_date, end_date)
+            .select(
+                [
+                    'sur_refl_b01', 'sur_refl_b02', 'sur_refl_b03',
+                    'sur_refl_b04', 'sur_refl_b05', 'sur_refl_b06',
+                    'sur_refl_b07'
+                ]
+            ))
+    srfMed = srf.median()
+
+    # Combine
+    combined = ndwi.addBands(
+        evi_med.rename('evi')
+    ).addBands(
+        evi_var.rename('evi_var')
+    ).addBands(srfMed)
+    # Apply land cover mask to isolate rangeland
+    combined = combined.updateMask(masked)
+
+    bands = combined.bandNames()
+
+    def map_training_data(ft):
+        return ft.setGeometry(None).set(combined.reduceRegion(
+            reducer=ee.Reducer.mean(),
+            geometry=ft.geometry(),
+            scale=500,
+        ))
+    train_test = gp.map(map_training_data)
+
+    def map_convert_lsu(ft):
+        return ft.set(
+            'LSU_ha',
+            ee.Number(1).divide(ee.Number(ft.get('ha_LSU')))
+        )
+
+    # Convert to LSU per hectare
+    train_test = train_test.map(map_convert_lsu)
+
+    # Train RF classifier
+    # parameters: numberOfTrees, variablesPerSplit,
+    # minLeafPopulation, bagFraction
+    classifierReg = (ee.Classifier.smileRandomForest(100)
+                    .setOutputMode('REGRESSION')
+                    .train(
+                        features=train_test, 
+                        classProperty='LSU_ha', 
+                        inputProperties=bands
+                    ))
+
+    # Classify with RandomForest
+    classified = combined.select(bands).classify(classifierReg)
+
+    return classified.clipToCollection(aoi)
+
+
+def calculate_firefreq(aoi, start_date, end_date):
+    start_dt = datetime.date.fromisoformat(start_date)
+    end_dt = datetime.date.fromisoformat(end_date)
+
+    def confidence_mask(thresh):
+        def mask_function(img):
+            conf_mask = img.select('ConfidenceLevel').gt(thresh)
+            return img.updateMask(conf_mask)
+        return mask_function
+
+    # Import and clean FireCCI data between 2000 and 2022
+    # (original Rangeland explorer map between 2000 and 2018)
+    ba = ee.ImageCollection(
+        GEEAsset.fetch_asset_source('fire_cci')
+    )
+    if aoi:
+        ba = ba.filterBounds(aoi)
+    
+    ba = (ba
+          .filter(ee.Filter.calendarRange(start_dt.year, end_dt.year, 'year'))
+          .map(confidence_mask(50))
+          .select('BurnDate'))
+
+    def temporal_average(collection, unit, reducer):
+        # Get the start date from the earliest image
+        start_date = ee.Date(ee.Image(collection.sort('system:time_start').first()).get('system:time_start'))
+        start_date = (start_date
+                    .advance(ee.Number(0).subtract(start_date.getRelative('month', unit)), 'month')
+                    .update(None, None, None, 0, 0, 0))
+        
+        # Get the end date from the latest image
+        end_date = ee.Date(ee.Image(collection.sort('system:time_start', False).first()).get('system:time_start'))
+        end_date = (end_date
+                    .advance(ee.Number(0).subtract(end_date.getRelative('month', unit)), 'month')
+                    .advance(1, unit).advance(-1, 'month')
+                    .update(None, None, None, 23, 59, 59))
+        
+        # Create a list of date ranges
+        date_ranges = ee.List.sequence(0, end_date.difference(start_date, unit).round().subtract(1))
+        
+        def make_timeslice(num):
+            num = ee.Number(num)
+            start = start_date.advance(num, unit)
+            start_num = start.millis()
+            start_date_num = ee.Number.parse(start.format("YYYYMMdd"))
+            end = start.advance(1, unit).advance(-1, 'second')
+            
+            filtered = collection.filterDate(start, end)
+            unit_means = (filtered.reduce(reducer)
+                        .set({'system:time_start': start_num,
+                                'system:time_end': end,
+                                'date': start_date_num}))
+            return unit_means
+
+        new_collection = ee.ImageCollection(date_ranges.map(make_timeslice))
+        
+        return new_collection
+
+    # Get annual burns
+    ba_annual = temporal_average(ba, 'year', ee.Reducer.max())
+
+    # Count number of burns over time period
+    ba_count = ba_annual.reduce(ee.Reducer.count())
+
+    return ba_count.rename('fireFreq')
+
+
+def calculate_baseline(aoi, start_date, end_date):
+    input_layer = InputLayer()
+    communities = input_layer.get_communities()
+    selected_area = communities.filterBounds(aoi)
+
+    # Get MODIS vegetation data
+    modis_veg = (ee.ImageCollection(
+                    GEEAsset.fetch_asset_source('modis_vegetation')
+                )
+                .filterDate(start_date, end_date)
+                .select(['NDVI', 'EVI'])
+                .map(lambda i: i.divide(10000)))
+    evi_baseline = modis_veg.select('EVI').median()
+    ndvi_baseline = modis_veg.select('NDVI').median()
+
+    cgls = (ee.ImageCollection(
+                GEEAsset.fetch_asset_source('cgls_ground_cover')
+            )
+            .filterDate(start_date, end_date)
+            .select(
+                [
+                    'bare-coverfraction', 'crops-coverfraction',
+                    'urban-coverfraction', 'shrub-coverfraction',
+                    'grass-coverfraction','tree-coverfraction'
+                ]
+            ))
+    cgls = cgls.median()
+
+    # Additional calculations for land cover fractions and grazing capacity
+    bg = cgls.select('bare-coverfraction').add(
+        cgls.select('urban-coverfraction')
+    )
+    t = cgls.select('tree-coverfraction').add(
+        cgls.select('shrub-coverfraction')
+    )
+    g = cgls.select('grass-coverfraction')
+
+    # TODO: add grazing capacity
+
+    # fire freq, no aoi since at the end we extract means values
+    fire_freq = calculate_firefreq(None, start_date, end_date).divide(18)
+    fire_freq = fire_freq.unmask(0)
+
+    # SOCltMean
+    soc_lt_mean = input_layer.get_soil_carbon(
+        datetime.date.fromisoformat(start_date),
+        datetime.date.fromisoformat(end_date),
+        False
+    )
+    soc_lt_mean = soc_lt_mean.rename('SOCltMean')
+
+    # SOCltTrend
+    soc_lt_trend = input_layer.get_soil_carbon_change(
+        datetime.date.fromisoformat(start_date),
+        datetime.date.fromisoformat(end_date),
+        False
+    )
+    soc_lt_trend = soc_lt_trend.rename('SOCltTrend')
+
+    # Combining all layers for analysis and renaming for clarity
+    combined = ee.Image.cat(
+        evi_baseline, ndvi_baseline, bg, t, g, 
+        fire_freq, soc_lt_mean, soc_lt_trend
+    )
+    combined = combined.select(
+        [
+            'EVI', 'NDVI', 'bare-coverfraction', 'tree-coverfraction',
+            'grass-coverfraction', 'fireFreq', 'SOCltMean', 'SOCltTrend'
+        ],
+        [
+            'EVI', 'NDVI', 'Bare ground %', 'Woody cover %', 'Grass cover %',
+            'Fires/yr', 'SOC kg/m2', 'SOC change kg/m2'
+        ]
+    )
+
+    # Reducing regions to extract mean values per polygon
+    reduced = combined.reduceRegions(selected_area, ee.Reducer.mean(), 100)
+    reduced = reduced.distinct(['Name', 'Area ha'])
+
+    return reduced

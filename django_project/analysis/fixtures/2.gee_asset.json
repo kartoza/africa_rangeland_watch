@@ -187,5 +187,54 @@
         "type": "image",
         "metadata": {}
     }
+},
+{
+    "model": "analysis.geeasset",
+    "pk": 19,
+    "fields": {
+        "key": "grazing_capacity_ref",
+        "source": "users/zandersamuel/SA_misc/Grazing_Capacity_10102016",
+        "type": "table",
+        "metadata": {}
+    }
+},
+{
+    "model": "analysis.geeasset",
+    "pk": 20,
+    "fields": {
+        "key": "modis_ndwi",
+        "source": "MODIS/MCD43A4_NDWI",
+        "type": "image_collection",
+        "metadata": {
+            "start_date": "2000-02-18",
+            "end_date": "2017-03-18"
+        }
+    }
+},
+{
+    "model": "analysis.geeasset",
+    "pk": 21,
+    "fields": {
+        "key": "modis_surface_reflect",
+        "source": "MODIS/006/MOD09A1",
+        "type": "image_collection",
+        "metadata": {
+            "start_date": "2000-02-18",
+            "end_date": "2023-02-18"
+        }
+    }
+},
+{
+    "model": "analysis.geeasset",
+    "pk": 22,
+    "fields": {
+        "key": "fire_cci",
+        "source": "ESA/CCI/FireCCI/5_1",
+        "type": "image_collection",
+        "metadata": {
+            "start_date": "2001-01-01",
+            "end_date": "2020-12-31"
+        }
+    }
 }
 ]
