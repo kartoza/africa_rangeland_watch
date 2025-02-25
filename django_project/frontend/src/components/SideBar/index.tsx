@@ -51,7 +51,11 @@ export default function Sidebar(props: Props) {
     closeSignOutModal();
     navigate('/');
   };
-
+  
+  const returnHome = () => {
+    navigate('/');
+  }
+  
   return (
     <>
       <Modal isOpen={isSignOutModalOpen} onClose={closeSignOutModal} isCentered>
@@ -168,28 +172,7 @@ export default function Sidebar(props: Props) {
         </Box>
       </Box>
 
-      {/* Sidebar strip for mobile */}
-      <Box
-        display={{ base: "flex", md: "none" }}
-        width="10%"
-        bg="dark_green.800"
-        h="100vh"
-        position="fixed"
-        left="0"
-        top="0"
-        alignItems="center"
-        justifyContent="center"
-        zIndex="1"
-      >
-        <IconButton
-          icon={<HamburgerIcon />}
-          aria-label="Open Sidebar"
-          onClick={onOpen}
-          color="white"
-          bg="transparent"
-          _hover={{ bg: "transparent" }}
-        />
-      </Box>
+      
 
       {/* Drawer for full mobile sidebar */}
       <Drawer isOpen={isOpen} placement="left" onClose={onClose}>
@@ -308,7 +291,8 @@ export default function Sidebar(props: Props) {
                 >
                   Notifications
                 </MenuItem>
-                {/* Updated Sign Out: Open confirmation modal */}
+                <MenuItem onClick={returnHome}>Return to Main Site</MenuItem>
+
                 <MenuItem onClick={handleSignOutClick}>Sign Out</MenuItem>
               </Box>
             </Box>

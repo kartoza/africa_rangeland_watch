@@ -17,73 +17,66 @@ type SectionProps = {
   imageHeight: string;
 };
 
-const Section: React.FC<SectionProps> = ({
-  title,
-  items,
-  imageWidth,
-  imageHeight,
-}) => {
+const Section: React.FC<SectionProps> = ({ title, items, imageWidth, imageHeight }) => {
   return (
     <Box mb={15} mt={20}>
       {/* Section Title */}
       <Heading as="h2" fontSize="2xl" color="black" mb={10} textAlign="center">
         {title}
       </Heading>
-      {/* Responsive Grid */}
-      <Grid
-        templateColumns={{
-          base: '1fr',
-          sm: 'repeat(2, 1fr)',
-          md: 'repeat(3, 1fr)',
-          lg: items.length === 4 ? 'repeat(4, 1fr)' : 'repeat(3, 1fr)',
-        }}
-        gap={6}
-        justifyContent="center"
-      >
-        {items.map((item, index) => (
-          <Box key={index} textAlign="center">
-            {/* Image */}
-            <Image
-              src={item.src}
-              alt={item.title}
-              width={imageWidth}
-              height={imageHeight}
-              objectFit="cover"
-              borderRadius="md"
-              boxShadow="md"
-              ml={{base: "20px"}}
-            />
-            {/* Title */}
-            <Text mt={2}  color="black" fontSize="md" fontWeight="bold">
-              {item.title}
-            </Text>
-          </Box>
-        ))}
-      </Grid>
+
+      {/* Check if items exist, otherwise show 'No data available' */}
+      {items.length > 0 ? (
+        <Grid
+          templateColumns={{
+            base: '1fr',
+            sm: 'repeat(2, 1fr)',
+            md: 'repeat(3, 1fr)',
+            lg: items.length === 4 ? 'repeat(4, 1fr)' : 'repeat(3, 1fr)',
+          }}
+          gap={6}
+          justifyContent="center"
+        >
+          {items.map((item, index) => (
+            <Box key={index} textAlign="center">
+              {/* Image */}
+              <Image
+                src={item.src}
+                alt={item.title}
+                width={imageWidth}
+                height={imageHeight}
+                objectFit="cover"
+                borderRadius="md"
+                boxShadow="md"
+                ml={{ base: "20px" }}
+              />
+              {/* Title */}
+              <Text mt={2} color="black" fontSize="md" fontWeight="bold">
+                {item.title}
+              </Text>
+            </Box>
+          ))}
+        </Grid>
+      ) : (
+        <Flex justify="center" align="center" height="200px">
+          <Text fontSize="lg" fontWeight="bold" color="gray.500">
+            No data available
+          </Text>
+        </Flex>
+      )}
     </Box>
   );
 };
 
+
 export default function ResourcesPage() {
-  // Dummy image data for each section
-  const caseStudies = [
-    { src: '/images/case1.jpg', title: 'Innovative Finance in Namakwa' },
-    { src: '/images/case2.jpg', title: 'Small Grants Facility in Namakwa' },
-    { src: '/images/case3.jpg', title: 'Low-cost erosion control in Namakwa' },
-    { src: '/images/case4.jpg', title: 'Case study title goes here' },
+  const caseStudies: ImageItem[] = [
   ];
 
-  const policyBriefs = [
-    { src: '/images/policy1.jpg', title: 'Policy Brief 1' },
-    { src: '/images/policy2.jpg', title: 'Policy Brief 2' },
-    { src: '/images/policy3.jpg', title: 'Policy Brief 3' },
-    { src: '/images/policy4.jpg', title: 'Policy Brief 4' },
+  const policyBriefs: ImageItem[] = [
   ];
 
-  const conservationNews = [
-    { src: '/images/conserve1.jpg', title: 'Conservation News 1' },
-    { src: '/images/conserve2.jpg', title: 'Conservation News 2' },
-    { src: '/images/conserve3.jpg', title: 'Conservation News 3' },
+  const conservationNews: ImageItem[] = [
   ];
 
   return (
