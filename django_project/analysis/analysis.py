@@ -1264,8 +1264,9 @@ def validate_spatial_date_range_filter(
 # TODO: investigate whether we can reduce to aoi in the training data
 # TODO: investigate and RnD to store the classifier model and load later
 def calculate_grazing_capacity(aoi, start_date, end_date):
+    """Calculate grazing by start_date, end_date, and area of interest."""
     input_layer = InputLayer()
-    
+
     sampling_area = input_layer.get_countries(
         country_names=[
             'SOUTH AFRICA', 'LESOTHO', 'SWAZILAND',
@@ -1284,12 +1285,12 @@ def calculate_grazing_capacity(aoi, start_date, end_date):
     )
     glc_img = ee.Image(glc_coll.mosaic())
     masked = (glc_img.neq(10)
-            .And(glc_img.neq(20))
-            .And(glc_img.neq(50))
-            .And(glc_img.neq(60))
-            .And(glc_img.neq(80))
-            .And(glc_img.neq(100))
-            .And(glc_img.neq(255)))
+              .And(glc_img.neq(20))
+              .And(glc_img.neq(50))
+              .And(glc_img.neq(60))
+              .And(glc_img.neq(80))
+              .And(glc_img.neq(100))
+              .And(glc_img.neq(255)))
 
     # MODIS
     ndwi = (ee.ImageCollection(
@@ -1299,29 +1300,26 @@ def calculate_grazing_capacity(aoi, start_date, end_date):
             .filterDate(start_date, end_date)
             .median())
 
-    evi = (ee.ImageCollection(
-                GEEAsset.fetch_asset_source('modis_vegetation')
-            )
-            .filterBounds(sampling_area)
-            .filterDate(start_date, end_date)
-            .select('EVI'))
+    evi = (ee.ImageCollection(GEEAsset.fetch_asset_source('modis_vegetation'))
+           .filterBounds(sampling_area)
+           .filterDate(start_date, end_date)
+           .select('EVI'))
     evi_med = evi.median()
 
     # Calculate variance in EVI over time
     evi_var = evi.reduce(ee.Reducer.variance())
 
     # Get surface reflectance data as well
-    srf = (ee.ImageCollection(
-                GEEAsset.fetch_asset_source('modis_surface_reflect')
-            )
-            .filterBounds(sampling_area)
-            .filterDate(start_date, end_date)
-            .select(
-                [
-                    'sur_refl_b01', 'sur_refl_b02', 'sur_refl_b03',
-                    'sur_refl_b04', 'sur_refl_b05', 'sur_refl_b06',
-                    'sur_refl_b07'
-                ]
+    srf = (ee.ImageCollection(GEEAsset.fetch_asset_source(
+        'modis_surface_reflect'))
+           .filterBounds(sampling_area)
+           .filterDate(start_date, end_date)
+           .select(
+               [
+                   'sur_refl_b01', 'sur_refl_b02', 'sur_refl_b03',
+                   'sur_refl_b04', 'sur_refl_b05', 'sur_refl_b06',
+                   'sur_refl_b07'
+               ]
             ))
     srfMed = srf.median()
 
@@ -1357,12 +1355,12 @@ def calculate_grazing_capacity(aoi, start_date, end_date):
     # parameters: numberOfTrees, variablesPerSplit,
     # minLeafPopulation, bagFraction
     classifierReg = (ee.Classifier.smileRandomForest(100)
-                    .setOutputMode('REGRESSION')
-                    .train(
-                        features=train_test, 
-                        classProperty='LSU_ha', 
-                        inputProperties=bands
-                    ))
+                     .setOutputMode('REGRESSION')
+                     .train(
+                         features=train_test,
+                         classProperty='LSU_ha',
+                         inputProperties=bands
+                     ))
 
     # Classify with RandomForest
     classified = combined.select(bands).classify(classifierReg)
@@ -1371,6 +1369,7 @@ def calculate_grazing_capacity(aoi, start_date, end_date):
 
 
 def calculate_firefreq(aoi, start_date, end_date):
+    """Calculate firefreq by start_date, end_date, and area of interest."""
     start_dt = datetime.date.fromisoformat(start_date)
     end_dt = datetime.date.fromisoformat(end_date)
 
@@ -1387,7 +1386,7 @@ def calculate_firefreq(aoi, start_date, end_date):
     )
     if aoi:
         ba = ba.filterBounds(aoi)
-    
+
     ba = (ba
           .filter(ee.Filter.calendarRange(start_dt.year, end_dt.year, 'year'))
           .map(confidence_mask(50))
@@ -1395,38 +1394,55 @@ def calculate_firefreq(aoi, start_date, end_date):
 
     def temporal_average(collection, unit, reducer):
         # Get the start date from the earliest image
-        start_date = ee.Date(ee.Image(collection.sort('system:time_start').first()).get('system:time_start'))
+        start_date = ee.Date(
+            ee.Image(
+                collection.sort('system:time_start').first()
+            ).get('system:time_start')
+        )
         start_date = (start_date
-                    .advance(ee.Number(0).subtract(start_date.getRelative('month', unit)), 'month')
-                    .update(None, None, None, 0, 0, 0))
-        
+                      .advance(
+                          ee.Number(0)
+                          .subtract(start_date.getRelative('month', unit)),
+                          'month'
+                      )
+                      .update(None, None, None, 0, 0, 0))
+
         # Get the end date from the latest image
-        end_date = ee.Date(ee.Image(collection.sort('system:time_start', False).first()).get('system:time_start'))
+        end_date = ee.Date(
+            ee.Image(
+                collection.sort('system:time_start', False).first()
+            ).get('system:time_start')
+        )
         end_date = (end_date
-                    .advance(ee.Number(0).subtract(end_date.getRelative('month', unit)), 'month')
+                    .advance(
+                        ee.Number(0)
+                        .subtract(end_date.getRelative('month', unit)),
+                        'month'
+                    )
                     .advance(1, unit).advance(-1, 'month')
                     .update(None, None, None, 23, 59, 59))
-        
+
         # Create a list of date ranges
-        date_ranges = ee.List.sequence(0, end_date.difference(start_date, unit).round().subtract(1))
-        
+        date_ranges = ee.List.sequence(
+            0,
+            end_date.difference(start_date, unit).round().subtract(1)
+        )
+
         def make_timeslice(num):
             num = ee.Number(num)
             start = start_date.advance(num, unit)
             start_num = start.millis()
             start_date_num = ee.Number.parse(start.format("YYYYMMdd"))
             end = start.advance(1, unit).advance(-1, 'second')
-            
+
             filtered = collection.filterDate(start, end)
             unit_means = (filtered.reduce(reducer)
-                        .set({'system:time_start': start_num,
+                          .set({'system:time_start': start_num,
                                 'system:time_end': end,
                                 'date': start_date_num}))
             return unit_means
 
-        new_collection = ee.ImageCollection(date_ranges.map(make_timeslice))
-        
-        return new_collection
+        return ee.ImageCollection(date_ranges.map(make_timeslice))
 
     # Get annual burns
     ba_annual = temporal_average(ba, 'year', ee.Reducer.max())
@@ -1438,6 +1454,7 @@ def calculate_firefreq(aoi, start_date, end_date):
 
 
 def calculate_baseline(aoi, start_date, end_date):
+    """Calculate baseline by start_date, end_date, and area of interest."""
     input_layer = InputLayer()
     communities = input_layer.get_communities()
     selected_area = communities.filterBounds(aoi)
@@ -1460,7 +1477,7 @@ def calculate_baseline(aoi, start_date, end_date):
                 [
                     'bare-coverfraction', 'crops-coverfraction',
                     'urban-coverfraction', 'shrub-coverfraction',
-                    'grass-coverfraction','tree-coverfraction'
+                    'grass-coverfraction', 'tree-coverfraction'
                 ]
             ))
     cgls = cgls.median()
@@ -1498,7 +1515,7 @@ def calculate_baseline(aoi, start_date, end_date):
 
     # Combining all layers for analysis and renaming for clarity
     combined = ee.Image.cat(
-        evi_baseline, ndvi_baseline, bg, t, g, 
+        evi_baseline, ndvi_baseline, bg, t, g,
         fire_freq, soc_lt_mean, soc_lt_trend
     )
     combined = combined.select(
