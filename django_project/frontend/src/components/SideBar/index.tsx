@@ -57,7 +57,7 @@ export default function Sidebar(props: Props) {
   const returnHome = () => {
     navigate('/');
   }
-
+  
   return (
     <>
       <Modal isOpen={isSignOutModalOpen} onClose={closeSignOutModal} isCentered>
