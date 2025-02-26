@@ -203,7 +203,9 @@ export default function Header(props: any) {
                 </Flex>
 
                 {/* Sidebar */}
-                <Sidebar1 display={isSidebarOpen || !isMobile ? "flex" : "none"} isSideBarOpen={isSidebarOpen} closeSidebar={closeSidebar} />
+                {isMobile && (
+                <Sidebar1 display={isSidebarOpen || isMobile ? "flex" : "none"} isSideBarOpen={isSidebarOpen} closeSidebar={closeSidebar} />
+                )}
 
                 {/* Hamburger Icon for Mobile */}
                 <IconButton
