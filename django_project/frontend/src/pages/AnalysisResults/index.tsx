@@ -410,11 +410,21 @@ export default function AnalysisResults() {
 
 
                   {/* Apply Filters Button */}
-                  <Button variant="ghost" onClick={() => {
-                    setRegion("");
-                    setDate("");
-                    setType("");
-                  }}>
+                  <Button 
+                    onClick={() => {
+                      setRegion("");
+                      setDate("");
+                      setType("");
+                    }}
+                    colorScheme="teal"
+                    variant="outline"
+                    borderColor="teal.500"
+                    textColor="teal.600"
+                    fontWeight={700}
+                    h={8}
+                    width="100%"
+                    borderRadius="md"
+                  >
                     Clear Filters
                   </Button>
 
