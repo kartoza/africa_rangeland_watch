@@ -11,6 +11,7 @@ import { Analysis } from "../../store/analysisSlice";
 import CONFIG from "../../config";
 import React from "react";
 import { fetchAnalysis } from "../../store/userAnalysisSlice";
+import { getAnalysisSummary } from "../../utils/analysisSummary";
 
 interface DashboardSettingsProps {
   isSettingsOpen: boolean;
@@ -166,7 +167,7 @@ export const DashboardSettingsModal: React.FC<DashboardSettingsProps> = ({
                             bg={selectedUserAnalysis?.id === analysis.id ? "blue.100" : "white"}
                             onClick={() => setSelectedUserAnalysis(analysis)}
                         >
-                            {analysis.id}
+                            {getAnalysisSummary(analysis)?.title}
                         </ListItem>
                         ))}
                     </List>
@@ -205,7 +206,7 @@ export const DashboardSettingsModal: React.FC<DashboardSettingsProps> = ({
                             bg={selectedDashboardAnalysis?.id === analysis.id ? "red.100" : "white"}
                             onClick={() => setSelectedDashboardAnalysis(analysis)}
                         >
-                            {analysis.id}
+                            {getAnalysisSummary(analysis)?.title}
                         </ListItem>
                         ))}
                     </List>
