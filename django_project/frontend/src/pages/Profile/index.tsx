@@ -15,7 +15,7 @@ import {
   Td,
   useToast,
   Tooltip,
-  Text
+  Text,
 } from "@chakra-ui/react";
 import React, { ChangeEvent, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
@@ -29,6 +29,14 @@ import {
 import { AppDispatch, RootState } from '../../store';
 import RequestOrganisation from "../../components/RequestOrganisation";
 import ChangePasswordModal from "../../components/ChangePassword";
+import countries from "world-countries";
+import Select from "react-select";
+
+
+const countryOptions = countries.map((country) => ({
+  value: country.cca2,
+  label: country.name.common,
+}));
 
 
 export default function ProfileInformationPage() {
@@ -42,6 +50,7 @@ export default function ProfileInformationPage() {
 
   const [country, setCountry] = useState('');
   const [user_role, setUserRole] = useState('');
+  const [purpose, setPurpose] = useState('');
   const [is_support_staff, setIsSupportStaff] = useState(false);
   const [first_name, setFirstName] = useState('');
   const [last_name, setLastName] = useState('');
@@ -174,6 +183,15 @@ export default function ProfileInformationPage() {
   const handleInputChange = () => {
     setIsChanged(true);
   };
+
+  const [selectedCountry, setSelectedCountry] = useState<{ value: string; label: string } | null>(null);
+
+  useEffect(() => {
+    if (country) {
+      const foundCountry = countryOptions.find((c) => c.label === country);
+      if (foundCountry) setSelectedCountry(foundCountry);
+    }
+  }, [country]);
 
   return (
     <>
@@ -342,7 +360,7 @@ export default function ProfileInformationPage() {
                   </Heading>
                   <Input
                     placeholder="What will you be using the platform for?"
-                    onChange={(e) => { setUserRole(e.target.value); handleInputChange(); }}
+                    onChange={(e) => { setPurpose(e.target.value); handleInputChange(); }}
                     borderRadius="5px"
                     borderWidth="1px"
                     borderColor="gray.500"
@@ -396,13 +414,16 @@ export default function ProfileInformationPage() {
                   <Heading as="h6" size="xs" color="black" mb="2">
                     Country
                   </Heading>
-                  <Input
-                    value={country}
-                    onChange={(e) => { setCountry(e.target.value); handleInputChange(); }}
-                    placeholder="South Africa"
-                    borderRadius="5px"
-                    borderWidth="1px"
-                    borderColor="gray.500"
+                  <Select
+                    options={countryOptions}
+                    value={selectedCountry}
+                    onChange={(selectedOption) => {
+                      setSelectedCountry(selectedOption); 
+                      setCountry(selectedOption?.label);
+                      handleInputChange();
+                    }}
+                    placeholder="Select a country..."
+                    isSearchable
                   />
                 </Flex>
               </Flex>
