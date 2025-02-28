@@ -507,6 +507,20 @@ class InputLayer:
         return landscapesDict
 
     def get_selected_area(self, aoi, is_custom_geom=False):
+        """
+        Get a FeatureCollection from area of interest.
+
+        Parameters
+        ----------
+        aoi : ee.Polygon
+            Polygon area of interest.
+        is_custom_geom : boolean
+            If False, then find Communities polygon that intersects with aoi.
+
+        Returns
+        -------
+        ee.FeatureCollection
+        """
         communities = self.get_communities()
         selected_area = None
         if is_custom_geom:
@@ -835,11 +849,7 @@ def get_s2_cloud_masked(
         .filterBounds(aoi) \
         .filterDate(start_date, end_date) \
         .filter(
-            ee.Filter.lte(
-                'CLOUDY_PIXEL_PERCENTAGE',
-                scene_cloud_threshold
-            )
-        )
+            ee.Filter.lte('CLOUDY_PIXEL_PERCENTAGE', scene_cloud_threshold))
 
     s2_clouds = ee.ImageCollection(
         GEEAsset.fetch_asset_source('sentinel2_clouds')
@@ -1496,7 +1506,24 @@ def calculate_firefreq(aoi, start_date, end_date):
 
 
 def calculate_baseline(aoi, start_date, end_date, is_custom_geom=False):
-    """Calculate baseline by start_date, end_date, and area of interest."""
+    """
+    Calculate baseline statistics.
+
+    Parameters
+    ----------
+    aoi : ee.Polygon
+        Polygon area of interest.
+    start_date : str
+        Start date to calculate baseline.
+    end_date : str
+        End date to calculate baseline.
+    is_custom_geom : boolean
+        If False, then use Communities polygon that intersects with aoi.
+
+    Returns
+    -------
+    ee.Image
+    """
     input_layer = InputLayer()
     selected_area = input_layer.get_selected_area(aoi, is_custom_geom)
 
@@ -1584,7 +1611,26 @@ def calculate_baseline(aoi, start_date, end_date, is_custom_geom=False):
 def get_sentinel_by_resolution(
     aoi, start_date, end_date, resolution, resolution_step
 ):
-    """Generate temporal timeseries stats."""
+    """
+    Get sentinel by resolution.
+
+    Parameters
+    ----------
+    aoi : ee.Polygon
+        Polygon area of interest.
+    start_date : str
+        Start date to calculate baseline.
+    end_date : str
+        End date to calculate baseline.
+    resolution : str
+        Temporal resolution: month or year.
+    resolution_step : str
+        Resolution: 1 for each month or 3 for quarterly.
+
+    Returns
+    -------
+    ee.ImageCollection
+    """
     sentinel_2 = get_s2_cloud_masked(
         aoi, start_date, end_date, scene_cloud_threshold=50
     )
@@ -1602,6 +1648,28 @@ def calculate_temporal(
     aoi, start_date, end_date, resolution, resolution_step,
     is_custom_geom=False
 ):
+    """
+    Calculate temporal timeseries stats.
+
+    Parameters
+    ----------
+    aoi : ee.Polygon
+        Polygon area of interest.
+    start_date : str
+        Start date to calculate baseline.
+    end_date : str
+        End date to calculate baseline.
+    resolution : str
+        Temporal resolution: month or year.
+    resolution_step : str
+        Resolution: 1 for each month or 3 for quarterly.
+    is_custom_geom : boolean
+        If False, then use Communities polygon that intersects with aoi.
+
+    Returns
+    -------
+    ee.ImageCollection
+    """
     input_layer = InputLayer()
     selected_area = input_layer.get_selected_area(aoi, is_custom_geom)
     geo = selected_area.geometry().bounds()
