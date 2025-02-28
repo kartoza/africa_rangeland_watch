@@ -14,6 +14,9 @@ S2_BANDS = ['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B11', 'B12']
 S2_NAMES = [
     'cb', 'blue', 'green', 'red', 'R1', 'R2', 'R3', 'nir', 'swir1', 'swir2']
 
+DEFAULT_SCENE_CLOUD_THRESHOLD = 20
+DEFAULT_CLOUD_MASK_PROBABILITY = 30
+
 # Bands to select after processing
 select_bands = [
     'blue', 'green', 'red', 'R2', 'nir', 'swir1', 'ndvi', 'nbr', 'evi']
@@ -503,6 +506,20 @@ class InputLayer:
         }
         return landscapesDict
 
+    def get_selected_area(self, aoi, is_custom_geom=False):
+        communities = self.get_communities()
+        selected_area = None
+        if is_custom_geom:
+            selected_area = ee.FeatureCollection([
+                ee.Feature(aoi, {'name': 'Custom Area'})
+            ])
+            selected_area = selected_area.map(lambda feature: feature.set(
+                'area', feature.geometry().area().divide(10000)
+            ))
+        else:
+            selected_area = communities.filterBounds(aoi)
+        return selected_area
+
 
 class AnalysisResultsCacheUtils:
     """Analysis results cache utilities."""
@@ -772,7 +789,10 @@ def add_indices(image):
     return image.addBands([ndvi, nbr, evi])
 
 
-def get_s2_cloud_masked(aoi, start_date, end_date):
+def get_s2_cloud_masked(
+    aoi, start_date, end_date,
+    scene_cloud_threshold=None, cloud_mask_probability=None
+):
     """
     Retrieves a cloud-masked Sentinel-2 image collection over
         a specified area and date range.
@@ -803,12 +823,23 @@ def get_s2_cloud_masked(aoi, start_date, end_date):
     >>> # Print the number of images retrieved
     >>> print('Number of images:', s2_collection.size().getInfo())
     """
+    scene_cloud_threshold = (
+        scene_cloud_threshold or DEFAULT_SCENE_CLOUD_THRESHOLD
+    )
+    cloud_mask_probability = (
+        cloud_mask_probability or DEFAULT_CLOUD_MASK_PROBABILITY
+    )
     s2_sr = ee.ImageCollection(
         GEEAsset.fetch_asset_source('sentinel2_harmonized')
     ) \
         .filterBounds(aoi) \
         .filterDate(start_date, end_date) \
-        .filter(ee.Filter.lte('CLOUDY_PIXEL_PERCENTAGE', 20))
+        .filter(
+            ee.Filter.lte(
+                'CLOUDY_PIXEL_PERCENTAGE',
+                scene_cloud_threshold
+            )
+        )
 
     s2_clouds = ee.ImageCollection(
         GEEAsset.fetch_asset_source('sentinel2_clouds')
@@ -842,7 +873,9 @@ def get_s2_cloud_masked(aoi, start_date, end_date):
         """
         img = ee.Image(feature.get('primary'))
         cloud_prob = ee.Image(feature.get('secondary'))
-        is_not_cloud = cloud_prob.select('probability').lt(30)
+        is_not_cloud = cloud_prob.select(
+            'probability'
+        ).lt(cloud_mask_probability)
         return img.updateMask(
             is_not_cloud
         ).copyProperties(img, img.propertyNames())
@@ -975,8 +1008,9 @@ def quarterly_medians(collection, date_start, unit, step, reducer):
     new_collection = ee.ImageCollection(
         date_ranges.map(make_time_slice))
 
-    new_collection = new_collection.filter(
-        ee.Filter.inList('month', [1, 4, 7, 10]))
+    if step == 3:
+        new_collection = new_collection.filter(
+            ee.Filter.inList('month', [1, 4, 7, 10]))
 
     return new_collection
 
@@ -1464,17 +1498,7 @@ def calculate_firefreq(aoi, start_date, end_date):
 def calculate_baseline(aoi, start_date, end_date, is_custom_geom=False):
     """Calculate baseline by start_date, end_date, and area of interest."""
     input_layer = InputLayer()
-    communities = input_layer.get_communities()
-    selected_area = None
-    if is_custom_geom:
-        selected_area = ee.FeatureCollection([
-            ee.Feature(aoi, {'name': 'Custom Area'})
-        ])
-        selected_area = selected_area.map(lambda feature: feature.set(
-            'area', feature.geometry().area().divide(10000)
-        ))
-    else:
-        selected_area = communities.filterBounds(aoi)
+    selected_area = input_layer.get_selected_area(aoi, is_custom_geom)
 
     # Get MODIS vegetation data
     modis_veg = (ee.ImageCollection(
@@ -1555,3 +1579,51 @@ def calculate_baseline(aoi, start_date, end_date, is_custom_geom=False):
     reduced = reduced.distinct(['Name', 'Area ha'])
 
     return reduced
+
+
+def get_sentinel_by_resolution(
+    aoi, start_date, end_date, resolution, resolution_step
+):
+    """Generate temporal timeseries stats."""
+    sentinel_2 = get_s2_cloud_masked(
+        aoi, start_date, end_date, scene_cloud_threshold=50
+    )
+    sent_quarterly = (
+        quarterly_medians(
+            sentinel_2, start_date, resolution, resolution_step,
+            ee.Reducer.median()
+        )
+    )
+    sent_quarterly = sent_quarterly.map(lambda i: i.rename(select_bands))
+    return sent_quarterly
+
+
+def calculate_temporal(
+    aoi, start_date, end_date, resolution, resolution_step,
+    is_custom_geom=False
+):
+    input_layer = InputLayer()
+    selected_area = input_layer.get_selected_area(aoi, is_custom_geom)
+    geo = selected_area.geometry().bounds()
+
+    classifier = train_bgt(
+        geo, GEEAsset.fetch_asset_source('random_forest_training')
+    )
+    col = get_sentinel_by_resolution(
+        geo, start_date, end_date, resolution, resolution_step
+    )
+
+    def process_image(i):
+        bg = classify_bgt(i, classifier).select('bare')
+        img = i.select(['evi', 'ndvi']).addBands(bg)
+        reduced = img.reduceRegions(
+            collection=selected_area,
+            reducer=ee.Reducer.mean(),
+            scale=120,
+            tileScale=4
+        )
+        reduced = reduced.map(
+            lambda ft: ft.set('year', i.get('year'), 'month', i.get('month')))
+        return reduced
+
+    return col.map(process_image).flatten()
