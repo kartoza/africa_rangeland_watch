@@ -192,7 +192,7 @@ class InputLayer:
 
     def get_soil_carbon(
         self, start_date: datetime.date = None, end_date: datetime.date = None,
-        clip_to_countries = True
+        clip_to_countries = True, aoi = None
     ):
         """
         Get image for soil carbon mean.
@@ -253,6 +253,10 @@ class InputLayer:
         ).mean()
         if clip_to_countries:
             soc_lt_mean = soc_lt_mean.clipToCollection(self.countries)
+        elif aoi:
+            soc_lt_mean = soc_lt_mean.clipToCollection(
+                ee.FeatureCollection([ee.Feature(aoi, {})])
+            )
         return soc_lt_mean
 
     def get_grazing_capacity(self):
@@ -310,7 +314,7 @@ class InputLayer:
 
     def get_soil_carbon_change(
         self, start_date: datetime.date = None, end_date: datetime.date = None,
-        clip_to_countries = True
+        clip_to_countries = True, aoi = None
     ):
         """
         Get soil carbon change, clipped by countries.
@@ -333,6 +337,10 @@ class InputLayer:
                         multiply(35))
         if clip_to_countries:
             soc_lt_trend = soc_lt_trend.clipToCollection(self.countries)
+        elif aoi:
+            soc_lt_trend = soc_lt_trend.clipToCollection(
+                ee.FeatureCollection([ee.Feature(aoi, {})])
+            )
         return soc_lt_trend
 
     def get_spatial_layer_dict(
@@ -1453,17 +1461,27 @@ def calculate_firefreq(aoi, start_date, end_date):
     return ba_count.rename('fireFreq')
 
 
-def calculate_baseline(aoi, start_date, end_date):
+def calculate_baseline(aoi, start_date, end_date, is_custom_geom=False):
     """Calculate baseline by start_date, end_date, and area of interest."""
     input_layer = InputLayer()
     communities = input_layer.get_communities()
-    selected_area = communities.filterBounds(aoi)
+    selected_area = None
+    if is_custom_geom:
+        selected_area = ee.FeatureCollection([
+            ee.Feature(aoi, {'name': 'Custom Area'})
+        ])
+        selected_area = selected_area.map(lambda feature: feature.set(
+            'area', feature.geometry().area().divide(10000)
+        ))
+    else:
+        selected_area = communities.filterBounds(aoi)
 
     # Get MODIS vegetation data
     modis_veg = (ee.ImageCollection(
                     GEEAsset.fetch_asset_source('modis_vegetation')
                 )
                 .filterDate(start_date, end_date)
+                .filterBounds(aoi)
                 .select(['NDVI', 'EVI'])
                 .map(lambda i: i.divide(10000)))
     evi_baseline = modis_veg.select('EVI').median()
@@ -1473,6 +1491,7 @@ def calculate_baseline(aoi, start_date, end_date):
                 GEEAsset.fetch_asset_source('cgls_ground_cover')
             )
             .filterDate(start_date, end_date)
+            .filterBounds(aoi)
             .select(
                 [
                     'bare-coverfraction', 'crops-coverfraction',
@@ -1493,15 +1512,16 @@ def calculate_baseline(aoi, start_date, end_date):
 
     # TODO: add grazing capacity
 
-    # fire freq, no aoi since at the end we extract means values
-    fire_freq = calculate_firefreq(None, start_date, end_date).divide(18)
+    # fire freq
+    fire_freq = calculate_firefreq(aoi, start_date, end_date).divide(18)
     fire_freq = fire_freq.unmask(0)
 
     # SOCltMean
     soc_lt_mean = input_layer.get_soil_carbon(
         datetime.date.fromisoformat(start_date),
         datetime.date.fromisoformat(end_date),
-        False
+        False,
+        aoi
     )
     soc_lt_mean = soc_lt_mean.rename('SOCltMean')
 
@@ -1509,7 +1529,8 @@ def calculate_baseline(aoi, start_date, end_date):
     soc_lt_trend = input_layer.get_soil_carbon_change(
         datetime.date.fromisoformat(start_date),
         datetime.date.fromisoformat(end_date),
-        False
+        False,
+        aoi
     )
     soc_lt_trend = soc_lt_trend.rename('SOCltTrend')
 
