@@ -239,7 +239,7 @@
 },
 {
     "model": "analysis.geeasset",
-    "pk": 7,
+    "pk": 23,
     "fields": {
         "key": "modis_vegetation_061",
         "source": "MODIS/061/MOD13Q1",
