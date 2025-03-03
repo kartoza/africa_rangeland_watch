@@ -54,7 +54,10 @@ class Command(BaseCommand):
             'analysisType': 'Baseline',
             'variable': 'Limpopo NP',
             't_resolution': '',
-
+            'Baseline': {
+                'startDate': '',
+                'endDate': ''
+            },
             'Temporal': {
                 'Annual': {
                     'ref': '',

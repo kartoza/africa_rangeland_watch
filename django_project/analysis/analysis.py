@@ -674,10 +674,32 @@ def run_analysis(lat: float, lon: float, analysis_dict: dict, *args, **kwargs):
         return analysis_cache.create_analysis_cache(reduced.getInfo())
 
     if analysis_dict['analysisType'] == "Baseline":
-        if custom_geom:
-            select = baseline_table.filterBounds(custom_geom)
+        has_dates = (
+            analysis_dict['Baseline']['startDate'] and
+            analysis_dict['Baseline']['endDate']
+        )
+        if has_dates:
+            if custom_geom:
+                select = calculate_baseline(
+                    ee.Geometry.Polygon(custom_geom['coordinates']) if
+                    custom_geom['type'] == 'Polygon' else
+                    ee.Geometry.MultiPolygon(custom_geom['coordinates']),
+                    analysis_dict['Baseline']['startDate'],
+                    analysis_dict['Baseline']['endDate'],
+                    is_custom_geom=True
+                )
+            else:
+                select = calculate_baseline(
+                    geo,
+                    analysis_dict['Baseline']['startDate'],
+                    analysis_dict['Baseline']['endDate'],
+                    is_custom_geom=False
+                )
         else:
-            select = baseline_table.filterBounds(selected_geos)
+            if custom_geom:
+                select = baseline_table.filterBounds(custom_geom)
+            else:
+                select = baseline_table.filterBounds(selected_geos)
         return analysis_cache.create_analysis_cache(select.getInfo())
 
     if analysis_dict['analysisType'] == "Temporal":
@@ -1515,8 +1537,8 @@ def calculate_baseline(aoi, start_date, end_date, is_custom_geom=False):
 
     Parameters
     ----------
-    aoi : ee.Polygon
-        Polygon area of interest.
+    aoi : ee.Geometry
+        Area of interest.
     start_date : str
         Start date to calculate baseline.
     end_date : str
