@@ -25,6 +25,8 @@ import { useDispatch } from "react-redux";
 import { logoutUser } from "../../store/authSlice";
 
 interface Props extends ChakraProps {
+  closeSidebar?: () => void;
+  isSideBarOpen?: boolean;
   className?: string;
 }
 
@@ -175,7 +177,11 @@ export default function Sidebar(props: Props) {
       
 
       {/* Drawer for full mobile sidebar */}
-      <Drawer isOpen={isOpen} placement="left" onClose={onClose}>
+      <Drawer 
+        isOpen={props.isSideBarOpen} 
+        placement="left" 
+        onClose={() => (props.closeSidebar())}
+      >
         <DrawerOverlay>
           <DrawerContent bg="green.900">
             <DrawerCloseButton color="white" />

@@ -88,24 +88,22 @@ export default function MegaMenu({ hoveredSection, isUserAvatarHovered }: MegaMe
           {/* About Section */}
           {hoveredSection === "about" && (
             <Flex gap="16px" flexDirection="column" alignItems="start">
-              <Text
-                color="black"
-                fontSize={{ base: "15px", sm: "18px" }}
-                fontWeight={700}
-                onClick={handleClick}
-                cursor="pointer"
-              >
+              <Text color="black" fontSize={{ base: "15px", sm: "18px" }} fontWeight={700} onClick={handleClick} cursor="pointer">
                 About
               </Text>
               <Flex gap="12px" flexDirection="column" alignItems="start">
                 {menuItems.about.map((item) => (
                   <Box
                     key={item.label}
-                    onClick={() => handleNavigation(item.to, item.onClick)}
-                    cursor="pointer"
+                    onClick={() => item.label !== "Conversation" && handleNavigation(item.to, item.onClick)}
+                    cursor={item.label === "Conversation" ? "not-allowed" : "pointer"}
                     fontSize={{ base: "13px", sm: "medium" }}
                   >
-                    <Text color="black" fontSize="16px" fontWeight={400}>
+                    <Text 
+                      color={item.label === "Conversation" ? "gray.400" : "black"} 
+                      fontSize="16px" 
+                      fontWeight={400}
+                    >
                       {item.label}
                     </Text>
                   </Box>
@@ -148,11 +146,15 @@ export default function MegaMenu({ hoveredSection, isUserAvatarHovered }: MegaMe
                 {menuItems.resources.map((item) => (
                   <Box
                     key={item.label}
-                    onClick={() => handleNavigation(item.to, item.onClick)}
-                    cursor="pointer"
+                    onClick={() => item.label !== "ARW Documentation" && handleNavigation(item.to, item.onClick)}
+                    cursor={item.label === "ARW Documentation" ? "not-allowed" : "pointer"}
                     fontSize={{ base: "13px", sm: "medium" }}
                   >
-                    <Text color="black" fontSize="16px" fontWeight={400}>
+                    <Text 
+                      color={item.label === "ARW Documentation" ? "gray.400" : "black"} 
+                      fontSize="16px" 
+                      fontWeight={400}
+                    >
                       {item.label}
                     </Text>
                   </Box>
@@ -160,6 +162,7 @@ export default function MegaMenu({ hoveredSection, isUserAvatarHovered }: MegaMe
               </Flex>
             </Flex>
           )}
+
         </Flex>
       </Box>
     </Box>
