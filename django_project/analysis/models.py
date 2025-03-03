@@ -385,7 +385,10 @@ class GEEAsset(models.Model):
         cls, asset_key: str, start_date: str, end_date: str
     ) -> Tuple[bool, str, str]:
         """Check and get given dates within asset's start and end date."""
-        valid_start_date = cls.is_date_within_asset_period(asset_key, start_date)
+        valid_start_date = cls.is_date_within_asset_period(
+            asset_key,
+            start_date
+        )
         valid_end_date = cls.is_date_within_asset_period(asset_key, end_date)
         if not valid_start_date and not valid_end_date:
             return (False, None, None,)
