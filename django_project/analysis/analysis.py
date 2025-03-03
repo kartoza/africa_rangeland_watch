@@ -1509,6 +1509,10 @@ def calculate_baseline(aoi, start_date, end_date, is_custom_geom=False):
     """
     Calculate baseline statistics.
 
+    Note:
+    - each indicator is checked againts its asset's date availability
+    - only calculate date range or its subset in asset's date availability
+
     Parameters
     ----------
     aoi : ee.Polygon
@@ -1524,81 +1528,135 @@ def calculate_baseline(aoi, start_date, end_date, is_custom_geom=False):
     -------
     ee.Image
     """
+    image_list = []
     input_layer = InputLayer()
     selected_area = input_layer.get_selected_area(aoi, is_custom_geom)
 
     # Get MODIS vegetation data
-    modis_veg = (ee.ImageCollection(
-                    GEEAsset.fetch_asset_source('modis_vegetation')
+    valid, start_dt, end_dt = GEEAsset.get_dates_within_asset_period(
+        'modis_vegetation_061', start_date, end_date
+    )
+    if valid:
+        modis_veg = (ee.ImageCollection(
+                        GEEAsset.fetch_asset_source('modis_vegetation_061')
+                    )
+                    .filterDate(start_dt, end_dt)
+                    .filterBounds(aoi)
+                    .select(['NDVI', 'EVI'])
+                    .map(lambda i: i.divide(10000)))
+        evi_baseline = modis_veg.select('EVI').median()
+        ndvi_baseline = modis_veg.select('NDVI').median()
+        image_list.append({
+            'asset': evi_baseline,
+            'attribute': 'EVI',
+            'label': 'EVI'
+        })
+        image_list.append({
+            'asset': ndvi_baseline,
+            'attribute': 'NDVI',
+            'label': 'NDVI'
+        })
+
+    # Get CGLS Ground Cover data
+    valid, start_dt, end_dt = GEEAsset.get_dates_within_asset_period(
+        'cgls_ground_cover', start_date, end_date
+    )
+    if valid:
+        cgls = (ee.ImageCollection(
+                    GEEAsset.fetch_asset_source('cgls_ground_cover')
                 )
-                .filterDate(start_date, end_date)
+                .filterDate(start_dt, end_dt)
                 .filterBounds(aoi)
-                .select(['NDVI', 'EVI'])
-                .map(lambda i: i.divide(10000)))
-    evi_baseline = modis_veg.select('EVI').median()
-    ndvi_baseline = modis_veg.select('NDVI').median()
+                .select(
+                    [
+                        'bare-coverfraction', 'crops-coverfraction',
+                        'urban-coverfraction', 'shrub-coverfraction',
+                        'grass-coverfraction', 'tree-coverfraction'
+                    ]
+                ))
+        cgls = cgls.median()
 
-    cgls = (ee.ImageCollection(
-                GEEAsset.fetch_asset_source('cgls_ground_cover')
-            )
-            .filterDate(start_date, end_date)
-            .filterBounds(aoi)
-            .select(
-                [
-                    'bare-coverfraction', 'crops-coverfraction',
-                    'urban-coverfraction', 'shrub-coverfraction',
-                    'grass-coverfraction', 'tree-coverfraction'
-                ]
-            ))
-    cgls = cgls.median()
-
-    # Additional calculations for land cover fractions and grazing capacity
-    bg = cgls.select('bare-coverfraction').add(
-        cgls.select('urban-coverfraction')
-    )
-    t = cgls.select('tree-coverfraction').add(
-        cgls.select('shrub-coverfraction')
-    )
-    g = cgls.select('grass-coverfraction')
+        # Additional calculations for land cover fractions and grazing capacity
+        bg = cgls.select('bare-coverfraction').add(
+            cgls.select('urban-coverfraction')
+        )
+        t = cgls.select('tree-coverfraction').add(
+            cgls.select('shrub-coverfraction')
+        )
+        g = cgls.select('grass-coverfraction')
+        image_list.append({
+            'asset': bg,
+            'attribute': 'bare-coverfraction',
+            'label': 'Bare ground %'
+        })
+        image_list.append({
+            'asset': t,
+            'attribute': 'tree-coverfraction',
+            'label': 'Woody cover %'
+        })
+        image_list.append({
+            'asset': g,
+            'attribute': 'grass-coverfraction',
+            'label': 'Grass cover %'
+        })
 
     # TODO: add grazing capacity
 
     # fire freq
-    fire_freq = calculate_firefreq(aoi, start_date, end_date).divide(18)
-    fire_freq = fire_freq.unmask(0)
-
-    # SOCltMean
-    soc_lt_mean = input_layer.get_soil_carbon(
-        datetime.date.fromisoformat(start_date),
-        datetime.date.fromisoformat(end_date),
-        False,
-        aoi
+    valid, start_dt, end_dt = GEEAsset.get_dates_within_asset_period(
+        'fire_cci', start_date, end_date
     )
-    soc_lt_mean = soc_lt_mean.rename('SOCltMean')
+    if valid:
+        fire_freq = calculate_firefreq(aoi, start_dt, end_dt).divide(18)
+        fire_freq = fire_freq.unmask(0)
+        image_list.append({
+            'asset': fire_freq,
+            'attribute': 'fireFreq',
+            'label': 'Fires/yr'
+        })
 
-    # SOCltTrend
-    soc_lt_trend = input_layer.get_soil_carbon_change(
-        datetime.date.fromisoformat(start_date),
-        datetime.date.fromisoformat(end_date),
-        False,
-        aoi
+    # SOCltMean and SOCltTrend
+    valid, start_dt, end_dt = GEEAsset.get_dates_within_asset_period(
+        'soil_carbon', start_date, end_date
     )
-    soc_lt_trend = soc_lt_trend.rename('SOCltTrend')
+    if valid:
+        soc_lt_mean = input_layer.get_soil_carbon(
+            datetime.date.fromisoformat(start_dt),
+            datetime.date.fromisoformat(end_dt),
+            False,
+            aoi
+        )
+        soc_lt_mean = soc_lt_mean.rename('SOCltMean')
+        image_list.append({
+            'asset': soc_lt_mean,
+            'attribute': 'SOCltMean',
+            'label': 'SOC kg/m2'
+        })
+
+        # SOCltTrend
+        soc_lt_trend = input_layer.get_soil_carbon_change(
+            datetime.date.fromisoformat(start_dt),
+            datetime.date.fromisoformat(end_dt),
+            False,
+            aoi
+        )
+        soc_lt_trend = soc_lt_trend.rename('SOCltTrend')
+        image_list.append({
+            'asset': soc_lt_trend,
+            'attribute': 'SOCltTrend',
+            'label': 'SOC change kg/m2'
+        })
+
+    if len(image_list) == 0:
+        raise ValueError('No baseline in the input date ranges.')
 
     # Combining all layers for analysis and renaming for clarity
     combined = ee.Image.cat(
-        evi_baseline, ndvi_baseline, bg, t, g,
-        fire_freq, soc_lt_mean, soc_lt_trend
+        *[img['asset'] for img in image_list]
     )
     combined = combined.select(
-        [
-            'EVI', 'NDVI', 'bare-coverfraction', 'tree-coverfraction',
-            'grass-coverfraction', 'fireFreq', 'SOCltMean', 'SOCltTrend'
-        ],
-        [
-            'EVI', 'NDVI', 'Bare ground %', 'Woody cover %', 'Grass cover %',
-            'Fires/yr', 'SOC kg/m2', 'SOC change kg/m2'
-        ]
+        [img['attribute'] for img in image_list],
+        [img['label'] for img in image_list]
     )
 
     # Reducing regions to extract mean values per polygon

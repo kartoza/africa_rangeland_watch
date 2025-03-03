@@ -236,5 +236,18 @@
             "end_date": "2020-12-31"
         }
     }
+},
+{
+    "model": "analysis.geeasset",
+    "pk": 7,
+    "fields": {
+        "key": "modis_vegetation_061",
+        "source": "MODIS/061/MOD13Q1",
+        "type": "image_collection",
+        "metadata": {
+            "start_date": "2000-02-18",
+            "end_date": "2025-02-18"
+        }
+    }
 }
 ]
