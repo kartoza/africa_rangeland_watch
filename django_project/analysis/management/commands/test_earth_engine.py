@@ -54,7 +54,10 @@ class Command(BaseCommand):
             'analysisType': 'Baseline',
             'variable': 'Limpopo NP',
             't_resolution': '',
-
+            'Baseline': {
+                'startDate': '',
+                'endDate': ''
+            },
             'Temporal': {
                 'Annual': {
                     'ref': '',
@@ -199,6 +202,48 @@ class Command(BaseCommand):
         print('\n')
         print('Temporal Output Plot: \n', temporal_output_plot)
 
+
+    def run_monthly_temporal_analysis(self):
+        """
+        Run monthly temporal analysis
+        """
+        print("Running monthly temporal analysis")
+
+        analysis_dict = {
+            'landscape': 'Limpopo NP',
+            'analysisType': 'Temporal',
+            'variable': 'EVI',
+            't_resolution': 'Monthly',
+            'Temporal': {
+                'Annual': {
+                    'ref': 2023,
+                    'test': 2023
+                },
+                'Quarterly': {
+                    'ref': '',
+                    'test': ''
+                },
+                'Monthly': {
+                    'ref': 5,
+                    'test': 8
+                }
+            },
+            'Spatial': {
+                'Annual': '',
+                'Quarterly': ''
+            }
+        }
+        lat = -22.843383205972945
+        lon = 31.64049468754881
+        temporal_output, temporal_output_plot = run_analysis(
+            lon=lon,
+            lat=lat,
+            analysis_dict=analysis_dict
+        )
+        print('Temporal Output: \n', temporal_output)
+        print('\n')
+        print('Temporal Output Plot: \n', temporal_output_plot)
+
     def handle(self, *args, **options):
         logging.basicConfig(level=logging.DEBUG)
 
@@ -209,3 +254,4 @@ class Command(BaseCommand):
         self.run_spatial_analysis()
         self.run_annual_temporal_analysis()
         self.run_quarterly_temporal_analysis()
+        self.run_monthly_temporal_analysis()
