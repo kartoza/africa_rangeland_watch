@@ -1,8 +1,9 @@
 from collections import defaultdict
 from django.shortcuts import render  # noqa: F401
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from django.contrib.auth.decorators import login_required
 from .models import InputLayer
+from django.shortcuts import get_object_or_404
 
 
 @login_required
@@ -31,3 +32,37 @@ def user_input_layers(request):
 
     # Return grouped layers as a JsonResponse
     return JsonResponse({"grouped_layers": grouped_layers})
+
+
+@login_required
+def delete_layer(request, uuid):
+    """
+    View to delete a user-defined layer by UUID.
+    """
+    layer = get_object_or_404(InputLayer, uuid=uuid, created_by=request.user)
+    layer.delete()
+    return JsonResponse({"message": "Layer deleted successfully"}, status=200)
+
+
+@login_required
+def download_layer(request, uuid):
+    """
+    View to download a user-defined layer file.
+    """
+    layer = get_object_or_404(InputLayer, uuid=uuid, created_by=request.user)
+
+    if not layer.data_provider or not layer.data_provider.file:
+        return JsonResponse(
+            {"error": "No file available for this layer"},
+            status=400
+        )
+
+    response = HttpResponse(
+        layer.data_provider.file,
+        content_type='application/octet-stream'
+    )
+    response['Content-Disposition'] = (
+        f'attachment; filename="{layer.name}.zip"'
+    )
+
+    return response

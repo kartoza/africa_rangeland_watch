@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Box, Heading, Flex, Button, Text, Divider, Tag, TagLabel, Card, CardBody, Image, Input, IconButton, Modal, ModalOverlay, ModalHeader, ModalCloseButton, ModalBody, ModalContent, Checkbox, Select, Collapse } from "@chakra-ui/react";
 import { FaDownload, FaEye, FaFilter, FaPlus, FaTrashAlt } from "react-icons/fa";
-import { fetchUserDefinedLayers } from "../../store/layerSlice";
+import { deleteLayer, downloadLayer, fetchUserDefinedLayers } from "../../store/layerSlice";
 import { AppDispatch } from "../../store";
 import Helmet from "react-helmet";
 import Header from "../../components/Header";
@@ -36,6 +36,8 @@ export default function UploadedResults() {
   const [isModalOpen, setModalOpen] = useState(false);
   const [currentLayer, setCurrentLayer] = useState(null);
   const [isUploaderOpen, setIsUploaderOpen] = useState(false);
+  const [selectedLayers, setSelectedLayers] = useState<Set<string>>(new Set());
+  
 
   
   const { layers, loading, error } = useSelector((state: any) => state.layer);
@@ -66,48 +68,36 @@ export default function UploadedResults() {
     }
   };
 
-  const handleDelete = (uuid: string) => {
-    // Handle deletion of the layer by uuid
-    console.log("Deleting Layer with UUID: ", uuid);
-  };
-
-  const handleDownload = (layer: Layer) => {
-    // Handle downloading the layer (logic here depends on your requirements)
-    console.log("Downloading Layer: ", layer);
-  };
-
   const handleView = (layer: Layer) => {
-    setCurrentLayer(layer);  // Set the layer for modal
-    setModalOpen(true);       // Open the modal
+    setCurrentLayer(layer);
+    setModalOpen(true);
   };
 
   const handleCloseModal = () => {
-    setModalOpen(false);     // Close the modal
+    setModalOpen(false);
   };
 
-  // Inside your component:
-const [selectedLayers, setSelectedLayers] = useState<Set<string>>(new Set()); // For storing selected layers' UUIDs
 
-// Handle the selection/deselection of layers
+
 const handleLayerSelection = (uuid: string) => {
-  setSelectedLayers((prevSelectedLayers) => {
-    const updatedSelectedLayers = new Set(prevSelectedLayers);
-    if (updatedSelectedLayers.has(uuid)) {
-      updatedSelectedLayers.delete(uuid); // Deselect the layer
+  setSelectedLayers(prevSelectedLayers => {
+    const updated = new Set(prevSelectedLayers);
+    if (updated.has(uuid)) {
+      updated.delete(uuid);
     } else {
-      updatedSelectedLayers.add(uuid); // Select the layer
+      updated.add(uuid);
     }
-    return updatedSelectedLayers;
+    return updated;
   });
 };
 
-// Handle downloading selected layers
-const handleDownloadSelected = () => {
+const handleDelete = (uuid: string) => {
+  dispatch(deleteLayer(uuid));
+};
+
+const handleDownload = () => {
   selectedLayers.forEach((uuid) => {
-    const layer = currentLayers.find((layer) => layer.uuid === uuid);
-    if (layer) {
-      handleDownload(layer); // Call your existing download handler for each selected layer
-    }
+    dispatch(downloadLayer(uuid));
   });
 };
 
@@ -206,7 +196,7 @@ const clearFilters = () => {
                 width="auto"
                 borderRadius="0px"
                 h={10}
-                onClick={handleDownloadSelected}
+                onClick={() => handleDownload()}
                 disabled={selectedLayers.size === 0} // Disable the button if no layers are selected
               >
                 Download Selected
@@ -217,19 +207,19 @@ const clearFilters = () => {
         <Collapse in={isFilterOpen} animateOpacity>
           <Box bg="gray.100" p={4} borderRadius="md" boxShadow="md" mt={2} width={{ base: "100%", md: "50%" }}>
             <Flex justify="space-between" align="center" mb={3}>
-                              <Text fontSize="lg" fontWeight="bold" color="gray.700">
-                                Filter Uploads
-                              </Text>
-                              <IconButton
-                                icon={<IoCloseSharp />}
-                                size="sm"
-                                onClick={() => setFilterOpen(!isFilterOpen)}
-                                aria-label="Close filters"
-                                variant="ghost"
-                                color="gray.600"
-                                _hover={{ color: "red.500" }}
-                              />
-                            </Flex>
+              <Text fontSize="lg" fontWeight="bold" color="gray.700">
+                Filter Uploads
+              </Text>
+              <IconButton
+                icon={<IoCloseSharp />}
+                size="sm"
+                onClick={() => setFilterOpen(!isFilterOpen)}
+                aria-label="Close filters"
+                variant="ghost"
+                color="gray.600"
+                _hover={{ color: "red.500" }}
+              />
+            </Flex>
             {/* Layer Type Filter */}
             <Select
               placeholder="Select Layer Type"

@@ -46,12 +46,38 @@ export const fetchUserDefinedLayers = createAsyncThunk(
   }
 );
 
-// Fetch all layers
-export const fetchLayers = createAsyncThunk(
-  'layer/fetchLayers',
-  async () => {
-    const response = await axios.get('/frontend-api/layer/');
-    return response.data;
+// Delete a layer
+export const deleteLayer = createAsyncThunk(
+  'layer/deleteLayer',
+  async (uuid: string, { rejectWithValue }) => {
+    try {
+      await axios.delete(`/delete-layer/${uuid}/`);
+      return uuid; // Return UUID to remove from state
+    } catch (error) {
+      return rejectWithValue("Failed to delete layer");
+    }
+  }
+);
+
+// Download a layer
+export const downloadLayer = createAsyncThunk(
+  'layer/downloadLayer',
+  async (uuid: string, { rejectWithValue }) => {
+    try {
+      const response = await axios.get(`/download-layer/${uuid}/`, {
+        responseType: 'blob', // Important for file downloads
+      });
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `${uuid}.zip`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      return uuid;
+    } catch (error) {
+      return rejectWithValue("Failed to download layer");
+    }
   }
 );
 
@@ -68,17 +94,6 @@ export const layerSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchLayers.pending, (state) => {
-        state.loading = true;
-      })
-      .addCase(fetchLayers.fulfilled, (state, action: PayloadAction<Layer[]>) => {
-        state.loading = false;
-        state.layers = action.payload;
-      })
-      .addCase(fetchLayers.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.error.message || 'An error occurred while fetching layers';
-      })
       .addCase(fetchUserDefinedLayers.pending, (state) => {
         state.loading = true;
       })
@@ -89,6 +104,12 @@ export const layerSlice = createSlice({
       .addCase(fetchUserDefinedLayers.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || 'An error occurred while fetching user-defined layers';
+      })
+      .addCase(deleteLayer.fulfilled, (state, action: PayloadAction<string>) => {
+        state.layers = state.layers.filter(layer => layer.uuid !== action.payload);
+      })
+      .addCase(downloadLayer.rejected, (state, action) => {
+        state.error = action.payload as string;
       });
   }
 });
