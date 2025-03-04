@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Box, Heading, Flex, Button, Text, Divider, Tag, TagLabel, Card, CardBody, Image, Input, IconButton, Modal, ModalOverlay, ModalHeader, ModalCloseButton, ModalBody, ModalContent, Checkbox, Select, Collapse } from "@chakra-ui/react";
+import { Box, Heading, Flex, Button, Text, Divider, Tag, TagLabel, Card, CardBody, Image, Input, IconButton, Modal, ModalOverlay, ModalHeader, ModalCloseButton, ModalBody, ModalContent, Checkbox, Select, Collapse, SimpleGrid } from "@chakra-ui/react";
 import { FaDownload, FaEye, FaFilter, FaPlus, FaTrashAlt } from "react-icons/fa";
 import { deleteLayer, downloadLayer, fetchUserDefinedLayers } from "../../store/layerSlice";
 import { AppDispatch } from "../../store";
@@ -220,6 +220,7 @@ const clearFilters = () => {
                 _hover={{ color: "red.500" }}
               />
             </Flex>
+            <SimpleGrid columns={2} spacing={4}>
             {/* Layer Type Filter */}
             <Select
               placeholder="Select Layer Type"
@@ -240,7 +241,6 @@ const clearFilters = () => {
               type="date"
               value={date}
               onChange={(e) => setDate(e.target.value)}
-              mt={2}
               borderColor="gray.400"
             />
 
@@ -258,6 +258,7 @@ const clearFilters = () => {
             >
               Clear Filters
             </Button>
+            </SimpleGrid>
           </Box>
         </Collapse>
 
