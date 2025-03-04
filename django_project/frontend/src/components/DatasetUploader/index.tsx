@@ -76,7 +76,8 @@ const DatasetUploader: React.FC = () => {
   return (
     <Popover placement="bottom-end">
       <PopoverTrigger>
-        <Button minWidth={150} colorScheme="orange_a200" size="sm" leftIcon={status === 'uploading' || status === 'processing' ? <Spinner size={'sm'} /> : null}>
+        <Button minWidth={150} h={10}
+                    borderRadius="5px"  colorScheme="orange_a200" size="sm" leftIcon={status === 'uploading' || status === 'processing' ? <Spinner size={'sm'} /> : null}>
           {status === 'uploading' || status === 'processing' ? 'Uploading': 'Upload'}
         </Button>
       </PopoverTrigger>
