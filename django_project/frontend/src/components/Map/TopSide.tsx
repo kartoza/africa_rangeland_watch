@@ -1,7 +1,8 @@
-import React, {useState} from 'react';
-import { Box, IconButton, Button, Flex, Spacer } from "@chakra-ui/react";
+import React from 'react';
+import { Box, Icon, Flex, Spacer, Tooltip } from "@chakra-ui/react";
 import { useSelector } from 'react-redux';
-import { HamburgerIcon } from "@chakra-ui/icons";
+import { HamburgerIcon, ExternalLinkIcon } from "@chakra-ui/icons";
+import { useNavigate } from 'react-router-dom';
 import DatasetUploader from '../DatasetUploader';
 import { selectIsLoggedIn } from "../../store/authSlice";
 
@@ -12,6 +13,8 @@ interface Props {
 /** Top side component of map. */
 export default function TopSide({ toggleClicked }: Props) {
   const isAuthenticated = useSelector(selectIsLoggedIn);
+  const navigate = useNavigate();
+
   return (
     <Box
       paddingX={4}
@@ -21,7 +24,8 @@ export default function TopSide({ toggleClicked }: Props) {
       boxSizing='border-box'
     >
       <Flex align="center" height="100%" flexGrow={1}>
-        <IconButton
+        <Box
+          as="button"
           onClick={toggleClicked}
           minWidth={4}
           height={6}
@@ -29,16 +33,31 @@ export default function TopSide({ toggleClicked }: Props) {
           border='1px solid #ddd'
           borderRadius={0}
           marginRight={4}
-          icon={<HamburgerIcon/>}
-          aria-label="Open Sidebar"
-          _hover={{
-            backgroundColor: '#eee'
-          }}
-        />
+          _hover={{ backgroundColor: '#eee' }}
+        >
+          <HamburgerIcon />
+        </Box>
+
         <Spacer />
-        { isAuthenticated && <DatasetUploader /> }
+        
+        {/* New Icon for navigating to Uploaded Resources */}
+        {isAuthenticated && (
+          <Tooltip label="View your uploads" aria-label="View your uploads">
+            <Box
+              as="span"
+              onClick={() => navigate('/uploaded-resources')}
+              cursor="pointer"
+              marginRight={4}
+              _hover={{ color: "blue.500" }}
+            >
+              <Icon as={ExternalLinkIcon} w={5} h={5} />
+            </Box>
+          </Tooltip>
+        )}
+
+        
+        {isAuthenticated && <DatasetUploader />}
       </Flex>
     </Box>
-  )
+  );
 }
-
