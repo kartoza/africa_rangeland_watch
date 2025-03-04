@@ -1,9 +1,13 @@
 from collections import defaultdict
 from django.shortcuts import render  # noqa: F401
-from django.http import JsonResponse, HttpResponse
+from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from .models import InputLayer
 from django.shortcuts import get_object_or_404
+import mimetypes
+import os
+from django.http import FileResponse
+
 
 
 @login_required
@@ -48,6 +52,7 @@ def delete_layer(request, uuid):
 def download_layer(request, uuid):
     """
     View to download a user-defined layer file.
+    Supports multiple formats: .zip, .geojson, .gpkg, .kml.
     """
     layer = get_object_or_404(InputLayer, uuid=uuid, created_by=request.user)
 
@@ -57,12 +62,14 @@ def download_layer(request, uuid):
             status=400
         )
 
-    response = HttpResponse(
-        layer.data_provider.file,
-        content_type='application/octet-stream'
+    file_path = layer.data_provider.file.path
+    file_name = os.path.basename(file_path)
+    content_type, _ = mimetypes.guess_type(file_path)
+
+    response = FileResponse(
+        open(file_path, 'rb'),
+        content_type=content_type or 'application/octet-stream'
     )
-    response['Content-Disposition'] = (
-        f'attachment; filename="{layer.name}.zip"'
-    )
+    response['Content-Disposition'] = f'attachment; filename="{file_name}"'
 
     return response
