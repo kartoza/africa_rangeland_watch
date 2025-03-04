@@ -155,7 +155,7 @@ const clearFilters = () => {
       {/* Main Content */}
       <Box flex="1" ml={{ base: "55px", md: "0px" }} mt={{ base: "0px", md: "20px" }} width={{ base: "80%", md: "auto" }} overflow={"hidden"}>
         <Heading size="lg" mb={6} color="black">
-          Uploaded Results
+          User Uploads
         </Heading>
 
         {/* Search & Action Row */}
