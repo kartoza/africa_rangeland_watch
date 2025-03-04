@@ -245,53 +245,52 @@ const DashboardPage: React.FC = () => {
 
             return (
               <DragDropContext onDragEnd={onDragEnd}>
-                <Droppable droppableId="dashboard" direction="horizontal">
-                  {(provided) => (
-                    <Grid
-                      templateColumns="repeat(3, 1fr)"
-                      gap={3}
-                      ref={provided.innerRef}
-                      {...provided.droppableProps}
-                    >
-                      {paginatedData.map((chart, index) => (
-                        <Draggable key={chart.card.id.toString()} draggableId={chart.card.id.toString()} index={index}>
-                          {(provided) => (
-                            <GridItem
-                              ref={provided.innerRef}
-                              {...provided.draggableProps}
-                              {...provided.dragHandleProps}
-                              bg="gray.200"
-                              border="1px solid"
-                              borderColor="gray.300"
-                              shadow="lg"
-                              rounded="lg"
-                              minH="400px"
-                              minW="450px"
-                              p={2}
-                            >
-                              <PanelGroup direction="vertical">
-                                <Panel defaultSize={50} minSize={20}>
-                                  <Panel
-                                    minSize={20}
-                                    style={{
-                                      width: '100%',
-                                      transition: 'opacity 0.3s ease',
-                                    }}
-                                  >
-                                    <ChartCard config={chart} />
-                                  </Panel>
-                                  <PanelResizeHandle />
-                                </Panel>
-                              </PanelGroup>
-                            </GridItem>
-                          )}
-                        </Draggable>
-                      ))}
-                      {provided.placeholder}
-                    </Grid>
-                  )}
-                </Droppable>
-              </DragDropContext>
+  <Droppable droppableId="dashboard" direction="horizontal">
+    {(provided) => (
+      <div
+        ref={provided.innerRef}
+        {...provided.droppableProps}
+        style={{ display: "flex", flexWrap: "wrap", gap: "16px", width: "100%" }} // Flex container with wrapping
+      >
+        {paginatedData.map((chart, index) => (
+          <Draggable key={chart.card.id.toString()} draggableId={chart.card.id.toString()} index={index}>
+            {(provided) => (
+              <div
+                ref={provided.innerRef}
+                {...provided.draggableProps}
+                {...provided.dragHandleProps}
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  backgroundColor: "gray.200",
+                  border: "1px solid gray",
+                  borderRadius: "8px",
+                  padding: "8px",
+                  height: "auto", // Ensure height is auto for dynamic resizing
+                  width: "calc(33.333% - 16px)", // This ensures 3 cards per row
+                  minWidth: "300px", // Ensure minimum width for resizing
+                }}
+              >
+                <PanelGroup direction="horizontal">
+                  <Panel key={chart.card.id.toString()} defaultSize={50} minSize={20}>
+                    <Panel minSize={20} style={{ width: "100%" }}>
+                      <ChartCard config={chart} />
+                    </Panel>
+                    <PanelResizeHandle style={{ width: "5px", background: "#ccc", cursor: "ew-resize" }} />
+                  </Panel>
+                </PanelGroup>
+              </div>
+            )}
+          </Draggable>
+        ))}
+        {provided.placeholder}
+      </div>
+    )}
+  </Droppable>
+</DragDropContext>
+
+
+
             );
           })()}
 
