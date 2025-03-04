@@ -273,9 +273,14 @@ export default function SupportPage() {
                     <Flex justifyContent="flex-start">
                       <Button 
                         onClick={() => { setSelectedStatus(""); setSelectedDate(""); }} 
-                        colorScheme="red"
-                        transition="all 0.3s ease-in-out"
-                        _hover={{ opacity: 0.8 }}
+                        colorScheme="teal"
+                        variant="outline"
+                        borderColor="teal.500"
+                        textColor="teal.600"
+                        fontWeight={700}
+                        h={8}
+                        width="100%"
+                        borderRadius="md"
                       >
                         Clear Filters
                       </Button>

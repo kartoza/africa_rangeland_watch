@@ -70,49 +70,18 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({ isOpen, onClose, se
       <DrawerOverlay />
       <DrawerContent backgroundColor="white">
         <DrawerCloseButton />
-        <Flex alignItems="center" justifyContent="space-between" mb="4" paddingX="4">
+        <Flex alignItems="center" justifyContent="space-between" mb="4" paddingX="4" paddingY="4">
           <Flex alignItems="center" gap="2">
             <FaFilter />
             <Text fontSize="lg" fontWeight="bold" color="black">
-              Filter
+              Filters
             </Text>
           </Flex>
-          <Button
-            colorScheme="teal"
-            variant="outline"
-            borderColor="teal.500"
-            textColor="teal.600"
-            fontWeight={700}
-            h={8}
-            width="40%"
-            borderRadius="md"
-            onClick={() => {
-              setSelectedOwner('');
-              setSelectedRegion('');
-              setFilters({
-                searchTerm: '',
-                my_resources: false,
-                category: '',
-                keyword: '',
-                region: '',
-                my_organisations: false,
-                my_dashboards: false,
-                favorites: false,
-                datasets: [],
-                maps: false,
-                owner: '',
-              });
-            }}            
-            mr={35}
-            mt={2}
-          >
-            Clear Filters
-          </Button>
         </Flex>
-
+  
         <Box borderBottom="1px solid gray" mb="4" />
         <DrawerBody>
-
+  
           {/* Search Field */}
           <Input
             placeholder="Search dashboard..."
@@ -122,7 +91,7 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({ isOpen, onClose, se
             borderRadius="md"
             mb="4"
           />
-
+  
           {/* Checkboxes */}
           <Text fontWeight="bold" mt="4" color="black" mb={4} fontSize={18}>
             Resources
@@ -149,37 +118,29 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({ isOpen, onClose, se
               </>
             ))
           }
-
-
-
+  
           {/* Category Selection */}
           <Box mb="6" mt={4}>
             <Text fontWeight="bold" color="black" mb="2" fontSize={16}>
               Select Category
             </Text>
-            <Select
-              placeholder="Select Category"
-              disabled
-            >
+            <Select placeholder="Select Category" disabled>
               <option value="category1">Category 1</option>
               <option value="category2">Category 2</option>
             </Select>
           </Box>
-
+  
           {/* Keyword Selection */}
           <Box mb="6">
             <Text fontWeight="bold" color="black" mb="2" fontSize={16}>
               Select Keyword
             </Text>
-            <Select
-              placeholder="Select Keyword"
-              disabled
-            >
+            <Select placeholder="Select Keyword" disabled>
               <option value="keyword1">Keyword 1</option>
               <option value="keyword2">Keyword 2</option>
             </Select>
           </Box>
-
+  
           {/* Region Selection */}
           <Box mb="6">
             <Text fontWeight="bold" color="black" mb="2" fontSize={16}>
@@ -205,7 +166,7 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({ isOpen, onClose, se
             </Select>
             {error && <Text color="red.500">{error}</Text>}
           </Box>
-
+  
           {/* Owner Selection */}
           <Box mb="6">
             <Text fontWeight="bold" color="black" mb="2" fontSize={16}>
@@ -226,10 +187,44 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({ isOpen, onClose, se
               ))}
             </Select>
           </Box>
+  
+          {/* Clear Filters Button - Now at the Bottom */}
+          <Flex justifyContent="center" mt="6">
+            <Button
+              colorScheme="teal"
+              variant="outline"
+              borderColor="teal.500"
+              textColor="teal.600"
+              fontWeight={700}
+              h={8}
+              width="100%"
+              borderRadius="md"
+              onClick={() => {
+                setSelectedOwner('');
+                setSelectedRegion('');
+                setFilters({
+                  searchTerm: '',
+                  my_resources: false,
+                  category: '',
+                  keyword: '',
+                  region: '',
+                  my_organisations: false,
+                  my_dashboards: false,
+                  favorites: false,
+                  datasets: [],
+                  maps: false,
+                  owner: '',
+                });
+              }}
+            >
+              Clear Filters
+            </Button>
+          </Flex>
         </DrawerBody>
       </DrawerContent>
     </Drawer>
   );
-};
+}
+  
 
 export default DashboardFilters;

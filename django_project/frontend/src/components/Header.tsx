@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Flex, Box, Text, Image, UnorderedList, ListItem, Link, IconButton, useDisclosure } from '@chakra-ui/react';
+import { Flex, Box, Text, Image, UnorderedList, ListItem, Link, IconButton, useDisclosure, useMediaQuery } from '@chakra-ui/react';
 import { HamburgerIcon, CloseIcon } from '@chakra-ui/icons';
 import { useLocation, useNavigate } from 'react-router-dom';
 import MegaMenu from './MegaMenu';
@@ -9,6 +9,7 @@ import { AppDispatch, RootState } from '../store';
 import { checkLoginStatus } from '../store/authSlice';
 import { selectIsLoggedIn } from "../store/authSlice";
 import { useSession } from '../sessionProvider'
+import Sidebar1 from '../components/SideBar';
 
 export default function Header(props: any) {
     const dispatch = useDispatch<AppDispatch>();
@@ -26,6 +27,16 @@ export default function Header(props: any) {
             saveSession(location.pathname, { activity: "Visited Page" });
         }
     }, [isAuthenticated, location.pathname, saveSession]);
+
+    const currentPage = location.pathname;
+
+    const handleMenuClick = () => {
+        if (["/support", "/uploaded-resources", "/profile", "/organisation", "/analysis-results", "/notifications"].includes(currentPage)) {
+            setIsSidebarOpen(!isSidebarOpen);
+        } else {
+            setIsMobileMenuOpen(!isMobileMenuOpen);
+        }
+    };
 
     
     // Handle hover for different sections
@@ -50,6 +61,20 @@ export default function Header(props: any) {
           navigate(to);
         }
       };
+
+    const [isSidebarOpen, setIsSidebarOpen] = useState(false); // Open by default on mobile
+    const [isMobile] = useMediaQuery("(max-width: 768px)"); // Detects mobile view
+
+    // Auto-open sidebar when on mobile
+    useEffect(() => {
+        if (isMobile) {
+        setIsSidebarOpen(false);
+        }
+    }, [isMobile]);
+
+    const closeSidebar = () => {
+        setIsSidebarOpen(false);
+    };
 
     return (
         <>
@@ -177,12 +202,17 @@ export default function Header(props: any) {
                     )}
                 </Flex>
 
+                {/* Sidebar */}
+                {isMobile && (
+                <Sidebar1 display={isSidebarOpen || isMobile ? "flex" : "none"} isSideBarOpen={isSidebarOpen} closeSidebar={closeSidebar} />
+                )}
+
                 {/* Hamburger Icon for Mobile */}
                 <IconButton
                     display={{ base: "flex", sm: "none" }}
-                    icon={isMobileMenuOpen ? <CloseIcon /> : <HamburgerIcon />}
+                    icon={isSidebarOpen ? <CloseIcon /> : <HamburgerIcon />}
                     aria-label="Toggle Menu"
-                    onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                    onClick={handleMenuClick}
                     bg="transparent"
                     color="white"
                     mr="-5px"
@@ -190,6 +220,7 @@ export default function Header(props: any) {
                     padding={0}
                     order={{ base: 3, sm: 0 }}
                 />
+
             </Flex>
 
             </Flex>
