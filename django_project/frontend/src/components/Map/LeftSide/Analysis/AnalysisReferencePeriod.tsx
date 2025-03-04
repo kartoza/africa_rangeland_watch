@@ -14,20 +14,23 @@ interface Props {
   title: string;
   value: AnalysisDataPeriod;
   isQuarter: boolean;
+  isMonthly: boolean;
   multiple?: boolean;
   onSelectedYear: (year: number | number[]) => void;
   onSelectedQuarter: (quarter: number | number[]) => void;
+  onSelectedMonth: (month: number | number[]) => void;
 }
 
 type DefaultPanel = {
   id: number, 
   year: number, 
-  quarter: number | null
+  quarter: number | null, 
+  month: number | null
 }
 
 /** Reference period. */
 export default function AnalysisReferencePeriod(
-  { title, value, isQuarter, multiple=false, onSelectedYear, onSelectedQuarter }: Props
+  { title, value, isQuarter, isMonthly, multiple=false, onSelectedYear, onSelectedQuarter, onSelectedMonth }: Props
 ) {
   const nowYear = new Date().getFullYear();
   const years: number[] = [];
@@ -41,16 +44,20 @@ export default function AnalysisReferencePeriod(
   let defaultPanels: DefaultPanel[] = [];
   if (multiple && Array.isArray(value?.year) && Array.isArray(value?.quarter)) {
     for (let i = 0; i < value.year.length; i++) {
-      defaultPanels.push({ id: i, year: value.year[i], quarter: value.quarter[i] });
+      defaultPanels.push({ id: i, year: value.year[i], quarter: value.quarter[i], month: null });
     }
-  } else if (!Array.isArray(value?.year) && !Array.isArray(value?.quarter)){
-    defaultPanels = [{ id: 0, year: value?.year ? value?.year : null, quarter: value?.quarter ? value?.quarter : null }]
+  } else if (multiple && Array.isArray(value?.year) && Array.isArray(value?.month)) {
+    for (let i = 0; i < value.year.length; i++) {
+      defaultPanels.push({ id: i, year: value.year[i], quarter: null, month: value.month[i] });
+    }
+  } else if (!Array.isArray(value?.year) && !Array.isArray(value?.quarter) && !Array.isArray(value?.month)){
+    defaultPanels = [{ id: 0, year: value?.year ? value?.year : null, quarter: value?.quarter ? value?.quarter : null, month: value?.month ? value?.month : null }]
   }
   const [panels, setPanels] = useState<DefaultPanel[]>(defaultPanels);
 
   // Add a new AccordionPanel
   const handleAddPanel = () => {
-    setPanels([...panels, { id: panels.length + 1, year: null, quarter: null }]);
+    setPanels([...panels, { id: panels.length + 1, year: null, quarter: null, month: null }]);
   };
 
   // Remove an AccordionPanel
@@ -59,6 +66,7 @@ export default function AnalysisReferencePeriod(
     setPanels(updatedPanels);
     onSelectedYear(updatedPanels.map(panel => panel.year)); // Update the parent component
     onSelectedQuarter(updatedPanels.map(panel => panel.quarter)); // Update the parent component
+    onSelectedMonth(updatedPanels.map(panel => panel.month)); // Update the parent component
   };
 
   // Handle year selection
@@ -77,6 +85,15 @@ export default function AnalysisReferencePeriod(
     );
     setPanels(updatedPanels);
     onSelectedQuarter(multiple ? updatedPanels.map(panel => panel.quarter) : updatedPanels[0].quarter); // Update the parent component
+  };
+
+  // Handle month selection
+  const handleMonthChange = (id: number, month: number) => {
+    const updatedPanels = panels.map(panel =>
+      panel.id === id ? { ...panel, month } : panel
+    );
+    setPanels(updatedPanels);
+    onSelectedMonth(multiple ? updatedPanels.map(panel => panel.month) : updatedPanels[0].month); // Update the parent component
   };
 
   return (
@@ -112,6 +129,19 @@ export default function AnalysisReferencePeriod(
             >
               {[1, 2, 3, 4].map(quarter => (
                 <option key={quarter} value={quarter}>{quarter}</option>
+              ))}
+            </Select>
+          )}
+          {isMonthly && (
+            <Select
+              fontSize='13px'
+              height='2rem'
+              placeholder="Select a month"
+              value={panel.month || ''}
+              onChange={(evt) => handleMonthChange(panel.id, parseInt(evt.target.value))}
+            >
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12].map(month => (
+                <option key={month} value={month}>{month}</option>
               ))}
             </Select>
           )}

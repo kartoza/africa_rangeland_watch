@@ -134,7 +134,8 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
       ...data,
       comparisonPeriod: {
         year: data.comparisonPeriod?.year,
-        quarter: data.temporalResolution == 'Quarterly' ? data.comparisonPeriod?.quarter : data.analysisType == 'Temporal' ? [] : null
+        quarter: data.temporalResolution == 'Quarterly' ? data.comparisonPeriod?.quarter : data.analysisType == 'Temporal' ? [] : null,
+        month: data.temporalResolution == 'Monthly' ? data.comparisonPeriod?.month : data.analysisType == 'Temporal' ? [] : null
       },
     }
     dispatch(doAnalysis(newData))
@@ -149,6 +150,9 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
         setMapInteraction(MapAnalysisInteraction.LANDSCAPE_SELECTOR);
       } else if (data.temporalResolution === TemporalResolution.QUARTERLY && data.period?.year 
         && data.period?.quarter && data.comparisonPeriod?.year && data.comparisonPeriod?.quarter) {
+          setMapInteraction(MapAnalysisInteraction.LANDSCAPE_SELECTOR)
+      } else if (data.temporalResolution === TemporalResolution.MONTHLY && data.period?.year 
+        && data.period?.month && data.comparisonPeriod?.year && data.comparisonPeriod?.month) {
           setMapInteraction(MapAnalysisInteraction.LANDSCAPE_SELECTOR)
       } else {
         setMapInteraction(MapAnalysisInteraction.NO_INTERACTION)
@@ -197,6 +201,9 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
       dataError = false
     } else if (data.temporalResolution === TemporalResolution.QUARTERLY && data.period?.year 
       && data.period?.quarter && data.comparisonPeriod?.year && data.comparisonPeriod?.quarter) {
+      dataError = false
+    } else if (data.temporalResolution === TemporalResolution.MONTHLY && data.period?.year 
+      && data.period?.month && data.comparisonPeriod?.year && data.comparisonPeriod?.month) {
       dataError = false
     }
   } else if (
@@ -454,18 +461,29 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
             title='5) Select reference period'
             value={data.period}
             isQuarter={data.temporalResolution === TemporalResolution.QUARTERLY}
+            isMonthly={data.temporalResolution === TemporalResolution.MONTHLY}
             onSelectedYear={(value: number) => setData({
               ...data,
               period: {
                 year: value,
-                quarter: data.period?.quarter
+                quarter: data.period?.quarter,
+                month: data.period?.month
               }
             })}
             onSelectedQuarter={(value: number) => setData({
               ...data,
               period: {
                 year: data.period?.year,
-                quarter: value
+                quarter: value,
+                month: null
+              }
+            })}
+            onSelectedMonth={(value: number) => setData({
+              ...data,
+              period: {
+                year: data.period?.year,
+                quarter: null,
+                month: value
               }
             })}
           />
@@ -477,19 +495,30 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
             title='6) Select comparison period'
             value={data.comparisonPeriod}
             isQuarter={data.temporalResolution === TemporalResolution.QUARTERLY}
+            isMonthly={data.temporalResolution === TemporalResolution.MONTHLY}
             multiple={true}
             onSelectedYear={(value: number) => setData({
               ...data,
               comparisonPeriod: {
                 year: value,
-                quarter: data.comparisonPeriod?.quarter
+                quarter: data.comparisonPeriod?.quarter,
+                month: data.comparisonPeriod?.month
               }
             })}
             onSelectedQuarter={(value: number) => setData({
               ...data,
               comparisonPeriod: {
                 year: data.comparisonPeriod?.year,
-                quarter: value
+                quarter: value,
+                month: null
+              }
+            })}
+            onSelectedMonth={(value: number) => setData({
+              ...data,
+              comparisonPeriod: {
+                year: data.comparisonPeriod?.year,
+                quarter: null,
+                month: value
               }
             })}
           />

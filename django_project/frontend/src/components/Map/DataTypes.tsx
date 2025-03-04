@@ -5,6 +5,7 @@
 export interface AnalysisDataPeriod {
   year?: number | number[];
   quarter?: number | number[];
+  month?: number | number[];
 }
 
 export interface AnalysisData {
