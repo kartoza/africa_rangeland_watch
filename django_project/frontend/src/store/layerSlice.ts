@@ -46,6 +46,15 @@ export const fetchUserDefinedLayers = createAsyncThunk(
   }
 );
 
+// Fetch all layers
+export const fetchLayers = createAsyncThunk(
+  'layer/fetchLayers',
+  async () => {
+    const response = await axios.get('/frontend-api/layer/');
+    return response.data;
+  }
+);
+
 // Delete a layer
 export const deleteLayer = createAsyncThunk(
   'layer/deleteLayer',
@@ -94,6 +103,17 @@ export const layerSlice = createSlice({
   },
   extraReducers: (builder) => {
     builder
+      .addCase(fetchLayers.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(fetchLayers.fulfilled, (state, action: PayloadAction<Layer[]>) => {
+        state.loading = false;
+        state.layers = action.payload;
+      })
+      .addCase(fetchLayers.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || 'An error occurred while fetching layers';
+      })
       .addCase(fetchUserDefinedLayers.pending, (state) => {
         state.loading = true;
       })
