@@ -26,6 +26,8 @@ export interface AnalysisData {
   userDefinedFeatureId?: string;
   spatialStartYear?: number;
   spatialEndYear?: number;
+  baselineStartDate?: string;
+  baselineEndDate?: string;
 }
 
 export const GroupName = {

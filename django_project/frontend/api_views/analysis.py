@@ -62,7 +62,10 @@ class AnalysisAPI(APIView):
             'analysisType': 'Baseline',
             'variable': data['landscape'],
             't_resolution': '',
-
+            'Baseline': {
+                'startDate': data.get('baselineStartDate', None),
+                'endDate': data.get('baselineEndDate', None)
+            },
             'Temporal': {
                 'Annual': {
                     'ref': '',

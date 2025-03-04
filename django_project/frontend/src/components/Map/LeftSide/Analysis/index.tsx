@@ -21,6 +21,7 @@ import { doAnalysis, REFERENCE_LAYER_DIFF_ID, resetAnalysisResult } from "../../
 import { AnalysisCustomGeometrySelector } from "./AnalysisCustomGeometrySelector";
 import AnalysisUserDefinedLayerSelector from "./AnalysisUserDefinedLayerSelector";
 import AnalysisSpatialYearFilter from "./AnalysisSpatialYearFilter";
+import BaselineDateRangeSelector from './BaselineDateRangeSelector';
 import { LayerCheckboxProps } from '../Layers';
 import { useSession } from '../../../../sessionProvider';
 import { saveAnalysis } from '../../../../store/userAnalysisSlice';
@@ -291,9 +292,33 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
             data={data}
             onSelected={(value) => setData({
               ...data,
-              analysisType: value
+              analysisType: value,
+              baselineStartDate: null,
+              baselineEndDate: null,
             })}
           />
+        }
+        {/* (Optional) Baseline Date Range selector */}
+        {
+          data.landscape && data.analysisType === Types.BASELINE && (
+            <Box mb={4}>
+              <BaselineDateRangeSelector startDate={data.baselineStartDate} endDate={data.baselineEndDate}
+                onChange={(name, value) => {
+                  if (name === 'startDate') {
+                    setData({
+                      ...data,
+                      baselineStartDate: value
+                    })
+                  } else {
+                    setData({
+                      ...data,
+                      baselineEndDate: value
+                    })
+                  }                  
+                }}
+              />
+            </Box>
+          )
         }
         {/* 3) Select temporal resolution */}
         {
