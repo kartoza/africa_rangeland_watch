@@ -1,6 +1,7 @@
 import datetime
 import time
 import base64
+from dateutil.relativedelta import relativedelta
 
 import ee
 import os
@@ -757,6 +758,66 @@ def run_analysis(lat: float, lon: float, analysis_dict: dict, *args, **kwargs):
                         ee.Filter.eq('year', test_yr),
                         ee.Filter.eq('month', test_quart)
                     )
+                )
+            )
+        elif res == 'Monthly':
+            select_geo = geo
+            if custom_geom:
+                select_geo = (
+                    ee.Geometry.Polygon(custom_geom['coordinates']) if
+                    custom_geom['type'] == 'Polygon' else
+                    ee.Geometry.MultiPolygon(custom_geom['coordinates'])
+                )
+            baseline_month = int(analysis_dict['Temporal']['Monthly']['ref'])
+            test_month = int(analysis_dict['Temporal']['Monthly']['test'])
+            baseline_dt = datetime.date(
+                baseline_yr, baseline_month, 1
+            ).isoformat()
+            # advance 1 month test_dt to include last month
+            test_dt = (
+                datetime.date(test_yr, test_month, 1) + relativedelta(months=1)
+            ).isoformat()
+            monthly_table = calculate_temporal(
+                select_geo,
+                baseline_dt,
+                test_dt,
+                resolution='month',
+                resolution_step=1,
+                is_custom_geom=(custom_geom is not None)
+            )
+            # Format the table correctly
+            monthly_table = monthly_table.select(
+                ['Name', 'ndvi', 'evi', 'bare', 'year', 'month'],
+                ['Name', 'NDVI', 'EVI', 'Bare ground', 'year', 'month']
+            )
+
+            # Map function to create a 'date' property
+            def add_date(ft):
+                date = ee.Date.parse(
+                    'yyyy-MM-dd',
+                    ee.String(ft.get('year')).cat(ee.String('-01-01'))
+                ).advance(
+                    ee.Number(ft.get('month')), 'months'
+                ).advance(-1, 'months')
+                return ft.set('date', date.millis())
+            monthly_table = monthly_table.map(add_date)
+            monthly_table = monthly_table.map(
+                lambda feature: feature.setGeometry(None)
+            )
+            date_list_ee = ee.List(
+                [
+                    baseline_dt,
+                    datetime.date(test_yr, test_month, 1).isoformat()
+                ]
+            ).map(lambda d: ee.Date(d).millis())
+            to_plot_ts = monthly_table.sort('Name').sort('date')
+            to_plot = to_plot_ts.filter(
+                ee.Filter.inList('date', date_list_ee)
+            )
+            return analysis_cache.create_analysis_cache(
+                (
+                    to_plot.getInfo(),
+                    to_plot_ts.getInfo()
                 )
             )
         else:
