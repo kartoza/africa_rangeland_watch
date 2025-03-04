@@ -12,6 +12,7 @@ import Pagination from "../../components/Pagination";
 import SearchInput from "../../components/SearchInput";
 import { ChevronUpIcon } from "@chakra-ui/icons";
 import { IoCloseSharp } from "react-icons/io5";
+import DatasetUploader from "../../components/DatasetUploader";
 
 
 
@@ -34,6 +35,7 @@ export default function UploadedResults() {
   const [date, setDate] = useState("");
   const [isModalOpen, setModalOpen] = useState(false);
   const [currentLayer, setCurrentLayer] = useState(null);
+  const [isUploaderOpen, setIsUploaderOpen] = useState(false);
 
   
   const { layers, loading, error } = useSelector((state: any) => state.layer);
@@ -162,24 +164,22 @@ const clearFilters = () => {
             <Flex direction={{ base: "column", md: "row" }} gap={4} align="center">
               {/* Filter Button */}
               <Button
-                    leftIcon={isFilterOpen ? undefined : <FaFilter />}
-                    rightIcon={isFilterOpen ? <ChevronUpIcon boxSize={6} /> : undefined}
-                    colorScheme="green"
-                    variant="solid"
-                    backgroundColor="dark_green.800"
-                    _hover={{ backgroundColor: "light_green.400" }}
-                    fontWeight={700}
-                    w={{ base: "100%", md: "auto" }}
-                    h={10}
-                    color="white"
-                    borderRadius="5px"
-                    onClick={() => setFilterOpen(!isFilterOpen)}
-                    transition="all 0.3s ease-in-out"
-                  >
-                    {!isFilterOpen ? "Filter" : ""}
-                  </Button>
-
-
+                leftIcon={isFilterOpen ? undefined : <FaFilter />}
+                rightIcon={isFilterOpen ? <ChevronUpIcon boxSize={6} /> : undefined}
+                colorScheme="green"
+                variant="solid"
+                backgroundColor="dark_green.800"
+                _hover={{ backgroundColor: "light_green.400" }}
+                fontWeight={700}
+                w={{ base: "100%", md: "auto" }}
+                h={10}
+                color="white"
+                borderRadius="5px"
+                onClick={() => setFilterOpen(!isFilterOpen)}
+                transition="all 0.3s ease-in-out"
+              >
+                {!isFilterOpen ? "Filter" : ""}
+              </Button>
 
               {/* Search Input */}
               {!loading && (
@@ -190,18 +190,19 @@ const clearFilters = () => {
 
           {/* New Add Data Button and Download Button */}
           <Box display="flex" gap={2} width={{ base: "100%", md: "auto" }} mb={{ base: 4, md: "0" }} flexDirection={{ base: "column", md: "row" }}>
-            <Button leftIcon={<FaPlus />} colorScheme="green" variant="outline" borderColor="dark_green.800" textColor="dark_green.800" w="auto" borderRadius="0px" h={10}>
-              Add Data
+            <Button leftIcon={<FaPlus />} colorScheme="green" variant="outline" borderColor="dark_green.800" textColor="dark_green.800" w="auto" borderRadius="0px" h={10} onClick={() => setIsUploaderOpen(!isUploaderOpen)}>
+              Upload
             </Button>
+
+            {isUploaderOpen && <DatasetUploader />}
 
             {/* Download Button */}
             <Button
                 leftIcon={<FaDownload />}
                 colorScheme="green"
-                variant="solid"
-                backgroundColor="dark_green.800"
-                _hover={{ backgroundColor: "light_green.400" }}
-                color="white"
+                variant="outline"
+                borderColor="dark_green.800"
+                textColor="dark_green.800"
                 width="auto"
                 borderRadius="0px"
                 h={10}

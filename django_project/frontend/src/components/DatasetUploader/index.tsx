@@ -115,6 +115,7 @@ const DatasetUploader: React.FC = () => {
                   size="sm"
                   colorScheme="dark_green_800"
                   width="full"
+                  borderRadius="5px"
                 >
                   Select File
                   <input
@@ -131,6 +132,7 @@ const DatasetUploader: React.FC = () => {
                 size="sm"
                 width="full"
                 mt={2}
+                borderRadius="5px"
                 onClick={handleClear}
                 disabled={status === 'uploading' || status === 'processing'}
               >
