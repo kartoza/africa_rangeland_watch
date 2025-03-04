@@ -1,9 +1,12 @@
+import uuid
 from django.test import TestCase
 from django.contrib.auth.models import User
 from django.urls import reverse
 from layers.models import InputLayer, InputLayerType, LayerGroupType, DataProvider
 from uuid import uuid4
 from django.core.files.uploadedfile import SimpleUploadedFile
+import mimetypes
+import os
 
 
 class UserInputLayersViewTest(TestCase):
@@ -80,13 +83,17 @@ class LayerViewsTestCase(TestCase):
         self.client.login(username='testuser', password='password')
         
         # Create a DataProvider with a file
-        test_file = SimpleUploadedFile("test_file.zip", b"Dummy content", content_type="application/zip")
+        test_file = SimpleUploadedFile(
+            "test_layer.geojson", 
+            b"Dummy GeoJSON content", 
+            content_type="application/geo+json"
+        )
         self.data_provider = DataProvider.objects.create(name="Test Provider", file=test_file)
 
         # Create an InputLayer linked to the DataProvider
         self.layer_with_file = InputLayer.objects.create(
+            uuid=uuid.uuid4(),
             name="Test Layer",
-            layer_type=InputLayerType.VECTOR,
             data_provider=self.data_provider,
             created_by=self.user
         )
@@ -120,8 +127,20 @@ class LayerViewsTestCase(TestCase):
 
     def test_download_layer_success(self):
         response = self.client.get(reverse('download_layer', args=[self.layer_with_file.uuid]))
+
+        # Ensure response is successful
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response["Content-Disposition"], f'attachment; filename="{self.layer_with_file.name}.zip"')
+
+        # Extract file extension dynamically
+        file_path = self.layer_with_file.data_provider.file.name  # Get stored file name
+        expected_filename = os.path.basename(file_path)
+        expected_content_type, _ = mimetypes.guess_type(file_path)
+
+        # Check content type
+        self.assertEqual(response["Content-Type"], expected_content_type or "application/octet-stream")
+
+        # Check filename in Content-Disposition
+        self.assertEqual(response["Content-Disposition"], f'attachment; filename="{expected_filename}"')
 
     def test_download_layer_unauthorized(self):
         self.client.logout()
