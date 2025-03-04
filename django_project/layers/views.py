@@ -3,6 +3,11 @@ from django.shortcuts import render  # noqa: F401
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
 from .models import InputLayer
+from django.shortcuts import get_object_or_404
+import mimetypes
+import os
+from django.http import FileResponse
+
 
 
 @login_required
@@ -31,3 +36,40 @@ def user_input_layers(request):
 
     # Return grouped layers as a JsonResponse
     return JsonResponse({"grouped_layers": grouped_layers})
+
+
+@login_required
+def delete_layer(request, uuid):
+    """
+    View to delete a user-defined layer by UUID.
+    """
+    layer = get_object_or_404(InputLayer, uuid=uuid, created_by=request.user)
+    layer.delete()
+    return JsonResponse({"message": "Layer deleted successfully"}, status=200)
+
+
+@login_required
+def download_layer(request, uuid):
+    """
+    View to download a user-defined layer file.
+    Supports multiple formats: .zip, .geojson, .gpkg, .kml.
+    """
+    layer = get_object_or_404(InputLayer, uuid=uuid, created_by=request.user)
+
+    if not layer.data_provider or not layer.data_provider.file:
+        return JsonResponse(
+            {"error": "No file available for this layer"},
+            status=400
+        )
+
+    file_path = layer.data_provider.file.path
+    file_name = os.path.basename(file_path)
+    content_type, _ = mimetypes.guess_type(file_path)
+
+    response = FileResponse(
+        open(file_path, 'rb'),
+        content_type=content_type or 'application/octet-stream'
+    )
+    response['Content-Disposition'] = f'attachment; filename="{file_name}"'
+
+    return response
