@@ -73,6 +73,11 @@ export function StatisticTable({analysis}: Props) {
   );
 }
 
+function formatMonthYear(month: number, year: number) {
+  const date = new Date(year, month - 1); // Month is zero-based in JS Date
+  return new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(date);
+}
+
 
 export function BarChart({ analysis }: Props) {
   // Extracting data for the chart
@@ -82,7 +87,12 @@ export function BarChart({ analysis }: Props) {
     return
   }
 
-  let labels: number[] = jsonData.features.map((feature:any) => feature.properties.year);
+  let labels: string[] = [];
+  if (analysis.data.temporalResolution === 'Annual') {
+    labels = jsonData.features.map((feature:any) => feature.properties.year)
+  } else {
+    labels = jsonData.features.map((feature:any) => formatMonthYear(feature.properties.month, feature.properties.year));
+  }
   labels = labels.filter((item, index) => labels.indexOf(item) === index)
 
   let datasets: { [key: string]: any } = {}
@@ -91,9 +101,22 @@ export function BarChart({ analysis }: Props) {
     if (datasets[key as string]) {
       continue;
     }
-    const data = jsonData.features
-    .filter((feature:any) => feature.properties.Name === jsonData.features[i].properties.Name)
-    .map((feature:any) => feature.properties[analysis.data.variable]);
+    const rawData = jsonData.features
+    .filter((feature:any) => feature.properties.Name === jsonData.features[i].properties.Name);
+    let data: number[] = new Array(labels.length).fill(null);
+    for (let j = 0; j < rawData.length; j++) {
+      let label = ''
+      if (analysis.data.temporalResolution === 'Annual') {
+        label = rawData[j].properties.year
+      } else {
+        label = formatMonthYear(rawData[j].properties.month, rawData[j].properties.year)
+      }
+
+      let labelIdx = labels.indexOf(label)
+      if (labelIdx > -1) {
+        data[labelIdx] = rawData[j].properties[analysis.data.variable]
+      }
+    }
     
     datasets[key] = {
       label: key,
@@ -143,7 +166,7 @@ export function LineChart({ analysis }: Props) {
   }
 
   const name1 = jsonData.features[0].properties.Name;
-  const name2 = jsonData.features[1].properties.Name;
+  const name2 = jsonData.features.length > 1 ? jsonData.features[1].properties.Name : null;
   const labels: number[] = jsonData.features
     .filter((feature:any) => feature.properties.Name === name1)
     .map((feature:any) => feature.properties.date);
@@ -163,7 +186,7 @@ export function LineChart({ analysis }: Props) {
     ],
   };
 
-  if (name1 != name2) {
+  if (name2 && name1 != name2) {
     const data2 = jsonData.features
     .filter((feature:any) => feature.properties.Name === name2)
     .map((feature:any) => feature.properties[analysis.data.variable]);
