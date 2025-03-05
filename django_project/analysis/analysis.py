@@ -1072,7 +1072,8 @@ def quarterly_medians(
         end_date = ee.Date(collection.sort(
             'system:time_start', False).first().get('system:time_start'))
         end_date = end_date.advance(
-            ee.Number(0).subtract(end_date.getRelative('month', unit)), 'month') \
+            ee.Number(0).subtract(end_date.getRelative('month', unit)),
+            'month') \
             .advance(1, unit).advance(-1, 'month') \
             .update(None, None, None, 23, 59, 59)
     else:
