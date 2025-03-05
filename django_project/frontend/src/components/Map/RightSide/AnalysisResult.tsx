@@ -165,37 +165,36 @@ export function LineChart({ analysis }: Props) {
     return
   }
 
-  const name1 = jsonData.features[0].properties.Name;
-  const name2 = jsonData.features.length > 1 ? jsonData.features[1].properties.Name : null;
-  const labels: number[] = jsonData.features
-    .filter((feature:any) => feature.properties.Name === name1)
+  let labels: number[] = jsonData.features
     .map((feature:any) => feature.properties.date);
-
-  const data1 = jsonData.features
-    .filter((feature:any) => feature.properties.Name === name1)
-    .map((feature:any) => feature.properties[analysis.data.variable]);
+  labels = labels.filter((item, index) => labels.indexOf(item) === index)
+  let datasets: { [key: string]: any } = {}
+  for (let i = 0; i < jsonData.features.length; i++) {
+    const key: string = jsonData.features[i].properties.Name;
+    if (datasets[key as string]) {
+      continue;
+    }
+    const rawData = jsonData.features
+    .filter((feature:any) => feature.properties.Name === jsonData.features[i].properties.Name);
+    let data: number[] = new Array(labels.length).fill(null);
+    for (let j = 0; j < rawData.length; j++) {
+      let label = rawData[j].properties.date
+      let labelIdx = labels.indexOf(label)
+      if (labelIdx > -1) {
+        data[labelIdx] = rawData[j].properties[analysis.data.variable]
+      }
+    }
+    
+    datasets[key] = {
+      label: key,
+      data: data,
+      backgroundColor: COLORS[i % COLORS.length]
+    };
+  }
 
   let chartData:any = {
     labels,
-    datasets: [
-      {
-        label: name1,
-        data: data1,
-        backgroundColor: "blue"
-      }
-    ],
-  };
-
-  if (name2 && name1 != name2) {
-    const data2 = jsonData.features
-    .filter((feature:any) => feature.properties.Name === name2)
-    .map((feature:any) => feature.properties[analysis.data.variable]);
-
-    chartData.datasets.push({
-      label: name2,
-      data: data2,
-      backgroundColor: "red"
-    });
+    datasets: Object.values(datasets)
   }
 
   const options:any = {
