@@ -43,7 +43,7 @@
     "model": "layers.inputlayer",
     "pk": "5662f959-aa71-4c91-b5f4-c1300e12f614",
     "fields": {
-        "name": "Bare ground cover",
+        "name": "Bare ground",
         "layer_type": "raster",
         "data_provider": 1,
         "url": "",

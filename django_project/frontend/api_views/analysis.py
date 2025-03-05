@@ -247,8 +247,11 @@ class AnalysisAPI(APIView):
         analysis_dict_list = []
         comp_years = data['comparisonPeriod']['year']
         comp_quarters = data['comparisonPeriod'].get('quarter', [])
-        if len(comp_years) == 0:
+        if comp_quarters is None or len(comp_quarters) == 0:
             comp_quarters = [None] * len(comp_years)
+        comp_months = data['comparisonPeriod'].get('month', [])
+        if comp_months is None or len(comp_months) == 0:
+            comp_months = [None] * len(comp_years)
 
         analysis_dict_list = []
         for idx, comp_year in enumerate(comp_years):
@@ -263,11 +266,12 @@ class AnalysisAPI(APIView):
                         'test': comp_year
                     },
                     'Quarterly': {
-                        'ref': data['period'].get('quarter', ''),
-                        'test': (
-                            comp_quarters[idx] if
-                            len(comp_quarters) > 0 else ''
-                        ),
+                        'ref': '',
+                        'test': ''
+                    },
+                    'Monthly': {
+                        'ref': '',
+                        'test': ''
                     }
                 },
                 'Spatial': {
@@ -275,6 +279,22 @@ class AnalysisAPI(APIView):
                     'Quarterly': ''
                 }
             }
+            if data['temporalResolution'] == 'Quarterly':
+                analysis_dict['Temporal']['Quarterly'] = {
+                    'ref': data['period'].get('quarter', ''),
+                    'test': (
+                        comp_quarters[idx] if
+                        len(comp_quarters) > 0 else ''
+                    ),
+                }
+            elif data['temporalResolution'] == 'Monthly':
+                analysis_dict['Temporal']['Monthly'] = {
+                    'ref': data['period'].get('month', ''),
+                    'test': (
+                        comp_months[idx] if
+                        len(comp_months) > 0 else ''
+                    ),
+                }
             analysis_dict_list.append(analysis_dict)
 
         initialize_engine_analysis()

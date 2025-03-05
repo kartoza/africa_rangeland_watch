@@ -785,6 +785,9 @@ def run_analysis(lat: float, lon: float, analysis_dict: dict, *args, **kwargs):
                 resolution_step=1,
                 is_custom_geom=(custom_geom is not None)
             )
+            monthly_table = monthly_table.map(
+                lambda feature: feature.setGeometry(None)
+            )
             # Format the table correctly
             monthly_table = monthly_table.select(
                 ['Name', 'ndvi', 'evi', 'bare', 'year', 'month'],
@@ -1015,7 +1018,9 @@ def get_nrt_sentinel(aoi, months):
     return nrt_img
 
 
-def quarterly_medians(collection, date_start, unit, step, reducer):
+def quarterly_medians(
+    collection, date_start, unit, step, reducer, date_end = None
+):
     """
     Calculates periodic aggregate images (e.g., quarterly medians)
      from an image collection.
@@ -1033,6 +1038,9 @@ def quarterly_medians(collection, date_start, unit, step, reducer):
         (e.g., 3 for quarterly if unit is 'month').
     reducer : ee.Reducer
         The reducer to apply over each interval (e.g., ee.Reducer.median()).
+    date_end : str
+        The end date (inclusive) in 'YYYY-MM-DD' format for aggregation.
+        Default to use the latest date in dataset.
 
     Returns
     -------
@@ -1060,12 +1068,16 @@ def quarterly_medians(collection, date_start, unit, step, reducer):
     start_date = start_date.update(
         None, None, None, 0, 0, 0)
 
-    end_date = ee.Date(collection.sort(
-        'system:time_start', False).first().get('system:time_start'))
-    end_date = end_date.advance(
-        ee.Number(0).subtract(end_date.getRelative('month', unit)), 'month') \
-        .advance(1, unit).advance(-1, 'month') \
-        .update(None, None, None, 23, 59, 59)
+    if date_end is None:
+        end_date = ee.Date(collection.sort(
+            'system:time_start', False).first().get('system:time_start'))
+        end_date = end_date.advance(
+            ee.Number(0).subtract(end_date.getRelative('month', unit)),
+            'month') \
+            .advance(1, unit).advance(-1, 'month') \
+            .update(None, None, None, 23, 59, 59)
+    else:
+        end_date = ee.Date.parse('YYYY-MM-dd', date_end)
 
     date_ranges = ee.List.sequence(
         0, end_date.difference(
@@ -1778,7 +1790,7 @@ def get_sentinel_by_resolution(
     sent_quarterly = (
         quarterly_medians(
             sentinel_2, start_date, resolution, resolution_step,
-            ee.Reducer.median()
+            ee.Reducer.median(), date_end=end_date
         )
     )
     sent_quarterly = sent_quarterly.map(lambda i: i.rename(select_bands))
@@ -1831,8 +1843,14 @@ def calculate_temporal(
             scale=120,
             tileScale=4
         )
-        reduced = reduced.map(
-            lambda ft: ft.set('year', i.get('year'), 'month', i.get('month')))
+        reduced = reduced.filter(
+            ee.Filter.notNull(['evi', 'ndvi', 'bare'])
+        ).map(
+            lambda ft: ft.set(
+                'year', i.get('year'),
+                'month', i.get('month')
+            )
+        )
         return reduced
 
     return col.map(process_image).flatten()
