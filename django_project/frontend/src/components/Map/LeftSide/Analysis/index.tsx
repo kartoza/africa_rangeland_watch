@@ -17,10 +17,11 @@ import AnalysisVariableBySpatialSelector
 import AnalysisLandscapeGeometrySelector
   from "./AnalysisLandscapeGeometrySelector";
 import { AppDispatch, RootState } from "../../../../store";
-import { doAnalysis, REFERENCE_LAYER_DIFF_ID, resetAnalysisResult } from "../../../../store/analysisSlice";
+import { doAnalysis, REFERENCE_LAYER_DIFF_ID, resetAnalysisResult, setAnalysis, setAnalysisLandscapeCommunity, setAnalysisCustomGeom } from "../../../../store/analysisSlice";
 import { AnalysisCustomGeometrySelector } from "./AnalysisCustomGeometrySelector";
 import AnalysisUserDefinedLayerSelector from "./AnalysisUserDefinedLayerSelector";
 import AnalysisSpatialYearFilter from "./AnalysisSpatialYearFilter";
+import BaselineDateRangeSelector from './BaselineDateRangeSelector';
 import { LayerCheckboxProps } from '../Layers';
 import { useSession } from '../../../../sessionProvider';
 import { saveAnalysis } from '../../../../store/userAnalysisSlice';
@@ -55,9 +56,9 @@ function checkPropertyEqualsXAndOthersNull<T>(
 export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUnchecked }: Props) {
   const { session, saveSession, loadingSession, loadSession, clearAnalysisState } = useSession();
   const dispatch = useDispatch<AppDispatch>();
-  const [data, setData] = useState<AnalysisData>(
-    { analysisType: Types.BASELINE }
-  );
+  const setData = (data: AnalysisData) => {
+    dispatch(setAnalysis(data))
+  }
   const { loading, referenceLayerDiff } = useSelector((state: RootState) => state.analysis);
   const { mapConfig } = useSelector((state: RootState) => state.mapConfig);
   const [mapInteraction, setMapInteraction] = useState(MapAnalysisInteraction.NO_INTERACTION);
@@ -70,8 +71,8 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
   const savedAnalysisFlag = useSelector(
     (state: RootState) => state.userAnalysis.savedAnalysisFlag
   );
-   const analysis = useSelector((state: RootState) => state.analysis);
-
+  const analysis = useSelector((state: RootState) => state.analysis);
+  const data = analysis.analysisData;
 
   const handleSaveAnalysis = () => {
     if (data && analysis) {
@@ -231,17 +232,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
           featureId={data.communityFeatureId}
           enableSelection={mapInteraction === MapAnalysisInteraction.LANDSCAPE_SELECTOR && data.landscape !== 'user-defined'}
           onSelected={(value) => {
-            setData({
-              ...data,
-              community: value?.id ? '' + value?.id : null,
-              latitude: value?.latitude ? value?.latitude : null,
-              longitude: value?.longitude ? value?.longitude : null,
-              communityName: value?.name ? value?.name : null,
-              communityFeatureId: value?.featureId ? value?.featureId : null,
-              custom_geom: null,
-              userDefinedFeatureId: null,
-              userDefinedFeatureName: null
-            })
+            dispatch(setAnalysisLandscapeCommunity(value))
           }
           }
         />
@@ -256,11 +247,10 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
               setMapInteraction(MapAnalysisInteraction.CUSTOM_GEOMETRY_DRAWING)
             } else if (geometry !== null) {
               setGeomError(false)
-              setData({
-                ...data,
-                reference_layer: geometry,
-                reference_layer_id: selected_id
-              })
+              dispatch(setAnalysisCustomGeom({
+                  reference_layer: geometry,
+                  reference_layer_id: selected_id
+              }))
             }
           }}
         />
@@ -291,9 +281,33 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
             data={data}
             onSelected={(value) => setData({
               ...data,
-              analysisType: value
+              analysisType: value,
+              baselineStartDate: null,
+              baselineEndDate: null,
             })}
           />
+        }
+        {/* (Optional) Baseline Date Range selector */}
+        {
+          data.landscape && data.analysisType === Types.BASELINE && (
+            <Box mb={4}>
+              <BaselineDateRangeSelector startDate={data.baselineStartDate} endDate={data.baselineEndDate}
+                onChange={(name, value) => {
+                  if (name === 'startDate') {
+                    setData({
+                      ...data,
+                      baselineStartDate: value
+                    })
+                  } else {
+                    setData({
+                      ...data,
+                      baselineEndDate: value
+                    })
+                  }
+                }}
+              />
+            </Box>
+          )
         }
         {/* 3) Select temporal resolution */}
         {

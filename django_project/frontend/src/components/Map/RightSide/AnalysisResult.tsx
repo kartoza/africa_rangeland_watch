@@ -261,6 +261,7 @@ export function RenderBaseline({ analysis }: Props) {
   const keys = Object.keys(analysis.results.columns)
   return <Box maxWidth={400} overflowX={"auto"}>
     <Table className='BaselineAnalysisResultTable' cellPadding={8}>
+      <thead>
       <tr>
         <th>Name</th>
         {
@@ -269,10 +270,12 @@ export function RenderBaseline({ analysis }: Props) {
           )
         }
       </tr>
+      </thead>
+      <tbody>
       {
-        analysis.results.features.map((feature: any) => {
+        analysis.results.features.map((feature: any, index: any) => {
           const properties = feature.properties;
-          return <tr>
+          return <tr key={index}>
             <td>{properties.Name}</td>
             {
               keys.map(
@@ -284,6 +287,7 @@ export function RenderBaseline({ analysis }: Props) {
           </tr>
         })
       }
+      </tbody>
     </Table>
   </Box>
 }
