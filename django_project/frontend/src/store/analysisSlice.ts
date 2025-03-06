@@ -10,6 +10,8 @@ import { DataState } from './common';
 import { AnalysisData } from "../components/Map/DataTypes";
 import { setCSRFToken } from "../utils/csrfUtils";
 import { Layer } from './layerSlice';
+import { Types } from '../components/Map/fixtures/analysis';
+import { Community } from './landscapeSlice';
 
 export const REFERENCE_LAYER_DIFF_ID = 'spatial_rel_diff'
 
@@ -19,10 +21,16 @@ export interface Analysis {
   results: any;
 }
 
+export interface CustomGeomSelection {
+  reference_layer: object;
+  reference_layer_id: string | number;
+}
+
 interface AnalysisState extends DataState {
-  analysis: Analysis | null;
+  analysis: Analysis | null; // this is from API response
   saveAnalysisFlag: boolean;
   referenceLayerDiff?: Layer;
+  analysisData: AnalysisData; // migrate from state
 }
 
 const initialAnalysisState: AnalysisState = {
@@ -30,7 +38,8 @@ const initialAnalysisState: AnalysisState = {
   saveAnalysisFlag: false,
   loading: false,
   error: null,
-  referenceLayerDiff: null
+  referenceLayerDiff: null,
+  analysisData: { analysisType: Types.BASELINE }
 };
 
 
@@ -60,6 +69,30 @@ export const analysisSlice = createSlice({
       } else {
         state.referenceLayerDiff = null;
       }      
+    },
+    setAnalysis(state, action: PayloadAction<AnalysisData>) {
+      state.analysisData = action.payload
+    },
+    setAnalysisLandscapeCommunity(state, action: PayloadAction<Community>) {
+      const value = action.payload
+      state.analysisData = {
+        ...state.analysisData,
+        community: value?.id ? '' + value?.id : null,
+        latitude: value?.latitude ? value?.latitude : null,
+        longitude: value?.longitude ? value?.longitude : null,
+        communityName: value?.name ? value?.name : null,
+        communityFeatureId: value?.featureId ? value?.featureId : null,
+        custom_geom: null,
+        userDefinedFeatureId: null,
+        userDefinedFeatureName: null
+      }
+    },
+    setAnalysisCustomGeom(state, action: PayloadAction<CustomGeomSelection>) {
+      state.analysisData = {
+        ...state.analysisData,
+        reference_layer: action.payload.reference_layer,
+        reference_layer_id: action.payload.reference_layer_id
+      }
     }
   },
   extraReducers: (builder) => {
@@ -91,7 +124,7 @@ export const analysisSlice = createSlice({
 });
 
 export const {
-  clearError, resetAnalysisResult
+  clearError, resetAnalysisResult, setAnalysis, setAnalysisLandscapeCommunity, setAnalysisCustomGeom
 } = analysisSlice.actions;
 
 export default analysisSlice.reducer;

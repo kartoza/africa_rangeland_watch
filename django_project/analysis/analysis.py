@@ -1,6 +1,7 @@
 import datetime
 import time
 import base64
+from dateutil.relativedelta import relativedelta
 
 import ee
 import os
@@ -13,6 +14,9 @@ SERVICE_ACCOUNT = os.environ.get('SERVICE_ACCOUNT', '')
 S2_BANDS = ['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B11', 'B12']
 S2_NAMES = [
     'cb', 'blue', 'green', 'red', 'R1', 'R2', 'R3', 'nir', 'swir1', 'swir2']
+
+DEFAULT_SCENE_CLOUD_THRESHOLD = 20
+DEFAULT_CLOUD_MASK_PROBABILITY = 30
 
 # Bands to select after processing
 select_bands = [
@@ -31,6 +35,12 @@ class InputLayer:
     """
     Class to prepare all input layer necessary for analysis.
     """
+
+    DEFAULT_COUNTRY_NAMES = [
+        'SOUTH AFRICA', 'LESOTHO', 'SWAZILAND',
+        'NAMIBIA', 'ZIMBABWE', 'BOTSWANA',
+        'MOZAMBIQUE', 'ZAMBIA'
+    ]
 
     def __init__(self):
         self.countries = self.get_countries()
@@ -143,15 +153,11 @@ class InputLayer:
         communities = communities.select(['Name', 'Project', 'area'])
         return communities
 
-    def get_countries(self):
+    def get_countries(self, country_names = None):
         """
         Get countries for clipping images
         """
-        names = [
-            'SOUTH AFRICA', 'LESOTHO', 'SWAZILAND',
-            'NAMIBIA', 'ZIMBABWE', 'BOTSWANA',
-            'MOZAMBIQUE', 'ZAMBIA'
-        ]
+        names = country_names or self.DEFAULT_COUNTRY_NAMES
         countries = (ee.FeatureCollection(
             GEEAsset.fetch_asset_source('countries')).
             filter(ee.Filter.inList('name', names)))
@@ -189,7 +195,8 @@ class InputLayer:
                 .set('year', ee.Number.parse(col.get('system:index'))))
 
     def get_soil_carbon(
-        self, start_date: datetime.date = None, end_date: datetime.date = None
+        self, start_date: datetime.date = None, end_date: datetime.date = None,
+        clip_to_countries = True, aoi = None
     ):
         """
         Get image for soil carbon mean.
@@ -248,7 +255,12 @@ class InputLayer:
         soc_lt_mean = ee.ImageCollection(
             [isda.float(), lt_mean.float()]
         ).mean()
-        soc_lt_mean = soc_lt_mean.clipToCollection(self.countries)
+        if clip_to_countries:
+            soc_lt_mean = soc_lt_mean.clipToCollection(self.countries)
+        elif aoi:
+            soc_lt_mean = soc_lt_mean.clipToCollection(
+                ee.FeatureCollection([ee.Feature(aoi, {})])
+            )
         return soc_lt_mean
 
     def get_grazing_capacity(self):
@@ -305,7 +317,8 @@ class InputLayer:
         return soc_col
 
     def get_soil_carbon_change(
-        self, start_date: datetime.date = None, end_date: datetime.date = None
+        self, start_date: datetime.date = None, end_date: datetime.date = None,
+        clip_to_countries = True, aoi = None
     ):
         """
         Get soil carbon change, clipped by countries.
@@ -325,7 +338,13 @@ class InputLayer:
         trend_sens_img = trend_sens_img.rename(['scale', 'offset'])
 
         soc_lt_trend = (trend_sens_img.select('scale').
-                        multiply(35).clipToCollection(self.countries))
+                        multiply(35))
+        if clip_to_countries:
+            soc_lt_trend = soc_lt_trend.clipToCollection(self.countries)
+        elif aoi:
+            soc_lt_trend = soc_lt_trend.clipToCollection(
+                ee.FeatureCollection([ee.Feature(aoi, {})])
+            )
         return soc_lt_trend
 
     def get_spatial_layer_dict(
@@ -488,6 +507,34 @@ class InputLayer:
         }
         return landscapesDict
 
+    def get_selected_area(self, aoi, is_custom_geom=False):
+        """
+        Get a FeatureCollection from area of interest.
+
+        Parameters
+        ----------
+        aoi : ee.Polygon
+            Polygon area of interest.
+        is_custom_geom : boolean
+            If False, then find Communities polygon that intersects with aoi.
+
+        Returns
+        -------
+        ee.FeatureCollection
+        """
+        communities = self.get_communities()
+        selected_area = None
+        if is_custom_geom:
+            selected_area = ee.FeatureCollection([
+                ee.Feature(aoi, {'name': 'Custom Area'})
+            ])
+            selected_area = selected_area.map(lambda feature: feature.set(
+                'area', feature.geometry().area().divide(10000)
+            ))
+        else:
+            selected_area = communities.filterBounds(aoi)
+        return selected_area
+
 
 class AnalysisResultsCacheUtils:
     """Analysis results cache utilities."""
@@ -628,10 +675,32 @@ def run_analysis(lat: float, lon: float, analysis_dict: dict, *args, **kwargs):
         return analysis_cache.create_analysis_cache(reduced.getInfo())
 
     if analysis_dict['analysisType'] == "Baseline":
-        if custom_geom:
-            select = baseline_table.filterBounds(custom_geom)
+        has_dates = (
+            analysis_dict['Baseline']['startDate'] and
+            analysis_dict['Baseline']['endDate']
+        )
+        if has_dates:
+            if custom_geom:
+                select = calculate_baseline(
+                    ee.Geometry.Polygon(custom_geom['coordinates']) if
+                    custom_geom['type'] == 'Polygon' else
+                    ee.Geometry.MultiPolygon(custom_geom['coordinates']),
+                    analysis_dict['Baseline']['startDate'],
+                    analysis_dict['Baseline']['endDate'],
+                    is_custom_geom=True
+                )
+            else:
+                select = calculate_baseline(
+                    geo,
+                    analysis_dict['Baseline']['startDate'],
+                    analysis_dict['Baseline']['endDate'],
+                    is_custom_geom=False
+                )
         else:
-            select = baseline_table.filterBounds(selected_geos)
+            if custom_geom:
+                select = baseline_table.filterBounds(custom_geom)
+            else:
+                select = baseline_table.filterBounds(selected_geos)
         return analysis_cache.create_analysis_cache(select.getInfo())
 
     if analysis_dict['analysisType'] == "Temporal":
@@ -689,6 +758,69 @@ def run_analysis(lat: float, lon: float, analysis_dict: dict, *args, **kwargs):
                         ee.Filter.eq('year', test_yr),
                         ee.Filter.eq('month', test_quart)
                     )
+                )
+            )
+        elif res == 'Monthly':
+            select_geo = geo
+            if custom_geom:
+                select_geo = (
+                    ee.Geometry.Polygon(custom_geom['coordinates']) if
+                    custom_geom['type'] == 'Polygon' else
+                    ee.Geometry.MultiPolygon(custom_geom['coordinates'])
+                )
+            baseline_month = int(analysis_dict['Temporal']['Monthly']['ref'])
+            test_month = int(analysis_dict['Temporal']['Monthly']['test'])
+            baseline_dt = datetime.date(
+                baseline_yr, baseline_month, 1
+            ).isoformat()
+            # advance 1 month test_dt to include last month
+            test_dt = (
+                datetime.date(test_yr, test_month, 1) + relativedelta(months=1)
+            ).isoformat()
+            monthly_table = calculate_temporal(
+                select_geo,
+                baseline_dt,
+                test_dt,
+                resolution='month',
+                resolution_step=1,
+                is_custom_geom=(custom_geom is not None)
+            )
+            monthly_table = monthly_table.map(
+                lambda feature: feature.setGeometry(None)
+            )
+            # Format the table correctly
+            monthly_table = monthly_table.select(
+                ['Name', 'ndvi', 'evi', 'bare', 'year', 'month'],
+                ['Name', 'NDVI', 'EVI', 'Bare ground', 'year', 'month']
+            )
+
+            # Map function to create a 'date' property
+            def add_date(ft):
+                date = ee.Date.parse(
+                    'yyyy-MM-dd',
+                    ee.String(ft.get('year')).cat(ee.String('-01-01'))
+                ).advance(
+                    ee.Number(ft.get('month')), 'months'
+                ).advance(-1, 'months')
+                return ft.set('date', date.millis())
+            monthly_table = monthly_table.map(add_date)
+            monthly_table = monthly_table.map(
+                lambda feature: feature.setGeometry(None)
+            )
+            date_list_ee = ee.List(
+                [
+                    baseline_dt,
+                    datetime.date(test_yr, test_month, 1).isoformat()
+                ]
+            ).map(lambda d: ee.Date(d).millis())
+            to_plot_ts = monthly_table.sort('Name').sort('date')
+            to_plot = to_plot_ts.filter(
+                ee.Filter.inList('date', date_list_ee)
+            )
+            return analysis_cache.create_analysis_cache(
+                (
+                    to_plot.getInfo(),
+                    to_plot_ts.getInfo()
                 )
             )
         else:
@@ -757,7 +889,10 @@ def add_indices(image):
     return image.addBands([ndvi, nbr, evi])
 
 
-def get_s2_cloud_masked(aoi, start_date, end_date):
+def get_s2_cloud_masked(
+    aoi, start_date, end_date,
+    scene_cloud_threshold=None, cloud_mask_probability=None
+):
     """
     Retrieves a cloud-masked Sentinel-2 image collection over
         a specified area and date range.
@@ -788,12 +923,19 @@ def get_s2_cloud_masked(aoi, start_date, end_date):
     >>> # Print the number of images retrieved
     >>> print('Number of images:', s2_collection.size().getInfo())
     """
+    scene_cloud_threshold = (
+        scene_cloud_threshold or DEFAULT_SCENE_CLOUD_THRESHOLD
+    )
+    cloud_mask_probability = (
+        cloud_mask_probability or DEFAULT_CLOUD_MASK_PROBABILITY
+    )
     s2_sr = ee.ImageCollection(
         GEEAsset.fetch_asset_source('sentinel2_harmonized')
     ) \
         .filterBounds(aoi) \
         .filterDate(start_date, end_date) \
-        .filter(ee.Filter.lte('CLOUDY_PIXEL_PERCENTAGE', 20))
+        .filter(
+            ee.Filter.lte('CLOUDY_PIXEL_PERCENTAGE', scene_cloud_threshold))
 
     s2_clouds = ee.ImageCollection(
         GEEAsset.fetch_asset_source('sentinel2_clouds')
@@ -827,7 +969,9 @@ def get_s2_cloud_masked(aoi, start_date, end_date):
         """
         img = ee.Image(feature.get('primary'))
         cloud_prob = ee.Image(feature.get('secondary'))
-        is_not_cloud = cloud_prob.select('probability').lt(30)
+        is_not_cloud = cloud_prob.select(
+            'probability'
+        ).lt(cloud_mask_probability)
         return img.updateMask(
             is_not_cloud
         ).copyProperties(img, img.propertyNames())
@@ -874,7 +1018,9 @@ def get_nrt_sentinel(aoi, months):
     return nrt_img
 
 
-def quarterly_medians(collection, date_start, unit, step, reducer):
+def quarterly_medians(
+    collection, date_start, unit, step, reducer, date_end = None
+):
     """
     Calculates periodic aggregate images (e.g., quarterly medians)
      from an image collection.
@@ -892,6 +1038,9 @@ def quarterly_medians(collection, date_start, unit, step, reducer):
         (e.g., 3 for quarterly if unit is 'month').
     reducer : ee.Reducer
         The reducer to apply over each interval (e.g., ee.Reducer.median()).
+    date_end : str
+        The end date (inclusive) in 'YYYY-MM-DD' format for aggregation.
+        Default to use the latest date in dataset.
 
     Returns
     -------
@@ -919,12 +1068,16 @@ def quarterly_medians(collection, date_start, unit, step, reducer):
     start_date = start_date.update(
         None, None, None, 0, 0, 0)
 
-    end_date = ee.Date(collection.sort(
-        'system:time_start', False).first().get('system:time_start'))
-    end_date = end_date.advance(
-        ee.Number(0).subtract(end_date.getRelative('month', unit)), 'month') \
-        .advance(1, unit).advance(-1, 'month') \
-        .update(None, None, None, 23, 59, 59)
+    if date_end is None:
+        end_date = ee.Date(collection.sort(
+            'system:time_start', False).first().get('system:time_start'))
+        end_date = end_date.advance(
+            ee.Number(0).subtract(end_date.getRelative('month', unit)),
+            'month') \
+            .advance(1, unit).advance(-1, 'month') \
+            .update(None, None, None, 23, 59, 59)
+    else:
+        end_date = ee.Date.parse('YYYY-MM-dd', date_end)
 
     date_ranges = ee.List.sequence(
         0, end_date.difference(
@@ -960,8 +1113,9 @@ def quarterly_medians(collection, date_start, unit, step, reducer):
     new_collection = ee.ImageCollection(
         date_ranges.map(make_time_slice))
 
-    new_collection = new_collection.filter(
-        ee.Filter.inList('month', [1, 4, 7, 10]))
+    if step == 3:
+        new_collection = new_collection.filter(
+            ee.Filter.inList('month', [1, 4, 7, 10]))
 
     return new_collection
 
@@ -1251,3 +1405,452 @@ def validate_spatial_date_range_filter(
             metadata = GEEAsset.fetch_asset_metadata(asset_key)
             return False, metadata.get('start_date'), metadata.get('end_date')
     return True, None, None
+
+
+# Note: this function exceeds computational limit
+# TODO: investigate whether we can reduce to aoi in the training data
+# TODO: investigate and RnD to store the classifier model and load later
+def calculate_grazing_capacity(aoi, start_date, end_date):
+    """Calculate grazing by start_date, end_date, and area of interest."""
+    input_layer = InputLayer()
+
+    sampling_area = input_layer.get_countries(
+        country_names=[
+            'SOUTH AFRICA', 'LESOTHO', 'SWAZILAND',
+            'NAMIBIA', 'ZIMBABWE', 'BOTSWANA',
+            'MOZAMBIQUE'
+        ]
+    )
+
+    gp = ee.FeatureCollection(
+        GEEAsset.fetch_asset_source('grazing_capacity_ref')
+    )
+
+    # Create a mask of non-natural lands
+    glc_coll = ee.ImageCollection(
+        GEEAsset.fetch_asset_source('globe_land30')
+    )
+    glc_img = ee.Image(glc_coll.mosaic())
+    masked = (glc_img.neq(10)
+              .And(glc_img.neq(20))
+              .And(glc_img.neq(50))
+              .And(glc_img.neq(60))
+              .And(glc_img.neq(80))
+              .And(glc_img.neq(100))
+              .And(glc_img.neq(255)))
+
+    # MODIS
+    ndwi = (ee.ImageCollection(
+                GEEAsset.fetch_asset_source('modis_ndwi')
+            )
+            .filterBounds(sampling_area)
+            .filterDate(start_date, end_date)
+            .median())
+
+    evi = (ee.ImageCollection(GEEAsset.fetch_asset_source('modis_vegetation'))
+           .filterBounds(sampling_area)
+           .filterDate(start_date, end_date)
+           .select('EVI'))
+    evi_med = evi.median()
+
+    # Calculate variance in EVI over time
+    evi_var = evi.reduce(ee.Reducer.variance())
+
+    # Get surface reflectance data as well
+    srf = (ee.ImageCollection(GEEAsset.fetch_asset_source(
+        'modis_surface_reflect'))
+           .filterBounds(sampling_area)
+           .filterDate(start_date, end_date)
+           .select(
+               [
+                   'sur_refl_b01', 'sur_refl_b02', 'sur_refl_b03',
+                   'sur_refl_b04', 'sur_refl_b05', 'sur_refl_b06',
+                   'sur_refl_b07'
+               ]
+            ))
+    srfMed = srf.median()
+
+    # Combine
+    combined = ndwi.addBands(
+        evi_med.rename('evi')
+    ).addBands(
+        evi_var.rename('evi_var')
+    ).addBands(srfMed)
+    # Apply land cover mask to isolate rangeland
+    combined = combined.updateMask(masked)
+
+    bands = combined.bandNames()
+
+    def map_training_data(ft):
+        return ft.setGeometry(None).set(combined.reduceRegion(
+            reducer=ee.Reducer.mean(),
+            geometry=ft.geometry(),
+            scale=500,
+        ))
+    train_test = gp.map(map_training_data)
+
+    def map_convert_lsu(ft):
+        return ft.set(
+            'LSU_ha',
+            ee.Number(1).divide(ee.Number(ft.get('ha_LSU')))
+        )
+
+    # Convert to LSU per hectare
+    train_test = train_test.map(map_convert_lsu)
+
+    # Train RF classifier
+    # parameters: numberOfTrees, variablesPerSplit,
+    # minLeafPopulation, bagFraction
+    classifierReg = (ee.Classifier.smileRandomForest(100)
+                     .setOutputMode('REGRESSION')
+                     .train(
+                         features=train_test,
+                         classProperty='LSU_ha',
+                         inputProperties=bands
+                     ))
+
+    # Classify with RandomForest
+    classified = combined.select(bands).classify(classifierReg)
+
+    return classified.clipToCollection(aoi)
+
+
+def calculate_firefreq(aoi, start_date, end_date):
+    """Calculate firefreq by start_date, end_date, and area of interest."""
+    start_dt = datetime.date.fromisoformat(start_date)
+    end_dt = datetime.date.fromisoformat(end_date)
+
+    def confidence_mask(thresh):
+        def mask_function(img):
+            conf_mask = img.select('ConfidenceLevel').gt(thresh)
+            return img.updateMask(conf_mask)
+        return mask_function
+
+    # Import and clean FireCCI data between 2000 and 2022
+    # (original Rangeland explorer map between 2000 and 2018)
+    ba = ee.ImageCollection(
+        GEEAsset.fetch_asset_source('fire_cci')
+    )
+    if aoi:
+        ba = ba.filterBounds(aoi)
+
+    ba = (ba
+          .filter(ee.Filter.calendarRange(start_dt.year, end_dt.year, 'year'))
+          .map(confidence_mask(50))
+          .select('BurnDate'))
+
+    def temporal_average(collection, unit, reducer):
+        # Get the start date from the earliest image
+        start_date = ee.Date(
+            ee.Image(
+                collection.sort('system:time_start').first()
+            ).get('system:time_start')
+        )
+        start_date = (start_date
+                      .advance(
+                          ee.Number(0)
+                          .subtract(start_date.getRelative('month', unit)),
+                          'month'
+                      )
+                      .update(None, None, None, 0, 0, 0))
+
+        # Get the end date from the latest image
+        end_date = ee.Date(
+            ee.Image(
+                collection.sort('system:time_start', False).first()
+            ).get('system:time_start')
+        )
+        end_date = (end_date
+                    .advance(
+                        ee.Number(0)
+                        .subtract(end_date.getRelative('month', unit)),
+                        'month'
+                    )
+                    .advance(1, unit).advance(-1, 'month')
+                    .update(None, None, None, 23, 59, 59))
+
+        # Create a list of date ranges
+        date_ranges = ee.List.sequence(
+            0,
+            end_date.difference(start_date, unit).round().subtract(1)
+        )
+
+        def make_timeslice(num):
+            num = ee.Number(num)
+            start = start_date.advance(num, unit)
+            start_num = start.millis()
+            start_date_num = ee.Number.parse(start.format("YYYYMMdd"))
+            end = start.advance(1, unit).advance(-1, 'second')
+
+            filtered = collection.filterDate(start, end)
+            unit_means = (filtered.reduce(reducer)
+                          .set({'system:time_start': start_num,
+                                'system:time_end': end,
+                                'date': start_date_num}))
+            return unit_means
+
+        return ee.ImageCollection(date_ranges.map(make_timeslice))
+
+    # Get annual burns
+    ba_annual = temporal_average(ba, 'year', ee.Reducer.max())
+
+    # Count number of burns over time period
+    ba_count = ba_annual.reduce(ee.Reducer.count())
+
+    return ba_count.rename('fireFreq')
+
+
+def calculate_baseline(aoi, start_date, end_date, is_custom_geom=False):
+    """
+    Calculate baseline statistics.
+
+    Note:
+    - each indicator is checked againts its asset's date availability
+    - only calculate date range or its subset in asset's date availability
+
+    Parameters
+    ----------
+    aoi : ee.Geometry
+        Area of interest.
+    start_date : str
+        Start date to calculate baseline.
+    end_date : str
+        End date to calculate baseline.
+    is_custom_geom : boolean
+        If False, then use Communities polygon that intersects with aoi.
+
+    Returns
+    -------
+    ee.Image
+    """
+    image_list = []
+    input_layer = InputLayer()
+    selected_area = input_layer.get_selected_area(aoi, is_custom_geom)
+
+    # Get MODIS vegetation data
+    valid, start_dt, end_dt = GEEAsset.get_dates_within_asset_period(
+        'modis_vegetation_061', start_date, end_date
+    )
+    if valid:
+        modis_veg = (ee.ImageCollection(
+                        GEEAsset.fetch_asset_source('modis_vegetation_061')
+                    )
+                    .filterDate(start_dt, end_dt)
+                    .filterBounds(aoi)
+                    .select(['NDVI', 'EVI'])
+                    .map(lambda i: i.divide(10000)))
+        evi_baseline = modis_veg.select('EVI').median()
+        ndvi_baseline = modis_veg.select('NDVI').median()
+        image_list.append({
+            'asset': evi_baseline,
+            'attribute': 'EVI',
+            'label': 'EVI'
+        })
+        image_list.append({
+            'asset': ndvi_baseline,
+            'attribute': 'NDVI',
+            'label': 'NDVI'
+        })
+
+    # Get CGLS Ground Cover data
+    valid, start_dt, end_dt = GEEAsset.get_dates_within_asset_period(
+        'cgls_ground_cover', start_date, end_date
+    )
+    if valid:
+        cgls = (ee.ImageCollection(
+                    GEEAsset.fetch_asset_source('cgls_ground_cover')
+                )
+                .filterDate(start_dt, end_dt)
+                .filterBounds(aoi)
+                .select(
+                    [
+                        'bare-coverfraction', 'crops-coverfraction',
+                        'urban-coverfraction', 'shrub-coverfraction',
+                        'grass-coverfraction', 'tree-coverfraction'
+                    ]
+                ))
+        cgls = cgls.median()
+
+        # Additional calculations for land cover fractions and grazing capacity
+        bg = cgls.select('bare-coverfraction').add(
+            cgls.select('urban-coverfraction')
+        )
+        t = cgls.select('tree-coverfraction').add(
+            cgls.select('shrub-coverfraction')
+        )
+        g = cgls.select('grass-coverfraction')
+        image_list.append({
+            'asset': bg,
+            'attribute': 'bare-coverfraction',
+            'label': 'Bare ground %'
+        })
+        image_list.append({
+            'asset': t,
+            'attribute': 'tree-coverfraction',
+            'label': 'Woody cover %'
+        })
+        image_list.append({
+            'asset': g,
+            'attribute': 'grass-coverfraction',
+            'label': 'Grass cover %'
+        })
+
+    # TODO: add grazing capacity
+
+    # fire freq
+    valid, start_dt, end_dt = GEEAsset.get_dates_within_asset_period(
+        'fire_cci', start_date, end_date
+    )
+    if valid:
+        fire_freq = calculate_firefreq(aoi, start_dt, end_dt).divide(18)
+        fire_freq = fire_freq.unmask(0)
+        image_list.append({
+            'asset': fire_freq,
+            'attribute': 'fireFreq',
+            'label': 'Fires/yr'
+        })
+
+    # SOCltMean and SOCltTrend
+    valid, start_dt, end_dt = GEEAsset.get_dates_within_asset_period(
+        'soil_carbon', start_date, end_date
+    )
+    if valid:
+        soc_lt_mean = input_layer.get_soil_carbon(
+            datetime.date.fromisoformat(start_dt),
+            datetime.date.fromisoformat(end_dt),
+            False,
+            aoi
+        )
+        soc_lt_mean = soc_lt_mean.rename('SOCltMean')
+        image_list.append({
+            'asset': soc_lt_mean,
+            'attribute': 'SOCltMean',
+            'label': 'SOC kg/m2'
+        })
+
+        # SOCltTrend
+        soc_lt_trend = input_layer.get_soil_carbon_change(
+            datetime.date.fromisoformat(start_dt),
+            datetime.date.fromisoformat(end_dt),
+            False,
+            aoi
+        )
+        soc_lt_trend = soc_lt_trend.rename('SOCltTrend')
+        image_list.append({
+            'asset': soc_lt_trend,
+            'attribute': 'SOCltTrend',
+            'label': 'SOC change kg/m2'
+        })
+
+    if len(image_list) == 0:
+        raise ValueError('No baseline in the input date ranges.')
+
+    # Combining all layers for analysis and renaming for clarity
+    combined = ee.Image.cat(
+        *[img['asset'] for img in image_list]
+    )
+    combined = combined.select(
+        [img['attribute'] for img in image_list],
+        [img['label'] for img in image_list]
+    )
+
+    # Reducing regions to extract mean values per polygon
+    reduced = combined.reduceRegions(selected_area, ee.Reducer.mean(), 100)
+    reduced = reduced.distinct(['Name', 'Area ha'])
+
+    return reduced
+
+
+def get_sentinel_by_resolution(
+    aoi, start_date, end_date, resolution, resolution_step
+):
+    """
+    Get sentinel by resolution.
+
+    Parameters
+    ----------
+    aoi : ee.Polygon
+        Polygon area of interest.
+    start_date : str
+        Start date to calculate baseline.
+    end_date : str
+        End date to calculate baseline.
+    resolution : str
+        Temporal resolution: month or year.
+    resolution_step : str
+        Resolution: 1 for each month or 3 for quarterly.
+
+    Returns
+    -------
+    ee.ImageCollection
+    """
+    sentinel_2 = get_s2_cloud_masked(
+        aoi, start_date, end_date, scene_cloud_threshold=50
+    )
+    sent_quarterly = (
+        quarterly_medians(
+            sentinel_2, start_date, resolution, resolution_step,
+            ee.Reducer.median(), date_end=end_date
+        )
+    )
+    sent_quarterly = sent_quarterly.map(lambda i: i.rename(select_bands))
+    return sent_quarterly
+
+
+def calculate_temporal(
+    aoi, start_date, end_date, resolution, resolution_step,
+    is_custom_geom=False
+):
+    """
+    Calculate temporal timeseries stats.
+
+    Parameters
+    ----------
+    aoi : ee.Polygon
+        Polygon area of interest.
+    start_date : str
+        Start date to calculate baseline.
+    end_date : str
+        End date to calculate baseline.
+    resolution : str
+        Temporal resolution: month or year.
+    resolution_step : str
+        Resolution: 1 for each month or 3 for quarterly.
+    is_custom_geom : boolean
+        If False, then use Communities polygon that intersects with aoi.
+
+    Returns
+    -------
+    ee.ImageCollection
+    """
+    input_layer = InputLayer()
+    selected_area = input_layer.get_selected_area(aoi, is_custom_geom)
+    geo = selected_area.geometry().bounds()
+
+    classifier = train_bgt(
+        geo, GEEAsset.fetch_asset_source('random_forest_training')
+    )
+    col = get_sentinel_by_resolution(
+        geo, start_date, end_date, resolution, resolution_step
+    )
+
+    def process_image(i):
+        bg = classify_bgt(i, classifier).select('bare')
+        img = i.select(['evi', 'ndvi']).addBands(bg)
+        reduced = img.reduceRegions(
+            collection=selected_area,
+            reducer=ee.Reducer.mean(),
+            scale=120,
+            tileScale=4
+        )
+        reduced = reduced.filter(
+            ee.Filter.notNull(['evi', 'ndvi', 'bare'])
+        ).map(
+            lambda ft: ft.set(
+                'year', i.get('year'),
+                'month', i.get('month')
+            )
+        )
+        return reduced
+
+    return col.map(process_image).flatten()

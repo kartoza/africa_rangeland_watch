@@ -5,6 +5,7 @@
 export interface AnalysisDataPeriod {
   year?: number | number[];
   quarter?: number | number[];
+  month?: number | number[];
 }
 
 export interface AnalysisData {
@@ -26,6 +27,8 @@ export interface AnalysisData {
   userDefinedFeatureId?: string;
   spatialStartYear?: number;
   spatialEndYear?: number;
+  baselineStartDate?: string;
+  baselineEndDate?: string;
 }
 
 export const GroupName = {

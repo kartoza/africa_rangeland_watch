@@ -17,10 +17,11 @@ import AnalysisVariableBySpatialSelector
 import AnalysisLandscapeGeometrySelector
   from "./AnalysisLandscapeGeometrySelector";
 import { AppDispatch, RootState } from "../../../../store";
-import { doAnalysis, REFERENCE_LAYER_DIFF_ID, resetAnalysisResult } from "../../../../store/analysisSlice";
+import { doAnalysis, REFERENCE_LAYER_DIFF_ID, resetAnalysisResult, setAnalysis, setAnalysisLandscapeCommunity, setAnalysisCustomGeom } from "../../../../store/analysisSlice";
 import { AnalysisCustomGeometrySelector } from "./AnalysisCustomGeometrySelector";
 import AnalysisUserDefinedLayerSelector from "./AnalysisUserDefinedLayerSelector";
 import AnalysisSpatialYearFilter from "./AnalysisSpatialYearFilter";
+import BaselineDateRangeSelector from './BaselineDateRangeSelector';
 import { LayerCheckboxProps } from '../Layers';
 import { useSession } from '../../../../sessionProvider';
 import { saveAnalysis } from '../../../../store/userAnalysisSlice';
@@ -55,9 +56,9 @@ function checkPropertyEqualsXAndOthersNull<T>(
 export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUnchecked }: Props) {
   const { session, saveSession, loadingSession, loadSession, clearAnalysisState } = useSession();
   const dispatch = useDispatch<AppDispatch>();
-  const [data, setData] = useState<AnalysisData>(
-    { analysisType: Types.BASELINE }
-  );
+  const setData = (data: AnalysisData) => {
+    dispatch(setAnalysis(data))
+  }
   const { loading, referenceLayerDiff } = useSelector((state: RootState) => state.analysis);
   const { mapConfig } = useSelector((state: RootState) => state.mapConfig);
   const [mapInteraction, setMapInteraction] = useState(MapAnalysisInteraction.NO_INTERACTION);
@@ -70,8 +71,8 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
   const savedAnalysisFlag = useSelector(
     (state: RootState) => state.userAnalysis.savedAnalysisFlag
   );
-   const analysis = useSelector((state: RootState) => state.analysis);
-
+  const analysis = useSelector((state: RootState) => state.analysis);
+  const data = analysis.analysisData;
 
   const handleSaveAnalysis = () => {
     if (data && analysis) {
@@ -134,7 +135,8 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
       ...data,
       comparisonPeriod: {
         year: data.comparisonPeriod?.year,
-        quarter: data.temporalResolution == 'Quarterly' ? data.comparisonPeriod?.quarter : data.analysisType == 'Temporal' ? [] : null
+        quarter: data.temporalResolution == 'Quarterly' ? data.comparisonPeriod?.quarter : data.analysisType == 'Temporal' ? [] : null,
+        month: data.temporalResolution == 'Monthly' ? data.comparisonPeriod?.month : data.analysisType == 'Temporal' ? [] : null
       },
     }
     dispatch(doAnalysis(newData))
@@ -149,6 +151,9 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
         setMapInteraction(MapAnalysisInteraction.LANDSCAPE_SELECTOR);
       } else if (data.temporalResolution === TemporalResolution.QUARTERLY && data.period?.year 
         && data.period?.quarter && data.comparisonPeriod?.year && data.comparisonPeriod?.quarter) {
+          setMapInteraction(MapAnalysisInteraction.LANDSCAPE_SELECTOR)
+      } else if (data.temporalResolution === TemporalResolution.MONTHLY && data.period?.year 
+        && data.period?.month && data.comparisonPeriod?.year && data.comparisonPeriod?.month) {
           setMapInteraction(MapAnalysisInteraction.LANDSCAPE_SELECTOR)
       } else {
         setMapInteraction(MapAnalysisInteraction.NO_INTERACTION)
@@ -198,6 +203,9 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
     } else if (data.temporalResolution === TemporalResolution.QUARTERLY && data.period?.year 
       && data.period?.quarter && data.comparisonPeriod?.year && data.comparisonPeriod?.quarter) {
       dataError = false
+    } else if (data.temporalResolution === TemporalResolution.MONTHLY && data.period?.year 
+      && data.period?.month && data.comparisonPeriod?.year && data.comparisonPeriod?.month) {
+      dataError = false
     }
   } else if (
     data.landscape && data.analysisType === Types.SPATIAL && data.variable && data.reference_layer
@@ -231,17 +239,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
           featureId={data.communityFeatureId}
           enableSelection={mapInteraction === MapAnalysisInteraction.LANDSCAPE_SELECTOR && data.landscape !== 'user-defined'}
           onSelected={(value) => {
-            setData({
-              ...data,
-              community: value?.id ? '' + value?.id : null,
-              latitude: value?.latitude ? value?.latitude : null,
-              longitude: value?.longitude ? value?.longitude : null,
-              communityName: value?.name ? value?.name : null,
-              communityFeatureId: value?.featureId ? value?.featureId : null,
-              custom_geom: null,
-              userDefinedFeatureId: null,
-              userDefinedFeatureName: null
-            })
+            dispatch(setAnalysisLandscapeCommunity(value))
           }
           }
         />
@@ -256,11 +254,10 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
               setMapInteraction(MapAnalysisInteraction.CUSTOM_GEOMETRY_DRAWING)
             } else if (geometry !== null) {
               setGeomError(false)
-              setData({
-                ...data,
-                reference_layer: geometry,
-                reference_layer_id: selected_id
-              })
+              dispatch(setAnalysisCustomGeom({
+                  reference_layer: geometry,
+                  reference_layer_id: selected_id
+              }))
             }
           }}
         />
@@ -291,9 +288,33 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
             data={data}
             onSelected={(value) => setData({
               ...data,
-              analysisType: value
+              analysisType: value,
+              baselineStartDate: null,
+              baselineEndDate: null,
             })}
           />
+        }
+        {/* (Optional) Baseline Date Range selector */}
+        {
+          data.landscape && data.analysisType === Types.BASELINE && (
+            <Box mb={4}>
+              <BaselineDateRangeSelector startDate={data.baselineStartDate} endDate={data.baselineEndDate}
+                onChange={(name, value) => {
+                  if (name === 'startDate') {
+                    setData({
+                      ...data,
+                      baselineStartDate: value
+                    })
+                  } else {
+                    setData({
+                      ...data,
+                      baselineEndDate: value
+                    })
+                  }
+                }}
+              />
+            </Box>
+          )
         }
         {/* 3) Select temporal resolution */}
         {
@@ -454,18 +475,29 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
             title='5) Select reference period'
             value={data.period}
             isQuarter={data.temporalResolution === TemporalResolution.QUARTERLY}
+            isMonthly={data.temporalResolution === TemporalResolution.MONTHLY}
             onSelectedYear={(value: number) => setData({
               ...data,
               period: {
                 year: value,
-                quarter: data.period?.quarter
+                quarter: data.period?.quarter,
+                month: data.period?.month
               }
             })}
             onSelectedQuarter={(value: number) => setData({
               ...data,
               period: {
                 year: data.period?.year,
-                quarter: value
+                quarter: value,
+                month: null
+              }
+            })}
+            onSelectedMonth={(value: number) => setData({
+              ...data,
+              period: {
+                year: data.period?.year,
+                quarter: null,
+                month: value
               }
             })}
           />
@@ -477,19 +509,30 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
             title='6) Select comparison period'
             value={data.comparisonPeriod}
             isQuarter={data.temporalResolution === TemporalResolution.QUARTERLY}
+            isMonthly={data.temporalResolution === TemporalResolution.MONTHLY}
             multiple={true}
             onSelectedYear={(value: number) => setData({
               ...data,
               comparisonPeriod: {
                 year: value,
-                quarter: data.comparisonPeriod?.quarter
+                quarter: data.comparisonPeriod?.quarter,
+                month: data.comparisonPeriod?.month
               }
             })}
             onSelectedQuarter={(value: number) => setData({
               ...data,
               comparisonPeriod: {
                 year: data.comparisonPeriod?.year,
-                quarter: value
+                quarter: value,
+                month: null
+              }
+            })}
+            onSelectedMonth={(value: number) => setData({
+              ...data,
+              comparisonPeriod: {
+                year: data.comparisonPeriod?.year,
+                quarter: null,
+                month: value
               }
             })}
           />
