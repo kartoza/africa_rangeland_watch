@@ -235,8 +235,8 @@ export default function AnalysisResults() {
           {/* Main Content */}
           <Box
             flex="1"
-            ml={{ base: "55px", md: "0px" }}
-            mt={{ base: "0px", md: "20px" }}
+            ml={{ base: "35px", md: "0px" }}
+            mt={{ base: "15px", md: "20px" }}
             width={{ base: "80%", md: "auto" }}
             overflow={"auto"}
           >
