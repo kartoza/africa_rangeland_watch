@@ -167,9 +167,9 @@ export default function SupportPage() {
           {/* Main Content */}
           <Box
             flex="1"
-            ml={{ base: "55px", md: "0px" }}
-            mt={{ base: "0px", md: "20px" }}
-            width={{ base: "80%", md: "auto" }}
+            ml={{ base: "35px", md: "0px" }}
+            mt={{ base: "15px", md: "20px" }}
+            width={{ base: "85%", md: "auto" }}
             overflow={"auto"}
           >
             <Heading size="lg" mb={6} color="black">
