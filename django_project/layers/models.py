@@ -145,6 +145,15 @@ class InputLayer(models.Model):
     def __str__(self):
         return self.name
 
+    def get_vis_params(self):
+        """Convert metadata to GEE vis params."""
+        return {
+            'min': self.metadata['minValue'],
+            'max': self.metadata['maxValue'],
+            'palette': self.metadata['colors'],
+            'opacity': self.metadata['opacity']
+        }
+
 
 class DataFeedSetting(models.Model):
     """

@@ -22,6 +22,7 @@ from analysis.analysis import (
     get_rel_diff, calculate_temporal_to_img
 )
 from analysis.utils import get_gdrive_file
+from layers.models import InputLayer as InputLayerFixture
 
 
 def _run_spatial_analysis(data):
@@ -149,11 +150,17 @@ def generate_temporal_analysis_raster_output(raster_output_id):
         )
     )
 
+    # find input layer for get the vis param config
+    input_layer_fixture = InputLayerFixture.objects.get(
+        name=raster_output.analysis.get('variable')
+    )
+
     # generate the image
     img = calculate_temporal_to_img(
         aoi, start_date.isoformat(), end_date.isoformat(),
         raster_output.analysis.get('temporalResolution'), resolution_step,
-        raster_output.analysis.get('variable')
+        'bare' if raster_output.analysis.get('variable') == 'Bare ground' else
+        raster_output.analysis.get('variable').lower()
     )
     if analysis_type == 'Annual':
         img = img.filter(
@@ -174,30 +181,7 @@ def generate_temporal_analysis_raster_output(raster_output_id):
         file_name_prefix=raster_output.name.replace('.tiff', ''),
         scale=120,  # same with temporal calc result
         region=aoi.geometry().bounds(),
-        vis_params={
-            'min': 0,
-            'max': 1,
-            'palette': [
-                "#FFFFFF",
-                "#CE7E45",
-                "#DF923D",
-                "#F1B555",
-                "#FCD163",
-                "#99B718",
-                "#74A901",
-                "#66A000",
-                "#529400",
-                "#3E8601",
-                "#207401",
-                "#056201",
-                "#004C00",
-                "#023B01",
-                "#012E01",
-                "#011D01",
-                "#011301"
-            ],
-            'opacity': 0.8
-        }
+        vis_params=input_layer_fixture.get_vis_params()
     )
 
     final_status = status['state']

@@ -1898,11 +1898,9 @@ def calculate_temporal_to_img(
 
         def process_image(i):
             bg = classify_bgt(i, classifier).select('bare')
-            bg = bg.map(
-                lambda ft: ft.set(
-                    'year', i.get('year'),
-                    'month', i.get('month')
-                )
+            bg = bg.set(
+                'year', i.get('year'),
+                'month', i.get('month')
             )
             return bg
         col = col.map(process_image)
