@@ -11,7 +11,8 @@ from .models import (
     LandscapeCommunity,
     UserAnalysisResults,
     GEEAsset,
-    AnalysisResultsCache
+    AnalysisResultsCache,
+    AnalysisRasterOutput
 )
 from analysis.utils import get_gdrive_file, delete_gdrive_file
 
@@ -189,3 +190,13 @@ class AnalysisResultsCacheAdmin(admin.ModelAdmin):
     """Admin for AnalysisResultsCache model."""
 
     list_display = ('id', 'expired_at',)
+
+
+@admin.register(AnalysisRasterOutput)
+class AnalysisRasterOutputAdmin(admin.ModelAdmin):
+    """Admin for AnalysisRasterOutput model."""
+
+    list_display = (
+        'uuid', 'name', 'status', 'size',
+        'generate_start_time', 'generate_end_time'
+    )
