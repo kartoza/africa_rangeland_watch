@@ -345,6 +345,14 @@ class AnalysisRasterOutput(models.Model):
         return results
 
 
+@receiver(pre_delete, sender=AnalysisRasterOutput)
+def analysisrasteroutput_pre_delete(
+        sender, instance: AnalysisRasterOutput, *args, **kwargs):
+    """Delete raster output when the result is deleted."""
+    from analysis.utils import delete_gdrive_file
+    delete_gdrive_file(f'{str(instance.uuid)}.tiff')
+
+
 class UserAnalysisResults(models.Model):
     created_by = models.ForeignKey(
         User,
