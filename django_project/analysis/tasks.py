@@ -166,7 +166,7 @@ def generate_temporal_analysis_raster_output(raster_output_id):
                 ee.Filter.eq('month', month_filter)
             )
         ).first()
-    
+
     status = export_image_to_drive(
         image=img,
         description=raster_output.name,
@@ -202,14 +202,14 @@ def generate_temporal_analysis_raster_output(raster_output_id):
 
     final_status = status['state']
     size = 0
-    if final_status == 'FINISHED':
+    if final_status == 'COMPLETED':
         # check exist and get size
         gdrive_file = get_gdrive_file(raster_output.name)
         if gdrive_file is None:
             final_status = 'FAILED'
             status['gdrive_error'] = f'File {raster_output.name} not found!'
         else:
-            gdrive_file.FetchMetadata() 
+            gdrive_file.FetchMetadata()
             size = gdrive_file.get("fileSize", 0)
 
     raster_output.status = final_status

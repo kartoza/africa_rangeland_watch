@@ -8,7 +8,7 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 
-from analysis.models import AnalysisRasterOutput, UserAnalysisResults
+from analysis.models import AnalysisRasterOutput
 from analysis.tasks import generate_temporal_analysis_raster_output
 from analysis.utils import get_gdrive_file
 
@@ -50,7 +50,7 @@ class UserAnalysisResultsViewSet(viewsets.ModelViewSet):
                     )
                 )
 
-                # Iterate for each period and check if already exist 
+                # Iterate for each period and check if already exist
                 output_obj_list = []
                 new_output_list = []
                 for input_dict in raster_dicts:
@@ -60,7 +60,9 @@ class UserAnalysisResultsViewSet(viewsets.ModelViewSet):
                     ).last()
                     if output_obj is None:
                         output_obj = AnalysisRasterOutput.objects.create(
-                            name=AnalysisRasterOutput.generate_name(input_dict),
+                            name=AnalysisRasterOutput.generate_name(
+                                input_dict
+                            ),
                             status='PENDING',
                             analysis=input_dict
                         )
@@ -69,7 +71,8 @@ class UserAnalysisResultsViewSet(viewsets.ModelViewSet):
                 result_obj.raster_outputs.set(output_obj_list)
 
                 for new_output in new_output_list:
-                    generate_temporal_analysis_raster_output.delay(new_output.uuid)
+                    generate_temporal_analysis_raster_output\
+                        .delay(new_output.uuid)
 
             return Response(serializer.data, status=201)
         return Response(serializer.errors, status=400)

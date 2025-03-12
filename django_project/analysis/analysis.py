@@ -1895,6 +1895,7 @@ def calculate_temporal_to_img(
         classifier = train_bgt(
             geo, GEEAsset.fetch_asset_source('random_forest_training')
         )
+
         def process_image(i):
             bg = classify_bgt(i, classifier).select('bare')
             bg = bg.map(
