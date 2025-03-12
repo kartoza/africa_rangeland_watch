@@ -2,6 +2,7 @@ import json
 import uuid
 
 import ee
+import calendar
 from typing import Tuple
 from django.utils import timezone
 from django.contrib.auth.models import User
@@ -257,6 +258,92 @@ class LandscapeCommunity(models.Model):
         return self.community_name
 
 
+class AnalysisRasterOutput(models.Model):
+    """Model that stores the raster output of an analysis."""
+
+    uuid = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        help_text="Unique identifier for the raster."
+    )
+    name = models.TextField()
+    size = models.BigIntegerField(default=0)
+    status = models.CharField(max_length=255)
+    generate_start_time = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+    generate_end_time = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+    status_logs = models.JSONField(
+        default=dict,
+        null=True,
+        blank=True
+    )
+    # should have: analysisType, variable, landscape,
+    # temporalResolution, year, month, quarter,
+    # communityName
+    analysis = models.JSONField(default=dict)
+
+    def __str__(self):
+        return self.name
+
+    def generate_name(self):
+        analysis_type = self.analysis.get('analysisType').lower()
+        temporal_res = self.analysis.get('temporalResolution').lower()
+        date_str = self.analysis.get('year')
+        if temporal_res == 'quarterly':
+            date_str = (
+                self.analysis.get('quarter') + '_' + self.analysis.get('year')
+            )
+        elif temporal_res == 'monthly':
+            date_str = (
+                calendar.month_name(self.analysis.get('month')).lower() +
+                '_' +
+                self.analysis.get('year')
+            )
+        variable = self.analysis.get('variable').lower()
+        community = self.analysis.get('communityName')
+        return f'{community}_{analysis_type}_{temporal_res}_{variable}_{date_str}.tiff'
+
+    @staticmethod
+    def from_temporal_analysis_input(data):
+        results = [
+            {
+                'analysisType': data['analysisType'],
+                'variable': data['variable'],
+                'landscape': data['landscape'],
+                'temporalResolution': data['temporalResolution'],
+                'year': data['period']['year'],
+                'month': data['period']['month'],
+                'quarter': data['period']['quarter'],
+                'communityName': data['communityName']
+            }
+        ]
+        comp_years = data['comparisonPeriod']['year']
+        comp_quarters = data['comparisonPeriod'].get('quarter', [])
+        if comp_quarters is None or len(comp_quarters) == 0:
+            comp_quarters = [None] * len(comp_years)
+        comp_months = data['comparisonPeriod'].get('month', [])
+        if comp_months is None or len(comp_months) == 0:
+            comp_months = [None] * len(comp_years)
+        for idx, comp_year in enumerate(comp_years):
+            analysis = {
+                'analysisType': data['analysisType'],
+                'variable': data['variable'],
+                'landscape': data['landscape'],
+                'temporalResolution': data['temporalResolution'],
+                'year': comp_year,
+                'month': comp_months[idx],
+                'quarter': comp_quarters[idx],
+                'communityName': data['communityName']
+            }
+            results.append(analysis)
+        return results
+
 
 class UserAnalysisResults(models.Model):
     created_by = models.ForeignKey(
@@ -280,6 +367,10 @@ class UserAnalysisResults(models.Model):
         null=True,
         blank=True,
         help_text='Path to the raster output of this analysis.'
+    )
+    raster_outputs = models.ManyToManyField(
+        AnalysisRasterOutput,
+        related_name="analysis_results"
     )
 
     def __str__(self):
