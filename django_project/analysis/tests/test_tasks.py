@@ -2,7 +2,7 @@ from django.test import TestCase
 from unittest.mock import patch, ANY
 from django.contrib.auth.models import User
 
-from analysis.tasks import store_analysis_raster_output
+from analysis.tasks import store_spatial_analysis_raster_output
 from analysis.models import UserAnalysisResults
 
 
@@ -12,7 +12,7 @@ class TestStoreAnalysisRasterOutput(TestCase):
     @patch('analysis.tasks._run_spatial_analysis')
     @patch('analysis.tasks._get_bounds')
     @patch('analysis.tasks.initialize_engine_analysis')
-    def test_store_analysis_raster_output(
+    def test_store_spatial_analysis_raster_output(
         self, mock_initialize_engine_analysis, mock_get_bounds,
         mock_run_spatial_analysis, mock_export_image_to_drive
     ):
@@ -35,7 +35,7 @@ class TestStoreAnalysisRasterOutput(TestCase):
         mock_get_bounds.return_value = {'coordinates': [34.0, -1.0]}
         mock_run_spatial_analysis.return_value = 'mock_image'
 
-        store_analysis_raster_output(mock_analysis_result.id)
+        store_spatial_analysis_raster_output(mock_analysis_result.id)
         
         # Assertions
         mock_initialize_engine_analysis.assert_called_once()

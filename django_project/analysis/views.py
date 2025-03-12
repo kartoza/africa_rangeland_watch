@@ -6,7 +6,8 @@ from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 
-from analysis.tasks import store_analysis_raster_output
+from analysis.models import AnalysisRasterOutput, UserAnalysisResults
+from analysis.tasks import generate_temporal_analysis_raster_output
 
 
 class UserAnalysisResultsViewSet(viewsets.ModelViewSet):
@@ -34,10 +35,38 @@ class UserAnalysisResultsViewSet(viewsets.ModelViewSet):
         if serializer.is_valid():
             serializer.save(created_by=request.user)
 
-            # store raster output using background task
+            # store raster output for temporal using background task
             analysis_data = request.data.get('analysis_results').get('data')
-            if analysis_data.get('analysisType', '') == 'Spatial':
-                store_analysis_raster_output.delay(serializer.data.get('id'))
+            if analysis_data.get('analysisType', '') == 'Temporal':
+                result_obj = UserAnalysisResults.objects.get(
+                    id=serializer.data.get('id')
+                )
+                raster_dicts = (
+                    AnalysisRasterOutput.from_temporal_analysis_input(
+                        analysis_data
+                    )
+                )
+
+                # Iterate for each period and check if already exist 
+                output_obj_list = []
+                new_output_list = []
+                for input_dict in raster_dicts:
+                    # check if output already exists
+                    output_obj = AnalysisRasterOutput.objects.filter(
+                        analysis=input_dict
+                    ).last()
+                    if output_obj is None:
+                        output_obj = AnalysisRasterOutput.objects.create(
+                            name=AnalysisRasterOutput.generate_name(input_dict),
+                            status='PENDING',
+                            analysis=input_dict
+                        )
+                        new_output_list.append(output_obj)
+                    output_obj_list.append(output_obj)
+                result_obj.raster_outputs.set(output_obj_list)
+
+                for new_output in new_output_list:
+                    generate_temporal_analysis_raster_output.delay(new_output.uuid)
 
             return Response(serializer.data, status=201)
         return Response(serializer.errors, status=400)

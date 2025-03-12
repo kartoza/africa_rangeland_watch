@@ -9,7 +9,11 @@ import uuid
 import ee
 
 from django.utils import timezone
-from analysis.models import UserAnalysisResults, AnalysisResultsCache
+from analysis.models import (
+    UserAnalysisResults,
+    AnalysisResultsCache,
+    AnalysisRasterOutput
+)
 from analysis.analysis import (
     export_image_to_drive,
     initialize_engine_analysis, InputLayer,
@@ -64,8 +68,8 @@ def _get_bounds(data):
     )
 
 
-@app.task(name='store_analysis_raster_output')
-def store_analysis_raster_output(analysis_result_id: int):
+@app.task(name='store_spatial_analysis_raster_output')
+def store_spatial_analysis_raster_output(analysis_result_id: int):
     """Trigger task to store analysis raster output."""
     analysis_result = UserAnalysisResults.objects.get(id=analysis_result_id)
     data = analysis_result.analysis_results.get('data', None)
@@ -95,6 +99,15 @@ def store_analysis_raster_output(analysis_result_id: int):
     print(f'filename: {filename}.tif')
     analysis_result.raster_output_path = f'{filename}.tif'
     analysis_result.save()
+
+
+@app.task(name='generate_temporal_analysis_raster_output')
+def generate_temporal_analysis_raster_output(raster_output_id):
+    """Trigger task to generate temporal analysis raster output."""
+    raster_output = AnalysisRasterOutput.objects.get(uuid=raster_output_id)
+
+    initialize_engine_analysis()
+    # TODO: generate the image
 
 
 @app.task(name='clear_analysis_results_cache', ignore_result=True)

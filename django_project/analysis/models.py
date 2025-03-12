@@ -291,23 +291,27 @@ class AnalysisRasterOutput(models.Model):
     def __str__(self):
         return self.name
 
-    def generate_name(self):
-        analysis_type = self.analysis.get('analysisType').lower()
-        temporal_res = self.analysis.get('temporalResolution').lower()
-        date_str = self.analysis.get('year')
+    @staticmethod
+    def generate_name(analysis):
+        analysis_type = analysis.get('analysisType').lower()
+        temporal_res = analysis.get('temporalResolution').lower()
+        date_str = analysis.get('year')
         if temporal_res == 'quarterly':
             date_str = (
-                self.analysis.get('quarter') + '_' + self.analysis.get('year')
+                analysis.get('quarter') + '_' + analysis.get('year')
             )
         elif temporal_res == 'monthly':
             date_str = (
-                calendar.month_name(self.analysis.get('month')).lower() +
+                calendar.month_name(analysis.get('month')).lower() +
                 '_' +
-                self.analysis.get('year')
+                analysis.get('year')
             )
-        variable = self.analysis.get('variable').lower()
-        community = self.analysis.get('communityName')
-        return f'{community}_{analysis_type}_{temporal_res}_{variable}_{date_str}.tiff'
+        variable = analysis.get('variable').lower()
+        community = analysis.get('communityName')
+        return (
+            f'{community}_{analysis_type}_{temporal_res}_'
+            f'{variable}_{date_str}.tiff'
+        )
 
     @staticmethod
     def from_temporal_analysis_input(data):
