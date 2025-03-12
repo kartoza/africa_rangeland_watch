@@ -5,6 +5,7 @@ from .models import UserAnalysisResults
 class UserAnalysisResultsSerializer(serializers.ModelSerializer):
     created_by = serializers.SerializerMethodField()
     dashboards = serializers.SerializerMethodField()
+    raster_output_list = serializers.SerializerMethodField()
 
     class Meta:
         model = UserAnalysisResults
@@ -14,7 +15,8 @@ class UserAnalysisResultsSerializer(serializers.ModelSerializer):
             'analysis_results',
             'created_at',
             'source',
-            'dashboards'
+            'dashboards',
+            'raster_output_list'
         ]
 
     def get_created_by(self, obj):
@@ -31,3 +33,13 @@ class UserAnalysisResultsSerializer(serializers.ModelSerializer):
 
     def get_dashboards(self, obj):
         return [{"id": d.uuid, "title": d.title} for d in obj.dashboards.all()]
+
+    def get_raster_output_list(self, obj):
+        return [
+            {
+                "id": item.uuid,
+                "name": item.name,
+                "size": item.size,
+                "status": item.status
+            } for item in obj.raster_outputs.all()
+        ]
