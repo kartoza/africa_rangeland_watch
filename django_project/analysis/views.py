@@ -1,5 +1,7 @@
 from dashboard.models import Dashboard
 from rest_framework import viewsets
+from django.shortcuts import get_object_or_404
+from django.http import Http404, StreamingHttpResponse
 from .models import UserAnalysisResults
 from .serializer import UserAnalysisResultsSerializer
 from rest_framework.response import Response
@@ -8,6 +10,7 @@ from rest_framework.decorators import action
 
 from analysis.models import AnalysisRasterOutput, UserAnalysisResults
 from analysis.tasks import generate_temporal_analysis_raster_output
+from analysis.utils import get_gdrive_file
 
 
 class UserAnalysisResultsViewSet(viewsets.ModelViewSet):
@@ -70,6 +73,38 @@ class UserAnalysisResultsViewSet(viewsets.ModelViewSet):
 
             return Response(serializer.data, status=201)
         return Response(serializer.errors, status=400)
+
+    @action(
+        detail=False,
+        methods=['get'],
+        url_path=r"download_raster_output/(?P<uuid>[0-9a-f-]+)"
+    )
+    def download_raster_output(self, request, uuid):
+        raster_output = get_object_or_404(
+            AnalysisRasterOutput,
+            uuid=uuid
+        )
+        filename = f'{raster_output.uuid}.tiff'
+
+        file = get_gdrive_file(filename)
+        if not file:
+            raise Http404("File not found in Google Drive")
+        else:
+            # Download and stream the file
+            def file_iterator():
+                file.FetchContent()
+                # Read in 8MB chunks
+                while chunk := file.content.read(8 * 1024 * 1024):
+                    yield chunk
+
+            response = StreamingHttpResponse(
+                file_iterator(),
+                content_type='image/tiff'
+            )
+            response['Content-Disposition'] = (
+                f'attachment; filename="{raster_output.name}"'
+            )
+            return response
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()
