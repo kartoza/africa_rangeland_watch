@@ -87,9 +87,8 @@ class UserAnalysisResultsViewSet(viewsets.ModelViewSet):
             AnalysisRasterOutput,
             uuid=uuid
         )
-        filename = f'{raster_output.uuid}.tiff'
 
-        file = get_gdrive_file(filename)
+        file = get_gdrive_file(raster_output.raster_filename)
         if not file:
             raise Http404("File not found in Google Drive")
         else:

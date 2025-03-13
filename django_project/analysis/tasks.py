@@ -21,7 +21,7 @@ from analysis.analysis import (
     initialize_engine_analysis, InputLayer,
     get_rel_diff, calculate_temporal_to_img
 )
-from analysis.utils import get_gdrive_file
+from analysis.utils import get_gdrive_file, delete_gdrive_file
 from layers.models import InputLayer as InputLayerFixture
 
 
@@ -109,7 +109,9 @@ def store_spatial_analysis_raster_output(analysis_result_id: int):
 def generate_temporal_analysis_raster_output(raster_output_id):
     """Trigger task to generate temporal analysis raster output."""
     raster_output = AnalysisRasterOutput.objects.get(uuid=raster_output_id)
-    analysis_type = raster_output.analysis.get('analysisType')
+    # clear existing raster if exist in gdrive
+    delete_gdrive_file(raster_output.raster_filename)
+    temporal_resolution = raster_output.analysis.get('temporalResolution')
     raster_output.status = 'RUNNING'
     raster_output.generate_start_time = timezone.now()
     raster_output.save()
@@ -119,15 +121,17 @@ def generate_temporal_analysis_raster_output(raster_output_id):
     # get date filter
     start_date = date(raster_output.analysis.get('year'), 1, 1)
     end_date = date(raster_output.analysis.get('year') + 1, 1, 1)
+    resolution = 'year'
     resolution_step = 1
     month_filter = None
-    if analysis_type == 'Monthly':
+    if temporal_resolution == 'Monthly':
         start_date = start_date.replace(
             month=raster_output.analysis.get('month')
         )
         end_date = start_date + relativedelta(months=1)
         month_filter = raster_output.analysis.get('month')
-    elif analysis_type == 'Quarterly':
+        resolution = 'month'
+    elif temporal_resolution == 'Quarterly':
         quarter_dict = {
             1: 1,
             2: 4,
@@ -140,7 +144,9 @@ def generate_temporal_analysis_raster_output(raster_output_id):
         end_date = start_date + relativedelta(months=3)
         resolution_step = 3
         month_filter = raster_output.analysis.get('quarter')
+        resolution = 'month'
 
+    print(f'Generating img {resolution} - {resolution_step} from {start_date} to {end_date}')
     # get aoi
     input_layers = InputLayer()
     communities = input_layers.get_communities()
@@ -158,11 +164,11 @@ def generate_temporal_analysis_raster_output(raster_output_id):
     # generate the image
     img = calculate_temporal_to_img(
         aoi, start_date.isoformat(), end_date.isoformat(),
-        raster_output.analysis.get('temporalResolution'), resolution_step,
+        resolution, resolution_step,
         'bare' if raster_output.analysis.get('variable') == 'Bare ground' else
         raster_output.analysis.get('variable').lower()
     )
-    if analysis_type == 'Annual':
+    if temporal_resolution == 'Annual':
         img = img.filter(
             ee.Filter.eq('year', raster_output.analysis.get('year'))
         ).first()
@@ -178,7 +184,7 @@ def generate_temporal_analysis_raster_output(raster_output_id):
         image=img,
         description=raster_output.name,
         folder='GEE_EXPORTS',
-        file_name_prefix=raster_output.name.replace('.tiff', ''),
+        file_name_prefix=str(raster_output.uuid),
         scale=120,  # same with temporal calc result
         region=aoi.geometry().bounds(),
         vis_params=input_layer_fixture.get_vis_params()
@@ -188,10 +194,12 @@ def generate_temporal_analysis_raster_output(raster_output_id):
     size = 0
     if final_status == 'COMPLETED':
         # check exist and get size
-        gdrive_file = get_gdrive_file(raster_output.name)
+        gdrive_file = get_gdrive_file(raster_output.raster_filename)
         if gdrive_file is None:
             final_status = 'FAILED'
-            status['gdrive_error'] = f'File {raster_output.name} not found!'
+            status['gdrive_error'] = (
+                f'File {raster_output.raster_filename} not found!'
+            )
         else:
             gdrive_file.FetchMetadata()
             size = gdrive_file.get("fileSize", 0)
