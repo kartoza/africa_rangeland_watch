@@ -15,18 +15,18 @@ const MotionBox = motion(Box);
 const MotionOverlay = motion(Box);
 
 const AnalysisSideBar = ({ isOpen, onClose, selectedAnalysis }: SidebarProps) => {
-  const [isDownloading, setIsDownloading] = useState(false);
+  const [isDownloading, setIsDownloading] = useState(null);
 
   if (!selectedAnalysis) return null;
 
   const handleDownload = async (id: string, event: any) => {
     try {
       event.preventDefault();
-      setIsDownloading(true);
+      setIsDownloading(id);
       let url = `user_analysis_results/download_raster_output/${id}`;
       const response = await fetch(url);
       if (!response.ok) {
-        setIsDownloading(false);
+        setIsDownloading(null);
         if (response.status === 404) {
           alert("File not found (404). Please check the ID and try again.");
         } else {
@@ -35,10 +35,21 @@ const AnalysisSideBar = ({ isOpen, onClose, selectedAnalysis }: SidebarProps) =>
         return;
       }
 
+      // Extract filename from Content-Disposition header
+      const contentDisposition = response.headers.get("Content-Disposition");
+      let filename = `${id}.tif`; // Default filename
+
+      if (contentDisposition) {
+        const match = contentDisposition.match(/filename="?([^"]+)"?/);
+        if (match && match[1]) {
+          filename = match[1];
+        }
+      }
+
       const blob = await response.blob();
       const link = document.createElement("a");
       link.href = URL.createObjectURL(blob);
-      link.download = url.split("/").pop();
+      link.download = filename;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -46,7 +57,7 @@ const AnalysisSideBar = ({ isOpen, onClose, selectedAnalysis }: SidebarProps) =>
       console.error("Download failed", error);
       alert("An error occurred while downloading the file. Please try again.");
     } finally {
-      setIsDownloading(false);
+      setIsDownloading(null);
     }
   };
 
@@ -238,6 +249,7 @@ const AnalysisSideBar = ({ isOpen, onClose, selectedAnalysis }: SidebarProps) =>
             {/* Raster Output Tab */}
             { selectedAnalysis?.analysis_results?.data?.analysisType === 'Temporal' &&
               <TabPanel>
+                <Box maxW="100%" overflowX="auto">
                 <Table variant="striped" colorScheme="gray" size="sm">
                 <Thead>
                   <Tr>
@@ -249,14 +261,18 @@ const AnalysisSideBar = ({ isOpen, onClose, selectedAnalysis }: SidebarProps) =>
                   {selectedAnalysis?.raster_output_list.map((raster_output: any) => {
                     return (
                       <Tr>
-                        <Td color="black">{raster_output.name}</Td>
+                        <Td>
+                          <Text color="black" isTruncated>
+                            {raster_output.name}
+                          </Text>
+                        </Td>
                         <Td color="black">
-                          {raster_output.status === 'FINISHED' && !isDownloading && (
+                          {raster_output.status === 'COMPLETED' && isDownloading !== raster_output.id  && (
                             <Link href="#" color="blue.500" onClick={(event) => handleDownload(raster_output.id, event)}>
                               Download
                             </Link>
                           )}
-                          {raster_output.status === 'FINISHED' && isDownloading && (
+                          {raster_output.status === 'COMPLETED' && isDownloading === raster_output.id && (
                             <Flex>
                               <Spinner size="sm" />
                               <Text ml={2} color="blue.500">Downloading...</Text>
@@ -271,6 +287,7 @@ const AnalysisSideBar = ({ isOpen, onClose, selectedAnalysis }: SidebarProps) =>
                   })}
                 </Tbody>
               </Table>
+              </Box>
               </TabPanel>
             }
 
