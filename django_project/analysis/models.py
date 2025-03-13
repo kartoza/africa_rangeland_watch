@@ -291,6 +291,10 @@ class AnalysisRasterOutput(models.Model):
     def __str__(self):
         return self.name
 
+    @property
+    def raster_filename(self):
+        return f'{self.uuid}.tif'
+
     @staticmethod
     def generate_name(analysis):
         analysis_type = analysis.get('analysisType').lower()
@@ -298,19 +302,18 @@ class AnalysisRasterOutput(models.Model):
         date_str = analysis.get('year')
         if temporal_res == 'quarterly':
             date_str = (
-                analysis.get('quarter') + '_' + analysis.get('year')
+                f"{analysis.get('quarter')}_{analysis.get('year')}"
             )
         elif temporal_res == 'monthly':
             date_str = (
-                calendar.month_name(analysis.get('month')).lower() +
-                '_' +
-                analysis.get('year')
+                f"{calendar.month_name[analysis.get('month')].lower()}_"
+                f"{analysis.get('year')}"
             )
         variable = analysis.get('variable').lower()
-        community = analysis.get('communityName')
+        community = analysis.get('communityName').replace(' ', '_')
         return (
             f'{community}_{analysis_type}_{temporal_res}_'
-            f'{variable}_{date_str}.tiff'
+            f'{variable}_{date_str}.tif'
         )
 
     @staticmethod
@@ -322,8 +325,8 @@ class AnalysisRasterOutput(models.Model):
                 'landscape': data['landscape'],
                 'temporalResolution': data['temporalResolution'],
                 'year': data['period']['year'],
-                'month': data['period']['month'],
-                'quarter': data['period']['quarter'],
+                'month': data['period'].get('month'),
+                'quarter': data['period'].get('quarter'),
                 'communityName': data['communityName']
             }
         ]
