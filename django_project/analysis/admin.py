@@ -15,6 +15,7 @@ from .models import (
     AnalysisRasterOutput
 )
 from analysis.utils import get_gdrive_file, delete_gdrive_file
+from analysis.tasks import generate_temporal_analysis_raster_output
 
 
 @admin.register(Analysis)
@@ -192,6 +193,14 @@ class AnalysisResultsCacheAdmin(admin.ModelAdmin):
     list_display = ('id', 'expired_at',)
 
 
+def generate_raster_output(modeladmin, request, queryset):
+    """Trigger task to generate raster for a given queryset."""
+    for raster in queryset:
+        generate_temporal_analysis_raster_output.delay(
+            raster.uuid
+        )
+
+
 @admin.register(AnalysisRasterOutput)
 class AnalysisRasterOutputAdmin(admin.ModelAdmin):
     """Admin for AnalysisRasterOutput model."""
@@ -200,3 +209,4 @@ class AnalysisRasterOutputAdmin(admin.ModelAdmin):
         'uuid', 'name', 'status', 'size',
         'generate_start_time', 'generate_end_time'
     )
+    actions = [generate_raster_output]
