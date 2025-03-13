@@ -146,7 +146,10 @@ def generate_temporal_analysis_raster_output(raster_output_id):
         month_filter = raster_output.analysis.get('quarter')
         resolution = 'month'
 
-    print(f'Generating img {resolution} - {resolution_step} from {start_date} to {end_date}')
+    print(
+        f'Generating img {resolution} ({resolution_step}) '
+        f'from {start_date} to {end_date}'
+    )
     # get aoi
     input_layers = InputLayer()
     communities = input_layers.get_communities()
