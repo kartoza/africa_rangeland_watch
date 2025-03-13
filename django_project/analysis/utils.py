@@ -31,6 +31,30 @@ def _initialize_gdrive_instance():
     return GoogleDrive(gauth)
 
 
+def gdrive_file_list(folder_name):
+    """Get file list from a directory in gdrive."""
+    gdrive = _initialize_gdrive_instance()
+
+    # Step 1: Search for the folder by name
+    folder_query = (
+        f"title = '{folder_name}' and mimeType = "
+        "'application/vnd.google-apps.folder' and trashed = false"
+    )
+    folder_list = gdrive.ListFile({'q': folder_query}).GetList()
+
+    if not folder_list:
+        # folder not found
+        return None
+    else:
+        # Assuming the first match is the desired folder
+        folder_id = folder_list[0]['id']
+        print(f"Folder ID: {folder_id}")
+
+        # Step 2: List files in the found folder
+        file_query = f"'{folder_id}' in parents and trashed = false"
+        return gdrive.ListFile({'q': file_query}).GetList()
+
+
 def get_gdrive_file(filename: str):
     """Retrieve a file by filename from gdrive."""
     gdrive = _initialize_gdrive_instance()
