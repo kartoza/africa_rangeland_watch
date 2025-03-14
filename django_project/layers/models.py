@@ -281,3 +281,7 @@ class ExportLayerRequest(models.Model):
         InputLayer,
         related_name="export_requests"
     )
+    notes = models.TextField(
+        blank=True,
+        null=True
+    )

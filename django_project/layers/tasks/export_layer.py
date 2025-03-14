@@ -6,13 +6,20 @@ Africa Rangeland Watch (ARW).
 """
 
 import os
+import tempfile
 import zipfile
+import uuid
 from core.celery import app
 from django.db import connection
+from django.core.files.base import File
+from django.conf import settings
+from django.utils import timezone
 import subprocess
 
 from cloud_native_gis.models.layer import Layer
 from cloud_native_gis.utils.fiona import FileType
+from core.models import TaskStatus
+from layers.models import ExportLayerRequest
 
 
 def _zip_shapefile(shp_filepath, working_dir, remove_file=True):
@@ -100,3 +107,85 @@ def export_layer(layer: Layer, type: FileType, working_dir: str):
             None,
             f'Failed to export layer {layer.name} to format {type}'
         )
+
+
+@app.task
+def process_export_request(export_id):
+    """Process export layer request from user."""
+    export_request = ExportLayerRequest.objects.get(id=export_id)
+    try:
+        export_request.status = TaskStatus.RUNNING
+        export_request.start_datetime = timezone.now()
+        export_request.save()
+
+        exported_files = []
+        with tempfile.TemporaryDirectory() as working_dir:
+            for input_layer in export_request.layers:
+                # find layer in cloud native gis
+                layer = Layer.objects.filter(
+                    unique_id=input_layer.uuid
+                ).first()
+                if layer is None:
+                    continue
+
+                print(f'Exporting layer {layer.unique_id}')
+                file_path, msg = export_layer(
+                    layer,
+                    export_request.format,
+                    working_dir
+                )
+
+                if file_path is None:
+                    print(msg)
+                    continue
+
+                exported_files.append(file_path)
+
+            if len(exported_files) == 0:
+                raise RuntimeError('No generated file!')
+
+            # if there are more than 1 file, zip the files
+            output_file = None
+            if len(exported_files) > 0:
+                zip_filepath = os.path.join(
+                    working_dir,
+                    f'{uuid.uuid4().hex}.zip'
+                )
+                with zipfile.ZipFile(
+                    zip_filepath, 'w', zipfile.ZIP_DEFLATED
+                ) as archive:
+                    for exported_file in exported_files:
+                        archive.write(
+                            exported_file,
+                            arcname=os.path.basename(exported_file)
+                        )
+                output_file = zip_filepath
+            else:
+                output_file = exported_files[0]
+
+            # store to media directory
+            if settings.DEBUG:
+                with open(output_file, 'rb') as f:
+                    export_request.file.save(
+                        os.path.basename(output_file),
+                        File(f),
+                        save=True
+                    )
+            else:
+                # TODO: upload to API
+                pass
+
+            export_request.end_datetime = timezone.now()
+            export_request.status = TaskStatus.COMPLETED
+            if len(exported_files) != export_request.layers.count():
+                export_request.notes = (
+                    'There are '
+                    f'{export_request.layers.count() - len(exported_files)} '
+                    'layers that are failed to be exported!'
+                )
+    except Exception as ex:
+        print(f'Failed to export layers {ex}')
+        export_request.status = TaskStatus.FAILED
+        export_request.notes = str(ex)
+    finally:
+        export_request.save()
