@@ -183,15 +183,18 @@ def import_layer(layer_id, upload_id, file_url):
             )
             auth = f'Token {preferences.worker_layer_api_key}'
 
-        filename = download_file_from_url(
-            file_url,
-            layer_upload.folder,
-            progress_callback=(
-                lambda progress: update_layer_upload_progress(
-                    layer_upload, progress)
-            ),
-            auth_header=auth
-        )
+        if not settings.DEBUG:
+            filename = download_file_from_url(
+                file_url,
+                layer_upload.folder,
+                progress_callback=(
+                    lambda progress: update_layer_upload_progress(
+                        layer_upload, progress)
+                ),
+                auth_header=auth
+            )
+        else:
+            filename = input_layer.name
 
         if filename:
             input_layer.layer_type = detect_file_type_by_extension(filename)
@@ -219,24 +222,42 @@ def import_layer(layer_id, upload_id, file_url):
 
         # upload pmtiles to Django
         if layer.pmtile:
-            auth = f'Token {preferences.worker_layer_api_key}'
-            upload_path = (
-                base_url + reverse('frontend-api:pmtile-layer', kwargs={
-                    'upload_id': upload_id,
-                })
-            )
-            is_success = upload_file(
-                upload_path,
-                os.path.join(settings.MEDIA_ROOT, layer.pmtile.name),
-                auth_header=auth
-            )
-            if not is_success:
-                logger.warning(
-                    f'PMTile upload for layer {layer_id} failed!')
-                layer.pmtile.delete(save=True)
+            if not settings.DEBUG:
+                auth = f'Token {preferences.worker_layer_api_key}'
+                upload_path = (
+                    base_url + reverse('frontend-api:pmtile-layer', kwargs={
+                        'upload_id': upload_id,
+                    })
+                )
+                is_success = upload_file(
+                    upload_path,
+                    os.path.join(settings.MEDIA_ROOT, layer.pmtile.name),
+                    auth_header=auth
+                )
+                if not is_success:
+                    logger.warning(
+                        f'PMTile upload for layer {layer_id} failed!')
+                    layer.pmtile.delete(save=True)
 
-                # fallback to use vector tile
-                input_layer.url = base_url + layer.tile_url
+                    # fallback to use vector tile
+                    input_layer.url = base_url + layer.tile_url
+                    input_layer.save()
+            else:
+                is_success = True
+                # update url in InputLayer
+                base_url = settings.DJANGO_BACKEND_URL
+                if base_url.endswith('/'):
+                    base_url = base_url[:-1]
+                if layer.pmtile:
+                    input_layer.url = (
+                        f'pmtiles://{base_url}' +
+                        reverse('serve-pmtiles', kwargs={
+                            'layer_uuid': layer.unique_id,
+                        })
+                    )
+                else:
+                    input_layer.url = base_url + layer.tile_url
+
                 input_layer.save()
             layer_upload.emptying_folder()
         else:
