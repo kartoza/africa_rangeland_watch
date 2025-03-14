@@ -10,6 +10,8 @@ import tempfile
 import zipfile
 import uuid
 from core.celery import app
+from celery.utils.log import get_task_logger
+from django.urls import reverse
 from django.db import connection
 from django.core.files.base import File
 from django.conf import settings
@@ -19,8 +21,12 @@ from pathlib import Path
 
 from cloud_native_gis.models.layer import Layer
 from cloud_native_gis.utils.fiona import FileType
-from core.models import TaskStatus
+from core.models import TaskStatus, Preferences
 from layers.models import ExportLayerRequest
+from layers.utils import upload_file
+
+
+logger = get_task_logger(__name__)
 
 
 def _zip_shapefile(shp_filepath, working_dir, remove_file=True):
@@ -132,7 +138,7 @@ def process_export_request(export_id):
                 if layer is None:
                     continue
 
-                print(f'Exporting layer {layer.unique_id}')
+                logger.info(f'Exporting layer {layer.unique_id}')
                 file_path, msg = export_layer(
                     layer,
                     export_request.format,
@@ -141,7 +147,7 @@ def process_export_request(export_id):
                 )
 
                 if file_path is None:
-                    print(msg)
+                    logger.error(msg)
                     continue
 
                 exported_files.append(file_path)
@@ -177,8 +183,31 @@ def process_export_request(export_id):
                         save=True
                     )
             else:
-                # TODO: upload to API
-                pass
+                # load preferences
+                preferences = Preferences.load()
+                base_url = settings.DJANGO_BACKEND_URL
+                if base_url.endswith('/'):
+                    base_url = base_url[:-1]
+                auth = f'Token {preferences.worker_layer_api_key}'
+
+                # upload to API
+                upload_path = (
+                    base_url +
+                    reverse('frontend-api:upload-exported-file', kwargs={
+                        'request_id': export_id,
+                    })
+                )
+                is_success = upload_file(
+                    upload_path,
+                    output_file,
+                    auth_header=auth
+                )
+                if not is_success:
+                    raise RuntimeError(
+                        f'Upload exported file for {export_id} failed!'
+                    )
+                # reload to refresh the updated file field
+                export_request.refresh_from_db()
 
             export_request.end_datetime = timezone.now()
             export_request.status = TaskStatus.COMPLETED
@@ -189,7 +218,7 @@ def process_export_request(export_id):
                     'layers that are failed to be exported!'
                 )
     except Exception as ex:
-        print(f'Failed to export layers {ex}')
+        logger.error(f'Failed to export layers {ex}')
         export_request.status = TaskStatus.FAILED
         export_request.notes = str(ex)
     finally:
