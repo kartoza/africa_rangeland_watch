@@ -15,6 +15,7 @@ from django.core.files.base import File
 from django.conf import settings
 from django.utils import timezone
 import subprocess
+from pathlib import Path
 
 from cloud_native_gis.models.layer import Layer
 from cloud_native_gis.utils.fiona import FileType
@@ -48,7 +49,9 @@ def _zip_shapefile(shp_filepath, working_dir, remove_file=True):
 
 
 # TODO: move this to CloudNativeGIS
-def export_layer(layer: Layer, type: FileType, working_dir: str):
+def export_layer(
+    layer: Layer, type: FileType, working_dir: str, filename = None
+):
     driver_dict = {
         FileType.GEOJSON: 'GeoJSON',
         FileType.GEOPACKAGE: 'GPKG',
@@ -59,9 +62,10 @@ def export_layer(layer: Layer, type: FileType, working_dir: str):
         '.shp' if type == FileType.SHAPEFILE else
         FileType.to_extension(type)
     )
+    name = Path(filename).stem if filename else str(layer.unique_id)
     export_filepath = os.path.join(
         working_dir,
-        f'{str(layer.unique_id)}{ext}'
+        f'{name}{ext}'
     )
     conn_str = (
         'PG:dbname={NAME} user={USER} password={PASSWORD} '
@@ -120,7 +124,7 @@ def process_export_request(export_id):
 
         exported_files = []
         with tempfile.TemporaryDirectory() as working_dir:
-            for input_layer in export_request.layers:
+            for input_layer in export_request.layers.all():
                 # find layer in cloud native gis
                 layer = Layer.objects.filter(
                     unique_id=input_layer.uuid
@@ -132,7 +136,8 @@ def process_export_request(export_id):
                 file_path, msg = export_layer(
                     layer,
                     export_request.format,
-                    working_dir
+                    working_dir,
+                    filename=input_layer.name
                 )
 
                 if file_path is None:
@@ -146,7 +151,7 @@ def process_export_request(export_id):
 
             # if there are more than 1 file, zip the files
             output_file = None
-            if len(exported_files) > 0:
+            if len(exported_files) > 1:
                 zip_filepath = os.path.join(
                     working_dir,
                     f'{uuid.uuid4().hex}.zip'
