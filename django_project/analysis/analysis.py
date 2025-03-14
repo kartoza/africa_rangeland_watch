@@ -1039,7 +1039,7 @@ def quarterly_medians(
     reducer : ee.Reducer
         The reducer to apply over each interval (e.g., ee.Reducer.median()).
     date_end : str
-        The end date (inclusive) in 'YYYY-MM-DD' format for aggregation.
+        The end date (exclusive) in 'YYYY-MM-DD' format for aggregation.
         Default to use the latest date in dataset.
 
     Returns
@@ -1113,7 +1113,7 @@ def quarterly_medians(
     new_collection = ee.ImageCollection(
         date_ranges.map(make_time_slice))
 
-    if step == 3:
+    if unit == 'month' and step == 3:
         new_collection = new_collection.filter(
             ee.Filter.inList('month', [1, 4, 7, 10]))
 
@@ -1357,6 +1357,7 @@ def export_image_to_drive(
     else:
         print('Export failed. Details:')
         print(final_status)
+    return final_status
 
 
 def spatial_get_date_filter(analysis_dict):
@@ -1854,3 +1855,55 @@ def calculate_temporal(
         return reduced
 
     return col.map(process_image).flatten()
+
+
+def calculate_temporal_to_img(
+    aoi, start_date, end_date, resolution, resolution_step,
+    band, is_custom_geom=False
+):
+    """
+    Calculate temporal timeseries stats.
+
+    Parameters
+    ----------
+    aoi : ee.Polygon
+        Polygon area of interest.
+    start_date : str
+        Start date to calculate baseline.
+    end_date : str
+        End date to calculate baseline.
+    resolution : str
+        Temporal resolution: month or year.
+    resolution_step : str
+        Resolution: 1 for each month or 3 for quarterly.
+    is_custom_geom : boolean
+        If False, then use Communities polygon that intersects with aoi.
+
+    Returns
+    -------
+    ee.ImageCollection
+    """
+    input_layer = InputLayer()
+    selected_area = input_layer.get_selected_area(aoi, is_custom_geom)
+    geo = selected_area.geometry().bounds()
+
+    col = get_sentinel_by_resolution(
+        geo, start_date, end_date, resolution, resolution_step
+    )
+
+    if band == 'bare':
+        classifier = train_bgt(
+            geo, GEEAsset.fetch_asset_source('random_forest_training')
+        )
+
+        def process_image(i):
+            bg = classify_bgt(i, classifier).select('bare')
+            bg = bg.set(
+                'year', i.get('year'),
+                'month', i.get('month')
+            )
+            return bg
+        col = col.map(process_image)
+
+    col = col.select(band)
+    return col

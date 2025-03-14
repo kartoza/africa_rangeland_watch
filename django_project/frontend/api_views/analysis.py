@@ -159,7 +159,7 @@ class AnalysisAPI(APIView):
 
             # Compute min, max, and mean
             results = {}
-            unprocessed_years = years
+            unprocessed_years = [y for y in years]
             names = set()
 
             for location_year, values in aggregated.items():

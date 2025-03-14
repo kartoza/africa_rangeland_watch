@@ -2,6 +2,7 @@ import json
 import uuid
 
 import ee
+import calendar
 from typing import Tuple
 from django.utils import timezone
 from django.contrib.auth.models import User
@@ -257,6 +258,107 @@ class LandscapeCommunity(models.Model):
         return self.community_name
 
 
+class AnalysisRasterOutput(models.Model):
+    """Model that stores the raster output of an analysis."""
+
+    uuid = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False,
+        help_text="Unique identifier for the raster."
+    )
+    name = models.TextField()
+    size = models.BigIntegerField(default=0)
+    status = models.CharField(max_length=255)
+    generate_start_time = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+    generate_end_time = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+    status_logs = models.JSONField(
+        default=dict,
+        null=True,
+        blank=True
+    )
+    # should have: analysisType, variable, landscape,
+    # temporalResolution, year, month, quarter,
+    # communityName
+    analysis = models.JSONField(default=dict)
+
+    def __str__(self):
+        return self.name
+
+    @property
+    def raster_filename(self):
+        return f'{self.uuid}.tif'
+
+    @staticmethod
+    def generate_name(analysis):
+        analysis_type = analysis.get('analysisType').lower()
+        temporal_res = analysis.get('temporalResolution').lower()
+        date_str = analysis.get('year')
+        if temporal_res == 'quarterly':
+            date_str = (
+                f"Q{analysis.get('quarter')}_{analysis.get('year')}"
+            )
+        elif temporal_res == 'monthly':
+            date_str = (
+                f"{calendar.month_name[analysis.get('month')].lower()}_"
+                f"{analysis.get('year')}"
+            )
+        variable = analysis.get('variable').lower().replace(' ', '_')
+        community = analysis.get('communityName').replace(' ', '_')
+        return (
+            f'{community}_{variable}_{analysis_type}_'
+            f'{temporal_res}_{date_str}.tif'
+        )
+
+    @staticmethod
+    def from_temporal_analysis_input(data):
+        results = [
+            {
+                'analysisType': data['analysisType'],
+                'variable': data['variable'],
+                'landscape': data['landscape'],
+                'temporalResolution': data['temporalResolution'],
+                'year': data['period']['year'],
+                'month': data['period'].get('month'),
+                'quarter': data['period'].get('quarter'),
+                'communityName': data['communityName']
+            }
+        ]
+        comp_years = data['comparisonPeriod']['year']
+        comp_quarters = data['comparisonPeriod'].get('quarter', [])
+        if comp_quarters is None or len(comp_quarters) == 0:
+            comp_quarters = [None] * len(comp_years)
+        comp_months = data['comparisonPeriod'].get('month', [])
+        if comp_months is None or len(comp_months) == 0:
+            comp_months = [None] * len(comp_years)
+        for idx, comp_year in enumerate(comp_years):
+            analysis = {
+                'analysisType': data['analysisType'],
+                'variable': data['variable'],
+                'landscape': data['landscape'],
+                'temporalResolution': data['temporalResolution'],
+                'year': comp_year,
+                'month': comp_months[idx],
+                'quarter': comp_quarters[idx],
+                'communityName': data['communityName']
+            }
+            results.append(analysis)
+        return results
+
+
+@receiver(pre_delete, sender=AnalysisRasterOutput)
+def analysisrasteroutput_pre_delete(
+        sender, instance: AnalysisRasterOutput, *args, **kwargs):
+    """Delete raster output when the result is deleted."""
+    from analysis.utils import delete_gdrive_file
+    delete_gdrive_file(f'{str(instance.uuid)}.tiff')
+
 
 class UserAnalysisResults(models.Model):
     created_by = models.ForeignKey(
@@ -280,6 +382,10 @@ class UserAnalysisResults(models.Model):
         null=True,
         blank=True,
         help_text='Path to the raster output of this analysis.'
+    )
+    raster_outputs = models.ManyToManyField(
+        AnalysisRasterOutput,
+        related_name="analysis_results"
     )
 
     def __str__(self):

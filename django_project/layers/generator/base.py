@@ -66,13 +66,7 @@ class BaseLayerGenerator:
 
     def metadata_to_vis_params(self, layer: InputLayer) -> dict:
         """Get visualization parameters from layer metadata."""
-        metadata = layer.metadata
-        return {
-            'min': metadata['minValue'],
-            'max': metadata['maxValue'],
-            'palette': metadata['colors'],
-            'opacity': metadata['opacity']
-        }
+        return layer.get_vis_params()
 
     def _generate(self) -> List[LayerCacheResult]:
         raise NotImplementedError('_generate is not implemented!')
