@@ -4,6 +4,12 @@ from django.contrib.auth.models import User
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 from cloud_native_gis.models.layer import Layer
+from cloud_native_gis.utils.fiona import FileType
+
+from core.models import TaskStatus
+
+
+EXPORTED_FILES_FOLDER = 'exported_files'
 
 
 class DataProvider(models.Model):
@@ -229,3 +235,49 @@ def input_layer_on_delete(sender, instance: InputLayer, using, **kwargs):
     if layer is None:
         return
     layer.delete()
+
+
+class ExportLayerRequest(models.Model):
+    """Model that represent a request to export layer(s)."""
+
+    FORMAT_CHOICES = (
+        (FileType.GEOJSON, FileType.GEOJSON),
+        (FileType.SHAPEFILE, FileType.SHAPEFILE),
+        (FileType.GEOPACKAGE, FileType.GEOPACKAGE),
+        (FileType.KML, FileType.KML),
+    )
+
+    requested_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        help_text="User who submits the request."
+    )
+    format = models.CharField(
+        max_length=255,
+        choices=FORMAT_CHOICES,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    start_datetime = models.DateTimeField(
+        blank=True,
+        null=True
+    )
+    end_datetime = models.DateTimeField(
+        blank=True,
+        null=True
+    )
+    status = models.CharField(
+        max_length=50,
+        choices=TaskStatus.choices,
+        default=TaskStatus.PENDING
+    )
+    # auto cleanup using django_cleanup
+    file = models.FileField(
+        upload_to=f'{EXPORTED_FILES_FOLDER}/',
+        null=True, blank=True,
+        help_text='Exported file.'
+    )
+    layers = models.ManyToManyField(
+        InputLayer,
+        related_name="export_requests"
+    )

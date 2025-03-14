@@ -82,3 +82,12 @@ class UserSession(models.Model):
 
     def __str__(self):
         return f"Session for {self.user.username}"
+
+
+class TaskStatus(models.TextChoices):
+    """Enum for specifying status of background task."""
+
+    PENDING = 'PENDING', 'PENDING'
+    RUNNING = 'RUNNING', 'RUNNING'
+    COMPLETED = 'COMPLETED', 'COMPLETED'
+    FAILED = 'FAILED', 'FAILED'
