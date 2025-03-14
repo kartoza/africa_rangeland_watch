@@ -302,18 +302,18 @@ class AnalysisRasterOutput(models.Model):
         date_str = analysis.get('year')
         if temporal_res == 'quarterly':
             date_str = (
-                f"{analysis.get('quarter')}_{analysis.get('year')}"
+                f"Q{analysis.get('quarter')}_{analysis.get('year')}"
             )
         elif temporal_res == 'monthly':
             date_str = (
                 f"{calendar.month_name[analysis.get('month')].lower()}_"
                 f"{analysis.get('year')}"
             )
-        variable = analysis.get('variable').lower()
+        variable = analysis.get('variable').lower().replace(' ', '_')
         community = analysis.get('communityName').replace(' ', '_')
         return (
-            f'{community}_{analysis_type}_{temporal_res}_'
-            f'{variable}_{date_str}.tif'
+            f'{community}_{variable}_{analysis_type}_'
+            f'{temporal_res}_{date_str}.tif'
         )
 
     @staticmethod
