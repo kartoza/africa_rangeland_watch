@@ -109,69 +109,14 @@ class LandscapeCommunityAdmin(OSMGeoAdmin):
     map_template = 'gis/admin/osm.html'
 
 
-def clear_raster_output(modeladmin, request, queryset):
-    """Clear raster output from analysis results."""
-    for result in queryset:
-        if not result.raster_output_path:
-            continue
-
-        if delete_gdrive_file(result.raster_output_path):
-            result.raster_output_path = None
-            result.save()
-
-
 class UserAnalysisResultsAdmin(admin.ModelAdmin):
-    list_display = ('created_by', 'source', 'created_at', 'download_link')
+    list_display = ('created_by', 'source', 'created_at')
     search_fields = ('created_by__username', 'source',)
     list_filter = ('source',)
-    actions = [clear_raster_output]
-
-    def download_link(self, obj: UserAnalysisResults):
-        if not obj.raster_output_path:
-            return '-'
-        return format_html(
-            '<a href="{}">Download</a>',
-            reverse('admin:analysis_results_download_file',
-                    args=[obj.pk])
-        )
-    download_link.short_description = 'Download File'
-
-    def get_urls(self):
-        urls = super(UserAnalysisResultsAdmin, self).get_urls()
-        urls += [
-            re_path(r'^download-file/(?P<pk>\d+)$', self.download_file,
-                    name='analysis_results_download_file'),
-        ]
-        return urls
 
     def view_analysis_results(self, obj):
         return str(obj.analysis_results)[:100]
     view_analysis_results.short_description = 'Analysis Results...'
-
-    def download_file(self, request, pk):
-        result = UserAnalysisResults.objects.get(id=pk)
-        if not result.raster_output_path:
-            raise Http404('File not found')
-
-        file = get_gdrive_file(result.raster_output_path)
-        if not file:
-            raise Http404("File not found in Google Drive")
-        else:
-            # Download and stream the file
-            def file_iterator():
-                file.FetchContent()
-                # Read in 8MB chunks
-                while chunk := file.content.read(8 * 1024 * 1024):
-                    yield chunk
-
-            response = StreamingHttpResponse(
-                file_iterator(),
-                content_type='image/tiff'
-            )
-            response['Content-Disposition'] = (
-                f'attachment; filename="{result.raster_output_path}"'
-            )
-            return response
 
 
 admin.site.register(UserAnalysisResults, UserAnalysisResultsAdmin)
@@ -196,6 +141,8 @@ class AnalysisResultsCacheAdmin(admin.ModelAdmin):
 def generate_raster_output(modeladmin, request, queryset):
     """Trigger task to generate raster for a given queryset."""
     for raster in queryset:
+        if raster.status == 'RUNNING':
+            continue
         generate_temporal_analysis_raster_output.delay(
             raster.uuid
         )
@@ -207,6 +154,53 @@ class AnalysisRasterOutputAdmin(admin.ModelAdmin):
 
     list_display = (
         'uuid', 'name', 'status', 'size',
-        'generate_start_time', 'generate_end_time'
+        'generate_start_time', 'generate_end_time',
+        'download_link'
     )
     actions = [generate_raster_output]
+
+    def download_link(self, obj: AnalysisRasterOutput):
+        if obj.status != 'COMPLETED':
+            return '-'
+        return format_html(
+            '<a href="{}">Download</a>',
+            reverse('admin:analysis_results_download_file',
+                    args=[obj.pk])
+        )
+    download_link.short_description = 'Download File'
+
+    def get_urls(self):
+        urls = super(AnalysisRasterOutputAdmin, self).get_urls()
+        urls += [
+            re_path(
+                r'^download-file/(?P<pk>[\da-f-]+)$',
+                self.download_file,
+                name='analysis_results_download_file'
+            ),
+        ]
+        return urls
+
+    def download_file(self, request, pk):
+        result = AnalysisRasterOutput.objects.get(uuid=pk)
+        if result.status != 'COMPLETED':
+            raise Http404('File is not generated')
+
+        file = get_gdrive_file(result.raster_filename)
+        if not file:
+            raise Http404("File not found in Google Drive")
+        else:
+            # Download and stream the file
+            def file_iterator():
+                file.FetchContent()
+                # Read in 8MB chunks
+                while chunk := file.content.read(8 * 1024 * 1024):
+                    yield chunk
+
+            response = StreamingHttpResponse(
+                file_iterator(),
+                content_type='image/tiff'
+            )
+            response['Content-Disposition'] = (
+                f'attachment; filename="{result.name}"'
+            )
+            return response
