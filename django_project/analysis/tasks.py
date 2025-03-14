@@ -143,7 +143,7 @@ def generate_temporal_analysis_raster_output(raster_output_id):
         )
         end_date = start_date + relativedelta(months=3)
         resolution_step = 3
-        month_filter = raster_output.analysis.get('quarter')
+        month_filter = quarter_dict[raster_output.analysis.get('quarter')]
         resolution = 'month'
 
     print(
