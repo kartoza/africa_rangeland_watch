@@ -14,7 +14,7 @@ from .models import (
     AnalysisResultsCache,
     AnalysisRasterOutput
 )
-from analysis.utils import get_gdrive_file, delete_gdrive_file
+from analysis.utils import get_gdrive_file
 from analysis.tasks import generate_temporal_analysis_raster_output
 
 
