@@ -19,7 +19,7 @@ from django.utils import timezone
 from cloud_native_gis.models.layer import Layer
 from core.models import TaskStatus, Preferences
 from layers.models import ExportLayerRequest
-from layers.utils import upload_file, export_layer
+from layers.utils import upload_file
 
 
 logger = get_task_logger(__name__)
@@ -45,8 +45,7 @@ def process_export_request(export_id):
                     continue
 
                 logger.info(f'Exporting layer {layer.unique_id}')
-                file_path, msg = export_layer(
-                    layer,
+                file_path, msg = layer.export_layer(
                     export_request.format,
                     working_dir,
                     filename=input_layer.name

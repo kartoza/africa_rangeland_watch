@@ -43,7 +43,7 @@ class TestExportLayerTasks(TestCase):
         self.export_request.layers.set([self.input_layer])
 
     @patch('layers.tasks.export_layer.upload_file')
-    @patch('layers.tasks.export_layer.export_layer')
+    @patch('layers.tasks.export_layer.Layer.export_layer')
     def test_process_export_request_success(
         self, mock_export_layer, mock_upload_file
     ):
@@ -59,7 +59,7 @@ class TestExportLayerTasks(TestCase):
         self.assertIsNone(self.export_request.notes)
 
     @patch('layers.tasks.export_layer.upload_file')
-    @patch('layers.tasks.export_layer.export_layer')
+    @patch('layers.tasks.export_layer.Layer.export_layer')
     def test_process_export_request_failure(
         self, mock_export_layer, mock_upload_file
     ):
@@ -75,7 +75,7 @@ class TestExportLayerTasks(TestCase):
         self.assertIn('No generated file!', self.export_request.notes)
 
     @patch('layers.tasks.export_layer.upload_file')
-    @patch('layers.tasks.export_layer.export_layer')
+    @patch('layers.tasks.export_layer.Layer.export_layer')
     def test_process_export_request_partial_success(
         self, mock_export_layer, mock_upload_file
     ):
