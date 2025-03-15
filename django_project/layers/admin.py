@@ -1,5 +1,11 @@
 from django.contrib import admin
-from .models import DataProvider, InputLayer, DataFeedSetting, LayerGroupType
+from .models import (
+    DataProvider,
+    InputLayer,
+    DataFeedSetting,
+    LayerGroupType,
+    ExportLayerRequest
+)
 
 
 @admin.register(DataProvider)
@@ -78,3 +84,10 @@ class LayerGroupTypeAdmin(admin.ModelAdmin):
     """Admin for LayerGroupType model."""
 
     list_display = ('name',)
+
+
+@admin.register(ExportLayerRequest)
+class ExportLayerRequestAdmin(admin.ModelAdmin):
+    """Admin for ExportLayerRequest model."""
+
+    list_display = ('created_at', 'requested_by', 'format', 'status')
