@@ -16,6 +16,8 @@ import {
   useToast,
   Icon,
   Collapse,
+  SimpleGrid,
+  IconButton,
 } from "@chakra-ui/react";
 import { FaFilter, FaPlus, FaCloudUploadAlt, FaTrash } from "react-icons/fa";
 import Header from "../../components/Header";
@@ -29,6 +31,7 @@ import Pagination from "../../components/Pagination";
 import SearchInput from "../../components/SearchInput";
 import { ChevronUpIcon } from "@chakra-ui/icons";
 import { motion } from "framer-motion";
+import { IoCloseSharp } from "react-icons/io5";
 
 
 export default function SupportPage() {
@@ -239,54 +242,59 @@ export default function SupportPage() {
 
             {showFilters && !creatingTicket && (
               <Collapse in={showFilters} animateOpacity>
-                  <Box 
-                    bg="gray.100" 
-                    w="50%" 
-                    p={4} 
-                    borderRadius="md" 
-                    boxShadow="sm"
-                  >
-                    {/* First Row: Status & Date */}
-                    <Flex gap={4} mb={4} wrap="wrap">
-                      {/* Status Dropdown */}
-                      <Select 
-                        placeholder="Filter by Status" 
-                        value={selectedStatus} 
-                        onChange={(e) => setSelectedStatus(e.target.value)}
-                        flex="1"
-                      >
-                        <option value="open">Open</option>
-                        <option value="in_progress">In Progress</option>
-                        <option value="resolved">Resolved</option>
-                      </Select>
-
-                      {/* Date Picker */}
-                      <Input 
-                        type="date" 
-                        value={selectedDate} 
-                        onChange={(e) => setSelectedDate(e.target.value)}
-                        flex="1"
-                      />
-                    </Flex>
-
-                    {/* Second Row: Clear Filters Button (Left-aligned) */}
-                    <Flex justifyContent="flex-start">
-                      <Button 
-                        onClick={() => { setSelectedStatus(""); setSelectedDate(""); }} 
-                        colorScheme="teal"
-                        variant="outline"
-                        borderColor="teal.500"
-                        textColor="teal.600"
-                        fontWeight={700}
-                        h={8}
-                        width="100%"
-                        borderRadius="md"
-                      >
-                        Clear Filters
-                      </Button>
-                    </Flex>
-                  </Box>
-              </Collapse>
+                        <Box bg="gray.100" p={4} borderRadius="md" boxShadow="md" mt={2} width={{ base: "100%", md: "50%" }}>
+                          <Flex justify="space-between" align="center" mb={3}>
+                            <Text fontSize="lg" fontWeight="bold" color="gray.700">
+                              Filter Support
+                            </Text>
+                            <IconButton
+                              icon={<IoCloseSharp />}
+                              size="sm"
+                              onClick={() => setShowFilters(!showFilters)}
+                              aria-label="Close filters"
+                              variant="ghost"
+                              color="gray.600"
+                              _hover={{ color: "red.500" }}
+                            />
+                          </Flex>
+                          <SimpleGrid columns={2} spacing={4}>
+                          <Select 
+                            placeholder="Filter by Status" 
+                            value={selectedStatus} 
+                            onChange={(e) => setSelectedStatus(e.target.value)}
+                          >
+                            <option value="open">Open</option>
+                            <option value="in_progress">In Progress</option>
+                            <option value="resolved">Resolved</option>
+                          </Select>
+              
+              
+                          {/* Date Filter */}
+                          <Input 
+                            type="date" 
+                            value={selectedDate} 
+                            onChange={(e) => setSelectedDate(e.target.value)}
+                          />
+              
+                          {/* Clear Filters Button */}
+                          <Button 
+                            onClick={() => { setSelectedStatus(""); setSelectedDate(""); }} 
+                            colorScheme="teal"
+                            variant="outline"
+                            borderColor="teal.500"
+                            textColor="teal.600"
+                            fontWeight={700}
+                            h={8}
+                            width="100%"
+                            borderRadius="md"
+                            mt={2}
+                          >
+                            Clear Filters
+                          </Button>
+                          </SimpleGrid>
+                        </Box>
+                      </Collapse>
+              
             )}
 
 
@@ -305,7 +313,6 @@ export default function SupportPage() {
                 display="flex"
                 flexDirection="column"
                 gap={4}
-                bg="gray.50"
               >
                 {filteredTickets.length === 0 ? (
                   <Flex justify="center" align="center" height="200px">
@@ -315,7 +322,7 @@ export default function SupportPage() {
                   </Flex>
                 ) : (
                   (searchTerm !== '' ? filteredTickets : currentTickets).map((ticket, index) => (
-                  <Box key={index} boxShadow="md" borderRadius="md" p={4} border="1px" borderColor="gray.300">
+                  <Box key={index} boxShadow="md" borderRadius="md" p={4} border="1px" borderColor="gray.300" bg="gray.50">
                       <Flex direction="column" gap={2} position="relative">
                       {/* Badge (Status) */}
                       <Tag

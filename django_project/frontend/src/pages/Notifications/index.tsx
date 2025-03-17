@@ -76,13 +76,13 @@ export default function Notifications() {
                   <NotificationsTab />
                 </TabPanel>
                 <TabPanel>
-                  <Text color="black">No data available for Personal notifications.</Text>
+                  <Text fontSize="m" fontWeight="bold" color="gray.500">No data available for Personal notifications.</Text>
                 </TabPanel>
                 <TabPanel>
-                  <Text color="black">No data available for Organisations notifications.</Text>
+                  <Text fontSize="m" fontWeight="bold" color="gray.500">No data available for Organisations notifications.</Text>
                 </TabPanel>
                 <TabPanel>
-                  <Text color="black">No data available for System notifications.</Text>
+                  <Text fontSize="m" fontWeight="bold" color="gray.500">No data available for System notifications.</Text>
                 </TabPanel>
                 <TabPanel>
                   <SystemTab />
