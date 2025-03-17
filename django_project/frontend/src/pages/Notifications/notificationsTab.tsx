@@ -13,71 +13,10 @@ export default function NotificationsTab() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
-  // useEffect(() => {
-  //   const fetchNotificationsData = () => {
-
-  //     setAllNotifications([]);
-  //   };
-
-  //   fetchNotificationsData();
-  // }, []);
-
   useEffect(() => {
-    // Simulate fetching data for "All" notifications
     const fetchNotificationsData = () => {
-      const dummyData = [
-        {
-          id: 1,
-          title: "System Update",
-          description: "A new system update is available. Please update to the latest version.",
-          badge: "New",
-          timestamp: "2025-03-04 10:00 AM",
-        },
-        {
-          id: 2,
-          title: "Payment Reminder",
-          description: "Your subscription payment is due in 3 days. Please make the payment to avoid interruption.",
-          badge: "Reminder",
-          timestamp: "2025-03-03 08:30 AM",
-        },
-        {
-          id: 3,
-          title: "Security Alert",
-          description: "Unusual login detected from a new device. If this wasn't you, please secure your account.",
-          badge: "Alert",
-          timestamp: "2025-03-02 05:45 PM",
-        },
-        {
-          id: 4,
-          title: "Security Alert",
-          description: "Unusual login detected from a new device. If this wasn't you, please secure your account.",
-          badge: "Alert",
-          timestamp: "2025-03-02 05:45 PM",
-        },
-        {
-          id: 5,
-          title: "Security Alert",
-          description: "Unusual login detected from a new device. If this wasn't you, please secure your account.",
-          badge: "Alert",
-          timestamp: "2025-03-02 05:45 PM",
-        },
-        {
-          id: 6,
-          title: "Security Alert",
-          description: "Unusual login detected from a new device. If this wasn't you, please secure your account.",
-          badge: "Alert",
-          timestamp: "2025-03-02 05:45 PM",
-        },
-        {
-          id: 7,
-          title: "Security Alert",
-          description: "Unusual login detected from a new device. If this wasn't you, please secure your account.",
-          badge: "Alert",
-          timestamp: "2025-03-02 05:45 PM",
-        },
-      ];
 
-      setAllNotifications(dummyData);
+      setAllNotifications([]);
     };
 
     fetchNotificationsData();

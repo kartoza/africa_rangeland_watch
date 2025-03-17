@@ -76,46 +76,6 @@ export default function SystemTab() {
       setThresholdValue((prev) => prev - 0.01);
     }
   };
-
-  useEffect(() => {
-    const dummyNotifications = [
-      {
-        id: 1,
-        indicator: "NDVI",
-        alert: true,
-        alertTrigger: "greaterThan",
-        threshold: 0.75,
-        anomalyDetectionAlert: false,
-        email: true,
-        platform: false,
-        lastTriggered: new Date(Date.now() - 1000 * 60 * 24), // 24 minutes ago
-      },
-      {
-        id: 2,
-        indicator: "EVI",
-        alert: false,
-        alertTrigger: "lessThan",
-        threshold: 0.60,
-        anomalyDetectionAlert: true,
-        email: false,
-        platform: true,
-        lastTriggered: new Date(Date.now() - 1000 * 60 * 60 * 24 * 2), // 2 days ago
-      },
-      {
-        id: 3,
-        indicator: "Soil Carbon",
-        alert: true,
-        alertTrigger: "equalTo",
-        threshold: 0.80,
-        anomalyDetectionAlert: true,
-        email: true,
-        platform: true,
-        lastTriggered: new Date(Date.now() - 1000 * 60 * 10), // 10 minutes ago
-      },
-    ];
-
-    setAllNotifications(dummyNotifications);
-  }, []);
   
 
   return (
