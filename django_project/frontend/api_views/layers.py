@@ -27,12 +27,19 @@ from cloud_native_gis.utils.fiona import (
     list_layers
 )
 
-from layers.models import InputLayer, DataProvider, LayerGroupType
+from core.models import TaskStatus
+from layers.models import (
+    InputLayer,
+    DataProvider,
+    LayerGroupType,
+    ExportLayerRequest
+)
 from frontend.serializers.layers import LayerSerializer
 from layers.tasks.import_layer import (
     import_layer,
     detect_file_type_by_extension
 )
+from layers.tasks.export_layer import process_export_request
 
 
 class LayerAPI(APIView):
@@ -300,3 +307,132 @@ class PMTileLayerAPI(APIView):
         )
 
         return response
+
+
+class UploadExportedFile(APIView):
+    """API to upload exported file to django."""
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        """Post exported file to be saved in media directory."""
+        instance = get_object_or_404(
+            ExportLayerRequest,
+            id=kwargs.get('request_id')
+        )
+
+        # Save files
+        if request.FILES:
+            file = request.FILES['file']
+            instance.file.save(
+                file.name,
+                file,
+                save=True
+            )
+        return Response('OK')
+
+
+class SubmitExportLayerRequest(APIView):
+    """API to submit export layer."""
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        """Post to submit export request."""
+        format = request.data.get('format', None)
+        if format is None:
+            return Response(
+                status=400,
+                data='Format is mandatory!'
+            )
+
+        available_formats = [
+            FileType.GEOJSON, FileType.GEOPACKAGE,
+            FileType.SHAPEFILE, FileType.KML
+        ]
+        if format not in available_formats:
+            return Response(
+                status=400,
+                data=f'Unrecognized format {format}!'
+            )
+
+        layers = request.data.get('layers', [])
+        input_layers = []
+        for layer_uuid in layers:
+            layer = get_object_or_404(
+                InputLayer, uuid=layer_uuid
+            )
+            input_layers.append(layer)
+
+        if len(input_layers) == 0:
+            return Response(
+                status=400,
+                data='At least 1 layer must be selected!'
+            )
+
+        export_request = ExportLayerRequest.objects.create(
+            requested_by=request.user,
+            format=format
+        )
+        export_request.layers.set(input_layers)
+
+        process_export_request.delay(export_request.id)
+
+        return Response(data={
+            'request_id': export_request.id,
+            'format': export_request.format,
+            'start_datetime': export_request.start_datetime,
+            'end_datetime': export_request.end_datetime,
+            'status': export_request.status,
+            'notes': export_request.notes
+        })
+
+
+class ExportLayerRequestStatus(APIView):
+    """API to fetch status of export process."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        """Fetch status of export request."""
+        instance = get_object_or_404(
+            ExportLayerRequest,
+            id=kwargs.get('request_id')
+        )
+
+        return Response(data={
+            'request_id': instance.id,
+            'format': instance.format,
+            'start_datetime': instance.start_datetime,
+            'end_datetime': instance.end_datetime,
+            'status': instance.status,
+            'notes': instance.notes
+        })
+
+
+class DownloadLayerExportedFile(APIView):
+    """API to download the exported file."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        """Download the output of export request."""
+        instance = get_object_or_404(
+            ExportLayerRequest,
+            id=kwargs.get('request_id')
+        )
+
+        if instance.status != TaskStatus.COMPLETED:
+            return Response(status=404, data='Export task is not finished!')
+
+        if instance.file is None:
+            return Response(
+                status=404,
+                data='Missing exported file!'
+            )
+
+        return FileResponse(
+            instance.file,
+            as_attachment=True,
+            filename=os.path.basename(instance.file.name)
+        )
