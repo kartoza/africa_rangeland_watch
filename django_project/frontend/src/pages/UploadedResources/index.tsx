@@ -245,7 +245,7 @@ const clearFilters = () => {
             </Flex>
           ) : (
             currentLayers.map((layer: Layer, index: number) => (
-              <Card key={index} boxShadow="md" borderRadius="md">
+              <Card key={index} boxShadow="md" borderRadius="md" bg="gray.50">
                 <CardBody>
                   <Flex direction={{ base: "column", md: "row" }} align="stretch" gap={4} justify="space-between">
                      {/* Layer Selection Checkbox */}

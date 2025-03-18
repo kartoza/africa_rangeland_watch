@@ -189,10 +189,10 @@ export default function HomePage() {
       {/* Second Section (resizable) */}
       <Box bg="white" padding="20px" textAlign="center" display="flex" alignItems="center" justifyContent="center" h={`${100 - sectionHeight}vh`}>
         <Flex justify="center" align="center" height="200px">
-                  <Text fontSize="lg" fontWeight="bold" color="gray.500">
-                    No data available
-                  </Text>
-                </Flex>
+          <Text fontSize="lg" fontWeight="bold" color="gray.500">
+            No data available
+          </Text>
+        </Flex>
       </Box>
 
       <SignIn isOpen={isSignInOpen} onClose={() => setIsSignInOpen(false)} />

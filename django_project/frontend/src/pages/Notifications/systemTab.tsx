@@ -19,6 +19,7 @@ import {
 } from "@chakra-ui/react";
 import "../../styles/index.css";
 import { FaArrowLeft, FaArrowRight } from "react-icons/fa";
+import { formatDistanceToNow } from "date-fns";
 
 export default function SystemTab() {
   const [thresholdValue, setThresholdValue] = useState(0.05);
@@ -75,6 +76,7 @@ export default function SystemTab() {
       setThresholdValue((prev) => prev - 0.01);
     }
   };
+  
 
   return (
     <>
@@ -82,12 +84,13 @@ export default function SystemTab() {
         <Thead bg="gray.100">
           <Tr>
             <Th>Indicators</Th>
-            <Th>Alerts</Th>
+            <Th>Enable Alerting</Th>
             <Th>Alert Trigger</Th>
+            <Th>Last Triggered</Th>
             <Th>Threshold Value</Th>
             <Th>Anomaly Detection Alert</Th>
             <Th>Email</Th>
-            <Th>Platform</Th>
+            <Th>in-App</Th>
           </Tr>
         </Thead>
         <Tbody>
@@ -134,29 +137,26 @@ export default function SystemTab() {
                   <option value="equalTo">Equal To</option>
                 </Select>
               </Td>
+              <Td>{formatDistanceToNow(new Date(notification.lastTriggered))} ago</Td>
               <Td>
-                <Flex alignItems="center">
-                  <IconButton
-                    icon={<FaArrowLeft />}
-                    onClick={() => handleArrowChange("decrease")}
-                    size="sm"
-                    variant="ghost"
-                    aria-label="Decrease threshold"
-                  />
-                  <Input
-                    value={notification.threshold}
-                    width="auto"
-                    textAlign="center"
-                  />
-                  <IconButton
-                    icon={<FaArrowRight />}
-                    onClick={() => handleArrowChange("increase")}
-                    size="sm"
-                    variant="ghost"
-                    aria-label="Increase threshold"
-                  />
-                </Flex>
+                <Input
+                  type="number"
+                  value={notification.threshold}
+                  onChange={(e) => {
+                    const newValue = parseFloat(e.target.value);
+                    if (!isNaN(newValue)) {
+                      const updatedData = allNotifications.map((item) =>
+                        item.id === notification.id ? { ...item, threshold: newValue } : item
+                      );
+                      setAllNotifications(updatedData);
+                    }
+                  }}
+                  width="auto"
+                  textAlign="center"
+                  step="0.01" // Allows finer control
+                />
               </Td>
+
               <Td>
                 <Switch
                   colorScheme="green"
