@@ -120,6 +120,8 @@ class TestExportLayerTasks(TestCase):
             format=FileType.SHAPEFILE,
             created_at=timezone.now() - timezone.timedelta(days=2)
         )
+        old_request.created_at = timezone.now() - timezone.timedelta(days=2)
+        old_request.save()
         new_request = ExportLayerRequest.objects.create(
             requested_by=self.user,
             format=FileType.SHAPEFILE,
