@@ -6,6 +6,7 @@ Africa Rangeland Watch (ARW).
 """
 
 import os
+from django.db import connection
 from django.core.files.storage import FileSystemStorage
 from django.http import FileResponse
 from django.conf import settings
@@ -300,3 +301,52 @@ class PMTileLayerAPI(APIView):
         )
 
         return response
+
+
+class DataPreviewAPI(APIView):
+    """API to preview data."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        """Get data from layer table."""
+        layer = get_object_or_404(
+            Layer,
+            unique_id=kwargs.get('pk')
+        )
+
+        page_size = request.GET.get('page_size', 10)
+        page = request.GET.get('page', 1)
+        total_count = layer.metadata['FEATURE COUNT']
+        columns = layer.layerattributes_set.all().values_list(
+            'attribute_name', flat=True
+        ).order_by('attribute_order')
+        sql_columns = [f'"{col}"' for col in columns]
+        id_col = 'id'
+        if id_col not in columns:
+            id_col = columns[0]
+        sql = (
+            f"""
+                SELECT {','.join(sql_columns)} FROM {layer.query_table_name}
+                ORDER BY {id_col} ASC
+                OFFSET {(int(page) - 1) * int(page_size)} LIMIT {page_size}
+            """
+        )
+        rows = []
+        with connection.cursor() as cursor:
+            cursor.execute(sql)
+            _rows = cursor.fetchall()
+            for _row in _rows:
+                _data = {}
+                for i, col in enumerate(columns):
+                    _data[col] = _row[i]
+                rows.append(_data)
+
+        return Response(data={
+            'layer_uuid': str(layer.unique_id),
+            'page': page,
+            'page_size': page_size,
+            'count': total_count,
+            'data': rows,
+            'columns': columns
+        })

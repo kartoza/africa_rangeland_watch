@@ -5,13 +5,13 @@ Africa Rangeland Watch (ARW).
 .. note:: ARW Frontend API urls.
 """
 
-from django.urls import path
+from django.urls import path, re_path
 from rest_framework.routers import DefaultRouter
 
 from frontend.api_views.analysis import AnalysisAPI
 from frontend.api_views.base_map import BaseMapAPI, MapConfigAPI
 from frontend.api_views.landscape import LandscapeViewSet
-from frontend.api_views.layers import LayerAPI, UploadLayerAPI, PMTileLayerAPI
+from frontend.api_views.layers import LayerAPI, UploadLayerAPI, PMTileLayerAPI, DataPreviewAPI
 
 router = DefaultRouter()
 router.register(r'landscapes', LandscapeViewSet, basename='landscapes')
@@ -46,7 +46,12 @@ layers_urls = [
         'pmtile-layer/<int:upload_id>/',
         PMTileLayerAPI.as_view(),
         name='pmtile-layer'
-    )
+    ),
+    re_path(
+        r'^data-preview/(?P<pk>[\da-f-]+)/$',
+        DataPreviewAPI.as_view(),
+        name='data-preview'
+    ),
 ]
 
 urlpatterns = base_map_urls + layers_urls + router.urls + [
