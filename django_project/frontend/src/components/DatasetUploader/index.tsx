@@ -19,7 +19,11 @@ import { AppDispatch, RootState } from "../../store";
 import { uploadFile, fetchProcessingStatus, resetState } from '../../store/uploadSlice';
 
 
-const DatasetUploader: React.FC = () => {
+interface DatasetUploaderProps {
+  buttonVariant?: string | null;
+}
+
+const DatasetUploader: React.FC<DatasetUploaderProps> = ({ buttonVariant = null }) => {
   const dispatch = useDispatch<AppDispatch>();
   const { file, uploadProgress, processingProgress, status, error, uploadId, layerId } = useSelector(
     (state: RootState) => state.upload
@@ -77,7 +81,7 @@ const DatasetUploader: React.FC = () => {
     <Popover placement="bottom-end">
       <PopoverTrigger>
         <Button minWidth={150} h={10}
-                    borderRadius="5px"  colorScheme="orange_a200" size="sm" leftIcon={status === 'uploading' || status === 'processing' ? <Spinner size={'sm'} /> : null}>
+                    borderRadius="5px"  colorScheme="orange_a200" size="sm" variant={buttonVariant || undefined} leftIcon={status === 'uploading' || status === 'processing' ? <Spinner size={'sm'} /> : null}>
           {status === 'uploading' || status === 'processing' ? 'Uploading': 'Upload'}
         </Button>
       </PopoverTrigger>
