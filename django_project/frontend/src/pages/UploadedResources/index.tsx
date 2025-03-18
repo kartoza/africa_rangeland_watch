@@ -12,7 +12,9 @@ import Pagination from "../../components/Pagination";
 import SearchInput from "../../components/SearchInput";
 import { ChevronUpIcon } from "@chakra-ui/icons";
 import { IoCloseSharp } from "react-icons/io5";
+import {setLayerUuid, resetState} from "../../store/dataPreviewSlice";
 import DatasetUploader from "../../components/DatasetUploader";
+import DatasetPreview from "../../components/DatasetPreview";
 
 
 
@@ -70,10 +72,12 @@ export default function UploadedResults() {
 
   const handleView = (layer: Layer) => {
     setCurrentLayer(layer);
+    dispatch(setLayerUuid(layer.uuid));
     setModalOpen(true);
   };
 
   const handleCloseModal = () => {
+    dispatch(resetState());
     setModalOpen(false);
   };
 
@@ -360,11 +364,11 @@ const clearFilters = () => {
 
         <Modal isOpen={isModalOpen} onClose={handleCloseModal}>
           <ModalOverlay />
-          <ModalContent>
+          <ModalContent bg="white">
             <ModalHeader>{currentLayer?.name}</ModalHeader>
             <ModalCloseButton />
             <ModalBody>
-              <Text>{currentLayer?.description}</Text>
+              <DatasetPreview />
             </ModalBody>
           </ModalContent>
         </Modal>
