@@ -6,12 +6,14 @@ import {
   Badge,
 } from "@chakra-ui/react";
 import "../../styles/index.css";
+import Pagination from "../../components/Pagination";
 
 export default function NotificationsTab() {
   const [allNotifications, setAllNotifications] = useState<any[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 5;
 
   useEffect(() => {
-    // Simulate fetching data for "All" notifications
     const fetchNotificationsData = () => {
 
       setAllNotifications([]);
@@ -20,10 +22,19 @@ export default function NotificationsTab() {
     fetchNotificationsData();
   }, []);
 
+  const totalPages = Math.ceil(allNotifications.length / itemsPerPage);
+  const indexOfLastItem = currentPage * itemsPerPage;
+  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
+  const currentItems = allNotifications.slice(indexOfFirstItem, indexOfLastItem);
+
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
+  };
+
   return (
     <>
-      <Box>
-        {allNotifications.map((notification) => (
+      <Box maxHeight="calc(100vh - 250px)">
+        {currentItems.map((notification) => (
           <Box
             key={notification.id}
             p={4}
@@ -34,7 +45,6 @@ export default function NotificationsTab() {
             display="flex"
             flexDirection="column"
             position="relative"
-            minHeight="150px"
           >
             {/* Badge - Custom styled */}
             <Badge
@@ -51,27 +61,29 @@ export default function NotificationsTab() {
             </Badge>
 
             {/* Title */}
-            <Heading size="sm" mb={2} color="black">
+            <Heading size="sm" mb={4} color="black">
               {notification.title}
             </Heading>
 
             {/* Description */}
-            <Text color="black" mb={4}>
+            <Text color="black" mb={6} fontSize="sm">
               {notification.description}
             </Text>
 
             {/* Timestamp */}
             <Text
-              color="black"
+              color="gray.500"
               position="absolute"
-              bottom={4}
-              left={4} 
+              bottom={2}
+              left={4}
               fontSize="sm"
             >
               {notification.timestamp}
             </Text>
           </Box>
         ))}
+
+        <Pagination currentPage={currentPage} totalPages={totalPages} handlePageChange={handlePageChange} />
       </Box>
     </>
   );

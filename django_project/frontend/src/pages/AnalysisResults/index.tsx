@@ -421,7 +421,7 @@ export default function AnalysisResults() {
                     let analysisSummary = getAnalysisSummary(analysis)
 
                     return (
-                      <Card key={index} boxShadow="md" borderRadius="md">
+                      <Card key={index} boxShadow="md" borderRadius="md" bg="gray.50">
                         <CardBody>
                           <Flex
                             direction={{ base: "column", md: "row" }}
