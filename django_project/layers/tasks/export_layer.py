@@ -130,7 +130,7 @@ def process_export_request(export_id):
         export_request.save()
 
 
-@app.task
+@app.task(name='cleanup_export_request')
 def cleanup_export_request():
     """Remove export request older than a day."""
     ExportLayerRequest.objects.filter(
