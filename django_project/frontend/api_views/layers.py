@@ -362,7 +362,9 @@ class SubmitExportLayerRequest(APIView):
                 uuid.UUID(layer_uuid)
             except ValueError:
                 raise ValidationError({
-                    'Invalid export request': f'Invalid UUID format: {layer_uuid}'
+                    'Invalid export request': (
+                        f'Invalid UUID format: {layer_uuid}'
+                    )
                 })
             layer = get_object_or_404(
                 InputLayer, uuid=layer_uuid
