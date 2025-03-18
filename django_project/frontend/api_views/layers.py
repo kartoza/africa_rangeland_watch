@@ -6,6 +6,7 @@ Africa Rangeland Watch (ARW).
 """
 
 import os
+import uuid
 from django.core.files.storage import FileSystemStorage
 from django.http import FileResponse
 from django.conf import settings
@@ -341,34 +342,37 @@ class SubmitExportLayerRequest(APIView):
         """Post to submit export request."""
         format = request.data.get('format', None)
         if format is None:
-            return Response(
-                status=400,
-                data='Format is mandatory!'
-            )
+            raise ValidationError({
+                'Invalid export request': 'Format is mandatory!'
+            })
 
         available_formats = [
             FileType.GEOJSON, FileType.GEOPACKAGE,
             FileType.SHAPEFILE, FileType.KML
         ]
         if format not in available_formats:
-            return Response(
-                status=400,
-                data=f'Unrecognized format {format}!'
-            )
+            raise ValidationError({
+                'Invalid export request': f'Unrecognized format {format}!'
+            })
 
         layers = request.data.get('layers', [])
         input_layers = []
         for layer_uuid in layers:
+            try:
+                uuid.UUID(layer_uuid)
+            except ValueError:
+                raise ValidationError({
+                    'Invalid export request': f'Invalid UUID format: {layer_uuid}'
+                })
             layer = get_object_or_404(
                 InputLayer, uuid=layer_uuid
             )
             input_layers.append(layer)
 
         if len(input_layers) == 0:
-            return Response(
-                status=400,
-                data='At least 1 layer must be selected!'
-            )
+            raise ValidationError({
+                'Invalid export request': 'At least 1 layer must be selected!'
+            })
 
         export_request = ExportLayerRequest.objects.create(
             requested_by=request.user,
