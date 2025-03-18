@@ -431,7 +431,7 @@ class DownloadLayerExportedFile(APIView):
         if instance.status != TaskStatus.COMPLETED:
             return Response(status=404, data='Export task is not finished!')
 
-        if instance.file is None:
+        if not instance.file.name:
             return Response(
                 status=404,
                 data='Missing exported file!'
