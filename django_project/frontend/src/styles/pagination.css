@@ -5,7 +5,6 @@
   
   .pagination {
     display: inline-block;
-    padding: 5px 10px;
     border-radius: 5px;
     background-color: #eee;
   }
@@ -13,7 +12,6 @@
   .page-numbers {
     display: inline-block;
     padding: 5px 10px;
-    margin: 0 5px;
     font-size: 14px;
     color: #595959;
     text-decoration: none;
