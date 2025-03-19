@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Box, Heading, Flex, Button, Text, Divider, Tag, TagLabel, Card, CardBody, Image, Input, IconButton, Modal, ModalOverlay, ModalHeader, ModalCloseButton, ModalBody, ModalContent, Checkbox, Select, Collapse, SimpleGrid } from "@chakra-ui/react";
+import { Box, Heading, Flex, Button, Text, Divider, Tag, TagLabel, Card, CardBody, Input, IconButton, Checkbox, Select, Collapse, SimpleGrid } from "@chakra-ui/react";
 import { FaDownload, FaEye, FaFilter, FaPlus, FaTrashAlt } from "react-icons/fa";
 import { deleteLayer, downloadLayer, fetchUserDefinedLayers } from "../../store/layerSlice";
 import { AppDispatch } from "../../store";
@@ -35,8 +35,6 @@ export default function UploadedResults() {
   const [isFilterOpen, setFilterOpen] = useState(false);
   const [layerType, setLayerType] = useState("");
   const [date, setDate] = useState("");
-  const [isModalOpen, setModalOpen] = useState(false);
-  const [currentLayer, setCurrentLayer] = useState(null);
   const [isUploaderOpen, setIsUploaderOpen] = useState(false);
   const [selectedLayers, setSelectedLayers] = useState<Set<string>>(new Set());
   
@@ -71,17 +69,8 @@ export default function UploadedResults() {
   };
 
   const handleView = (layer: Layer) => {
-    setCurrentLayer(layer);
-    dispatch(setLayerUuid(layer.uuid));
-    setModalOpen(true);
+    dispatch(setLayerUuid({layer_uuid: layer.uuid, layer_name: layer.name}));
   };
-
-  const handleCloseModal = () => {
-    dispatch(resetState());
-    setModalOpen(false);
-  };
-
-
 
 const handleLayerSelection = (uuid: string) => {
   setSelectedLayers(prevSelectedLayers => {
@@ -362,16 +351,7 @@ const clearFilters = () => {
           </Flex>
         )}
 
-        <Modal isOpen={isModalOpen} onClose={handleCloseModal}>
-          <ModalOverlay />
-          <ModalContent bg="white">
-            <ModalHeader>{currentLayer?.name}</ModalHeader>
-            <ModalCloseButton />
-            <ModalBody>
-              <DatasetPreview />
-            </ModalBody>
-          </ModalContent>
-        </Modal>
+        <DatasetPreview />
       </Box>
     </Flex>
   </Box>

@@ -14,6 +14,7 @@ interface FetchDataPreview {
 
 interface DataPreviewState {
     layer_uuid: string | null;
+    layer_name: string | null;
     pageSize: number;
     page: number;
     count: number;
@@ -21,29 +22,33 @@ interface DataPreviewState {
     columns: string[];
     status: 'idle' | 'loading' | 'success' | 'failed';
     error: string | null;
+    search: string | null;
 }
 
 const initialState: DataPreviewState = {
     layer_uuid: null,
+    layer_name: null,
     pageSize: 10,
     page: 1,
     count: 0,
     data: [],
     columns: [],
     status: 'idle',
-    error: null
+    error: null,
+    search: null
 };
 
 // Async thunk to fetch data preview
 export const fetchDataPreview = createAsyncThunk(
     'dataPreview/fetchDataPreview',
-    async ({ layer_uuid, page, page_size }: { layer_uuid: string, page: number, page_size: number }, { rejectWithValue }) => {
+    async ({ layer_uuid, page, page_size, search }: { layer_uuid: string, page: number, page_size: number, search: string | null }, { rejectWithValue }) => {
         try {
+            let params: any = { page, page_size };
+            if (search && search.length >= 3) {
+                params.search = search;
+            }
             const response = await axios.get(`/frontend-api/data-preview/${layer_uuid}/`, {
-                params: {
-                    page,
-                    page_size
-                }
+                params: params
             });
             return response.data;
         } catch (error: any) {
@@ -62,6 +67,7 @@ const dataPreviewSlice = createSlice({
     reducers: {
         resetState: (state) => {
             state.layer_uuid = null;
+            state.layer_name = null;
             state.pageSize = 10;
             state.page = 1;
             state.count = 0;
@@ -69,9 +75,11 @@ const dataPreviewSlice = createSlice({
             state.columns = [];
             state.status = 'idle';
             state.error = null;
+            state.search = null;
         },
-        setLayerUuid: (state, action: PayloadAction<string>) => {
-            state.layer_uuid = action.payload;
+        setLayerUuid: (state, action: PayloadAction<{ layer_uuid: string, layer_name: string }>) => {
+            state.layer_uuid = action.payload.layer_uuid;
+            state.layer_name = action.payload.layer_name;
             state.pageSize = 10;
             state.page = 1;
             state.count = 0;
@@ -79,6 +87,7 @@ const dataPreviewSlice = createSlice({
             state.columns = [];
             state.status = 'idle';
             state.error = null;
+            state.search = null;
         },
         setPage: (state, action: PayloadAction<number>) => {
             state.page = action.payload;
@@ -92,6 +101,9 @@ const dataPreviewSlice = createSlice({
             state.data = [];
             state.status = 'idle';
             state.error = null;
+        },
+        searchData: (state, action: PayloadAction<string>) => {
+            state.search = action.payload
         }
     },
     extraReducers: (builder) => {
@@ -115,5 +127,5 @@ const dataPreviewSlice = createSlice({
     }
 });
 
-export const { resetState, setLayerUuid, setPage, setPageSize } = dataPreviewSlice.actions;
+export const { resetState, setLayerUuid, setPage, setPageSize, searchData } = dataPreviewSlice.actions;
 export default dataPreviewSlice.reducer;
