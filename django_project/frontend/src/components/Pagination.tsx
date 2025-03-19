@@ -20,7 +20,7 @@ const Pagination: React.FC<PaginationProps> = ({
   totalCount,
   onPageSizeChange
 }) => {
-  const getPageNumbers = () => {
+  const getPageNumbers = (currentPage: number, totalPages: number) => {
     if (totalPages <= 7) {
       return Array.from({ length: totalPages }, (_, i) => i + 1);
     }
@@ -69,7 +69,7 @@ const Pagination: React.FC<PaginationProps> = ({
           >
             prev
           </Button>
-          {getPageNumbers().map((page, index) => 
+          {getPageNumbers(currentPage, totalPages).map((page, index) => 
           page === "..." ? (
             <Button
               key={index}
@@ -83,11 +83,11 @@ const Pagination: React.FC<PaginationProps> = ({
             <Button
               key={index}
               className={`page-numbers ${
-                currentPage === index + 1 ? "current" : ""
+                currentPage == page ? "current" : ""
               }`}
-              onClick={() => handlePageChange(index + 1)}
+              onClick={() => handlePageChange(typeof page === 'string' ? Number.parseInt(page) : page)}
             >
-              {index + 1}
+              {page}
             </Button>
           ))}
           <Button
