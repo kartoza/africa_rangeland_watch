@@ -112,6 +112,9 @@ const dataPreviewSlice = createSlice({
                 state.status = 'loading';
             })
             .addCase(fetchDataPreview.fulfilled, (state, action: PayloadAction<FetchDataPreview>) => {
+                if (state.page !== action.payload.page) {
+                    return;
+                }
                 state.layer_uuid = action.payload.layer_uuid;
                 state.page = action.payload.page;
                 state.pageSize = action.payload.page_size;

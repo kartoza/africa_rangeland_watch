@@ -67,13 +67,13 @@ const DatasetPreview: React.FC = () => {
                 <ModalCloseButton />
                 <ModalBody>
                     <Box>
-                        {status === 'loading' && <Progress size="xs" isIndeterminate />}
                         {error && <Text color="red.500" mb={4}>{error}</Text>}
                         <InputGroup mb={4}>
                             <Input
                                 placeholder="Search..."
                                 value={rawSearch || ""}
                                 onChange={(e) => setRawSearch(e.target.value || "")}
+                                disabled={status === 'loading'}
                                 mb={4}
                             />
                             {rawSearch && (
@@ -83,10 +83,12 @@ const DatasetPreview: React.FC = () => {
                                         icon={<CloseIcon />}
                                         size="xs"
                                         onClick={() => setRawSearch("")}
+                                        disabled={status === 'loading'}
                                     />
                                 </InputRightElement>
                             )}
                         </InputGroup>
+                        {status === 'loading' && <Progress size="xs" isIndeterminate />}
                         {data && (
                             <TableContainer>
                                 <Table variant="simple">
