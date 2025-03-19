@@ -313,16 +313,18 @@ class DataPreviewAPI(APIView):
             attribute_type='text'
         ).values_list('attribute_name', flat=True)
         search_query = []
+        params = []
         for attr in text_attributes:
-            search_query.append(f"{attr} ILIKE '%{search}%'")
-        return ' OR '.join(search_query)
+            search_query.append(f"{attr} ILIKE %s")
+            params.append(f"%{search}%")
+        return ' OR '.join(search_query), params
 
     def _get_count(self, layer: Layer, search=None):
         """Get count of features in layer."""
         if search is None or search == '':
             return layer.metadata['FEATURE COUNT']
 
-        search_cond = self._get_search_query(layer, search)
+        search_cond, params = self._get_search_query(layer, search)
         if search_cond == '':
             return layer.metadata['FEATURE COUNT']
 
@@ -331,7 +333,7 @@ class DataPreviewAPI(APIView):
             f'WHERE {search_cond}'
         )
         with connection.cursor() as cursor:
-            cursor.execute(sql)
+            cursor.execute(sql, params)
             return cursor.fetchone()[0]
 
     def get(self, request, *args, **kwargs):
@@ -353,8 +355,9 @@ class DataPreviewAPI(APIView):
         if id_col not in columns:
             id_col = columns[0]
         search_cond = ''
+        params = []
         if search is not None and search != '':
-            search_cond = self._get_search_query(layer, search)
+            search_cond, params = self._get_search_query(layer, search)
             if search_cond != '':
                 search_cond = f'WHERE {search_cond}'
         sql = (
@@ -367,7 +370,7 @@ class DataPreviewAPI(APIView):
         )
         rows = []
         with connection.cursor() as cursor:
-            cursor.execute(sql)
+            cursor.execute(sql, params)
             _rows = cursor.fetchall()
             for _row in _rows:
                 _data = {}
