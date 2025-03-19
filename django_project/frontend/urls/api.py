@@ -11,7 +11,12 @@ from rest_framework.routers import DefaultRouter
 from frontend.api_views.analysis import AnalysisAPI
 from frontend.api_views.base_map import BaseMapAPI, MapConfigAPI
 from frontend.api_views.landscape import LandscapeViewSet
-from frontend.api_views.layers import LayerAPI, UploadLayerAPI, PMTileLayerAPI, DataPreviewAPI
+from frontend.api_views.layers import (
+    LayerAPI,
+    UploadLayerAPI,
+    PMTileLayerAPI,
+    DataPreviewAPI
+)
 
 router = DefaultRouter()
 router.register(r'landscapes', LandscapeViewSet, basename='landscapes')
