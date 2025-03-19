@@ -33,8 +33,8 @@ const Pagination: React.FC<PaginationProps> = ({
       return [1, "...", currentPage - 1, currentPage, currentPage + 1, "...", totalPages];
     }
   };
-  const startItem = totalCount ? (currentPage - 1) * pageSize + 1 : null;
-  const endItem = totalCount ? Math.min(currentPage * pageSize, totalCount) : null;
+  const startItem = totalCount ? (currentPage - 1) * pageSize + 1 : 0;
+  const endItem = totalCount ? Math.min(currentPage * pageSize, totalCount) : 0;
 
   return (
     <Flex justifyContent="flex-end" mt={4}>
