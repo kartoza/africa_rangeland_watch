@@ -15,7 +15,8 @@ from frontend.api_views.layers import (
     LayerAPI,
     UploadLayerAPI,
     PMTileLayerAPI,
-    DataPreviewAPI
+    DataPreviewAPI,
+    UploadExportedFile
 )
 
 router = DefaultRouter()
@@ -57,6 +58,11 @@ layers_urls = [
         DataPreviewAPI.as_view(),
         name='data-preview'
     ),
+    path(
+        'upload-exported-file/<int:request_id>/',
+        UploadExportedFile.as_view(),
+        name='upload-exported-file'
+    )
 ]
 
 urlpatterns = base_map_urls + layers_urls + router.urls + [

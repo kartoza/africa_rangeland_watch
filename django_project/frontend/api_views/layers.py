@@ -29,7 +29,12 @@ from cloud_native_gis.utils.fiona import (
     list_layers
 )
 
-from layers.models import InputLayer, DataProvider, LayerGroupType
+from layers.models import (
+    InputLayer,
+    DataProvider,
+    LayerGroupType,
+    ExportLayerRequest
+)
 from frontend.serializers.layers import LayerSerializer
 from layers.tasks.import_layer import (
     import_layer,
@@ -398,3 +403,26 @@ class DataPreviewAPI(APIView):
             'data': rows,
             'columns': columns
         })
+
+
+class UploadExportedFile(APIView):
+    """API to upload exported file to django."""
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        """Post exported file to be saved in media directory."""
+        instance = get_object_or_404(
+            ExportLayerRequest,
+            id=kwargs.get('request_id')
+        )
+
+        # Save files
+        if request.FILES:
+            file = request.FILES['file']
+            instance.file.save(
+                file.name,
+                file,
+                save=True
+            )
+        return Response('OK')
