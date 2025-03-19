@@ -329,8 +329,7 @@ class DataPreviewAPI(APIView):
             return layer.metadata['FEATURE COUNT']
 
         sql = (
-            f'SELECT COUNT(*) FROM {layer.query_table_name} '
-            f'WHERE {search_cond}'
+            'SELECT COUNT(*) FROM {} WHERE {}'.format(layer.query_table_name, search_cond)
         )
         with connection.cursor() as cursor:
             cursor.execute(sql, params)
@@ -361,16 +360,16 @@ class DataPreviewAPI(APIView):
             if search_cond != '':
                 search_cond = f'WHERE {search_cond}'
         sql = (
-            f"""
-                SELECT {','.join(sql_columns)} FROM {layer.query_table_name}
-                {search_cond}
-                ORDER BY {id_col} ASC
-                OFFSET {(int(page) - 1) * int(page_size)} LIMIT {page_size}
             """
+                SELECT {} FROM {}
+                {}
+                ORDER BY {} ASC
+                OFFSET %s LIMIT %s
+            """.format(','.join(sql_columns), layer.query_table_name, search_cond, id_col)
         )
         rows = []
         with connection.cursor() as cursor:
-            cursor.execute(sql, params)
+            cursor.execute(sql, params + [(int(page) - 1) * int(page_size), int(page_size)])
             _rows = cursor.fetchall()
             for _row in _rows:
                 _data = {}
