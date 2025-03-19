@@ -308,6 +308,32 @@ class DataPreviewAPI(APIView):
 
     permission_classes = [IsAuthenticated]
 
+    def _get_search_query(self, layer: Layer, search):
+        text_attributes = layer.layerattributes_set.filter(
+            attribute_type='text'
+        ).values_list('attribute_name', flat=True)
+        search_query = []
+        for attr in text_attributes:
+            search_query.append(f"{attr} ILIKE '%{search}%'")
+        return ' OR '.join(search_query)
+
+    def _get_count(self, layer: Layer, search=None):
+        """Get count of features in layer."""
+        if search is None or search == '':
+            return layer.metadata['FEATURE COUNT']
+
+        search_cond = self._get_search_query(layer, search)
+        if search_cond == '':
+            return layer.metadata['FEATURE COUNT']
+
+        sql = (
+            f'SELECT COUNT(*) FROM {layer.query_table_name} '
+            f'WHERE {search_cond}'
+        )
+        with connection.cursor() as cursor:
+            cursor.execute(sql)
+            return cursor.fetchone()[0]
+
     def get(self, request, *args, **kwargs):
         """Get data from layer table."""
         layer = get_object_or_404(
@@ -315,9 +341,10 @@ class DataPreviewAPI(APIView):
             unique_id=kwargs.get('pk')
         )
 
-        page_size = request.GET.get('page_size', 10)
-        page = request.GET.get('page', 1)
-        total_count = layer.metadata['FEATURE COUNT']
+        page_size = int(request.GET.get('page_size', 10))
+        page = int(request.GET.get('page', 1))
+        search = request.GET.get('search', None)
+        total_count = self._get_count(layer, search)
         columns = layer.layerattributes_set.all().values_list(
             'attribute_name', flat=True
         ).order_by('attribute_order')
@@ -325,9 +352,15 @@ class DataPreviewAPI(APIView):
         id_col = 'id'
         if id_col not in columns:
             id_col = columns[0]
+        search_cond = ''
+        if search is not None and search != '':
+            search_cond = self._get_search_query(layer, search)
+            if search_cond != '':
+                search_cond = f'WHERE {search_cond}'
         sql = (
             f"""
                 SELECT {','.join(sql_columns)} FROM {layer.query_table_name}
+                {search_cond}
                 ORDER BY {id_col} ASC
                 OFFSET {(int(page) - 1) * int(page_size)} LIMIT {page_size}
             """
