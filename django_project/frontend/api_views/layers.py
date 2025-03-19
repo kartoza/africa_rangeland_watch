@@ -6,6 +6,7 @@ Africa Rangeland Watch (ARW).
 """
 
 import os
+from psycopg2 import sql
 from django.db import connection
 from django.core.files.storage import FileSystemStorage
 from django.http import FileResponse
@@ -314,25 +315,29 @@ class DataPreviewAPI(APIView):
         ).values_list('attribute_name', flat=True)
         search_query = []
         params = []
+        attrs = []
         for attr in text_attributes:
-            search_query.append(f"{attr} ILIKE %s")
+            attrs.append(sql.Identifier(attr))
+            search_query.append("{} ILIKE %s")
             params.append(f"%{search}%")
-        return ' OR '.join(search_query), params
+        return ' OR '.join(search_query), params, attrs
 
     def _get_count(self, layer: Layer, search=None):
         """Get count of features in layer."""
         if search is None or search == '':
             return layer.metadata['FEATURE COUNT']
 
-        search_cond, params = self._get_search_query(layer, search)
+        search_cond, params, attrs = self._get_search_query(layer, search)
         if search_cond == '':
             return layer.metadata['FEATURE COUNT']
-
-        sql = (
-            'SELECT COUNT(*) FROM %s WHERE %s'
+        query = sql.SQL("SELECT COUNT(*) FROM {}.{} WHERE {}").format(
+            sql.Identifier(layer.schema_name),
+            sql.Identifier(layer.table_name),
+            sql.SQL(search_cond).format(*attrs)
         )
         with connection.cursor() as cursor:
-            cursor.execute(sql, [layer.query_table_name, search_cond] + params)
+            print(cursor.mogrify(query, params).decode())
+            cursor.execute(query, params)
             return cursor.fetchone()[0]
 
     def get(self, request, *args, **kwargs):
@@ -349,27 +354,35 @@ class DataPreviewAPI(APIView):
         columns = layer.layerattributes_set.all().values_list(
             'attribute_name', flat=True
         ).order_by('attribute_order')
-        sql_columns = [f'"{col}"' for col in columns]
         id_col = 'id'
         if id_col not in columns:
             id_col = columns[0]
-        search_cond = ''
+        search_cond = sql.SQL('')
         params = []
         if search is not None and search != '':
-            search_cond, params = self._get_search_query(layer, search)
+            search_cond, params, attrs = self._get_search_query(layer, search)
             if search_cond != '':
-                search_cond = f'WHERE {search_cond}'
-        sql = (
-            """
-                SELECT {} FROM %s
-                {}
-                ORDER BY %s ASC
-                OFFSET %s LIMIT %s
-            """.format(','.join(sql_columns), search_cond)
+                search_cond = sql.SQL('WHERE {}').format(
+                    sql.SQL(search_cond).format(*attrs)
+                )
+        query = sql.SQL("""
+            SELECT {} FROM {}.{}
+            {}
+            ORDER BY {} ASC
+            OFFSET %s LIMIT %s
+        """).format(
+            sql.SQL(',').join(map(sql.Identifier, columns)),
+            sql.Identifier(layer.schema_name),
+            sql.Identifier(layer.table_name),
+            search_cond,
+            sql.Identifier(id_col)
         )
         rows = []
         with connection.cursor() as cursor:
-            cursor.execute(sql, [layer.query_table_name, id_col] + params + [(int(page) - 1) * int(page_size), int(page_size)])
+            cursor.execute(
+                query,
+                params + [(int(page) - 1) * int(page_size), int(page_size)]
+            )
             _rows = cursor.fetchall()
             for _row in _rows:
                 _data = {}
