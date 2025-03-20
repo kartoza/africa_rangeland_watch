@@ -49,8 +49,38 @@ nav:
                   - Quickstart: user/quickstart/index.md
                   - Guide:
                           - user/guide/index.md
+                          - Sign Up: user/guide/sign-up.md
+                          - Sign In: user/guide/sign-in.md
+                          - Sign Out Page: user/guide/Sign-out.md
+                          - Sign Out From User Profile: user/guide/Sign-out-user-profile.md
+                          - Forgot Password: user/guide/forgot-password.md
+                          - About Page: user/guide/about.md
+                          - Analysis Result Page: user/guide/Analysis-result.md
+                          - Dashboard Page: user/guide/Dashboard.md
+                          - Map Page: user/guide/map.md
+                          - Notifications: user/guide/Notifications.md
+                          - Organisation Information Page: user/guide/Organisation-information.md
+                          - Support Page: user/guide/Support.md
+                          - User Profile: user/guide/user-profile.md
+                          - Update Profile: user/guide/update-profile.md
+                          - Uploaded Resources Page: user/guide/Uploaded-resources.md
                   - Manual :
                           - user/manual/index.md
+                          - Sign Up: user/manual/sign-up.md
+                          - Sign In: user/manual/sign-in.md
+                          - Sign Out Page: user/manual/Sign-out.md
+                          - Sign Out From User Profile: user/manual/Sign-out-user-profile.md
+                          - Forgot Password: user/manual/forgot-password.md
+                          - About Page: user/manual/about.md
+                          - Analysis Result Page: user/manual/Analysis-result.md
+                          - Dashboard Page: user/manual/Dashboard.md
+                          - Map Page: user/manual/map.md
+                          - Notifications: user/manual/Notifications.md
+                          - Organisation Information Page: user/manual/Organisation-information.md
+                          - Support Page: user/manual/Support.md
+                          - User Profile: user/manual/user-profile.md
+                          - Update Profile: user/manual/update-profile.md
+                          - Uploaded Resources Page: user/manual/Uploaded-resources.md
                   - Onboarding: user/onboard.md
         - Administrators:
                 - administrator/index.md
