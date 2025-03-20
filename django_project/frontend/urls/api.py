@@ -11,7 +11,12 @@ from rest_framework.routers import DefaultRouter
 from frontend.api_views.analysis import AnalysisAPI
 from frontend.api_views.base_map import BaseMapAPI, MapConfigAPI
 from frontend.api_views.landscape import LandscapeViewSet
-from frontend.api_views.layers import LayerAPI, UploadLayerAPI, PMTileLayerAPI
+from frontend.api_views.layers import (
+    LayerAPI,
+    UploadLayerAPI,
+    PMTileLayerAPI,
+    UploadExportedFile
+)
 
 router = DefaultRouter()
 router.register(r'landscapes', LandscapeViewSet, basename='landscapes')
@@ -46,6 +51,11 @@ layers_urls = [
         'pmtile-layer/<int:upload_id>/',
         PMTileLayerAPI.as_view(),
         name='pmtile-layer'
+    ),
+    path(
+        'upload-exported-file/<int:request_id>/',
+        UploadExportedFile.as_view(),
+        name='upload-exported-file'
     )
 ]
 
