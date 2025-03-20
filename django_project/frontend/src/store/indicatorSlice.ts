@@ -31,7 +31,7 @@ const initialState: IndicatorsState = {
 export const fetchIndicators = createAsyncThunk<Indicator[]>(
   "indicators/fetchIndicators",
   async () => {
-    const response = await fetch("/api/indicators"); // Adjust API endpoint
+    const response = await fetch("/api/indicators");
     if (!response.ok) {
       throw new Error("Failed to fetch indicators");
     }

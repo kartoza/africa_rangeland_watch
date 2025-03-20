@@ -13,6 +13,7 @@ export default function SystemTab() {
 
   // Fetch indicators on mount
   useEffect(() => {
+    console.log('triggered')
     dispatch(fetchIndicators());
   }, [dispatch]);
 
