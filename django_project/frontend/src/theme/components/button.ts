@@ -62,6 +62,19 @@ const variants = {
         const colorScheme = props.colorScheme as ColorScheme | undefined;
         return colorCombinations[colorScheme || "orange_a200"];
     }),
+    profileArea: defineStyle((props) => {
+        return {
+            bg: "white",
+            color: "green",
+            borderColor: "dark_green.800",
+            textColor: "dark_green.800",
+            width: "auto",
+            borderRadius: "0px",
+            border: "1px solid",
+            height: "10",
+            _hover: { bg: "green.50" },
+        };
+    })
 };
 
 const Button = defineStyleConfig({
