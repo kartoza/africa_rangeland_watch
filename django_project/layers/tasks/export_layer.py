@@ -128,3 +128,11 @@ def process_export_request(export_id):
         export_request.notes = str(ex)
     finally:
         export_request.save()
+
+
+@app.task(name='cleanup_export_request')
+def cleanup_export_request():
+    """Remove export request older than a day."""
+    ExportLayerRequest.objects.filter(
+        created_at__lt=timezone.now() - timezone.timedelta(days=1)
+    ).delete()
