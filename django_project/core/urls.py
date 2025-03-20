@@ -83,6 +83,7 @@ urlpatterns = [
     path('', include('dashboard.urls')),
     path('', include('analysis.urls')),
     path('', include('earthranger.urls')),
+    path('', include('alerts.urls')),
 ]
 
 if settings.DEBUG:
