@@ -11,6 +11,8 @@ import uploadReducer from './uploadSlice';
 import userProfileReducer from './userProfileSlice';
 import userAnalysisReducer from './userAnalysisSlice';
 import dashboardReducer from './dashboardSlice';
+import indicatorReducer from "./indicatorSlice";
+import alertSettingReducer from "./alertSettingSlice";
 
 
 const store = configureStore({
@@ -26,7 +28,9 @@ const store = configureStore({
     upload: uploadReducer,
     userProfile: userProfileReducer, 
     userAnalysis: userAnalysisReducer,
-    dashboard: dashboardReducer
+    dashboard: dashboardReducer,
+    indicators: indicatorReducer,
+    alertSettings: alertSettingReducer,
   },
 });
 
