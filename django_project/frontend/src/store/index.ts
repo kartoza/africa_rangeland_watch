@@ -11,6 +11,7 @@ import uploadReducer from './uploadSlice';
 import userProfileReducer from './userProfileSlice';
 import userAnalysisReducer from './userAnalysisSlice';
 import dashboardReducer from './dashboardSlice';
+import dataPreviewReducer from './dataPreviewSlice';
 import downloadReducer from './downloadSlice';
 
 
@@ -28,6 +29,7 @@ const store = configureStore({
     userProfile: userProfileReducer, 
     userAnalysis: userAnalysisReducer,
     dashboard: dashboardReducer,
+    dataPreview: dataPreviewReducer,
     download: downloadReducer,
   },
 });

@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { Box, Heading, Flex, Button, Text, Divider, Tag, TagLabel, Card, CardBody, Input, IconButton, Modal, ModalOverlay, ModalHeader, ModalCloseButton, ModalBody, ModalContent, Checkbox, Select, Collapse, SimpleGrid } from "@chakra-ui/react";
+import { Box, Heading, Flex, Button, Text, Divider, Tag, TagLabel, Card, CardBody, Input, IconButton, Checkbox, Select, Collapse, SimpleGrid } from "@chakra-ui/react";
 import { FaEye, FaFilter, FaTrashAlt } from "react-icons/fa";
 import { deleteLayer, fetchUserDefinedLayers } from "../../store/layerSlice";
 import { AppDispatch, RootState } from "../../store";
+// import { Box, Heading, Flex, Button, Text, Divider, Tag, TagLabel, Card, CardBody, Input, IconButton, Modal, ModalOverlay, ModalHeader, ModalCloseButton, ModalBody, ModalContent, Checkbox, Select, Collapse, SimpleGrid } from "@chakra-ui/react";
 import Helmet from "react-helmet";
 import Header from "../../components/Header";
 import Sidebar from "../../components/SideBar";
@@ -12,7 +13,9 @@ import Pagination from "../../components/Pagination";
 import SearchInput from "../../components/SearchInput";
 import { ChevronUpIcon } from "@chakra-ui/icons";
 import { IoCloseSharp } from "react-icons/io5";
+import {setLayerId} from "../../store/dataPreviewSlice";
 import DatasetUploader from "../../components/DatasetUploader";
+import DatasetPreview from "../../components/DatasetPreview";
 import DatasetDownloader from "../../components/DatasetDownloader";
 import { addUuid, removeUuid } from '../../store/downloadSlice';
 
@@ -25,6 +28,7 @@ interface Layer {
   data_provider: string;
   layer_type: string; // New tag for layer type
   created_at: string; // New tag for creation date
+  layer_id: number;
 }
 
 export default function UploadedResults() {
@@ -35,8 +39,6 @@ export default function UploadedResults() {
   const [isFilterOpen, setFilterOpen] = useState(false);
   const [layerType, setLayerType] = useState("");
   const [date, setDate] = useState("");
-  const [isModalOpen, setModalOpen] = useState(false);
-  const [currentLayer, setCurrentLayer] = useState(null);
   const { uuid_list } = useSelector(
       (state: RootState) => state.download
   );
@@ -71,44 +73,37 @@ export default function UploadedResults() {
   };
 
   const handleView = (layer: Layer) => {
-    setCurrentLayer(layer);
-    setModalOpen(true);
+    dispatch(setLayerId({layer_id: layer.layer_id, layer_name: layer.name}));
   };
 
-  const handleCloseModal = () => {
-    setModalOpen(false);
+  const handleDelete = (uuid: string) => {
+    dispatch(deleteLayer(uuid));
   };
 
-const handleDelete = (uuid: string) => {
-  dispatch(deleteLayer(uuid));
-};
+  const formatDate = (dateString: string): string => {
+    const date = new Date(dateString);
+    const options: Intl.DateTimeFormatOptions = { day: '2-digit', month: 'long', year: 'numeric' };
+    return date.toLocaleDateString('en-GB', options); // Formats the date like "27 March 2025"
+  };
 
-const formatDate = (dateString: string): string => {
-  const date = new Date(dateString);
-  const options: Intl.DateTimeFormatOptions = { day: '2-digit', month: 'long', year: 'numeric' };
-  return date.toLocaleDateString('en-GB', options); // Formats the date like "27 March 2025"
-};
+  useEffect(() => {
+    let filtered = layers;
 
-useEffect(() => {
-  let filtered = layers;
+    if (layerType) {
+      filtered = filtered.filter((layer: { layer_type: string; }) => layer.layer_type === layerType);
+    }
 
-  if (layerType) {
-    filtered = filtered.filter((layer: { layer_type: string; }) => layer.layer_type === layerType);
-  }
+    if (date) {
+      filtered = filtered.filter((layer: { created_at: string; }) => formatDate(layer.created_at) === formatDate(date));
+    }
 
-  if (date) {
-    filtered = filtered.filter((layer: { created_at: string; }) => formatDate(layer.created_at) === formatDate(date));
-  }
+    setFilteredLayers(filtered);
+  }, [layerType, date, layers]); // Runs automatically when filters change
 
-  setFilteredLayers(filtered);
-}, [layerType, date, layers]); // Runs automatically when filters change
-
-const clearFilters = () => {
-  setLayerType("");
-  setDate("");
-};
-
-
+  const clearFilters = () => {
+    setLayerType("");
+    setDate("");
+  };
 
   return (
     <>
@@ -329,16 +324,7 @@ const clearFilters = () => {
           </Flex>
         )}
 
-        <Modal isOpen={isModalOpen} onClose={handleCloseModal}>
-          <ModalOverlay />
-          <ModalContent>
-            <ModalHeader>{currentLayer?.name}</ModalHeader>
-            <ModalCloseButton />
-            <ModalBody>
-              <Text>{currentLayer?.description}</Text>
-            </ModalBody>
-          </ModalContent>
-        </Modal>
+        <DatasetPreview />
       </Box>
     </Flex>
   </Box>
