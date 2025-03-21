@@ -12,7 +12,8 @@ from .models import (
     UserAnalysisResults,
     GEEAsset,
     AnalysisResultsCache,
-    AnalysisRasterOutput
+    AnalysisRasterOutput,
+    AnalysisTask
 )
 from analysis.utils import get_gdrive_file
 from analysis.tasks import generate_temporal_analysis_raster_output
@@ -204,3 +205,11 @@ class AnalysisRasterOutputAdmin(admin.ModelAdmin):
                 f'attachment; filename="{result.name}"'
             )
             return response
+
+
+@admin.register(AnalysisTask)
+class AnalysisTaskAdmin(admin.ModelAdmin):
+    """Admin for AnalysisTask model."""
+
+    list_display = ('submitted_by', 'status', 'completed_at',)
+    list_filter = ('status',)
