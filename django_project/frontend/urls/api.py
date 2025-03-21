@@ -15,7 +15,6 @@ from frontend.api_views.layers import (
     LayerAPI,
     UploadLayerAPI,
     PMTileLayerAPI,
-    DataPreviewAPI,
     UploadExportedFile,
     SubmitExportLayerRequest,
     ExportLayerRequestStatus,
@@ -55,11 +54,6 @@ layers_urls = [
         'pmtile-layer/<int:upload_id>/',
         PMTileLayerAPI.as_view(),
         name='pmtile-layer'
-    ),
-    re_path(
-        r'^data-preview/(?P<pk>[\da-f-]+)/$',
-        DataPreviewAPI.as_view(),
-        name='data-preview'
     ),
     path(
         'upload-exported-file/<int:request_id>/',
