@@ -25,14 +25,14 @@ import {
 } from '@chakra-ui/react';
 import { CloseIcon } from "@chakra-ui/icons";
 import { AppDispatch, RootState } from "../../store";
-import { setLayerUuid, setPage, setPageSize, searchData } from '../../store/dataPreviewSlice';
+import { setLayerId, setPage, setPageSize, searchData } from '../../store/dataPreviewSlice';
 import { fetchDataPreview } from '../../store/dataPreviewSlice';
 import Pagination from '../Pagination';
 
 const DatasetPreview: React.FC = () => {
     const dispatch = useDispatch<AppDispatch>();
     const [rawSearch, setRawSearch] = useState("");
-    const { layer_uuid, layer_name, data, status, error, page, pageSize, count, columns, search } = useSelector((state: RootState) => state.dataPreview);
+    const { layer_id, layer_name, data, status, error, page, pageSize, count, columns, search } = useSelector((state: RootState) => state.dataPreview);
 
     useEffect(() => {
         const handler = setTimeout(() => {
@@ -42,10 +42,10 @@ const DatasetPreview: React.FC = () => {
     }, [rawSearch]);
 
     useEffect(() => {
-        if (layer_uuid) {
-            dispatch(fetchDataPreview({ layer_uuid, page, page_size: pageSize, search }));
+        if (layer_id) {
+            dispatch(fetchDataPreview({ layer_id, page, page_size: pageSize, search }));
         }
-    }, [dispatch, layer_uuid, page, pageSize, search]);
+    }, [dispatch, layer_id, page, pageSize, search]);
 
     const handlePageChange = (newPage: number) => {
         dispatch(setPage(newPage));
@@ -56,11 +56,11 @@ const DatasetPreview: React.FC = () => {
     };
 
     const handleCloseModal = () => {
-        dispatch(setLayerUuid({ layer_uuid: null, layer_name: null }));
+        dispatch(setLayerId({ layer_id: null, layer_name: null }));
     }
 
     return (
-        <Modal isOpen={layer_uuid !== null} onClose={handleCloseModal} scrollBehavior="inside" size="full">
+        <Modal isOpen={layer_id !== null} onClose={handleCloseModal} scrollBehavior="inside" size="full">
             <ModalOverlay />
             <ModalContent bg="white">
                 <ModalHeader>{layer_name}</ModalHeader>

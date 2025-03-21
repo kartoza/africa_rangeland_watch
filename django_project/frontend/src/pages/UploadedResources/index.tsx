@@ -13,7 +13,7 @@ import Pagination from "../../components/Pagination";
 import SearchInput from "../../components/SearchInput";
 import { ChevronUpIcon } from "@chakra-ui/icons";
 import { IoCloseSharp } from "react-icons/io5";
-import {setLayerUuid, resetState} from "../../store/dataPreviewSlice";
+import {setLayerId} from "../../store/dataPreviewSlice";
 import DatasetUploader from "../../components/DatasetUploader";
 import DatasetPreview from "../../components/DatasetPreview";
 import DatasetDownloader from "../../components/DatasetDownloader";
@@ -28,6 +28,7 @@ interface Layer {
   data_provider: string;
   layer_type: string; // New tag for layer type
   created_at: string; // New tag for creation date
+  layer_id: number;
 }
 
 export default function UploadedResults() {
@@ -72,7 +73,7 @@ export default function UploadedResults() {
   };
 
   const handleView = (layer: Layer) => {
-    dispatch(setLayerUuid({layer_uuid: layer.uuid, layer_name: layer.name}));
+    dispatch(setLayerId({layer_id: layer.layer_id, layer_name: layer.name}));
   };
 
   const handleDelete = (uuid: string) => {

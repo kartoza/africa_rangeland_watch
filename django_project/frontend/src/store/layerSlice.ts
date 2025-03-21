@@ -21,6 +21,7 @@ export interface Layer {
   data_provider?: string;
   created_at?: string;
   updated_at?: string;
+  layer_id?: number;
 }
 
 interface LayerState extends DataState {

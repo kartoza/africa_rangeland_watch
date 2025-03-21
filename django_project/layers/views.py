@@ -1,13 +1,14 @@
+import os
+import mimetypes
 from collections import defaultdict
 from django.shortcuts import render  # noqa: F401
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
-from .models import InputLayer
 from django.shortcuts import get_object_or_404
-import mimetypes
-import os
 from django.http import FileResponse
 
+from cloud_native_gis.models import Layer
+from .models import InputLayer
 
 
 @login_required
@@ -25,6 +26,8 @@ def user_input_layers(request):
     grouped_layers = defaultdict(list)
     for layer in user_layers:
         group_name = layer.group.name if layer.group else "Ungrouped"
+        # find corespoinding layer from cloud_native_gis
+        gis_layer = Layer.objects.filter(unique_id=layer.uuid).first()
         grouped_layers[group_name].append({
             "uuid": str(layer.uuid),
             "name": layer.name,
@@ -32,6 +35,7 @@ def user_input_layers(request):
             "data_provider": layer.data_provider.name,
             "created_at": layer.created_at,
             "updated_at": layer.updated_at,
+            "layer_id": gis_layer.id if gis_layer else None,
         })
 
     # Return grouped layers as a JsonResponse
