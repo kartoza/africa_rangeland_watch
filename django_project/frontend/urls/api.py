@@ -16,7 +16,10 @@ from frontend.api_views.layers import (
     UploadLayerAPI,
     PMTileLayerAPI,
     DataPreviewAPI,
-    UploadExportedFile
+    UploadExportedFile,
+    SubmitExportLayerRequest,
+    ExportLayerRequestStatus,
+    DownloadLayerExportedFile
 )
 
 router = DefaultRouter()
@@ -62,6 +65,21 @@ layers_urls = [
         'upload-exported-file/<int:request_id>/',
         UploadExportedFile.as_view(),
         name='upload-exported-file'
+    ),
+    path(
+        'export-layer/status/<int:request_id>/',
+        ExportLayerRequestStatus.as_view(),
+        name='status-export-layer-request'
+    ),
+    path(
+        'export-layer/download/<int:request_id>/',
+        DownloadLayerExportedFile.as_view(),
+        name='download-exported-layer-file'
+    ),
+    path(
+        'export-layer/submit/',
+        SubmitExportLayerRequest.as_view(),
+        name='submit-export-layer-request'
     )
 ]
 

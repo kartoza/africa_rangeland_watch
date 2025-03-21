@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Box, Heading, Flex, Button, Text, Divider, Tag, TagLabel, Card, CardBody, Input, IconButton, Checkbox, Select, Collapse, SimpleGrid } from "@chakra-ui/react";
-import { FaDownload, FaEye, FaFilter, FaPlus, FaTrashAlt } from "react-icons/fa";
-import { deleteLayer, downloadLayer, fetchUserDefinedLayers } from "../../store/layerSlice";
-import { AppDispatch } from "../../store";
+import { FaEye, FaFilter, FaTrashAlt } from "react-icons/fa";
+import { deleteLayer, fetchUserDefinedLayers } from "../../store/layerSlice";
+import { AppDispatch, RootState } from "../../store";
+// import { Box, Heading, Flex, Button, Text, Divider, Tag, TagLabel, Card, CardBody, Input, IconButton, Modal, ModalOverlay, ModalHeader, ModalCloseButton, ModalBody, ModalContent, Checkbox, Select, Collapse, SimpleGrid } from "@chakra-ui/react";
 import Helmet from "react-helmet";
 import Header from "../../components/Header";
 import Sidebar from "../../components/SideBar";
@@ -15,6 +16,8 @@ import { IoCloseSharp } from "react-icons/io5";
 import {setLayerUuid, resetState} from "../../store/dataPreviewSlice";
 import DatasetUploader from "../../components/DatasetUploader";
 import DatasetPreview from "../../components/DatasetPreview";
+import DatasetDownloader from "../../components/DatasetDownloader";
+import { addUuid, removeUuid } from '../../store/downloadSlice';
 
 
 
@@ -35,9 +38,9 @@ export default function UploadedResults() {
   const [isFilterOpen, setFilterOpen] = useState(false);
   const [layerType, setLayerType] = useState("");
   const [date, setDate] = useState("");
-  const [isUploaderOpen, setIsUploaderOpen] = useState(false);
-  const [selectedLayers, setSelectedLayers] = useState<Set<string>>(new Set());
-  
+  const { uuid_list } = useSelector(
+      (state: RootState) => state.download
+  );
 
   
   const { layers, loading, error } = useSelector((state: any) => state.layer);
@@ -72,54 +75,34 @@ export default function UploadedResults() {
     dispatch(setLayerUuid({layer_uuid: layer.uuid, layer_name: layer.name}));
   };
 
-const handleLayerSelection = (uuid: string) => {
-  setSelectedLayers(prevSelectedLayers => {
-    const updated = new Set(prevSelectedLayers);
-    if (updated.has(uuid)) {
-      updated.delete(uuid);
-    } else {
-      updated.add(uuid);
+  const handleDelete = (uuid: string) => {
+    dispatch(deleteLayer(uuid));
+  };
+
+  const formatDate = (dateString: string): string => {
+    const date = new Date(dateString);
+    const options: Intl.DateTimeFormatOptions = { day: '2-digit', month: 'long', year: 'numeric' };
+    return date.toLocaleDateString('en-GB', options); // Formats the date like "27 March 2025"
+  };
+
+  useEffect(() => {
+    let filtered = layers;
+
+    if (layerType) {
+      filtered = filtered.filter((layer: { layer_type: string; }) => layer.layer_type === layerType);
     }
-    return updated;
-  });
-};
 
-const handleDelete = (uuid: string) => {
-  dispatch(deleteLayer(uuid));
-};
+    if (date) {
+      filtered = filtered.filter((layer: { created_at: string; }) => formatDate(layer.created_at) === formatDate(date));
+    }
 
-const handleDownload = () => {
-  selectedLayers.forEach((uuid) => {
-    dispatch(downloadLayer(uuid));
-  });
-};
+    setFilteredLayers(filtered);
+  }, [layerType, date, layers]); // Runs automatically when filters change
 
-const formatDate = (dateString: string): string => {
-  const date = new Date(dateString);
-  const options: Intl.DateTimeFormatOptions = { day: '2-digit', month: 'long', year: 'numeric' };
-  return date.toLocaleDateString('en-GB', options); // Formats the date like "27 March 2025"
-};
-
-useEffect(() => {
-  let filtered = layers;
-
-  if (layerType) {
-    filtered = filtered.filter((layer: { layer_type: string; }) => layer.layer_type === layerType);
-  }
-
-  if (date) {
-    filtered = filtered.filter((layer: { created_at: string; }) => formatDate(layer.created_at) === formatDate(date));
-  }
-
-  setFilteredLayers(filtered);
-}, [layerType, date, layers]); // Runs automatically when filters change
-
-const clearFilters = () => {
-  setLayerType("");
-  setDate("");
-};
-
-
+  const clearFilters = () => {
+    setLayerType("");
+    setDate("");
+  };
 
   return (
     <>
@@ -173,27 +156,10 @@ const clearFilters = () => {
 
           {/* New Add Data Button and Download Button */}
           <Box display="flex" gap={2} width={{ base: "100%", md: "auto" }} mb={{ base: 4, md: "0" }} flexDirection={{ base: "column", md: "row" }}>
-            <Button leftIcon={<FaPlus />} colorScheme="green" variant="outline" borderColor="dark_green.800" textColor="dark_green.800" w="auto" borderRadius="0px" h={10} onClick={() => setIsUploaderOpen(!isUploaderOpen)}>
-              Upload
-            </Button>
-
-            {isUploaderOpen && <DatasetUploader />}
+            <DatasetUploader buttonVariant="profileArea"/>
 
             {/* Download Button */}
-            <Button
-                leftIcon={<FaDownload />}
-                colorScheme="green"
-                variant="outline"
-                borderColor="dark_green.800"
-                textColor="dark_green.800"
-                width="auto"
-                borderRadius="0px"
-                h={10}
-                onClick={() => handleDownload()}
-                disabled={selectedLayers.size === 0} // Disable the button if no layers are selected
-              >
-                Download Selected
-              </Button>
+            <DatasetDownloader buttonVariant="profileArea" />
           </Box>
         </Flex>
 
@@ -277,10 +243,16 @@ const clearFilters = () => {
                 <CardBody>
                   <Flex direction={{ base: "column", md: "row" }} align="stretch" gap={4} justify="space-between">
                      {/* Layer Selection Checkbox */}
-                     <Checkbox
-                          isChecked={selectedLayers.has(layer.uuid)}
-                          onChange={() => handleLayerSelection(layer.uuid)}
-                        />
+                    <Checkbox
+                      isChecked={uuid_list.includes(layer.uuid)}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          dispatch(addUuid(layer.uuid));
+                        } else {
+                          dispatch(removeUuid(layer.uuid));
+                        }
+                      }}
+                    />
                     {/* Content */}
                     <Box flex="1" display="flex" flexDirection="column" justifyContent="space-between">
                       <Heading size="md" fontWeight="bold" color="black" mb={2}>
