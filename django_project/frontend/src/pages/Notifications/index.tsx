@@ -64,7 +64,7 @@ export default function Notifications() {
                 <Tab _selected={{ color: "white", bg: "dark_green.800" }}>Organisations</Tab>
                 <Tab _selected={{ color: "white", bg: "dark_green.800" }}>System</Tab>
                 <Tab _selected={{ color: "white", bg: "dark_green.800" }} onClick={handleSettingsClick}>
-                  <FaCog style={{ marginLeft: "8px" }} /> {/* Gear icon */}
+                  <FaCog /> {/* Gear icon */}
                 </Tab>
 
 
