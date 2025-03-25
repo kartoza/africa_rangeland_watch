@@ -6,13 +6,29 @@ from .serializers import (
     AlertSettingSerializer,
     IndicatorAlertHistorySerializer
 )
+from django.db.models import Prefetch
 
 
 class IndicatorViewSet(viewsets.ModelViewSet):
     """ViewSet for performing CRUD operations on Indicator model."""
-    queryset = Indicator.objects.all()
     serializer_class = IndicatorSerializer
     permission_classes = [permissions.IsAuthenticated]
+
+    def get_queryset(self):
+        """Fetch indicators and prefetch their related
+        alert settings for the logged-in user."""
+        return Indicator.objects.prefetch_related(
+            Prefetch(
+                "alertsetting_set",
+                queryset=AlertSetting.objects.filter(user=self.request.user)
+            )
+        )
+
+    def get_serializer_context(self):
+        """Pass the request context to the serializer."""
+        return {'request': self.request}
+
+
 
 
 class AlertSettingViewSet(viewsets.ModelViewSet):

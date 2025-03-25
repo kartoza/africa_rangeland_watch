@@ -2,33 +2,39 @@ from rest_framework import serializers
 from .models import Indicator, AlertSetting, IndicatorAlertHistory
 
 
-class IndicatorSerializer(serializers.ModelSerializer):
-    """Serializer for the Indicator model."""
-
-    class Meta:
-        model = Indicator
-        fields = ['id', 'name']
-
-
 class AlertSettingSerializer(serializers.ModelSerializer):
     """Serializer for the AlertSetting model."""
 
-    indicator = IndicatorSerializer(read_only=True)
-    indicator_id = serializers.PrimaryKeyRelatedField(
-        queryset=Indicator.objects.all(),
-        source='indicator',
-        write_only=True
+    indicator = serializers.PrimaryKeyRelatedField(
+        queryset=Indicator.objects.all()
     )
 
     class Meta:
         model = AlertSetting
         fields = [
-            'id', 'name', 'indicator', 'indicator_id', 'enable_alert',
+            'id', 'name', 'indicator', 'enable_alert',
             'last_alert', 'threshold_comparison', 'threshold_value',
             'anomaly_detection_alert', 'email_alert', 'in_app_alert',
             'created_at', 'updated_at', 'user'
         ]
         read_only_fields = ['created_at', 'updated_at']
+
+
+class IndicatorSerializer(serializers.ModelSerializer):
+    """Serializer for the Indicator model."""
+
+    alert_settings = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Indicator
+        fields = ['id', 'name', 'alert_settings']
+
+    def get_alert_settings(self, obj):
+        """Fetch the alert settings related to this
+        indicator for the current user."""
+        user = self.context['request'].user
+        alert_settings = obj.alertsetting_set.filter(user=user)
+        return AlertSettingSerializer(alert_settings, many=True).data
 
 
 class IndicatorAlertHistorySerializer(serializers.ModelSerializer):
