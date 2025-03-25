@@ -15,7 +15,7 @@ interface Indicator {
 
 // Define the initial state
 interface IndicatorsState {
-  indicators: Indicator[];
+  indicators: any;
   loading: boolean;
   error: string | null;
 }
@@ -45,7 +45,7 @@ const indicatorsSlice = createSlice({
   initialState,
   reducers: {
     updateIndicator: (state, action: PayloadAction<Indicator>) => {
-      const index = state.indicators.findIndex((ind) => ind.id === action.payload.id);
+      const index = state.indicators.findIndex((ind: { id: number; }) => ind.id === action.payload.id);
       if (index !== -1) {
         state.indicators[index] = action.payload;
       }

@@ -18,7 +18,7 @@ export default function SystemTab() {
 
   // Handle updates
   const handleUpdate = (id: number, field: keyof typeof indicators[0], value: any) => {
-    dispatch(updateIndicator({ ...indicators.find((ind) => ind.id === id)!, [field]: value }));
+    dispatch(updateIndicator({ ...indicators.find((ind: { id: number; }) => ind.id === id)!, [field]: value }));
   };
 
   if (loading) return <p>Loading...</p>;
@@ -41,7 +41,7 @@ export default function SystemTab() {
       <Tbody>
         {(Array.isArray(indicators?.results) ? indicators?.results : []).map((notification: any) => (
           <Tr key={notification.id}>
-            <Td>{notification.indicator}</Td>
+            <Td>{notification?.name}</Td>
             <Td>
               <Switch
                 colorScheme="green"
@@ -55,39 +55,49 @@ export default function SystemTab() {
                 placeholder="Select trigger"
                 defaultValue={notification.alertTrigger}
                 onChange={(e) => handleUpdate(notification.id, "alertTrigger", e.target.value)}
+                border="1px solid gray"
               >
                 <option value="lessThan">Less Than</option>
                 <option value="greaterThan">Greater Than</option>
                 <option value="equalTo">Equal To</option>
               </Select>
             </Td>
-            <Td>{formatDistanceToNow(new Date(notification.lastTriggered))} ago</Td>
+            <Td>
+              {notification?.lastTriggered
+                ? `${formatDistanceToNow(new Date(notification.lastTriggered))} ago`
+                : "N/A"}
+            </Td>
             <Td>
               <Input
                 type="number"
                 value={notification.threshold}
                 onChange={(e) => handleUpdate(notification.id, "threshold", parseFloat(e.target.value))}
+                border="1px solid gray"
+                _focus={{ borderColor: "#3182CE", boxShadow: "0 0 0 1px #55aa7f" }}
+                _hover={{ borderColor: "black" }}
+                
               />
             </Td>
+
             <Td>
               <Switch
                 colorScheme="green"
                 size="lg"
-                isChecked={notification.anomalyDetectionAlert}
+                isChecked={notification?.anomalyDetectionAlert}
                 onChange={(e) => handleUpdate(notification.id, "anomalyDetectionAlert", e.target.checked)}
               />
             </Td>
             <Td>
               <Checkbox
                 colorScheme="green"
-                isChecked={notification.email}
+                isChecked={notification?.email}
                 onChange={(e) => handleUpdate(notification.id, "email", e.target.checked)}
               />
             </Td>
             <Td>
               <Checkbox
                 colorScheme="green"
-                isChecked={notification.platform}
+                isChecked={notification?.platform}
                 onChange={(e) => handleUpdate(notification.id, "platform", e.target.checked)}
               />
             </Td>
