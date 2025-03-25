@@ -6,6 +6,7 @@ Africa Rangeland Watch (ARW).
 """
 
 import mock
+import uuid
 from django.urls import reverse
 from django.core.files.storage import FileSystemStorage
 from django.core.files.uploadedfile import SimpleUploadedFile
@@ -13,12 +14,21 @@ from cloud_native_gis.models.layer import Layer
 from cloud_native_gis.models.layer_upload import LayerUpload
 
 from core.settings.utils import absolute_path
+from core.models import TaskStatus
 from core.tests.common import BaseAPIViewTest
 from layers.models import (
     InputLayer, InputLayerType,
-    DataProvider, LayerGroupType
+    DataProvider, LayerGroupType,
+    ExportLayerRequest
 )
-from frontend.api_views.layers import LayerAPI, UploadLayerAPI, PMTileLayerAPI
+from frontend.api_views.layers import (
+    LayerAPI,
+    UploadLayerAPI,
+    PMTileLayerAPI,
+    SubmitExportLayerRequest,
+    ExportLayerRequestStatus,
+    DownloadLayerExportedFile
+)
 
 
 class LayerAPITest(BaseAPIViewTest):
@@ -280,3 +290,205 @@ class LayerAPITest(BaseAPIViewTest):
         self.assertEqual(input_layer.group.name, 'user-defined')
         self.assertEqual(input_layer.name, 'data_test.gpkg')
         mock_import_layer.assert_called_once()
+        
+    @mock.patch('layers.tasks.export_layer.process_export_request.delay')
+    def test_submit_export_layer_request(self, mock_process_export_request):
+        """Test submit export layer request."""
+        view = SubmitExportLayerRequest.as_view()
+        request = self.factory.post(
+            reverse('frontend-api:submit-export-layer-request'),
+            data={
+                'format': 'geojson',
+                'layers': [str(self.input_layer.uuid)]
+            },
+            format='json'
+        )
+        request.user = self.superuser
+        response = view(request)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('request_id', response.data)
+        self.assertIn('format', response.data)
+        self.assertIn('start_datetime', response.data)
+        self.assertIn('end_datetime', response.data)
+        self.assertIn('status', response.data)
+        self.assertIn('notes', response.data)
+        mock_process_export_request.assert_called_once()
+
+    def test_submit_export_layer_request_no_format(self):
+        """Test submit export layer request without format."""
+        view = SubmitExportLayerRequest.as_view()
+        request = self.factory.post(
+            reverse('frontend-api:submit-export-layer-request'),
+            data={
+                'layers': [str(self.input_layer.uuid)]
+            },
+            format='json'
+        )
+        request.user = self.superuser
+        response = view(request)
+        self._check_error(
+            response,
+            'Format is mandatory!',
+            400,
+            'Invalid export request'
+        )
+
+    def test_submit_export_layer_request_invalid_format(self):
+        """Test submit export layer request with invalid format."""
+        view = SubmitExportLayerRequest.as_view()
+        request = self.factory.post(
+            reverse('frontend-api:submit-export-layer-request'),
+            data={
+                'format': 'invalid_format',
+                'layers': [str(self.input_layer.uuid)]
+            },
+            format='json'
+        )
+        request.user = self.superuser
+        response = view(request)
+        self._check_error(
+            response,
+            'Unrecognized format invalid_format!',
+            400,
+            'Invalid export request'
+        )
+
+    def test_submit_export_layer_request_no_layers(self):
+        """Test submit export layer request without layers."""
+        view = SubmitExportLayerRequest.as_view()
+        request = self.factory.post(
+            reverse('frontend-api:submit-export-layer-request'),
+            data={
+                'format': 'geojson'
+            },
+            format='json'
+        )
+        request.user = self.superuser
+        response = view(request)
+        self._check_error(
+            response,
+            'At least 1 layer must be selected!',
+            400,
+            'Invalid export request'
+        )
+
+    def test_submit_export_layer_request_invalid_uuid(self):
+        """Test submit export layer request with invalid UUID."""
+        view = SubmitExportLayerRequest.as_view()
+        request = self.factory.post(
+            reverse('frontend-api:submit-export-layer-request'),
+            data={
+                'format': 'geojson',
+                'layers': ['invalid_uuid']
+            },
+            format='json'
+        )
+        request.user = self.superuser
+        response = view(request)
+        self._check_error(
+            response,
+            'Invalid UUID format: invalid_uuid',
+            400,
+            'Invalid export request'
+        )
+
+    def test_export_layer_request_status(self):
+        """Test fetch status of export layer request."""
+        view = ExportLayerRequestStatus.as_view()
+        export_request = ExportLayerRequest.objects.create(
+            requested_by=self.user,
+            format='geojson'
+        )
+        export_request.layers.set([self.input_layer])
+
+        request = self.factory.get(
+            reverse('frontend-api:status-export-layer-request', kwargs={
+                'request_id': export_request.id
+            })
+        )
+        request.user = self.superuser
+        response = view(request, **{
+            'request_id': export_request.id
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('request_id', response.data)
+        self.assertIn('format', response.data)
+        self.assertIn('start_datetime', response.data)
+        self.assertIn('end_datetime', response.data)
+        self.assertIn('status', response.data)
+        self.assertIn('notes', response.data)
+
+    def test_download_layer_exported_file(self):
+        """Test download the exported file."""
+        view = DownloadLayerExportedFile.as_view()
+        export_request = ExportLayerRequest.objects.create(
+            requested_by=self.user,
+            format='geojson',
+            status=TaskStatus.COMPLETED
+        )
+        export_request.layers.set([self.input_layer])
+        file_path = absolute_path(
+            'frontend', 'tests', 'data', 'exported_file.geojson'
+        )
+        expected_filename = f'{str(uuid.uuid4())}.geojson'
+        with open(file_path, 'rb') as data:
+            export_request.file.save(expected_filename, data, save=True)
+        
+        request = self.factory.get(
+            reverse('frontend-api:download-exported-layer-file', kwargs={
+                'request_id': export_request.id
+            })
+        )
+        request.user = self.superuser
+        response = view(request, **{
+            'request_id': export_request.id
+        })
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            response['Content-Disposition'],
+            f'attachment; filename="{expected_filename}"'
+        )
+
+    def test_download_layer_exported_file_not_completed(self):
+        """Test download the exported file when task is not completed."""
+        view = DownloadLayerExportedFile.as_view()
+        export_request = ExportLayerRequest.objects.create(
+            requested_by=self.user,
+            format='geojson',
+            status=TaskStatus.PENDING
+        )
+        export_request.layers.set([self.input_layer])
+
+        request = self.factory.get(
+            reverse('frontend-api:download-exported-layer-file', kwargs={
+                'request_id': export_request.id
+            })
+        )
+        request.user = self.superuser
+        response = view(request, **{
+            'request_id': export_request.id
+        })
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.data, 'Export task is not finished!')
+
+    def test_download_layer_exported_file_missing(self):
+        """Test download the exported file when file is missing."""
+        view = DownloadLayerExportedFile.as_view()
+        export_request = ExportLayerRequest.objects.create(
+            requested_by=self.user,
+            format='geojson',
+            status=TaskStatus.COMPLETED
+        )
+        export_request.layers.set([self.input_layer])
+
+        request = self.factory.get(
+            reverse('frontend-api:download-exported-layer-file', kwargs={
+                'request_id': export_request.id
+            })
+        )
+        request.user = self.superuser
+        response = view(request, **{
+            'request_id': export_request.id
+        })
+        self.assertEqual(response.status_code, 404)
+        self.assertEqual(response.data, 'Missing exported file!')

@@ -46,6 +46,11 @@ app.conf.beat_schedule = {
         # Run every hour
         'schedule': crontab(minute='00', hour='*'),
     },
+    'cleanup-old-export-request': {
+        'task': 'cleanup_export_request',
+        # Run everyday at 00:00 UTC
+        'schedule': crontab(minute='00', hour='00'),
+    },
 }
 
 

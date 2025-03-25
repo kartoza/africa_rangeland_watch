@@ -10,11 +10,15 @@ from unittest.mock import patch
 from django.test import TestCase
 from cloud_native_gis.models.layer import Layer
 from cloud_native_gis.utils.fiona import FileType
+from django.utils import timezone
 
 from core.factories import UserF
 from core.models import TaskStatus
 from layers.models import ExportLayerRequest, InputLayer, DataProvider
-from layers.tasks.export_layer import process_export_request
+from layers.tasks.export_layer import (
+    process_export_request,
+    cleanup_export_request
+)
 
 
 class TestExportLayerTasks(TestCase):
@@ -108,4 +112,27 @@ class TestExportLayerTasks(TestCase):
         self.assertIn(
             'layers that are failed to be exported',
             self.export_request.notes
+        )
+
+    def test_cleanup_export_request(self):
+        old_request = ExportLayerRequest.objects.create(
+            requested_by=self.user,
+            format=FileType.SHAPEFILE,
+            created_at=timezone.now() - timezone.timedelta(days=2)
+        )
+        old_request.created_at = timezone.now() - timezone.timedelta(days=2)
+        old_request.save()
+        new_request = ExportLayerRequest.objects.create(
+            requested_by=self.user,
+            format=FileType.SHAPEFILE,
+            created_at=timezone.now()
+        )
+
+        cleanup_export_request()
+
+        self.assertFalse(
+            ExportLayerRequest.objects.filter(id=old_request.id).exists()
+        )
+        self.assertTrue(
+            ExportLayerRequest.objects.filter(id=new_request.id).exists()
         )
