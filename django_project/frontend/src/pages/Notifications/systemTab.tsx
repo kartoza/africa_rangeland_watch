@@ -13,7 +13,6 @@ export default function SystemTab() {
 
   // Fetch indicators on mount
   useEffect(() => {
-    console.log('triggered')
     dispatch(fetchIndicators());
   }, [dispatch]);
 
@@ -40,7 +39,7 @@ export default function SystemTab() {
         </Tr>
       </Thead>
       <Tbody>
-        {indicators.map((notification) => (
+        {(Array.isArray(indicators?.results) ? indicators?.results : []).map((notification: any) => (
           <Tr key={notification.id}>
             <Td>{notification.indicator}</Td>
             <Td>
