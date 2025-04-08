@@ -8,85 +8,103 @@ test('test', async ({ page }) => {
   await page.goto('https://arw.dev.do.kartoza.com/');
   await expect(page.locator('h1')).toContainText('Africa Rangeland Watch');
   await expect(page.getByRole('link', { name: 'MAP' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'View Map' })).toBeVisible();
-  await page.getByRole('button', { name: 'View Map' }).click();
-  await expect(page.getByRole('region', { name: 'Map' })).toBeVisible();
-  await expect(page.getByRole('tab', { name: 'Layers' })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Header Logo' })).toBeVisible();
-  await expect(page.getByRole('tab', { name: 'Analysis' })).toBeVisible();
-  await expect(page.getByRole('textbox', { name: 'Start Date' })).toBeVisible();
-  await page.getByRole('textbox', { name: 'Start Date' }).fill('2018-01-01');
-  await page.getByRole('textbox', { name: 'End Date' }).fill('2019-12-31');
-  await expect(page.getByText('Click polygons on the map')).toBeVisible();
-  await page.waitForLoadState('load');
+  await page.getByRole('link', { name: 'MAP' }).click();
   await page.getByRole('region', { name: 'Map' }).click({
     position: {
-      x: 485,
-      y: 259
+      x: 493,
+      y: 300
     }
   });
-  await expect(page.getByLabel('Analysis', { exact: true })).toContainText('Click polygons on the map BNP western polygon');
-  await expect(page.getByRole('button', { name: 'Run Analysis' })).toBeVisible();
   await page.getByRole('button', { name: 'Run Analysis' }).click();
-  await expect(page.getByText('Statistics')).toBeVisible();
-  await expect(page.getByText('Statistics')).toBeVisible();
-  await page.waitForLoadState('domcontentloaded');
-  await expect(page.getByRole('cell', { name: 'Name' })).toBeVisible();
-  await expect(page.getByRole('cell', { name: 'Bare ground %' })).toBeVisible();
-  await expect(page.getByRole('cell', { name: 'EVI' })).toBeVisible();
-  await expect(page.getByRole('cell', { name: 'Bahine National Park' })).toBeVisible();
-  await expect(page.getByRole('cell', { name: 'BNP western polygon' })).toBeVisible();
-  await expect(page.locator('tbody')).toContainText('0.2389359742713804');
-  await expect(page.locator('tbody')).toContainText('0.05216795436870624');
-  await expect(page.getByText('Statistics')).toBeVisible();
+  await expect(page.locator('#app')).toContainText('Statistics');
   await expect(page.getByRole('button', { name: 'Save Results' })).toBeVisible();
   await page.getByRole('button', { name: 'Save Results' }).click();
-  await expect(page.getByText('Analysis results saved!')).toBeVisible();
-  await expect(page.locator('#toast-1-description')).toContainText('You will find your results on the analysis results page in the profile area.');
-  await expect(page.getByRole('region', { name: 'Notifications-top-right' }).getByRole('img')).toBeVisible();
   await page.getByRole('button', { name: 'Close' }).click();
-  await page.locator('a:nth-child(3)').click();
+  await page.locator('label').filter({ hasText: 'Temporal' }).locator('span').first().click();
+  await expect(page.locator('label').filter({ hasText: 'Temporal' })).toBeVisible();
+  await expect(page.locator('label').filter({ hasText: 'Annual' })).toBeVisible();
+  await page.getByRole('region', { name: ') Select reference period' }).getByRole('combobox').selectOption('2016');
+  await page.getByRole('combobox').nth(3).selectOption('2018');
+  await page.getByRole('button', { name: 'Run Analysis' }).click();
+  await expect(page.locator('#app')).toContainText('Statistics');
+  await expect(page.locator('canvas').nth(1)).toBeVisible();
+  await expect(page.locator('canvas').nth(2)).toBeVisible();
+  await expect(page.locator('#app')).toMatchAriaSnapshot(`- paragraph: Statistics`);
+  await page.locator('canvas').nth(1).click({
+    position: {
+      x: 139,
+      y: 121
+    }
+  });
+  await page.locator('canvas').nth(2).click({
+    position: {
+      x: 205,
+      y: 40
+    }
+  });
+  await page.locator('canvas').nth(2).click({
+    position: {
+      x: 187,
+      y: 12
+    }
+  });
+  await page.locator('canvas').nth(2).click({
+    position: {
+      x: 183,
+      y: 31
+    }
+  });
+  await page.locator('canvas').nth(2).click({
+    position: {
+      x: 208,
+      y: 37
+    }
+  });
+  await page.locator('canvas').nth(2).click({
+    position: {
+      x: 206,
+      y: 12
+    }
+  });
+  await page.locator('canvas').nth(2).click({
+    position: {
+      x: 186,
+      y: 12
+    }
+  });
+  await page.getByRole('cell', { name: 'Bahine National Park' }).click();
+  await page.getByRole('cell', { name: 'BNP western polygon' }).click();
+  await page.getByRole('button', { name: 'Save Results' }).click();
+  await page.getByRole('button', { name: 'Close' }).click();
+  await page.getByText('Spatial').click();
+  await page.getByRole('button', { name: 'Draw' }).click();
+  await page.getByRole('button', { name: 'Polygon tool (p)' }).click();
+  await page.getByRole('button', { name: 'Polygon tool (p)' }).click();
+  await page.getByRole('button', { name: 'Polygon tool (p)' }).click();
+  await page.getByRole('button', { name: 'Polygon tool (p)' }).click();
+  await page.getByRole('button', { name: 'Polygon tool (p)' }).click();
+  await page.getByRole('button', { name: 'Cancel' }).click();
   await page.getByRole('link', { name: 'Profile Area' }).click();
   await page.locator('a').filter({ hasText: 'Analysis Results' }).click();
-  await expect(page.getByRole('heading', { name: 'Baseline Analysis of Bahine NP' })).toBeVisible();
-  await expect(page.locator('#app')).toContainText('Analysis Results');
-  await expect(page.getByRole('button', { name: 'View' }).first()).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Delete' }).first()).toBeVisible();
-  await page.getByRole('heading', { name: 'Baseline Analysis of Bahine NP' }).click();
-  await expect(page.getByRole('button', { name: 'Create Dashboard' })).toBeVisible();
-  await page.getByRole('button', { name: 'Create Dashboard' }).click();
-  await expect(page.locator('[id="chakra-modal--header-\\:r1k\\:"]')).toContainText('Create Dashboard');
-  await expect(page.getByText('Dashboard Name')).toBeVisible();
-  await expect(page.getByRole('textbox', { name: 'Dashboard Name' })).toBeEmpty();
-  await expect(page.getByText('Chart')).toBeVisible();
-  await expect(page.getByText('Map', { exact: true })).toBeVisible();
-  await expect(page.getByLabel('Access Level')).toBeVisible();
-  await page.getByRole('textbox', { name: 'Dashboard Name' }).click();
-  await page.getByRole('textbox', { name: 'Dashboard Name' }).fill('Testing');
-  await expect(page.getByRole('button', { name: 'Save' })).toBeVisible();
-  await page.getByRole('button', { name: 'Save' }).click();
-  await expect(page.getByText('Dashboard Created!')).toBeVisible();
-  await expect(page.locator('#toast-2-description')).toContainText('Your dashboard has been created please head over to the dashboard page to view it.');
-  await expect(page.getByRole('region', { name: 'Notifications-top-right' }).locator('span path')).toBeVisible();
+  await expect(page.locator('#app')).toContainText('Temporal Analysis of Bahine NP');
+  await expect(page.locator('#app')).toContainText('Baseline Analysis of Bahine NP');
+  await page.getByRole('button', { name: 'View' }).first().click();
+  await expect(page.getByText('View AnalysisInfoLocationLinked ResourcesRaster OutputTitleValueOwnerjeff@')).toBeVisible();
+  await expect(page.locator('canvas').first()).toBeVisible();
+  await expect(page.locator('canvas').nth(1)).toBeVisible();
+  await page.getByRole('button').filter({ hasText: /^$/ }).click();
+  await page.getByRole('button', { name: 'View' }).nth(1).click();
+  await expect(page.locator('.css-16vx7aj')).toBeVisible();
+  await expect(page.getByRole('cell', { name: 'EVI' })).toBeVisible();
+  await expect(page.getByRole('cell', { name: '0.25274563282355295' })).toBeVisible();
+  await expect(page.getByRole('cell', { name: 'NDVI' })).toBeVisible();
+  await expect(page.locator('#app')).toContainText('0.44281920874453096');
+  await page.getByRole('tab', { name: 'Location' }).click();
+  await page.getByRole('button').filter({ hasText: /^$/ }).click();
+  await page.getByRole('button', { name: 'Delete' }).first().click();
+  await page.getByText('Yes, Delete').nth(1).click();
   await page.getByRole('button', { name: 'Close' }).click();
-  await page.locator('a').filter({ hasText: 'My Dashboard' }).click();
-  await expect(page.getByRole('button', { name: 'Testing Settings Download' })).toBeVisible();
-  await expect(page.locator('#app')).toContainText('4 resources found');
-  await page.getByRole('button', { name: 'Testing Settings Download' }).getByLabel('Delete Dashboard').click();
-  await expect(page.getByText('Delete Dashboard')).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Yes, Delete' })).toBeVisible();
-  await page.getByRole('button', { name: 'Yes, Delete' }).click();
-  await expect(page.getByText('Dashboard updated')).toBeVisible();
-  await expect(page.locator('#toast-3-description')).toContainText('Action has been completed.If changes dont reflect immediately please refresh the page.');
-  await page.getByRole('button', { name: 'Close' }).click();
-  await page.locator('div').filter({ hasText: 'Delete DashboardAre you sure' }).nth(3).click();
-  await page.locator('a:nth-child(3)').click();
-  await page.getByRole('link', { name: 'Profile Area' }).click();
-  await page.locator('a').filter({ hasText: 'Analysis Results' }).click();
-  await expect(page.getByRole('heading', { name: 'Baseline Analysis of Bahine NP' })).toBeVisible();
-  await page.getByRole('heading', { name: 'Baseline Analysis of Bahine NP' }).click();
   await page.getByRole('button', { name: 'Delete' }).click();
-  await expect(page.getByRole('button', { name: 'Yes, Delete' })).toBeVisible();
   await page.getByRole('button', { name: 'Yes, Delete' }).click();
-  await page.getByRole('button', { name: 'Close' }).click();
+  await page.locator('a').filter({ hasText: 'My Dashboard' }).click();
 });
