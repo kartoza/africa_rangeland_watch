@@ -31,7 +31,7 @@ export default defineConfig({
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
-    baseURL: process.env.STAGING === '1' ? 'http://example.com' : 'http://localhost:61100/'
+    baseURL: 'http://dev.local:8000/#/'
   },
 
   /* Configure projects for major browsers */
@@ -40,6 +40,7 @@ export default defineConfig({
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'],
+      ignoreHTTPSErrors: true,
       // Use prepared auth state.
       storageState: 'auth.json',
      },
