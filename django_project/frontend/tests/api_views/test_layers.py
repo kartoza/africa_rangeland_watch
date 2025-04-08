@@ -9,7 +9,6 @@ import mock
 import uuid
 from django.urls import reverse
 from django.core.files.storage import FileSystemStorage
-from django.http import FileResponse
 from django.core.files.uploadedfile import SimpleUploadedFile
 from cloud_native_gis.models.layer import Layer
 from cloud_native_gis.models.layer_upload import LayerUpload
@@ -291,7 +290,7 @@ class LayerAPITest(BaseAPIViewTest):
         self.assertEqual(input_layer.group.name, 'user-defined')
         self.assertEqual(input_layer.name, 'data_test.gpkg')
         mock_import_layer.assert_called_once()
-
+        
     @mock.patch('layers.tasks.export_layer.process_export_request.delay')
     def test_submit_export_layer_request(self, mock_process_export_request):
         """Test submit export layer request."""
