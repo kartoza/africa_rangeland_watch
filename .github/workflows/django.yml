@@ -76,7 +76,7 @@ jobs:
           make sleep
       - name: Test django endpoint
         run: |
-          curl http://dev.local:8000
+          curl http://localhost:61100/
           if [ $? -ne 0 ]; then
             echo "Curl command failed"
             exit 1
