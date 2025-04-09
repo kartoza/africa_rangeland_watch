@@ -1,11 +1,13 @@
 import { test, expect } from '@playwright/test';
 
+let url = '/';
+
 test.use({
   storageState: 'auth.json'
 });
 
 test('test', async ({ page }) => {
-  await page.goto('http://dev.local:8000/');
+  await page.goto(url);
   await expect(page.locator('h1')).toContainText('Africa Rangeland Watch');
   await expect(page.locator('div').filter({ hasText: 'Africa Rangeland WatchUnderstand and monitor the impact of sustainable' }).nth(2)).toBeVisible();
   await expect(page.getByRole('link', { name: 'Header Logo' })).toBeVisible();

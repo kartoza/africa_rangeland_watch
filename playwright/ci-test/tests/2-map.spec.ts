@@ -1,11 +1,13 @@
 import { test, expect } from '@playwright/test';
 
+let url = '/';
+
 test.use({
   storageState: 'auth.json'
 });
 
 test('test', async ({ page }) => {
-  await page.goto('http://dev.local:8000/');
+  await page.goto(url);
   await expect(page.locator('h1')).toContainText('Africa Rangeland Watch');
   await expect(page.getByRole('link', { name: 'MAP' })).toBeVisible();
   await page.getByRole('link', { name: 'MAP' }).click();
@@ -14,9 +16,7 @@ test('test', async ({ page }) => {
   await expect(page.getByRole('tab', { name: 'Analysis' })).toBeVisible();
   await expect(page.getByRole('button', { name: ') Select landscape' })).toBeVisible();
   await page.getByRole('combobox').selectOption('Drakensberg Sub-Escarpment');
-  await page.goto('http://dev.local:8000/#/map');
   await page.getByRole('combobox').selectOption('Bahine NP');
-  await page.goto('http://dev.local:8000/#/map');
   await page.getByText('Temporal').click();
   await page.getByText('Baseline', { exact: true }).click();
   await expect(page.getByRole('textbox', { name: 'Start Date' })).toBeEmpty();

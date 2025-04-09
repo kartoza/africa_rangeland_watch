@@ -94,7 +94,7 @@ jobs:
       - name: Create superuser and load fixtures
         working-directory: deployment
         run: |
-          cat << EOF | docker-compose exec -T dev bash
+          cat << EOF | docker compose exec -T dev bash
           export DJANGO_SUPERUSER_PASSWORD=admin
           python manage.py createsuperuser --no-input --username admin --email 'admin@example.com'
           python manage.py loaddata analysis/fixtures/*.json

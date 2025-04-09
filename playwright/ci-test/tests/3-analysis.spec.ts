@@ -1,11 +1,13 @@
 import { test, expect } from '@playwright/test';
 
+let url = '/';
+
 test.use({
   storageState: 'auth.json'
 });
 
 test('test', async ({ page }) => {
-  await page.goto('http://dev.local:8000/');
+  await page.goto(url);
   await expect(page.locator('h1')).toContainText('Africa Rangeland Watch');
   await page.getByRole('link', { name: 'MAP' }).click();
   await page.getByRole('tab', { name: 'Layers' }).click();
@@ -20,7 +22,6 @@ test('test', async ({ page }) => {
     }
   });
   await page.getByRole('combobox').selectOption('1');
-  await page.goto('http://dev.local:8000/#/map');
   await page.getByRole('region', { name: 'Map' }).click({
     position: {
       x: 637,
@@ -44,10 +45,8 @@ test('test', async ({ page }) => {
     }
   });
   await page.getByLabel(') Select year range (Optional)').locator('div').filter({ hasText: 'Select start' }).getByRole('combobox').selectOption('2017');
-  await page.goto('http://dev.local:8000/#/map');
   await page.getByRole('region', { name: ') Select year range (Optional)' }).click();
   await page.getByLabel(') Select year range (Optional)').locator('div').filter({ hasText: 'Select end' }).getByRole('combobox').selectOption('2019');
-  await page.goto('http://dev.local:8000/#/map');
   await page.getByRole('button', { name: 'Draw' }).click();
   await page.getByRole('region', { name: 'Map' }).click({
     position: {
