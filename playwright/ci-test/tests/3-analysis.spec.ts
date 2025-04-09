@@ -11,9 +11,6 @@ test('test', async ({ page }) => {
   await expect(page.locator('h1')).toContainText('Africa Rangeland Watch');
   await page.getByRole('link', { name: 'MAP' }).click();
   await page.getByRole('tab', { name: 'Layers' }).click();
-  await page.getByRole('button', { name: 'User Defined' }).click();
-  await page.getByRole('region', { name: 'User Defined' }).locator('span').first().click();
-  await page.getByRole('region', { name: 'User Defined' }).locator('span').nth(2).click();
   await page.getByRole('region', { name: 'Map' }).click({
     button: 'middle',
     position: {
@@ -32,18 +29,11 @@ test('test', async ({ page }) => {
     button: 'right'
   });
   await page.getByRole('tab', { name: 'Layers' }).click();
-  await page.getByRole('button', { name: 'User Defined' }).click();
-  await page.getByRole('region', { name: 'User Defined' }).locator('span').first().click();
-  await page.getByRole('region', { name: 'User Defined' }).locator('span').nth(2).click();
-  await page.locator('label').filter({ hasText: 'limpopo_test.zip' }).locator('polyline').click();
   await page.getByRole('tab', { name: 'Analysis' }).click();
+  await page.getByRole('combobox').selectOption('Bahine NP');
   await page.getByText('Spatial').click();
-  await page.getByRole('region', { name: 'Map' }).click({
-    position: {
-      x: 498,
-      y: 309
-    }
-  });
+  await expect(page.getByRole('button', { name: ') Select variable' })).toBeVisible();
+  await page.getByRole('region', { name: ') Select variable' }).getByRole('combobox').selectOption('EVI');
   await page.getByLabel(') Select year range (Optional)').locator('div').filter({ hasText: 'Select start' }).getByRole('combobox').selectOption('2017');
   await page.getByRole('region', { name: ') Select year range (Optional)' }).click();
   await page.getByLabel(') Select year range (Optional)').locator('div').filter({ hasText: 'Select end' }).getByRole('combobox').selectOption('2019');

@@ -21,7 +21,6 @@ test('test', async ({ page }) => {
   await page.getByText('Baseline', { exact: true }).click();
   await expect(page.getByRole('textbox', { name: 'Start Date' })).toBeEmpty();
   await expect(page.getByRole('textbox', { name: 'End Date' })).toBeEmpty();
-  await page.getByRole('banner').click();
   await expect(page.getByText('Click polygons on the map')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Reset Form' })).toBeVisible();
   await page.getByRole('button', { name: 'Zoom out' }).click();
