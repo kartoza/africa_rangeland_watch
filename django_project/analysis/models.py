@@ -483,8 +483,8 @@ class GEEAsset(models.Model):
             raise ValueError(
                 'Asset metadata must contain start_date and end_date.'
             )
-
-        return start_date <= date < end_date
+        # compare only the year
+        return int(start_date[:4]) <= int(date[:4]) <= int(end_date[:4])
 
     @classmethod
     def get_dates_within_asset_period(
