@@ -1,3 +1,9 @@
+# coding=utf-8
+"""
+Africa Rangeland Watch (ARW).
+
+.. note:: Analysis Runner Class
+"""
 import uuid
 from collections import OrderedDict
 from datetime import date
@@ -28,23 +34,10 @@ def _temporal_analysis(lat, lon, analysis_dict, custom_geom):
 
 class AnalysisRunner:
 
-    def get_reference_layer_geom(self, data):
-        """Retrieve selected reference layer and return its geom."""
-        layers = data['reference_layer']
-        features = layers.get('features', [])
-        feature_id = data.get('reference_layer_id', None)
-        if not feature_id and len(features) > 0:
-            return features[0]['geometry']
-
-        for feature in features:
-            if feature['properties']['id'] == feature_id:
-                return feature['geometry']
-
-        return None
-
-    def run_baseline_analysis(self, data):
-        """Run the baseline analysis."""
-        analysis_dict = {
+    @staticmethod
+    def get_analysis_dict_baseline(data):
+        """Get analysis dictionary for baseline."""
+        return {
             'landscape': '',
             'analysisType': 'Baseline',
             'variable': data['landscape'],
@@ -68,6 +61,92 @@ class AnalysisRunner:
                 'Quarterly': ''
             }
         }
+      
+    @staticmethod
+    def get_analysis_dict_temporal(data):
+        """Get analysis dictionary for temporal."""
+        comp_years = data['comparisonPeriod']['year']
+        comp_quarters = data['comparisonPeriod'].get('quarter', [])
+        if comp_quarters is None or len(comp_quarters) == 0:
+            comp_quarters = [None] * len(comp_years)
+        comp_months = data['comparisonPeriod'].get('month', [])
+        if comp_months is None or len(comp_months) == 0:
+            comp_months = [None] * len(comp_years)
+
+        analysis_dict_list = []
+        for idx, comp_year in enumerate(comp_years):
+            analysis_dict = {
+                'landscape': data['landscape'],
+                'analysisType': 'Temporal',
+                'variable': data['variable'],
+                't_resolution': data['temporalResolution'],
+                'Temporal': {
+                    'Annual': {
+                        'ref': data['period']['year'],
+                        'test': comp_year
+                    },
+                    'Quarterly': {
+                        'ref': '',
+                        'test': ''
+                    },
+                    'Monthly': {
+                        'ref': '',
+                        'test': ''
+                    }
+                },
+                'Spatial': {
+                    'Annual': '',
+                    'Quarterly': ''
+                }
+            }
+            
+            analysis_dict_list.append(analysis_dict)
+        return analysis_dict_list, comp_years
+
+    @staticmethod
+    def get_analysis_dict_spatial(data):
+        """Get analysis dictionary for spatial."""
+        return {
+            'landscape': '',
+            'analysisType': 'Spatial',
+            'variable': data['variable'],
+            't_resolution': '',
+            'Temporal': {
+                'Annual': {
+                    'ref': '',
+                    'test': ''
+                },
+                'Quarterly': {
+                    'ref': '',
+                    'test': ''
+                }
+            },
+            'Spatial': {
+                'Annual': '',
+                'Quarterly': '',
+                'start_year': data.get('spatialStartYear', None),
+                'end_year': data.get('spatialEndYear', None)
+            }
+        }
+
+    @staticmethod
+    def get_reference_layer_geom(data):
+        """Retrieve selected reference layer and return its geom."""
+        layers = data['reference_layer']
+        features = layers.get('features', [])
+        feature_id = data.get('reference_layer_id', None)
+        if not feature_id and len(features) > 0:
+            return features[0]['geometry']
+
+        for feature in features:
+            if feature['properties']['id'] == feature_id:
+                return feature['geometry']
+
+        return None
+
+    def run_baseline_analysis(self, data):
+        """Run the baseline analysis."""
+        analysis_dict = self.get_analysis_dict_baseline(data)
         initialize_engine_analysis()
         return run_analysis(
             lon=float(data['longitude']),
@@ -76,7 +155,8 @@ class AnalysisRunner:
             custom_geom=data.get('custom_geom', None)
         )
 
-    def _combine_temporal_analysis_results(self, years, input_results):
+    @staticmethod
+    def combine_temporal_analysis_results(years, input_results):
         def merge_and_sort(arrays):
             unique_dict = {}
 
@@ -231,59 +311,7 @@ class AnalysisRunner:
 
     def run_temporal_analysis(self, data):
         """Run the temporal analysis."""
-        analysis_dict_list = []
-        comp_years = data['comparisonPeriod']['year']
-        comp_quarters = data['comparisonPeriod'].get('quarter', [])
-        if comp_quarters is None or len(comp_quarters) == 0:
-            comp_quarters = [None] * len(comp_years)
-        comp_months = data['comparisonPeriod'].get('month', [])
-        if comp_months is None or len(comp_months) == 0:
-            comp_months = [None] * len(comp_years)
-
-        analysis_dict_list = []
-        for idx, comp_year in enumerate(comp_years):
-            analysis_dict = {
-                'landscape': data['landscape'],
-                'analysisType': 'Temporal',
-                'variable': data['variable'],
-                't_resolution': data['temporalResolution'],
-                'Temporal': {
-                    'Annual': {
-                        'ref': data['period']['year'],
-                        'test': comp_year
-                    },
-                    'Quarterly': {
-                        'ref': '',
-                        'test': ''
-                    },
-                    'Monthly': {
-                        'ref': '',
-                        'test': ''
-                    }
-                },
-                'Spatial': {
-                    'Annual': '',
-                    'Quarterly': ''
-                }
-            }
-            if data['temporalResolution'] == 'Quarterly':
-                analysis_dict['Temporal']['Quarterly'] = {
-                    'ref': data['period'].get('quarter', ''),
-                    'test': (
-                        comp_quarters[idx] if
-                        len(comp_quarters) > 0 else ''
-                    ),
-                }
-            elif data['temporalResolution'] == 'Monthly':
-                analysis_dict['Temporal']['Monthly'] = {
-                    'ref': data['period'].get('month', ''),
-                    'test': (
-                        comp_months[idx] if
-                        len(comp_months) > 0 else ''
-                    ),
-                }
-            analysis_dict_list.append(analysis_dict)
-
+        analysis_dict_list, comp_years = self.get_analysis_dict_temporal(data)
         initialize_engine_analysis()
 
         results = []
@@ -302,7 +330,7 @@ class AnalysisRunner:
             # Collect results as they complete
             results = [future.result() for future in futures]
 
-        results = self._combine_temporal_analysis_results(comp_years, results)
+        results = self.combine_temporal_analysis_results(comp_years, results)
         return results
 
     def run_spatial_analysis(self, data):
@@ -314,33 +342,12 @@ class AnalysisRunner:
                 f'{data.get('reference_layer_id')}!'
             )
 
-        analysis_dict = {
-            'landscape': '',
-            'analysisType': 'Spatial',
-            'variable': data['variable'],
-            't_resolution': '',
-            'Temporal': {
-                'Annual': {
-                    'ref': '',
-                    'test': ''
-                },
-                'Quarterly': {
-                    'ref': '',
-                    'test': ''
-                }
-            },
-            'Spatial': {
-                'Annual': '',
-                'Quarterly': '',
-                'start_year': data.get('spatialStartYear', None),
-                'end_year': data.get('spatialEndYear', None)
-            }
-        }
+        analysis_dict = self.get_analysis_dict_spatial(data)
         analysis_cache = AnalysisResultsCacheUtils({
             'lat': data['latitude'],
             'lon': data['longitude'],
             'analysis_dict': analysis_dict,
-            'args': [analysis_dict],
+            'args': [],
             'kwargs': {
                 'reference_layer': reference_layer_geom,
                 'custom_geom': data.get('custom_geom', None)
@@ -428,11 +435,11 @@ class AnalysisRunner:
 
     def run(self, data):
         """Run the analysis."""
-        if data['analysisType'] == 'baseline':
+        if data['analysisType'] == 'Baseline':
             return self.run_baseline_analysis(data)
-        elif data['analysisType'] == 'temporal':
+        elif data['analysisType'] == 'Temporal':
             return self.run_temporal_analysis(data)
-        elif data['analysisType'] == 'spatial':
+        elif data['analysisType'] == 'Spatial':
             return self.run_spatial_analysis(data)
         else:
             raise ValueError('Invalid analysis type!')
