@@ -17,7 +17,11 @@ import AnalysisVariableBySpatialSelector
 import AnalysisLandscapeGeometrySelector
   from "./AnalysisLandscapeGeometrySelector";
 import { AppDispatch, RootState } from "../../../../store";
-import { doAnalysis, REFERENCE_LAYER_DIFF_ID, resetAnalysisResult, setAnalysis, setAnalysisLandscapeCommunity, setAnalysisCustomGeom } from "../../../../store/analysisSlice";
+import {
+  doAnalysis, REFERENCE_LAYER_DIFF_ID, resetAnalysisResult,
+  setAnalysis, setAnalysisLandscapeCommunity, setAnalysisCustomGeom,
+  fetchAnalysisStatus
+} from "../../../../store/analysisSlice";
 import { AnalysisCustomGeometrySelector } from "./AnalysisCustomGeometrySelector";
 import AnalysisUserDefinedLayerSelector from "./AnalysisUserDefinedLayerSelector";
 import AnalysisSpatialYearFilter from "./AnalysisSpatialYearFilter";
@@ -73,6 +77,8 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
   );
   const analysis = useSelector((state: RootState) => state.analysis);
   const data = analysis.analysisData;
+  const analysisTaskId = useSelector((state: RootState) => state.analysis.analysisTaskId);
+  const analysisTaskStatus = useSelector((state: RootState) => state.analysis.analysisTaskStatus);
 
   const handleSaveAnalysis = () => {
     if (data && analysis) {
@@ -123,6 +129,22 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
     }
   }, [loadingSession, data]);
   
+  useEffect(() => {
+    let interval: NodeJS.Timeout | null = null;
+    if (analysisTaskId && (analysisTaskStatus === 'PENDING' || analysisTaskStatus === 'RUNNING')) {
+      interval = setInterval(() => {
+        dispatch(fetchAnalysisStatus({taskId: analysisTaskId}));
+      }, 1000);
+    }
+
+    if (analysisTaskStatus === 'COMPLETED' || analysisTaskStatus === 'FAILED') {
+      if (interval) clearInterval(interval);
+    }
+
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [analysisTaskId, analysisTaskStatus])
 
   /** When data changed */
   const triggerAnalysis = () => {
