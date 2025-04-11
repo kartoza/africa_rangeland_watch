@@ -33,6 +33,8 @@ test.describe('upload files', () => {
 
     await page.locator('.css-uylvmb > .chakra-icon').click();
 
+    await page.waitForLoadState('domcontentloaded');
+
     await expect(page.getByRole('heading', { name: 'test_data_geo.geojson' })).toBeVisible();
   });
 
@@ -51,7 +53,7 @@ test.describe('upload files', () => {
     await page.getByText('Status: success').click();
     await page.getByRole('button', { name: 'Clear' }).click();
     await page.locator('.css-uylvmb > .chakra-icon').click();
-    await page.getByRole('button', { name: '2' }).click();
+    await page.waitForLoadState('domcontentloaded');
     await expect(page.getByRole('heading', { name: 'test_data.gpkg' })).toBeVisible();
   });
 
@@ -67,6 +69,7 @@ test.describe('upload files', () => {
     await fileChooser.setFiles('tests/data/test_data_kml.kml');
     await page.getByRole('button', { name: 'Clear' }).click();
     await page.locator('.css-uylvmb > .chakra-icon').click();
+    await page.waitForLoadState('domcontentloaded');
     await expect(page.getByRole('heading', { name: 'test_data_kml.kml' })).toBeVisible();
   });
 
@@ -83,6 +86,7 @@ test.describe('upload files', () => {
 
     await fileChooser.setFiles('tests/data/limpopo_test.zip');
     await page.locator('.css-uylvmb > .chakra-icon').click();
+    await page.waitForLoadState('domcontentloaded');
     await expect(page.getByRole('heading', { name: 'limpopo_test.zip' })).toBeVisible();
   });
 
