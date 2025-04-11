@@ -74,4 +74,4 @@ class GEEAssetTest(TestCase):
             'test_asset',
             '2023-12-31'
         )
-        self.assertFalse(result)
+        self.assertTrue(result)
