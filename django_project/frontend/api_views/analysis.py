@@ -26,7 +26,7 @@ class AnalysisResultSerializer(serializers.Serializer):
     """Serializer for analysis API response."""
     data = serializers.JSONField()
     results = serializers.JSONField(allow_null=True)
-    task_id = serializers.CharField(allow_null=True)
+    task_id = serializers.IntegerField(allow_null=True)
     status = serializers.ChoiceField(choices=TaskStatus.choices)
     is_cached = serializers.BooleanField()
     error = serializers.CharField(allow_null=True, required=False)
@@ -42,12 +42,20 @@ class AnalysisAPI(APIView):
     def check_cache(self, data):
         """Check if results are already cached."""
         analysis_dict = {}
-        lat = float(data['latitude']) if data['latitude'] is not None else None
-        lon = float(data['longitude']) if data['longitude'] is not None else None
+        lat = (
+            float(data['latitude']) if data['latitude'] is not None else
+            None
+        )
+        lon = (
+            float(data['longitude']) if data['longitude'] is not None else
+            None
+        )
         args = []
         kwargs = {}
         if data['analysisType'] == 'Temporal':
-            analysis_dict_list, comp_years = AnalysisRunner.get_analysis_dict_temporal(data)
+            analysis_dict_list, comp_years = (
+                AnalysisRunner.get_analysis_dict_temporal(data)
+            )
             kwargs = {
                 'custom_geom': data.get('custom_geom', None)
             }
@@ -75,7 +83,9 @@ class AnalysisAPI(APIView):
             return None
         elif data['analysisType'] == 'Spatial':
             analysis_dict = AnalysisRunner.get_analysis_dict_spatial(data)
-            reference_layer_geom = AnalysisRunner.get_reference_layer_geom(data)
+            reference_layer_geom = (
+                AnalysisRunner.get_reference_layer_geom(data)
+            )
             kwargs = {
                 'reference_layer': reference_layer_geom,
                 'custom_geom': data.get('custom_geom', None)
@@ -156,7 +166,7 @@ class AnalysisAPI(APIView):
                 analysis_inputs=data,
                 submitted_by=request.user
             )
-            
+
             # submit task
             task = run_analysis_task.delay(analysis_task.id)
             analysis_task.task_id = task.id

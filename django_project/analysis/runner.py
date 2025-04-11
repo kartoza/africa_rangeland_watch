@@ -20,7 +20,6 @@ from analysis.analysis import (
     spatial_get_date_filter,
     validate_spatial_date_range_filter
 )
-from analysis.analysis import initialize_engine_analysis, run_analysis
 
 
 def _temporal_analysis(lat, lon, analysis_dict, custom_geom):
@@ -61,7 +60,7 @@ class AnalysisRunner:
                 'Quarterly': ''
             }
         }
-      
+
     @staticmethod
     def get_analysis_dict_temporal(data):
         """Get analysis dictionary for temporal."""
@@ -99,7 +98,7 @@ class AnalysisRunner:
                     'Quarterly': ''
                 }
             }
-            
+
             analysis_dict_list.append(analysis_dict)
         return analysis_dict_list, comp_years
 

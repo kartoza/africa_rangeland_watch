@@ -578,4 +578,4 @@ class AnalysisTask(models.Model):
         null=True,
         blank=True,
         help_text='Error message if the task failed.'
-    )    
+    )
