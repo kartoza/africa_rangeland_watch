@@ -20,7 +20,7 @@ import { AppDispatch, RootState } from "../../../../store";
 import {
   doAnalysis, REFERENCE_LAYER_DIFF_ID, resetAnalysisResult,
   setAnalysis, setAnalysisLandscapeCommunity, setAnalysisCustomGeom,
-  fetchAnalysisStatus
+  fetchAnalysisStatus, setMaxWaitAnalysisReached
 } from "../../../../store/analysisSlice";
 import { AnalysisCustomGeometrySelector } from "./AnalysisCustomGeometrySelector";
 import AnalysisUserDefinedLayerSelector from "./AnalysisUserDefinedLayerSelector";
@@ -79,6 +79,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
   const data = analysis.analysisData;
   const analysisTaskId = useSelector((state: RootState) => state.analysis.analysisTaskId);
   const analysisTaskStatus = useSelector((state: RootState) => state.analysis.analysisTaskStatus);
+  const analysisTaskStartTime = useSelector((state: RootState) => state.analysis.analysisTaskStartTime);
 
   const handleSaveAnalysis = () => {
     if (data && analysis) {
@@ -133,7 +134,14 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
     let interval: NodeJS.Timeout | null = null;
     if (analysisTaskId && (analysisTaskStatus === 'PENDING' || analysisTaskStatus === 'RUNNING')) {
       interval = setInterval(() => {
-        dispatch(fetchAnalysisStatus({taskId: analysisTaskId}));
+        const currentTime = Math.floor(Date.now() / 1000);
+        const elapsedTime = currentTime - analysisTaskStartTime;
+        if (elapsedTime > mapConfig.max_wait_analysis_run_time) {
+          clearInterval(interval);
+          dispatch(setMaxWaitAnalysisReached());
+        } else {
+          dispatch(fetchAnalysisStatus({taskId: analysisTaskId}));
+        }
       }, 1000);
     }
 
@@ -144,7 +152,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [analysisTaskId, analysisTaskStatus])
+  }, [analysisTaskId, analysisTaskStatus, analysisTaskStartTime])
 
   /** When data changed */
   const triggerAnalysis = () => {

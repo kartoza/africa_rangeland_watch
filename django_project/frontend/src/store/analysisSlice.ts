@@ -44,6 +44,7 @@ interface AnalysisState extends DataState {
   analysisData: AnalysisData; // migrate from state
   analysisTaskId?: number | null;
   analysisTaskStatus?: string;
+  analysisTaskStartTime?: number | null;
 }
 
 const initialAnalysisState: AnalysisState = {
@@ -54,7 +55,8 @@ const initialAnalysisState: AnalysisState = {
   referenceLayerDiff: null,
   analysisData: { analysisType: Types.BASELINE },
   analysisTaskId: null,
-  analysisTaskStatus: null
+  analysisTaskStatus: null,
+  analysisTaskStartTime: null
 };
 
 
@@ -161,6 +163,16 @@ export const analysisSlice = createSlice({
         reference_layer: action.payload.reference_layer,
         reference_layer_id: action.payload.reference_layer_id
       }
+    },
+    setMaxWaitAnalysisReached(state, action: PayloadAction) {
+      state.loading = false;
+      state.saveAnalysisFlag = false;
+      state.error = 'Analysis task timed out.';
+      state.analysisTaskStatus = 'FAILED';
+      state.analysisTaskId = null;
+      state.analysis = null;
+      state.referenceLayerDiff = null;
+      state.analysisTaskStartTime = null;
     }
   },
   extraReducers: (builder) => {
@@ -191,6 +203,9 @@ export const analysisSlice = createSlice({
             }
           }
         }
+        if (state.analysisTaskId) {
+          state.analysisTaskStartTime = Math.floor(Date.now() / 1000);
+        }
       })
       .addCase(doAnalysis.rejected, (state, action) => {
         state.loading = false;
@@ -200,12 +215,14 @@ export const analysisSlice = createSlice({
         state.analysisTaskId = null;
         state.analysis = null;
         state.referenceLayerDiff = null;
+        state.analysisTaskStartTime = null;
       }).addCase(fetchAnalysisStatus.fulfilled, (state, action: PayloadAction<AnalysisAPIResult>) => {
         state.analysisTaskId = action.payload.task_id;
         state.analysisTaskStatus = action.payload.status;
         state.error = action.payload.error;
         if (action.payload.status === 'COMPLETED') {
           state.loading = false;
+          state.analysisTaskStartTime = null;
           // check if result is from spatial reference layer diff
           const data = action.payload.data;
           state.saveAnalysisFlag = true;
@@ -223,6 +240,7 @@ export const analysisSlice = createSlice({
           }
         } else if (action.payload.status === 'FAILED') {
           state.loading = false;
+          state.analysisTaskStartTime = null;
         }
       })
       .addCase(fetchAnalysisStatus.rejected, (state, action) => {
@@ -233,12 +251,15 @@ export const analysisSlice = createSlice({
         state.analysisTaskId = null;
         state.analysis = null;
         state.referenceLayerDiff = null;
+        state.analysisTaskStartTime = null;
       });
   }
 });
 
 export const {
-  clearError, resetAnalysisResult, setAnalysis, setAnalysisLandscapeCommunity, setAnalysisCustomGeom
+  clearError, resetAnalysisResult, setAnalysis,
+  setAnalysisLandscapeCommunity, setAnalysisCustomGeom,
+  setMaxWaitAnalysisReached
 } = analysisSlice.actions;
 
 export default analysisSlice.reducer;

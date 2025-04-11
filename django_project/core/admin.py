@@ -35,6 +35,8 @@ class PreferencesAdmin(admin.ModelAdmin):
         ('Analysis', {
             'fields': (
                 'result_cache_ttl',
+                'spatial_reference_layer_max_area',
+                'max_wait_analysis_run_time',
             )
         }),
     )
