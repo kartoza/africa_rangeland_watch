@@ -183,7 +183,7 @@ class AnalysisAPI(APIView):
                 'started_at': analysis_task.created_at,
                 'completed_at': None
             }).data)
-        except Exception as e:
+        except Exception:
             logging.error("An error occurred during analysis", exc_info=True)
             return Response(
                 {
