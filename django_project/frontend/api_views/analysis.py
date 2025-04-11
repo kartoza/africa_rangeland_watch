@@ -183,6 +183,15 @@ class AnalysisAPI(APIView):
                 'started_at': analysis_task.created_at,
                 'completed_at': None
             }).data)
+        except ValueError as e:
+            logging.error(f"Validation error: {e}")
+            return Response(
+                {
+                    'error': str(e),
+                    'status': TaskStatus.FAILED
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
         except Exception:
             logging.error("An error occurred during analysis", exc_info=True)
             return Response(
