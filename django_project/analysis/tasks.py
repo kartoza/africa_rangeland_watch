@@ -7,7 +7,6 @@ Africa Rangeland Watch (ARW).
 from core.celery import app
 import uuid
 import ee
-import traceback
 import logging
 from datetime import date
 from dateutil.relativedelta import relativedelta
@@ -251,9 +250,9 @@ def run_analysis_task(analysis_task_id: int):
             'message': str(e)
         }
         logger.error(
-            f'Error running analysis task {analysis_task_id}: {e}'
+            f'Error running analysis task {analysis_task_id}: {e}',
+            exc_info=True
         )
-        logger.error(traceback.format_exc())
     finally:
         analysis_task.completed_at = timezone.now()
         analysis_task.updated_at = timezone.now()

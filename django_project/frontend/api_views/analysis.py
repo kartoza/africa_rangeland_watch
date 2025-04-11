@@ -4,6 +4,7 @@ Africa Rangeland Watch (ARW).
 
 .. note:: Analysis APIs
 """
+import logging
 from datetime import date
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -183,9 +184,12 @@ class AnalysisAPI(APIView):
                 'completed_at': None
             }).data)
         except Exception as e:
+            logging.error("An error occurred during analysis", exc_info=True)
             return Response(
                 {
-                    'error': str(e),
+                    'error': (
+                        "An internal error has occurred. Please try again."
+                    ),
                     'status': TaskStatus.FAILED
                 },
                 status=status.HTTP_400_BAD_REQUEST
