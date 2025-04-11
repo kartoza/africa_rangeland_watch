@@ -28,7 +28,7 @@ export default defineConfig({
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     /* Base URL to use in actions like `await page.goto('/')`. */
-    baseURL: 'http://example.com',
+    baseURL: 'https://arw.dev.do.kartoza.com/',
 
     /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     trace: 'on-first-retry',
@@ -41,6 +41,8 @@ export default defineConfig({
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'],
+        // Ignore HTTPS errors to allow testing against self-signed certificates or staging environments.
+        ignoreHTTPSErrors: true,
       // Use prepared auth state.
       storageState: 'auth.json',
      },

@@ -7,16 +7,14 @@ USES_APT=$(which apt | grep -w "apt" | wc -l)
 USES_RPM=$(which rpm | grep -w "rpm" | wc -l)
 
 if [ $USES_APT -eq 1 ]; then 
-	curl -SLO https://deb.nodesource.com/nsolid_setup_deb.sh
-	sudo chmod 500 nsolid_setup_deb.sh
-	sudo ./nsolid_setup_deb.sh 20
-	sudo apt-get install nodejs -y
+	curl -fsSL https://deb.nodesource.com/setup_lts.x -o nodesource_setup.sh
+	sudo -E bash nodesource_setup.sh
+	sudo apt-get install -y nodejs
 
 elif [ $USES_RPM -eq 1 ]; then
-	curl -SLO https://rpm.nodesource.com/nsolid_setup_rpm.sh
-	sudo chmod 500 nsolid_setup_rpm.sh
-	sudo ./nsolid_setup_rpm.sh 20
-	sudo yum install nodejs -y --setopt=nodesource-nodejs.module_hotfixes=1
+	curl -fsSL https://rpm.nodesource.com/setup_lts.x -o nodesource_setup.sh
+	sudo bash nodesource_setup.sh
+	sudo yum install -y nodejs
 fi
 
 echo "Done"
