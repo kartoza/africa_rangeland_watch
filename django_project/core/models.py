@@ -52,7 +52,10 @@ class Preferences(SingletonModel):
     )
 
     spatial_reference_layer_max_area = models.IntegerField(
-        default=500000000
+        default=500000000,
+        help_text=(
+            "The maximum area in square meters for spatial reference layer."
+        )
     )
 
     worker_layer_api_key = models.TextField(
@@ -70,6 +73,13 @@ class Preferences(SingletonModel):
             "The number of hours before the result cache expires."
         ),
         default=1
+    )
+
+    max_wait_analysis_run_time = models.IntegerField(
+        default=300,
+        help_text=(
+            "The maximum wait time in seconds for fetching analysis status."
+        )
     )
 
 

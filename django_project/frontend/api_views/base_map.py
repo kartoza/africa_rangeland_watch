@@ -45,6 +45,9 @@ class MapConfigAPI(APIView):
                 'initial_bound': preferences.map_initial_bound,
                 'spatial_reference_layer_max_area': (
                     preferences.spatial_reference_layer_max_area
+                ),
+                'max_wait_analysis_run_time': (
+                    preferences.max_wait_analysis_run_time
                 )
             }
         )

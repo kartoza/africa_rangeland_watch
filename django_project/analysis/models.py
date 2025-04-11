@@ -11,6 +11,7 @@ from django.contrib.gis.geos import GEOSGeometry
 from django.db.models.signals import pre_delete
 from django.dispatch import receiver
 
+from core.models import TaskStatus
 from alerts.models import Indicator
 
 
@@ -536,3 +537,45 @@ class AnalysisResultsCache(models.Model):
         )
         obj.save()
         return obj
+
+
+class AnalysisTask(models.Model):
+    analysis_inputs = models.JSONField(
+        null=True,
+        blank=True
+    )
+    submitted_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    status = models.CharField(
+        max_length=50,
+        choices=TaskStatus.choices,
+        default=TaskStatus.PENDING,
+        help_text='Status of the analysis task.'
+    )
+    task_id = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        help_text='ID of the task.'
+    )
+    completed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text='Date and time when the task was completed.'
+    )
+    result = models.JSONField(
+        null=True,
+        blank=True,
+        help_text='Result of the analysis task.'
+    )
+    error = models.JSONField(
+        null=True,
+        blank=True,
+        help_text='Error message if the task failed.'
+    )

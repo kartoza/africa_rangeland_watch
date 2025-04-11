@@ -7,22 +7,28 @@ Africa Rangeland Watch (ARW).
 from core.celery import app
 import uuid
 import ee
+import logging
 from datetime import date
 from dateutil.relativedelta import relativedelta
 
 from django.utils import timezone
+from core.models import TaskStatus
 from analysis.models import (
     UserAnalysisResults,
     AnalysisResultsCache,
-    AnalysisRasterOutput
+    AnalysisRasterOutput,
+    AnalysisTask
 )
 from analysis.analysis import (
     export_image_to_drive,
     initialize_engine_analysis, InputLayer,
     get_rel_diff, calculate_temporal_to_img
 )
+from analysis.runner import AnalysisRunner
 from analysis.utils import get_gdrive_file, delete_gdrive_file
 from layers.models import InputLayer as InputLayerFixture
+
+logger = logging.getLogger(__name__)
 
 
 def _run_spatial_analysis(data):
@@ -220,3 +226,34 @@ def clear_analysis_results_cache():
     AnalysisResultsCache.objects.filter(
         expired_at__lt=timezone.now()
     ).delete()
+
+
+@app.task(name='run_analysis_task')
+def run_analysis_task(analysis_task_id: int):
+    """Trigger task to run analysis task."""
+    analysis_task = AnalysisTask.objects.get(id=analysis_task_id)
+    analysis_task.status = TaskStatus.RUNNING
+    analysis_task.updated_at = timezone.now()
+    analysis_task.error = None
+    analysis_task.result = None
+    analysis_task.completed_at = None
+    analysis_task.save()
+
+    try:
+        runner = AnalysisRunner()
+        results = runner.run(analysis_task.analysis_inputs)
+        analysis_task.result = results
+        analysis_task.status = TaskStatus.COMPLETED
+    except Exception as e:
+        analysis_task.status = TaskStatus.FAILED
+        analysis_task.error = {
+            'message': str(e)
+        }
+        logger.error(
+            f'Error running analysis task {analysis_task_id}: {e}',
+            exc_info=True
+        )
+    finally:
+        analysis_task.completed_at = timezone.now()
+        analysis_task.updated_at = timezone.now()
+        analysis_task.save()

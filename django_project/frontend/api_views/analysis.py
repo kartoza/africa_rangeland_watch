@@ -4,50 +4,35 @@ Africa Rangeland Watch (ARW).
 
 .. note:: Analysis APIs
 """
-import uuid
-from collections import OrderedDict
+import logging
 from datetime import date
-from copy import deepcopy
-from concurrent.futures import ThreadPoolExecutor
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework import serializers
 
-from core.models import Preferences
+from core.models import TaskStatus
 from analysis.analysis import (
-    initialize_engine_analysis,
-    run_analysis,
-    get_rel_diff,
-    InputLayer,
     AnalysisResultsCacheUtils,
     spatial_get_date_filter,
     validate_spatial_date_range_filter
 )
+from analysis.models import AnalysisTask
+from analysis.runner import AnalysisRunner
+from analysis.tasks import run_analysis_task
 
 
-def _temporal_analysis(lat, lon, analysis_dict, custom_geom):
-    return run_analysis(
-        lat=lat,
-        lon=lon,
-        analysis_dict=analysis_dict,
-        custom_geom=custom_geom
-    )
-
-
-def get_reference_layer_geom(data):
-    """Retrieve selected reference layer and return its geom."""
-    layers = data['reference_layer']
-    features = layers.get('features', [])
-    feature_id = data.get('reference_layer_id', None)
-    if not feature_id and len(features) > 0:
-        return features[0]['geometry']
-
-    for feature in features:
-        if feature['properties']['id'] == feature_id:
-            return feature['geometry']
-
-    return None
+class AnalysisResultSerializer(serializers.Serializer):
+    """Serializer for analysis API response."""
+    data = serializers.JSONField()
+    results = serializers.JSONField(allow_null=True)
+    task_id = serializers.IntegerField(allow_null=True)
+    status = serializers.ChoiceField(choices=TaskStatus.choices)
+    is_cached = serializers.BooleanField()
+    error = serializers.CharField(allow_null=True, required=False)
+    started_at = serializers.DateTimeField(allow_null=True, required=False)
+    completed_at = serializers.DateTimeField(allow_null=True, required=False)
 
 
 class AnalysisAPI(APIView):
@@ -55,314 +40,81 @@ class AnalysisAPI(APIView):
 
     permission_classes = [IsAuthenticated]
 
-    def run_baseline_analysis(self, data):
-        """Run the baseline analysis."""
-        analysis_dict = {
-            'landscape': '',
-            'analysisType': 'Baseline',
-            'variable': data['landscape'],
-            't_resolution': '',
-            'Baseline': {
-                'startDate': data.get('baselineStartDate', None),
-                'endDate': data.get('baselineEndDate', None)
-            },
-            'Temporal': {
-                'Annual': {
-                    'ref': '',
-                    'test': ''
-                },
-                'Quarterly': {
-                    'ref': '',
-                    'test': ''
-                }
-            },
-            'Spatial': {
-                'Annual': '',
-                'Quarterly': ''
-            }
-        }
-        initialize_engine_analysis()
-        return run_analysis(
-            lon=float(data['longitude']),
-            lat=float(data['latitude']),
-            analysis_dict=analysis_dict,
-            custom_geom=data.get('custom_geom', None)
+    def check_cache(self, data):
+        """Check if results are already cached."""
+        analysis_dict = {}
+        lat = (
+            float(data['latitude']) if data['latitude'] is not None else
+            None
         )
+        lon = (
+            float(data['longitude']) if data['longitude'] is not None else
+            None
+        )
+        args = []
+        kwargs = {}
+        if data['analysisType'] == 'Temporal':
+            analysis_dict_list, comp_years = (
+                AnalysisRunner.get_analysis_dict_temporal(data)
+            )
+            kwargs = {
+                'custom_geom': data.get('custom_geom', None)
+            }
+            results = []
+            # check if all items are cached
+            for analysis_dict in analysis_dict_list:
+                analysis_cache = AnalysisResultsCacheUtils({
+                    'lat': lat,
+                    'lon': lon,
+                    'analysis_dict': analysis_dict,
+                    'args': args,
+                    'kwargs': kwargs
+                })
+                output = analysis_cache.get_analysis_cache()
+                if output is not None:
+                    results.append(output)
 
-    def _combine_temporal_analysis_results(self, years, input_results):
-        def merge_and_sort(arrays):
-            unique_dict = {}
-
-            for array in arrays:
-                for item in array['features']:
-                    key = (
-                        f"{item['properties']['Name']}-"
-                        f"{item['properties']['date']}"
-                    )
-                    # Overwrites duplicates, ensuring uniqueness
-                    unique_dict[key] = item
-            return list(unique_dict.values())
-
-        def add_empty_records(existing_records):
-            new_records = {}
-            for year in years:
-                has_record = len(
-                    list(
-                        filter(
-                            lambda x: x['properties']['year'] == year,
-                            existing_records
-                        )
-                    )
-                ) > 0
-                if not has_record:
-                    for record in existing_records:
-                        key = f'{record["properties"]["Name"]}-{year}'
-                        if key not in new_records:
-                            new_record = deepcopy(record)
-                            new_record['properties']['year'] = year
-                            new_record['properties']['Bare ground'] = None
-                            new_record['properties']['EVI'] = None
-                            new_record['properties']['NDVI'] = None
-                            new_records[key] = new_record
-            return new_records.values()
-
-        def add_statistics(features):
-            new_features = [
-                a['properties'] for a in filter(
-                    lambda x: x['properties']['year'] in years,
-                    features
+            # check if length is same
+            if len(results) == len(analysis_dict_list):
+                return AnalysisRunner.combine_temporal_analysis_results(
+                    comp_years,
+                    results
                 )
-            ]
 
-            # Process data
-            aggregated = {}
-
-            for row in new_features:
-                name, year = row["Name"], int(row["year"])
-
-                # Convert numeric values
-                bare_ground = row["Bare ground"]
-                evi = row["EVI"]
-                ndvi = row["NDVI"]
-
-                key = (name, year)
-                if key not in aggregated:
-                    aggregated[key] = {
-                        "Bare ground": [],
-                        "EVI": [],
-                        "NDVI": []
-                    }
-
-                aggregated[key]["Bare ground"].append(bare_ground)
-                aggregated[key]["EVI"].append(evi)
-                aggregated[key]["NDVI"].append(ndvi)
-
-            # Compute min, max, and mean
-            results = {}
-            unprocessed_years = [y for y in years]
-            names = set()
-
-            for location_year, values in aggregated.items():
-                location, year = location_year
-                if year in unprocessed_years:
-                    unprocessed_years.remove(year)
-                names.add(location)
-                if year not in results:
-                    results[year] = {}
-                if location not in results[year]:
-                    results[year][location] = {}
-
-                for category, numbers in values.items():
-                    min_val = min(numbers)
-                    max_val = max(numbers)
-                    mean_val = sum(numbers) / len(numbers)
-                    results[year][location][category] = {
-                        'min': min_val,
-                        'max': max_val,
-                        'mean': mean_val
-                    }
-
-            empty_data = {
-                'Bare ground': {
-                    'min': None, 'max': None, 'mean': None
-                },
-                'EVI': {
-                    'min': None, 'max': None, 'mean': None
-                },
-                'NDVI': {
-                    'min': None, 'max': None, 'mean': None
-                },
+            return None
+        elif data['analysisType'] == 'Spatial':
+            analysis_dict = AnalysisRunner.get_analysis_dict_spatial(data)
+            reference_layer_geom = (
+                AnalysisRunner.get_reference_layer_geom(data)
+            )
+            kwargs = {
+                'reference_layer': reference_layer_geom,
+                'custom_geom': data.get('custom_geom', None)
             }
-            for year in unprocessed_years:
-                for name in names:
-                    if results.get(year, None):
-                        results[year].update({
-                            name: empty_data
-                        })
-                    else:
-                        results[year] = {
-                            name: empty_data
-                        }
+        elif data['analysisType'] == 'Baseline':
+            analysis_dict = AnalysisRunner.get_analysis_dict_baseline(data)
+            kwargs['custom_geom'] = data.get('custom_geom', None)
 
-            results = {
-                year: {
-                    name: OrderedDict(
-                        sorted(value.items())
-                    ) for name, value in sorted(group.items())
-                } for year, group in sorted(results.items())
-            }
-            return results
+        analysis_cache = AnalysisResultsCacheUtils({
+            'lat': lat,
+            'lon': lon,
+            'analysis_dict': analysis_dict,
+            'args': args,
+            'kwargs': kwargs
+        })
 
-        output_results = []
-        output_results.append(input_results[0][0])
-        output_results.append(input_results[0][1])
-        output_results[0]['features'] = merge_and_sort(
-            [ir[0] for ir in input_results]
-        )
+        return analysis_cache.get_analysis_cache()
 
-        output_results[0]['features'].extend(
-            add_empty_records(output_results[1]['features'])
-        )
-        # add empty result if no data exist for certain year
-        output_results[1]['features'] = merge_and_sort(
-            [ir[1] for ir in input_results]
-        )
-
-        output_results[0]['features'] = sorted(
-            output_results[0]['features'],
-            key=lambda x: x['properties']['date']
-        )
-        output_results[1]['features'] = sorted(
-            output_results[1]['features'],
-            key=lambda x: x['properties']['date']
-        )
-        output_results[0]['statistics'] = add_statistics(
-            output_results[1]['features']
-        )
-
-        return output_results
-
-    def run_temporal_analysis(self, data):
-        """Run the temporal analysis."""
-        analysis_dict_list = []
-        comp_years = data['comparisonPeriod']['year']
-        comp_quarters = data['comparisonPeriod'].get('quarter', [])
-        if comp_quarters is None or len(comp_quarters) == 0:
-            comp_quarters = [None] * len(comp_years)
-        comp_months = data['comparisonPeriod'].get('month', [])
-        if comp_months is None or len(comp_months) == 0:
-            comp_months = [None] * len(comp_years)
-
-        analysis_dict_list = []
-        for idx, comp_year in enumerate(comp_years):
-            analysis_dict = {
-                'landscape': data['landscape'],
-                'analysisType': 'Temporal',
-                'variable': data['variable'],
-                't_resolution': data['temporalResolution'],
-                'Temporal': {
-                    'Annual': {
-                        'ref': data['period']['year'],
-                        'test': comp_year
-                    },
-                    'Quarterly': {
-                        'ref': '',
-                        'test': ''
-                    },
-                    'Monthly': {
-                        'ref': '',
-                        'test': ''
-                    }
-                },
-                'Spatial': {
-                    'Annual': '',
-                    'Quarterly': ''
-                }
-            }
-            if data['temporalResolution'] == 'Quarterly':
-                analysis_dict['Temporal']['Quarterly'] = {
-                    'ref': data['period'].get('quarter', ''),
-                    'test': (
-                        comp_quarters[idx] if
-                        len(comp_quarters) > 0 else ''
-                    ),
-                }
-            elif data['temporalResolution'] == 'Monthly':
-                analysis_dict['Temporal']['Monthly'] = {
-                    'ref': data['period'].get('month', ''),
-                    'test': (
-                        comp_months[idx] if
-                        len(comp_months) > 0 else ''
-                    ),
-                }
-            analysis_dict_list.append(analysis_dict)
-
-        initialize_engine_analysis()
-
-        results = []
-        # Run analyses in parallel using ThreadPoolExecutor
-        with ThreadPoolExecutor() as executor:
-            # Submit tasks to the executor
-            futures = [
-                executor.submit(
-                    _temporal_analysis,
-                    data['latitude'],
-                    data['longitude'],
-                    analysis_dict,
-                    data.get('custom_geom', None)
-                ) for analysis_dict in analysis_dict_list
-            ]
-            # Collect results as they complete
-            results = [future.result() for future in futures]
-
-        results = self._combine_temporal_analysis_results(comp_years, results)
-        return results
-
-    def run_spatial_analysis(self, data):
-        """Run the spatial analysis."""
-        reference_layer_geom = get_reference_layer_geom(data)
+    def validate_spatial_analysis(self, data):
+        """Validate spatial analysis inputs."""
+        reference_layer_geom = AnalysisRunner.get_reference_layer_geom(data)
         if reference_layer_geom is None:
             raise ValueError(
                 'Invalid reference_layer with id '
                 f'{data.get('reference_layer_id')}!'
             )
 
-        analysis_dict = {
-            'landscape': '',
-            'analysisType': 'Spatial',
-            'variable': data['variable'],
-            't_resolution': '',
-            'Temporal': {
-                'Annual': {
-                    'ref': '',
-                    'test': ''
-                },
-                'Quarterly': {
-                    'ref': '',
-                    'test': ''
-                }
-            },
-            'Spatial': {
-                'Annual': '',
-                'Quarterly': '',
-                'start_year': data.get('spatialStartYear', None),
-                'end_year': data.get('spatialEndYear', None)
-            }
-        }
-        analysis_cache = AnalysisResultsCacheUtils({
-            'lat': data['latitude'],
-            'lon': data['longitude'],
-            'analysis_dict': analysis_dict,
-            'args': [analysis_dict],
-            'kwargs': {
-                'reference_layer': reference_layer_geom,
-                'custom_geom': data.get('custom_geom', None)
-            }
-        })
-        output = analysis_cache.get_analysis_cache()
-        if output:
-            return output
-
+        analysis_dict = AnalysisRunner.get_analysis_dict_spatial(data)
         filter_start_date, filter_end_date = spatial_get_date_filter(
             analysis_dict
         )
@@ -380,82 +132,106 @@ class AnalysisAPI(APIView):
                 f'{date.fromisoformat(end_meta).year}'
             )
 
-        initialize_engine_analysis()
-        if data['longitude'] is None and data['latitude'] is None:
-            # return the relative different layer
-            input_layers = InputLayer()
-            rel_diff = get_rel_diff(
-                input_layers.get_spatial_layer_dict(
-                    filter_start_date,
-                    filter_end_date
-                ),
-                analysis_dict,
-                reference_layer_geom
-            )
-            metadata = {
-                'minValue': -25,
-                'maxValue': 25,
-                'colors': ['#f9837b', '#fffcb9', '#fffcb9', '#32c2c8'],
-                'opacity': 0.7
-            }
-            results = {
-                'id': 'spatial_analysis_rel_diff',
-                'uuid': str(uuid.uuid4()),
-                'name': '% difference in ' + data['variable'],
-                'type': 'raster',
-                'group': 'spatial_analysis',
-                'metadata': metadata,
-                'url': rel_diff.getMapId({
-                    'min': metadata['minValue'],
-                    'max': metadata['maxValue'],
-                    'palette': metadata['colors'],
-                    'opacity': metadata['opacity']
-                })['tile_fetcher'].url_format,
-                'style': None
-            }
-            preferences = Preferences.load()
-            return analysis_cache.create_analysis_cache(
-                results,
-                preferences.result_cache_ttl
-            )
-
-        results = run_analysis(
-            lon=float(data['longitude']),
-            lat=float(data['latitude']),
-            analysis_dict=analysis_dict,
-            reference_layer=reference_layer_geom,
-            custom_geom=data.get('custom_geom', None)
-        )
-
-        if data.get('custom_geom', None):
-            # add Name to the results
-            name = data.get('userDefinedFeatureName', 'User Defined Geometry')
-            for feature in results.get('features', []):
-                if 'properties' not in feature:
-                    continue
-                if 'Name' in feature['properties']:
-                    continue
-                feature['properties']['Name'] = name
-
-        return results
-
     def post(self, request, *args, **kwargs):
         """Fetch list of Landscape."""
         data = request.data
         try:
-            if data['analysisType'] == 'Baseline':
-                results = self.run_baseline_analysis(data)
-            elif data['analysisType'] == 'Temporal':
-                results = self.run_temporal_analysis(data)
-            elif data['analysisType'] == 'Spatial':
-                results = self.run_spatial_analysis(data)
-            else:
+            if (
+                data['analysisType'] not in
+                ['Baseline', 'Temporal', 'Spatial']
+            ):
                 raise ValueError('Invalid analysis type')
-            return Response({
+
+            # check if analysis is already cached
+            results = self.check_cache(data)
+            if results is not None:
+                return Response(
+                    AnalysisResultSerializer({
+                        'data': data,
+                        'results': results,
+                        'task_id': None,
+                        'status': TaskStatus.COMPLETED,
+                        'is_cached': True,
+                        'error': None,
+                        'started_at': None,
+                        'completed_at': None
+                    }).data
+                )
+
+            # validate spatial analysis
+            if data['analysisType'] == 'Spatial':
+                self.validate_spatial_analysis(data)
+
+            # Create task object
+            analysis_task = AnalysisTask.objects.create(
+                analysis_inputs=data,
+                submitted_by=request.user
+            )
+
+            # submit task
+            task = run_analysis_task.delay(analysis_task.id)
+            analysis_task.task_id = task.id
+            analysis_task.save(update_fields=['task_id'])
+
+            return Response(AnalysisResultSerializer({
                 'data': data,
-                'results': results
-            })
-        except Exception as e:
+                'results': None,
+                'task_id': analysis_task.id,
+                'status': TaskStatus.PENDING,
+                'is_cached': False,
+                'error': None,
+                'started_at': analysis_task.created_at,
+                'completed_at': None
+            }).data)
+        except ValueError as e:
+            logging.error(f"Validation error: {e}")
             return Response(
-                {'error': str(e)}, status=status.HTTP_400_BAD_REQUEST
+                {
+                    'error': str(e),
+                    'status': TaskStatus.FAILED
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception:
+            logging.error("An error occurred during analysis", exc_info=True)
+            return Response(
+                {
+                    'error': (
+                        "An internal error has occurred. Please try again."
+                    ),
+                    'status': TaskStatus.FAILED
+                },
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+
+class FetchAnalysisTaskAPI(APIView):
+    """API to fetch analysis task status and results."""
+
+    def get(self, request, *args, **kwargs):
+        """Fetch analysis task status and results."""
+        task_id = kwargs.get('task_id')
+        try:
+            analysis_task = AnalysisTask.objects.get(id=task_id)
+            if analysis_task.status == TaskStatus.COMPLETED:
+                results = analysis_task.result
+            else:
+                results = None
+
+            return Response(AnalysisResultSerializer({
+                'data': analysis_task.analysis_inputs,
+                'results': results,
+                'task_id': task_id,
+                'status': analysis_task.status,
+                'is_cached': False,
+                'error': (
+                    analysis_task.error.get('message') if
+                    analysis_task.error else None
+                ),
+                'started_at': analysis_task.created_at,
+                'completed_at': analysis_task.completed_at
+            }).data)
+        except AnalysisTask.DoesNotExist:
+            return Response(
+                {'error': 'Task not found'}, status=status.HTTP_404_NOT_FOUND
             )

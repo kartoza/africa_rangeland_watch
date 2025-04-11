@@ -9,10 +9,12 @@ from django.urls import reverse
 from django.utils import timezone
 from unittest.mock import patch, MagicMock
 
-from analysis.models import Landscape
 from core.tests.common import BaseAPIViewTest
-from frontend.api_views.analysis import AnalysisAPI
+from frontend.api_views.analysis import AnalysisAPI, FetchAnalysisTaskAPI
 from analysis.analysis import InputLayer, AnalysisResultsCache
+from analysis.runner import AnalysisRunner
+from analysis.models import AnalysisTask
+from core.models import TaskStatus
 
 
 class AnalysisAPITest(BaseAPIViewTest):
@@ -22,8 +24,8 @@ class AnalysisAPITest(BaseAPIViewTest):
         '1.landscape.json'
     ]
 
-    @patch('frontend.api_views.analysis._temporal_analysis')
-    @patch('frontend.api_views.analysis.initialize_engine_analysis')
+    @patch('analysis.runner._temporal_analysis')
+    @patch('analysis.runner.initialize_engine_analysis')
     def test_temporal_analysis(self, mock_init_gee, mock_analysis):
         """Test temporal analysis list."""
         def side_effect_func(*args, **kwargs):
@@ -90,7 +92,7 @@ class AnalysisAPITest(BaseAPIViewTest):
         mock_analysis.side_effect = side_effect_func
         mock_init_gee.return_value = None
 
-        view = AnalysisAPI.as_view()
+        # view = AnalysisAPI.as_view()
 
         payload = {
             'longitude' : 0,
@@ -108,15 +110,9 @@ class AnalysisAPITest(BaseAPIViewTest):
                 'quarter': [2,1,3]
             }
         }
-        request = self.factory.post(
-            reverse('frontend-api:analysis'),
-            payload,
-            format='json'
-        )
-        request.user = self.superuser
-        response = view(request)
-        self.assertEqual(response.status_code, 200)
-        results = response.data['results']
+
+        runner = AnalysisRunner()
+        results = runner.run(payload)
         self.assertEqual(
             len(results),
             2
@@ -142,8 +138,8 @@ class AnalysisAPITest(BaseAPIViewTest):
             2020
         )
 
-    @patch('frontend.api_views.analysis.initialize_engine_analysis')
-    @patch('frontend.api_views.analysis.get_rel_diff')
+    @patch('analysis.runner.initialize_engine_analysis')
+    @patch('analysis.runner.get_rel_diff')
     @patch('uuid.uuid4')
     @patch.object(InputLayer, 'get_countries')
     @patch.object(InputLayer, 'get_spatial_layer_dict')
@@ -161,8 +157,6 @@ class AnalysisAPITest(BaseAPIViewTest):
         # Set the return value of get_rel_diff()
         mock_get_rel_diff.return_value = mock_get_map_id
         mock_init_gee.return_value = None
-
-        view = AnalysisAPI.as_view()
 
         payload = {
             "period": {
@@ -208,16 +202,8 @@ class AnalysisAPITest(BaseAPIViewTest):
         # Check no cache before
         self.assertFalse(AnalysisResultsCache.objects.exists())
 
-        request = self.factory.post(
-            reverse('frontend-api:analysis'),
-            payload,
-            format='json'
-        )
-        request.user = self.superuser
-        response = view(request)
-
-        self.assertEqual(response.status_code, 200)
-        results = response.data['results']
+        runner = AnalysisRunner()
+        results = runner.run(payload)
 
         expected_results = {
             "group": "spatial_analysis",
@@ -242,7 +228,7 @@ class AnalysisAPITest(BaseAPIViewTest):
         # Check cache
         self.assertTrue(AnalysisResultsCache.objects.exists())
 
-    @patch('frontend.api_views.analysis.get_reference_layer_geom')
+    @patch('analysis.runner.AnalysisRunner.get_reference_layer_geom')
     def test_get_reference_layer_geom_none(self, mock_get_reference_layer_geom):
         """Test get_reference_layer_geom method when geom is None."""
         mock_get_reference_layer_geom.return_value = None
@@ -292,3 +278,191 @@ class AnalysisAPITest(BaseAPIViewTest):
 
         self.assertEqual(response.status_code, 400)
         self.assertIn('Invalid reference_layer with id', response.data['error'])
+
+    @patch("analysis.tasks.run_analysis_task.delay")
+    @patch("analysis.models.AnalysisTask.objects.create")
+    def test_post_analysis_task_creation(self, mock_create_task, mock_run_task):
+        """Test POST method for creating an analysis task."""
+        mock_create_task.return_value = MagicMock(
+            id=1,
+            created_at=timezone.now(),
+            save=MagicMock()
+        )
+        mock_run_task.return_value = MagicMock(id="mock-task-id")
+
+        payload = {
+            "longitude": 0,
+            "latitude": 0,
+            "analysisType": "Baseline",
+            "landscape": "1",
+            "variable": "NDVI",
+            "temporalResolution": "Annual",
+            "period": {"year": "2015", "quarter": "1"},
+        }
+
+        view = AnalysisAPI.as_view()
+        request = self.factory.post(
+            reverse("frontend-api:analysis"),
+            payload,
+            format="json"
+        )
+        request.user = self.superuser
+
+        response = view(request)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["status"], TaskStatus.PENDING)
+        self.assertEqual(response.data["task_id"], 1)
+        self.assertFalse(response.data["is_cached"])
+        mock_create_task.assert_called_once_with(
+            analysis_inputs=payload,
+            submitted_by=self.superuser
+        )
+        mock_run_task.assert_called_once_with(1)
+
+    @patch("analysis.tasks.run_analysis_task.delay")
+    def test_post_invalid_analysis_type(self, mock_run_task):
+        """Test POST method with an invalid analysis type."""
+        payload = {
+            "longitude": 0,
+            "latitude": 0,
+            "analysisType": "InvalidType",
+            "landscape": "1",
+            "variable": "NDVI",
+            "temporalResolution": "Annual",
+            "period": {"year": "2015", "quarter": "1"},
+        }
+
+        view = AnalysisAPI.as_view()
+        request = self.factory.post(
+            reverse("frontend-api:analysis"),
+            payload,
+            format="json"
+        )
+        request.user = self.superuser
+
+        response = view(request)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("Invalid analysis type", response.data["error"])
+        mock_run_task.assert_not_called()
+
+    @patch("analysis.tasks.run_analysis_task.delay")
+    @patch("analysis.models.AnalysisTask.objects.create")
+    def test_post_spatial_analysis_validation(self, mock_create_task, mock_run_task):
+        """Test POST method with spatial analysis validation failure."""
+        mock_create_task.return_value = MagicMock(
+            id=1,
+            created_at=timezone.now(),
+            save=MagicMock()
+        )
+
+        payload = {
+            "longitude": None,
+            "latitude": None,
+            "analysisType": "Spatial",
+            "landscape": "1",
+            "variable": "NDVI",
+            "temporalResolution": "Annual",
+            "period": {"year": "2015", "quarter": "1"},
+            "reference_layer": {},  # Invalid reference layer
+        }
+
+        view = AnalysisAPI.as_view()
+        request = self.factory.post(
+            reverse("frontend-api:analysis"),
+            payload,
+            format="json"
+        )
+        request.user = self.superuser
+
+        response = view(request)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("Invalid reference_layer with id", response.data["error"])
+        mock_create_task.assert_not_called()
+        mock_run_task.assert_not_called()
+
+
+class FetchAnalysisTaskAPITest(BaseAPIViewTest):
+    """FetchAnalysisTaskAPI test case."""
+
+    def setUp(self):
+        """Set up test data."""
+        super().setUp()
+        self.analysis_task = AnalysisTask.objects.create(
+            analysis_inputs={
+                "analysisType": "Spatial",
+                "variable": "EVI",
+                "period": {"year": 2020, "quarter": 1},
+            },
+            submitted_by=self.superuser,
+            status=TaskStatus.PENDING,
+        )
+
+    def test_fetch_analysis_task_completed(self):
+        """Test fetching a completed analysis task."""
+        self.analysis_task.status = TaskStatus.COMPLETED
+        self.analysis_task.result = {"key": "value"}
+        self.analysis_task.save()
+
+        url = reverse(
+            "frontend-api:fetch-analysis-task",
+            kwargs={"task_id": self.analysis_task.id}
+        )
+        request = self.factory.get(url)
+        request.user = self.superuser
+
+        view = FetchAnalysisTaskAPI.as_view()
+        response = view(request, task_id=self.analysis_task.id)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["status"], TaskStatus.COMPLETED)
+        self.assertEqual(response.data["results"], {"key": "value"})
+
+    def test_fetch_analysis_task_pending(self):
+        """Test fetching a pending analysis task."""
+        url = reverse(
+            "frontend-api:fetch-analysis-task",
+            kwargs={"task_id": self.analysis_task.id}
+        )
+        request = self.factory.get(url)
+        request.user = self.superuser
+
+        view = FetchAnalysisTaskAPI.as_view()
+        response = view(request, task_id=self.analysis_task.id)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data["status"], TaskStatus.PENDING)
+        self.assertIsNone(response.data["results"])
+
+    def test_fetch_analysis_task_not_found(self):
+        """Test fetching a non-existent analysis task."""
+        url = reverse(
+            "frontend-api:fetch-analysis-task",
+            kwargs={"task_id": 9999}
+        )
+        request = self.factory.get(url)
+        request.user = self.superuser
+
+        view = FetchAnalysisTaskAPI.as_view()
+        response = view(request, task_id=9999)
+
+        self.assertEqual(response.status_code, 404)
+        self.assertIn("Task not found", response.data["error"])
+
+    @patch("analysis.models.AnalysisTask.objects.get")
+    def test_fetch_analysis_task_error(self, mock_get):
+        """Test fetching an analysis task with an error."""
+        mock_get.side_effect = Exception("Unexpected error")
+
+        url = reverse(
+            "frontend-api:fetch-analysis-task",
+            kwargs={"task_id": self.analysis_task.id}
+        )
+        request = self.factory.get(url)
+        request.user = self.superuser
+
+        view = FetchAnalysisTaskAPI.as_view()
+        with self.assertRaises(Exception):
+            view(request, task_id=self.analysis_task.id)
