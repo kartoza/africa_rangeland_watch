@@ -2,6 +2,7 @@ from django.contrib.auth.models import User
 from rest_framework.test import APITestCase
 from rest_framework import status
 from alerts.models import Indicator, AlertSetting, IndicatorAlertHistory
+from base.models import Organisation, UserOrganisations
 
 
 class IndicatorTests(APITestCase):
@@ -81,3 +82,116 @@ class IndicatorAlertHistoryTests(APITestCase):
         response = self.client.get('/api/alert-histories/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 7)
+
+
+class CategorizedAlertsViewTests(APITestCase):
+    """Test categorized alerts API view."""
+
+    def setUp(self):
+        # Create users
+        self.user = User.objects.create_user(
+            username="mainuser", password="pass"
+        )
+        self.orgmate = User.objects.create_user(
+            username="orguser", password="pass"
+        )
+        self.other_user = User.objects.create_user(
+            username="external", password="pass"
+        )
+
+        # Authenticate as self.user
+        self.client.force_authenticate(user=self.user)
+
+        # Create organisation and assign user + orgmate
+        self.org = Organisation.objects.create(name="Test Org")
+        self.user.profile.organisations.add(self.org)
+        self.orgmate.profile.organisations.add(self.org)
+
+        UserOrganisations.objects.get_or_create(
+            user_profile=self.user.profile, organisation=self.org
+        )
+        UserOrganisations.objects.get_or_create(
+            user_profile=self.orgmate.profile, organisation=self.org
+        )
+
+        # Create indicator
+        self.indicator = Indicator.objects.create(name="NDVI")
+
+        # Alert settings
+        self.personal_setting = AlertSetting.objects.create(
+            name="My Personal Alert",
+            indicator=self.indicator,
+            user=self.user,
+            threshold_value=0.2,
+            enable_alert=True,
+        )
+
+        self.orgmate_setting = AlertSetting.objects.create(
+            name="Orgmate Alert",
+            indicator=self.indicator,
+            user=self.orgmate,
+            threshold_value=0.3,
+            enable_alert=True,
+        )
+
+        # Simulate system alert
+        # self.system_setting = AlertSetting.objects.create(
+        #    name="System Alert", indicator=self.indicator, user=None,
+        #    threshold_value=0.5, enable_alert=True
+        # )
+
+        # Alert histories
+        IndicatorAlertHistory.objects.create(
+            alert_setting=self.personal_setting,
+            text="Personal Alert triggered"
+        )
+
+        IndicatorAlertHistory.objects.create(
+            alert_setting=self.orgmate_setting,
+            text="Organisation Alert triggered"
+        )
+
+        # IndicatorAlertHistory.objects.create(
+        #    alert_setting=self.system_setting,
+        #    text="System Alert triggered"
+        # )
+
+    def test_personal_alerts(self):
+        response = self.client.get(
+            "/api/categorized-alerts/categorized/?category=personal"
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(
+            any(
+                "Personal Alert" in a["text"] for a in response.data
+            )
+        )
+
+    def test_organisation_alerts(self):
+        response = self.client.get(
+            "/api/categorized-alerts/categorized/?category=organization"
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertTrue(
+            any(
+                "Organisation Alert" in a["text"] for a in response.data
+            )
+        )
+
+    # def test_system_alerts(self):
+    #    response = self.client.get(
+    #        "/api/categorized-alerts/categorized/?category=system"
+    #    )
+    #    self.assertEqual(response.status_code, 200)
+    #    self.assertTrue(
+    #        any(
+    #            "System Alert" in a["text"] for a in response.data
+    #        )
+    #    )
+
+    def test_all_alerts_combined(self):
+        response = self.client.get(
+            "/api/categorized-alerts/categorized/?category=all"
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertGreaterEqual(len(response.data), 2)

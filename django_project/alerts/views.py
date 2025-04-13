@@ -1,12 +1,14 @@
 # Create your views here.
 from rest_framework import viewsets, permissions
+from rest_framework.response import Response
+from rest_framework.decorators import action
 from .models import Indicator, AlertSetting, IndicatorAlertHistory
 from .serializers import (
     IndicatorSerializer,
     AlertSettingSerializer,
     IndicatorAlertHistorySerializer
 )
-from django.db.models import Prefetch
+from django.db.models import Prefetch, Q
 
 
 class IndicatorViewSet(viewsets.ModelViewSet):
@@ -58,3 +60,47 @@ class IndicatorAlertHistoryViewSet(viewsets.ModelViewSet):
         """Filter queryset to only return alert
         histories for the logged-in user."""
         return self.queryset.filter(alert_setting__user=self.request.user)
+
+
+class CategorizedAlertsView(viewsets.ModelViewSet):
+    """
+    A viewset for retrieving categorized alerts:
+    personal, organization, system, or all.
+    """
+    serializer_class = IndicatorAlertHistorySerializer
+    permission_classes = [permissions.IsAuthenticated]
+    queryset = IndicatorAlertHistory.objects.all()
+
+    @action(detail=False, methods=['get'], url_path='categorized')
+    def categorized(self, request):
+        """ Retrieve categorized alerts based
+        on the user's profile and alert settings.
+        """
+        category = request.query_params.get('category', 'all')
+        user = request.user
+        user_org_ids = user.profile.organisations.values_list('id', flat=True)
+
+        if category == 'personal':
+            alerts = self.queryset.filter(alert_setting__user=user)
+
+        elif category == 'organization':
+            alerts = self.queryset.filter(
+                alert_setting__user__profile__organisations__in=user_org_ids
+            ).distinct()
+
+        elif category == 'system':
+            alerts = self.queryset.filter(alert_setting__user=None)
+
+        else:  # all
+            alerts = self.queryset.filter(
+                Q(alert_setting__user=user) |
+                Q(
+                    alert_setting__user__profile__organisations__in=(
+                        user_org_ids
+                    )
+                ) |
+                Q(alert_setting__user=None)
+            ).distinct()
+
+        serializer = self.get_serializer(alerts, many=True)
+        return Response(serializer.data)

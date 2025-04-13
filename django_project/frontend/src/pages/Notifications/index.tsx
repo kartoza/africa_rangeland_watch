@@ -1,5 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Helmet from "react-helmet";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Box,
   Heading,
@@ -25,6 +26,32 @@ export default function Notifications() {
   const handleSettingsClick = () => {
     setSelectedTabIndex(4); // Switch to "Settings" tab
   };
+
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  const handleTabChange = (index: number) => {
+    const tabParam = ["all", "personal", "organization", "system"][index];
+    navigate(`/notifications?tab=${tabParam}`);
+    setSelectedTabIndex(index);
+  };
+
+  useEffect(() => {
+    const tabMap = {
+      all: 0,
+      personal: 1,
+      organization: 2,
+      system: 3,
+    } as const;
+    
+    type TabKey = keyof typeof tabMap;
+    
+    const tabParam = searchParams.get("tab");
+    
+    if (tabParam && tabParam in tabMap) {
+      setSelectedTabIndex(tabMap[tabParam as TabKey]);
+    }
+  }, []);
 
   return (
     <>
@@ -56,7 +83,7 @@ export default function Notifications() {
               variant="enclosed"
               isLazy
               index={selectedTabIndex}
-              onChange={setSelectedTabIndex} // Directly update the index
+              onChange={handleTabChange} // Directly update the index
             >
               <TabList display="flex" alignItems="center">
                 <Tab _selected={{ color: "white", bg: "dark_green.800" }}>All</Tab>
@@ -73,16 +100,16 @@ export default function Notifications() {
 
               <TabPanels>
                 <TabPanel>
-                  <NotificationsTab />
+                  <NotificationsTab category="all"/>
                 </TabPanel>
                 <TabPanel>
-                  <Text fontSize="m" fontWeight="bold" color="gray.500">No data available for Personal notifications.</Text>
+                  <NotificationsTab category="personal"/>
                 </TabPanel>
                 <TabPanel>
-                  <Text fontSize="m" fontWeight="bold" color="gray.500">No data available for Organisations notifications.</Text>
+                  <NotificationsTab category="organisation"/>
                 </TabPanel>
                 <TabPanel>
-                  <Text fontSize="m" fontWeight="bold" color="gray.500">No data available for System notifications.</Text>
+                  <NotificationsTab category="system"/>
                 </TabPanel>
                 <TabPanel>
                   <SystemTab />
