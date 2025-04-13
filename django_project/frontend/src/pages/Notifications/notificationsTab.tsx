@@ -21,7 +21,6 @@ export default function NotificationsTab({ category }: { category: string }) {
           {
             headers: {
               "Content-Type": "application/json",
-              "Authorization": `Bearer ${localStorage.getItem("token")}` // or remove if using session auth
             }
           }
         );
