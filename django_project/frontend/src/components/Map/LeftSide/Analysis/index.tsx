@@ -559,7 +559,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
       <Box mt={4} mb={4} marginTop={10}>
         {
           !dataError ?
-            <Box mb={4} color={'green'}>
+            <Box mb={4} color={'green'} pl={2} pr={2}>
               Click polygons on the
               map {data?.locations ?
                 <Box>{data?.locations?.map(location => location.communityName).join(', ')}</Box>:
