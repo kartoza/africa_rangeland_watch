@@ -97,6 +97,22 @@ class AnalysisRunner:
                     'Quarterly': ''
                 }
             }
+            if data['temporalResolution'] == 'Quarterly':
+                analysis_dict['Temporal']['Quarterly'] = {
+                    'ref': data['period'].get('quarter', ''),
+                    'test': (
+                        comp_quarters[idx] if
+                        len(comp_quarters) > 0 else ''
+                    ),
+                }
+            elif data['temporalResolution'] == 'Monthly':
+                analysis_dict['Temporal']['Monthly'] = {
+                    'ref': data['period'].get('month', ''),
+                    'test': (
+                        comp_months[idx] if
+                        len(comp_months) > 0 else ''
+                    ),
+                }
 
             analysis_dict_list.append(analysis_dict)
         return analysis_dict_list, comp_years
