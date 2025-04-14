@@ -22,12 +22,9 @@ from analysis.analysis import (
 )
 
 
-def _temporal_analysis(lat, lon, analysis_dict, custom_geom):
+def _temporal_analysis(locations, analysis_dict, custom_geom):
     return run_analysis(
-        locations=[{
-            'lon': lon,
-            'lat': lat,
-        }],
+        locations=locations,
         analysis_dict=analysis_dict,
         custom_geom=custom_geom
     )
@@ -150,10 +147,7 @@ class AnalysisRunner:
         analysis_dict = self.get_analysis_dict_baseline(data)
         initialize_engine_analysis()
         return run_analysis(
-            locations=[{
-                'lon': float(data['longitude']),
-                'lat': float(data['latitude']),
-            }],
+            locations=data.get('locations', []),
             analysis_dict=analysis_dict,
             custom_geom=data.get('custom_geom', None)
         )
@@ -324,8 +318,7 @@ class AnalysisRunner:
             futures = [
                 executor.submit(
                     _temporal_analysis,
-                    data['latitude'],
-                    data['longitude'],
+                    data.get('locations', []),
                     analysis_dict,
                     data.get('custom_geom', None)
                 ) for analysis_dict in analysis_dict_list
@@ -347,8 +340,7 @@ class AnalysisRunner:
 
         analysis_dict = self.get_analysis_dict_spatial(data)
         analysis_cache = AnalysisResultsCacheUtils({
-            'lat': data['latitude'],
-            'lon': data['longitude'],
+            'locations': data.get('locations', []),
             'analysis_dict': analysis_dict,
             'args': [],
             'kwargs': {
@@ -378,7 +370,8 @@ class AnalysisRunner:
             )
 
         initialize_engine_analysis()
-        if data['longitude'] is None and data['latitude'] is None:
+        locations = data.get('locations', [])
+        if locations is None or len(locations) == 0:
             # return the relative different layer
             input_layers = InputLayer()
             rel_diff = get_rel_diff(
@@ -417,10 +410,7 @@ class AnalysisRunner:
             )
 
         results = run_analysis(
-            locations=[{
-                'lon': float(data['longitude']),
-                'lat': float(data['latitude']),
-            }],
+            locations=locations,
             analysis_dict=analysis_dict,
             reference_layer=reference_layer_geom,
             custom_geom=data.get('custom_geom', None)

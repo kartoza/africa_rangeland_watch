@@ -19,8 +19,8 @@ import AnalysisLandscapeGeometrySelector
 import { AppDispatch, RootState } from "../../../../store";
 import {
   doAnalysis, REFERENCE_LAYER_DIFF_ID, resetAnalysisResult,
-  setAnalysis, setAnalysisLandscapeCommunity, setAnalysisCustomGeom,
-  fetchAnalysisStatus, setMaxWaitAnalysisReached
+  setAnalysis, setAnalysisCustomGeom,
+  fetchAnalysisStatus, setMaxWaitAnalysisReached, toggleAnalysisLandscapeCommunity
 } from "../../../../store/analysisSlice";
 import { AnalysisCustomGeometrySelector } from "./AnalysisCustomGeometrySelector";
 import AnalysisUserDefinedLayerSelector from "./AnalysisUserDefinedLayerSelector";
@@ -118,8 +118,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
         // trigger relative layer diff
         dispatch(doAnalysis({
           ...session.analysisState,
-          latitude: null,
-          longitude: null
+          locations: null
         }))
       }
       // pop stored state
@@ -190,7 +189,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
       }
       saveSession('/map', { activity: "Visited Analysis Page"}, data);
     } else if (data.landscape && data.analysisType === Types.SPATIAL) {
-      if (mapInteraction === MapAnalysisInteraction.NO_INTERACTION && data.reference_layer && data.variable && data.latitude === null && data.longitude === null) {
+      if (mapInteraction === MapAnalysisInteraction.NO_INTERACTION && data.reference_layer && data.variable && (data.locations === null || data.locations.length === 0)) {
         // trigger relative layer diff
         dispatch(doAnalysis(data))
       } else if (mapInteraction === MapAnalysisInteraction.LANDSCAPE_SELECTOR && !data.reference_layer) {
@@ -243,7 +242,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
     dataError = false
   }
   let disableSubmit = !!dataError;
-  if (!data.community && !data.custom_geom) {
+  if (!data.locations && !data.custom_geom) {
     disableSubmit = true
   }
   if (loading) {
@@ -266,10 +265,11 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
         />
         <AnalysisLandscapeGeometrySelector
           landscape={landscapes.find(landscape => landscape.name === data.landscape)}
-          featureId={data.communityFeatureId}
           enableSelection={mapInteraction === MapAnalysisInteraction.LANDSCAPE_SELECTOR && data.landscape !== 'user-defined'}
+          featureIds={data.locations?.map((location) => location.communityFeatureId)}
           onSelected={(value) => {
-            dispatch(setAnalysisLandscapeCommunity(value))
+            // dispatch(setAnalysisLandscapeCommunity(value))
+            dispatch(toggleAnalysisLandscapeCommunity(value))
           }
           }
         />
@@ -297,11 +297,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
             onSelected={(geometry, latitude, longitude, userDefinedFeatureName, userDefinedFeatureId) => {
               setData({
                 ...data,
-                community: null,
-                latitude: latitude,
-                longitude: longitude,
-                communityName: null,
-                communityFeatureId: null,
+                locations: null,
                 custom_geom: geometry,
                 userDefinedFeatureId: userDefinedFeatureId,
                 userDefinedFeatureName: userDefinedFeatureName
@@ -378,11 +374,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
               // set spatial year filter and reset results
               setData({
                 ...data,
-                community: null,
-                latitude: null,
-                longitude: null,
-                communityName: null,
-                communityFeatureId: null,
+                locations: null,
                 custom_geom: null,
                 userDefinedFeatureId: null,
                 userDefinedFeatureName: null,
@@ -417,11 +409,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
                     ...data,
                     reference_layer: null,
                     reference_layer_id: null,
-                    community: null,
-                    latitude: null,
-                    longitude: null,
-                    communityName: null,
-                    communityFeatureId: null,
+                    locations: null,
                     custom_geom: null,
                     userDefinedFeatureId: null,
                     userDefinedFeatureName: null
@@ -479,7 +467,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
           )
         }
         {
-          data.analysisType === Types.SPATIAL && data.variable && data.reference_layer && loading && data.latitude === null && data.longitude === null &&
+          data.analysisType === Types.SPATIAL && data.variable && data.reference_layer && loading && (data.locations === null || data.locations.length === 0) &&
           <HStack mt={4} color={'red'}
             wrap="wrap" gap={2} alignItems='center' justifyContent='center'>
             <Spinner size="xs"/>
@@ -573,8 +561,8 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
           !dataError ?
             <Box mb={4} color={'green'}>
               Click polygons on the
-              map {data?.communityName ?
-              <Box>{data?.communityName}</Box> :
+              map {data?.locations ?
+                <Box>{data?.locations?.map(location => location.communityName).join(', ')}</Box>:
               data?.userDefinedFeatureName ? 
               <Box>{data?.userDefinedFeatureName}</Box> : null}
             </Box> :

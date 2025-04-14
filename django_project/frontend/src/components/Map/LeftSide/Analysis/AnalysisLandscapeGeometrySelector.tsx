@@ -10,7 +10,7 @@ interface Props {
   landscape: Landscape;
   enableSelection: boolean;
   onSelected: (value: Community) => void;
-  featureId?: string;
+  featureIds?: string[];
 }
 
 let hoverFunction: (ev: maplibregl.MapMouseEvent & {
@@ -22,7 +22,7 @@ let clickFunction: (ev: maplibregl.MapMouseEvent & {
 
 /** Landscape geometry selector. */
 export default function AnalysisLandscapeGeometrySelector(
-  { landscape, enableSelection, onSelected, featureId }: Props
+  { landscape, enableSelection, onSelected, featureIds }: Props
 ) {
   const { map } = useMap();
 
@@ -160,9 +160,9 @@ export default function AnalysisLandscapeGeometrySelector(
       map.on('mousemove', COMMUNITY_ID, hoverFunction);
     }
 
-    if (featureId) {
+    if (featureIds && featureIds.length > 0) {
       map.setFilter(
-        (COMMUNITY_ID + '-highlight'), ["==", "id", featureId]
+        (COMMUNITY_ID + '-highlight'), ["in", "id", ...featureIds]
       );
     } else {
       map.setFilter(
@@ -175,7 +175,7 @@ export default function AnalysisLandscapeGeometrySelector(
       map.off('mousemove', COMMUNITY_ID, hoverFunction);
     }
       
-  }, [map, landscape, featureId, enableSelection])
+  }, [map, landscape, featureIds, enableSelection])
 
   return <></>
 }
