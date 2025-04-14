@@ -30,6 +30,23 @@ const COLORS = [
   "#008080"  // Teal
 ];
 
+const splitAndTruncateString = (str: string, maxLength: number) => {
+  const words = str.split(' ');
+  const maxLines = 2;
+
+  if (words.length <= maxLines) {
+    return words;
+  }
+
+  // Take the first N-1 words and add "..." on the last line
+  const truncated = words.slice(0, maxLines - 1);
+  const lastLine = words.slice(maxLines - 1).join(' ');
+  truncated.push(lastLine.length > maxLength ? lastLine.substring(0, maxLength) + '…' : lastLine + '…');
+
+  return truncated;
+}
+
+
 export function StatisticTable({analysis}: Props) {
   const statistics = analysis.results[0].statistics;
   const variable = analysis.data.variable;
@@ -270,6 +287,14 @@ function SpatialBarChart({ analysis }: Props) {
           text: 'mean'
         }
       },
+      x: {
+        ticks: {
+          callback: function(value: any, index: number, ticks: any[]) {
+            const label = this.getLabelForValue(value);
+            return splitAndTruncateString(label, 10);
+          }
+        }
+      }
     }
   };
 
