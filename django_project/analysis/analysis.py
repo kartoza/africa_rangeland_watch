@@ -513,7 +513,7 @@ class InputLayer:
 
         Parameters
         ----------
-        aoi : ee.Polygon
+        aoi : ee.Polygon or ee.FeatureCollection
             Polygon area of interest.
         is_custom_geom : boolean
             If False, then find Communities polygon that intersects with aoi.
@@ -603,17 +603,15 @@ def get_rel_diff(
     return rel_diff
 
 
-def run_analysis(lat: float, lon: float, analysis_dict: dict, *args, **kwargs):
+def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
     """
     Run baseline, spatial, and temporal analysis
 
-    :param lat: Latitude
-    :param lon: Longitude
+    :param locations: List of dictionary with lat and lon
     :param analysis_dict: Analysis Dictionary
     """
     analysis_cache = AnalysisResultsCacheUtils({
-        'lat': lat,
-        'lon': lon,
+        'locations': locations,
         'analysis_dict': analysis_dict,
         'args': args,
         'kwargs': kwargs
@@ -626,9 +624,14 @@ def run_analysis(lat: float, lon: float, analysis_dict: dict, *args, **kwargs):
     communities = input_layers.get_communities()
     baseline_table = input_layers.get_baseline_table()
 
-    geo = ee.Geometry.Point([lon, lat])
+    features_geo = []
+    for location in locations:
+        geo = ee.Geometry.Point(
+            [location.get('lon'), location.get('lat')]
+        )
+        features_geo.append(ee.Feature(geo))
     selected_geos = selected_geos.merge(
-        ee.FeatureCollection([ee.Feature(geo)])
+        ee.FeatureCollection(features_geo)
     )
     select_names = None
 
@@ -691,7 +694,7 @@ def run_analysis(lat: float, lon: float, analysis_dict: dict, *args, **kwargs):
                 )
             else:
                 select = calculate_baseline(
-                    geo,
+                    selected_geos,
                     analysis_dict['Baseline']['startDate'],
                     analysis_dict['Baseline']['endDate'],
                     is_custom_geom=False
@@ -761,7 +764,7 @@ def run_analysis(lat: float, lon: float, analysis_dict: dict, *args, **kwargs):
                 )
             )
         elif res == 'Monthly':
-            select_geo = geo
+            select_geo = selected_geos
             if custom_geom:
                 select_geo = (
                     ee.Geometry.Polygon(custom_geom['coordinates']) if
@@ -1807,7 +1810,7 @@ def calculate_temporal(
 
     Parameters
     ----------
-    aoi : ee.Polygon
+    aoi : ee.Polygon or ee.FeatureCollection
         Polygon area of interest.
     start_date : str
         Start date to calculate baseline.

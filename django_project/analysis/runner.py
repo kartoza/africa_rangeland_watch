@@ -24,8 +24,10 @@ from analysis.analysis import (
 
 def _temporal_analysis(lat, lon, analysis_dict, custom_geom):
     return run_analysis(
-        lat=lat,
-        lon=lon,
+        locations=[{
+            'lon': lon,
+            'lat': lat,
+        }],
         analysis_dict=analysis_dict,
         custom_geom=custom_geom
     )
@@ -148,8 +150,10 @@ class AnalysisRunner:
         analysis_dict = self.get_analysis_dict_baseline(data)
         initialize_engine_analysis()
         return run_analysis(
-            lon=float(data['longitude']),
-            lat=float(data['latitude']),
+            locations=[{
+                'lon': float(data['longitude']),
+                'lat': float(data['latitude']),
+            }],
             analysis_dict=analysis_dict,
             custom_geom=data.get('custom_geom', None)
         )
@@ -413,8 +417,10 @@ class AnalysisRunner:
             )
 
         results = run_analysis(
-            lon=float(data['longitude']),
-            lat=float(data['latitude']),
+            locations=[{
+                'lon': float(data['longitude']),
+                'lat': float(data['latitude']),
+            }],
             analysis_dict=analysis_dict,
             reference_layer=reference_layer_geom,
             custom_geom=data.get('custom_geom', None)
