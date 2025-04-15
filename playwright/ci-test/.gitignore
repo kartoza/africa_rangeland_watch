@@ -1,8 +1,14 @@
 node_modules/
 /test-results/
 /playwright-report/
+/blob-report/
 /playwright/.cache/
-states
-package-lock.json
-playwright-results
 *auth.json
+.env
+.direnv/
+/test-results/
+__pycache__
+package-lock.json
+nodesource_setup.sh
+nsolid_setup_rpm.sh
+nsolid_setup_deb.sh
