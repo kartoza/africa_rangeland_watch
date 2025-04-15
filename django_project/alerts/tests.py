@@ -1,7 +1,9 @@
+from unittest.mock import patch
 from django.contrib.auth.models import User
 from rest_framework.test import APITestCase
 from rest_framework import status
 from alerts.models import Indicator, AlertSetting, IndicatorAlertHistory
+from alerts.utils import trigger_alert
 
 
 class IndicatorTests(APITestCase):
@@ -53,7 +55,10 @@ class IndicatorAlertHistoryTests(APITestCase):
 
     def setUp(self):
         self.user = User.objects.create_user(
-            username='testuser', password='testpass')
+            username='testuser',
+            password='testpass',
+            email='testuser@example.com'
+        )
         self.client.force_authenticate(user=self.user)
         self.indicator = Indicator.objects.create(name="Temperature")
         self.alert_setting = AlertSetting.objects.create(
@@ -81,3 +86,22 @@ class IndicatorAlertHistoryTests(APITestCase):
         response = self.client.get('/api/alert-histories/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 7)
+
+    def test_trigger_alert_creates_history_and_sends_email(self):
+        """Test that trigger_alert creates a history and sends email."""
+        with patch("alerts.utils.send_alert_email") as mock_send_email:
+            self.alert_setting.email_alert = True
+            self.alert_setting.save()
+
+            trigger_alert(self.alert_setting, "Triggered via test")
+
+            # Assert IndicatorAlertHistory was created
+            histories = IndicatorAlertHistory.objects.filter(
+                alert_setting=self.alert_setting
+            )
+            self.assertTrue(histories.exists())
+            new_history = histories.exclude(id=self.alert_history.id).last()
+            self.assertIn("Triggered via test", new_history.text)
+
+            # Assert send_alert_email was called
+            mock_send_email.assert_called_once()
