@@ -31,7 +31,7 @@ class AnalysisAPITest(BaseAPIViewTest):
         def side_effect_func(*args, **kwargs):
             """Side effect function."""
             if args:
-                year = args[2]['Temporal']['Annual']['test']
+                year = args[1]['Temporal']['Annual']['test']
                 timestamp = timezone.now().replace(year=year).timestamp()
                 return [
                     {
@@ -95,8 +95,10 @@ class AnalysisAPITest(BaseAPIViewTest):
         # view = AnalysisAPI.as_view()
 
         payload = {
-            'longitude' : 0,
-            'latitude' : 0,
+            'locations': [{
+                'lat': 0,
+                'lon': 0,
+            }],
             'analysisType': 'Temporal',
             'landscape': '1',
             'variable': 'NDVI',
@@ -163,8 +165,7 @@ class AnalysisAPITest(BaseAPIViewTest):
                 "year":2015,
                 "quarter":1
             },
-            "latitude": None,
-            "longitude": None,
+            'locations': [],
             "variable": "EVI",
             "community": None,
             "landscape": "Bahine NP",
@@ -240,8 +241,7 @@ class AnalysisAPITest(BaseAPIViewTest):
                 "year": 2015,
                 "quarter": 1
             },
-            "latitude": None,
-            "longitude": None,
+            'locations': None,
             "variable": "EVI",
             "community": None,
             "landscape": "Bahine NP",
@@ -291,8 +291,10 @@ class AnalysisAPITest(BaseAPIViewTest):
         mock_run_task.return_value = MagicMock(id="mock-task-id")
 
         payload = {
-            "longitude": 0,
-            "latitude": 0,
+            'locations': [{
+                'lat': 0,
+                'lon': 0,
+            }],
             "analysisType": "Baseline",
             "landscape": "1",
             "variable": "NDVI",
@@ -324,8 +326,10 @@ class AnalysisAPITest(BaseAPIViewTest):
     def test_post_invalid_analysis_type(self, mock_run_task):
         """Test POST method with an invalid analysis type."""
         payload = {
-            "longitude": 0,
-            "latitude": 0,
+            'locations': [{
+                'lat': 0,
+                'lon': 0,
+            }],
             "analysisType": "InvalidType",
             "landscape": "1",
             "variable": "NDVI",
@@ -358,8 +362,7 @@ class AnalysisAPITest(BaseAPIViewTest):
         )
 
         payload = {
-            "longitude": None,
-            "latitude": None,
+            'locations': [],
             "analysisType": "Spatial",
             "landscape": "1",
             "variable": "NDVI",

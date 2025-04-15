@@ -8,18 +8,22 @@ export interface AnalysisDataPeriod {
   month?: number | number[];
 }
 
+export interface Location {
+  lat: number;
+  lon: number;
+  community: string;
+  communityName: string;
+  communityFeatureId: string;
+}
+
 export interface AnalysisData {
-  latitude?: number;
-  longitude?: number;
+  locations?: Location[];
   landscape?: string;
   analysisType?: string;
   temporalResolution?: string;
   variable?: string;
   period?: AnalysisDataPeriod;
   comparisonPeriod?: AnalysisDataPeriod;
-  community?: string;
-  communityName?: string;
-  communityFeatureId?: string;
   reference_layer?: object;
   reference_layer_id?: string|number;
   custom_geom?: object;
