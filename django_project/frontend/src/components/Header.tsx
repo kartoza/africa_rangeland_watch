@@ -81,18 +81,22 @@ export default function Header(props: any) {
 
     // Fetch in-app notifications count
     useEffect(() => {
-    const fetchNotifications = async () => {
-        try {
-        const response = await axios.get("/api/in-app-notifications/");
-        const count = response.data?.results?.length || 0;
-        setNotificationCount(count);
-        } catch (err) {
-        console.error("Failed to fetch in-app notifications", err);
-        }
-    };
-
-    fetchNotifications();
-    }, []);
+        const fetchNotifications = async () => {
+          try {
+            const response = await axios.get("/api/in-app-notifications/");
+            const unreadCount = response.data?.results?.filter((n: any) => !n.is_read)?.length || 0;
+            setNotificationCount(unreadCount);
+          } catch (err) {
+            console.error("Failed to fetch in-app notifications", err);
+          }
+        };
+      
+        fetchNotifications();
+      
+        const interval = setInterval(fetchNotifications, 2000); // every 15 seconds
+      
+        return () => clearInterval(interval); // cleanup
+      }, []);
 
     return (
         <>

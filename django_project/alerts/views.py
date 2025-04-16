@@ -178,3 +178,17 @@ class MarkNotificationsReadView(viewsets.ViewSet):
             },
             status=status.HTTP_200_OK
         )
+
+    @action(detail=True, methods=["post"])
+    def mark_unread(self, request, pk=None):
+        """Mark a single notification as unread."""
+        user = request.user
+        NotificationReadStatus.objects.filter(
+            user=user
+        ).delete()
+
+        return Response(
+            {
+                "status": f"Notification {pk} marked as unread"
+            }, status=200
+        )

@@ -49,7 +49,7 @@ class IndicatorAlertHistorySerializer(serializers.ModelSerializer):
         source='alert_setting',
         write_only=True
     )
-    is_read = serializers.BooleanField()
+    is_read = serializers.SerializerMethodField()
 
     class Meta:
         model = IndicatorAlertHistory
@@ -62,6 +62,13 @@ class IndicatorAlertHistorySerializer(serializers.ModelSerializer):
             'is_read'
         ]
         read_only_fields = ['created_at']
+
+    def get_is_read(self, obj):
+        """Check if the alert history is read."""
+        user = self.context["request"].user
+        return NotificationReadStatus.objects.filter(
+            user=user, notification=obj
+        ).exists()
 
 
 class NotificationReadStatusSerializer(serializers.ModelSerializer):
