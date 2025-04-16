@@ -4,6 +4,7 @@ from .views import (
     AlertSettingViewSet,
     IndicatorAlertHistoryViewSet,
     InAppNotificationViewSet,
+    MarkNotificationsReadView,
 )
 
 router = DefaultRouter()
@@ -27,5 +28,11 @@ router.register(
     InAppNotificationViewSet,
     basename='in-app-notifications'
 )
+router.register(
+    r'in-app-notifications-read',
+    MarkNotificationsReadView,
+    basename='notifications-read'
+)
+
 
 urlpatterns = router.urls

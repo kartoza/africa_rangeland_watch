@@ -4,6 +4,7 @@ import {
   Heading,
   Text,
   Badge,
+  Button,
 } from "@chakra-ui/react";
 import "../../styles/index.css";
 import Pagination from "../../components/Pagination";
@@ -22,7 +23,8 @@ export default function NotificationsTab() {
         title: item.alert_setting.name,
         badge: item.alert_setting.indicator,  // can map to name if needed
         description: item.text,
-        timestamp: new Date(item.created_at).toLocaleString()
+        timestamp: new Date(item.created_at).toLocaleString(),
+        is_read: item.is_read,
       })));
     };
 
@@ -38,20 +40,49 @@ export default function NotificationsTab() {
     setCurrentPage(page);
   };
 
+  // Handle notification click to mark as read
+  const handleNotificationClick = async (notificationId: number) => {
+    try {
+      await axios.post(`/api/in-app-notifications-read/${notificationId}/mark_read/`);
+      setAllNotifications(prev =>
+        prev.map(n =>
+          n.id === notificationId ? { ...n, is_read: true } : n
+        )
+      );
+    } catch (err) {
+      console.error("Failed to mark notification as read", err);
+    }
+  };
+
   return (
-    <>
+    <><Button
+        colorScheme="green"
+        size="sm"
+        mb={4}
+        onClick={async () => {
+          await axios.post("/api/in-app-notifications-read/mark_all/");
+          setAllNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+        }}
+      >
+        Mark all as read
+      </Button>
       <Box maxHeight="calc(100vh - 250px)">
         {currentItems.map((notification) => (
           <Box
             key={notification.id}
+            onClick={() => handleNotificationClick(notification.id)}
             p={4}
             mb={4}
-            bg="gray.50"
+            bg={notification.is_read ? "gray.100" : "white"} // Highlight unread
             borderRadius="md"
             boxShadow="sm"
             display="flex"
             flexDirection="column"
             position="relative"
+            borderLeft="4px solid"
+            borderColor={notification.is_read ? "gray.300" : "green.400"} // Unread highlight
+            cursor="pointer"
+            transition="background 0.2s ease"
           >
             {/* Badge - Custom styled */}
             <Badge

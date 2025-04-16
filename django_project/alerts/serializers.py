@@ -1,5 +1,8 @@
 from rest_framework import serializers
-from .models import Indicator, AlertSetting, IndicatorAlertHistory
+from .models import (
+    Indicator, AlertSetting, IndicatorAlertHistory,
+    NotificationReadStatus
+)
 
 
 class AlertSettingSerializer(serializers.ModelSerializer):
@@ -46,6 +49,7 @@ class IndicatorAlertHistorySerializer(serializers.ModelSerializer):
         source='alert_setting',
         write_only=True
     )
+    is_read = serializers.BooleanField()
 
     class Meta:
         model = IndicatorAlertHistory
@@ -54,6 +58,15 @@ class IndicatorAlertHistorySerializer(serializers.ModelSerializer):
             'text',
             'alert_setting',
             'alert_setting_id',
-            'created_at'
+            'created_at',
+            'is_read'
         ]
         read_only_fields = ['created_at']
+
+
+class NotificationReadStatusSerializer(serializers.ModelSerializer):
+    """Serializer for the NotificationReadStatus model."""
+    class Meta:
+        model = NotificationReadStatus
+        fields = ["user", "notification", "read_at"]
+        read_only_fields = ["read_at"]
