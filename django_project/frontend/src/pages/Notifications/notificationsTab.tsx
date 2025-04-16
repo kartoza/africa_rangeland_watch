@@ -7,6 +7,7 @@ import {
 } from "@chakra-ui/react";
 import "../../styles/index.css";
 import Pagination from "../../components/Pagination";
+import axios from "axios";
 
 export default function NotificationsTab() {
   const [allNotifications, setAllNotifications] = useState<any[]>([]);
@@ -14,9 +15,15 @@ export default function NotificationsTab() {
   const itemsPerPage = 5;
 
   useEffect(() => {
-    const fetchNotificationsData = () => {
-
-      setAllNotifications([]);
+    const fetchNotificationsData = async () => {
+      const response = await axios.get("/api/in-app-notifications/");
+      setAllNotifications(response.data.map((item: any) => ({
+        id: item.id,
+        title: item.alert_setting.name,
+        badge: item.alert_setting.indicator,  // can map to name if needed
+        description: item.text,
+        timestamp: new Date(item.created_at).toLocaleString()
+      })));
     };
 
     fetchNotificationsData();

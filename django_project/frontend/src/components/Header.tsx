@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Flex, Box, Text, Image, UnorderedList, ListItem, Link, IconButton, useDisclosure, useMediaQuery } from '@chakra-ui/react';
+import { Flex, Box, Text, Image, UnorderedList, ListItem, Link, IconButton, useDisclosure, useMediaQuery, Badge } from '@chakra-ui/react';
 import { HamburgerIcon, CloseIcon } from '@chakra-ui/icons';
 import { useLocation, useNavigate } from 'react-router-dom';
+import axios from 'axios';
 import MegaMenu from './MegaMenu';
 import SignIn from './SignIn';
 import { AppDispatch, RootState } from '../store';
@@ -75,6 +76,23 @@ export default function Header(props: any) {
     const closeSidebar = () => {
         setIsSidebarOpen(false);
     };
+
+    const [notificationCount, setNotificationCount] = useState(0);
+
+    // Fetch in-app notifications count
+    useEffect(() => {
+    const fetchNotifications = async () => {
+        try {
+        const response = await axios.get("/api/in-app-notifications/");
+        const count = response.data?.results?.length || 0;
+        setNotificationCount(count);
+        } catch (err) {
+        console.error("Failed to fetch in-app notifications", err);
+        }
+    };
+
+    fetchNotifications();
+    }, []);
 
     return (
         <>
@@ -171,16 +189,29 @@ export default function Header(props: any) {
                             <Link href="#">
                             <Image src="static/images/search_icon.svg" alt="search" h="24px" w="24px" />
                             </Link>
-                            <Link href="#" pointerEvents="none">
-                            <Image 
-                                src="static/images/notifications_icon.svg" 
-                                alt="Notif" 
-                                h="24px" 
-                                w="24px" 
-                                opacity="0.5" 
-                                cursor="not-allowed"
-                            />
+                            <Box position="relative">
+                            <Link href="#/notifications">
+                                <Image
+                                src="static/images/notifications_icon.svg"
+                                alt="Notif"
+                                h="24px"
+                                w="24px"
+                                />
+                                {notificationCount > 0 && (
+                                <Badge
+                                    position="absolute"
+                                    top="-1"
+                                    right="-1"
+                                    fontSize="0.6em"
+                                    colorScheme="red"
+                                    borderRadius="full"
+                                    px={1.5}
+                                >
+                                    {notificationCount}
+                                </Badge>
+                                )}
                             </Link>
+                            </Box>
                         </>
                         )}
 

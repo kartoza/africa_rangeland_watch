@@ -58,3 +58,18 @@ class IndicatorAlertHistoryViewSet(viewsets.ModelViewSet):
         """Filter queryset to only return alert
         histories for the logged-in user."""
         return self.queryset.filter(alert_setting__user=self.request.user)
+
+
+class InAppNotificationViewSet(viewsets.ModelViewSet):
+    """ViewSet for performing CRUD operations on
+    IndicatorAlertHistory model for in-app notifications."""
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = IndicatorAlertHistorySerializer
+
+    def get_queryset(self):
+        """Filter queryset to only return in-app alerts
+        for the logged-in user."""
+        return IndicatorAlertHistory.objects.filter(
+            alert_setting__user=self.request.user,
+            alert_setting__in_app_alert=True
+        ).order_by("-created_at")
