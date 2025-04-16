@@ -3,6 +3,7 @@ from .views import (
     IndicatorViewSet,
     AlertSettingViewSet,
     IndicatorAlertHistoryViewSet,
+    CategorizedAlertsView,
     InAppNotificationViewSet,
     MarkNotificationsReadView,
 )
@@ -22,6 +23,11 @@ router.register(
     r'alert-histories',
     IndicatorAlertHistoryViewSet,
     basename='alert-history'
+)
+router.register(
+    r'categorized-alerts',
+    CategorizedAlertsView,
+    basename='categorized-alert'
 )
 router.register(
     r'in-app-notifications',

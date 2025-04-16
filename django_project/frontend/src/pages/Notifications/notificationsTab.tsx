@@ -10,26 +10,45 @@ import "../../styles/index.css";
 import Pagination from "../../components/Pagination";
 import axios from "axios";
 
-export default function NotificationsTab() {
+export default function NotificationsTab({ category }: { category: string }) {
   const [allNotifications, setAllNotifications] = useState<any[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
   useEffect(() => {
     const fetchNotificationsData = async () => {
-      const response = await axios.get("/api/in-app-notifications/");
-      setAllNotifications(response.data.map((item: any) => ({
-        id: item.id,
-        title: item.alert_setting.name,
-        badge: item.alert_setting.indicator,  // can map to name if needed
-        description: item.text,
-        timestamp: new Date(item.created_at).toLocaleString(),
-        is_read: item.is_read,
-      })));
+      try {
+        let response;
+        if (category === "all") {
+          response = await axios.get("/api/in-app-notifications/");
+          const formatted = response.data.map((item: any) => ({
+            id: item.id,
+            title: item.alert_setting?.name || "Unnamed Alert",
+            description: item.text || "No description provided.",
+            badge: item.alert_setting?.indicator || "General",
+            timestamp: new Date(item.created_at).toLocaleString(),
+            is_read: item.is_read,
+          }));
+          setAllNotifications(formatted);
+        } else {
+          response = await axios.get(`/api/categorized-alerts/categorized/?category=${category}`);
+          const formatted = response.data.map((item: any) => ({
+            id: item.id,
+            title: item.alert_setting?.name || "Unnamed Alert",
+            description: item.text || "No description provided.",
+            badge: category.charAt(0).toUpperCase() + category.slice(1),
+            timestamp: new Date(item.created_at).toLocaleString(),
+            is_read: item.is_read ?? false, // fallback
+          }));
+          setAllNotifications(formatted);
+        }
+      } catch (err) {
+        console.error("Error fetching notifications:", err);
+      }
     };
-
+  
     fetchNotificationsData();
-  }, []);
+  }, [category]);
 
   const totalPages = Math.ceil(allNotifications.length / itemsPerPage);
   const indexOfLastItem = currentPage * itemsPerPage;
