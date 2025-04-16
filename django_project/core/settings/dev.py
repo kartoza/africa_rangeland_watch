@@ -12,8 +12,8 @@ CRISPY_FAIL_SILENTLY = not DEBUG
 
 ALLOWED_HOSTS = ['*']
 
-# EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
-EMAIL_BACKEND = 'core.resend_email_backend.ResendBackend'
+EMAIL_BACKEND = 'django.core.mail.backends.console.EmailBackend'
+#EMAIL_BACKEND = 'core.resend_email_backend.ResendBackend'
 EMAIL_HOST = os.environ.get('EMAIL_HOST', 'smtp')
 # Port for sending e-mail.
 EMAIL_PORT = ast.literal_eval(os.environ.get('EMAIL_PORT', '25'))

@@ -2,7 +2,10 @@ from rest_framework.routers import DefaultRouter
 from .views import (
     IndicatorViewSet,
     AlertSettingViewSet,
-    IndicatorAlertHistoryViewSet
+    IndicatorAlertHistoryViewSet,
+    CategorizedAlertsView,
+    InAppNotificationViewSet,
+    MarkNotificationsReadView,
 )
 
 router = DefaultRouter()
@@ -21,5 +24,21 @@ router.register(
     IndicatorAlertHistoryViewSet,
     basename='alert-history'
 )
+router.register(
+    r'categorized-alerts',
+    CategorizedAlertsView,
+    basename='categorized-alert'
+)
+router.register(
+    r'in-app-notifications',
+    InAppNotificationViewSet,
+    basename='in-app-notifications'
+)
+router.register(
+    r'in-app-notifications-read',
+    MarkNotificationsReadView,
+    basename='notifications-read'
+)
+
 
 urlpatterns = router.urls
