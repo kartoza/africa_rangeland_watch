@@ -93,6 +93,6 @@ export class LegendControl extends CustomControl {
   }
 
   onRender(): React.ReactNode {
-    return <Legend ref={this.ref}/>
+    return <Legend ref={this.ref} map={this.map}/>
   }
 }
