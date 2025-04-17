@@ -8,19 +8,46 @@ import {
 import "../../styles/index.css";
 import Pagination from "../../components/Pagination";
 
-export default function NotificationsTab() {
+export default function NotificationsTab({ category }: { category: string }) {
   const [allNotifications, setAllNotifications] = useState<any[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 5;
 
   useEffect(() => {
-    const fetchNotificationsData = () => {
-
-      setAllNotifications([]);
+    const fetchNotificationsData = async () => {
+      try {
+        const response = await fetch(
+          `/api/categorized-alerts/categorized/?category=${category}`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+            }
+          }
+        );
+  
+        if (!response.ok) {
+          throw new Error("Failed to fetch notifications");
+        }
+  
+        const data = await response.json();
+  
+        const formatted = data.map((item: any) => ({
+          id: item.id,
+          title: item.alert_setting?.name || "Unnamed Alert",
+          description: item.text || "No description provided.",
+          badge: category.charAt(0).toUpperCase() + category.slice(1),
+          timestamp: new Date(item.created_at).toLocaleString()
+        }));
+  
+        setAllNotifications(formatted);
+      } catch (err) {
+        console.error("Error fetching notifications:", err);
+        setAllNotifications([]);
+      }
     };
-
+  
     fetchNotificationsData();
-  }, []);
+  }, [category]);
 
   const totalPages = Math.ceil(allNotifications.length / itemsPerPage);
   const indexOfLastItem = currentPage * itemsPerPage;
