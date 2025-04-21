@@ -17,11 +17,13 @@ import {
 import "../../styles/index.css";
 import Pagination from "../../components/Pagination";
 import axios from "axios";
+import { useNotifications } from "../../components/NotificationContext";
 
 export default function NotificationsTab({ category }: { category: string }) {
   const [allNotifications, setAllNotifications] = useState<any[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const { isOpen, onOpen, onClose } = useDisclosure();
+  const { fetchNotifications } = useNotifications();
   const [selectedNotification, setSelectedNotification] = useState<any | null>(null);
   const itemsPerPage = 5;
 
@@ -78,6 +80,7 @@ export default function NotificationsTab({ category }: { category: string }) {
           onClick={async () => {
             await axios.post("/api/in-app-notifications-read/mark_all/");
             setAllNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+            fetchNotifications(); // Refresh notification count
           }}
         >
           Mark all as read
@@ -93,7 +96,8 @@ export default function NotificationsTab({ category }: { category: string }) {
                   n.id === selectedNotification.id ? { ...n, is_read: false } : n
                 )
               );
-              onClose(); // optional: close modal after marking
+              onClose();
+              fetchNotifications(); // Refresh notification count
             } catch (err) {
               console.error("Failed to mark as unread", err);
             }
@@ -122,6 +126,7 @@ export default function NotificationsTab({ category }: { category: string }) {
                   );
               
                   setSelectedNotification(updated);
+                  fetchNotifications();
                 } catch (err) {
                   console.error("Failed to mark notification as read", err);
                   setSelectedNotification(notification); // fallback to original

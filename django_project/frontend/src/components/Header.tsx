@@ -11,6 +11,7 @@ import { checkLoginStatus } from '../store/authSlice';
 import { selectIsLoggedIn } from "../store/authSlice";
 import { useSession } from '../sessionProvider'
 import Sidebar1 from '../components/SideBar';
+import { useNotifications } from './NotificationContext';
 
 export default function Header(props: any) {
     const dispatch = useDispatch<AppDispatch>();
@@ -77,26 +78,13 @@ export default function Header(props: any) {
         setIsSidebarOpen(false);
     };
 
-    const [notificationCount, setNotificationCount] = useState(0);
-
     // Fetch in-app notifications count
+    const { notificationCount, fetchNotifications } = useNotifications();
+    
+    // Fetch once on component mount
     useEffect(() => {
-        const fetchNotifications = async () => {
-          try {
-            const response = await axios.get("/api/in-app-notifications/");
-            const unreadCount = response.data?.results?.filter((n: any) => !n.is_read)?.length || 0;
-            setNotificationCount(unreadCount);
-          } catch (err) {
-            console.error("Failed to fetch in-app notifications", err);
-          }
-        };
-      
         fetchNotifications();
-      
-        const interval = setInterval(fetchNotifications, 2000); // every 15 seconds
-      
-        return () => clearInterval(interval); // cleanup
-      }, []);
+    }, [location.pathname]);
 
     return (
         <>
