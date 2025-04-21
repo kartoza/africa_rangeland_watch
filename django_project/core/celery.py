@@ -51,6 +51,10 @@ app.conf.beat_schedule = {
         # Run everyday at 00:00 UTC
         'schedule': crontab(minute='00', hour='00'),
     },
+    'process_alerts': {
+        'task': 'alerts.tasks.process_alerts',
+        'schedule': crontab(minute='0', hour='*'),  # Run every hour
+    },
 }
 
 
