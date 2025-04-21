@@ -5,6 +5,8 @@ from rest_framework import status
 from alerts.models import Indicator, AlertSetting, IndicatorAlertHistory
 from base.models import Organisation, UserOrganisations
 from alerts.utils import trigger_alert
+from alerts.tasks import process_alerts
+from analysis.models import UserAnalysisResults, AnalysisRasterOutput
 
 
 class IndicatorTests(APITestCase):
@@ -94,7 +96,7 @@ class IndicatorAlertHistoryTests(APITestCase):
             self.alert_setting.email_alert = True
             self.alert_setting.save()
 
-            trigger_alert(self.alert_setting, "Triggered via test")
+            trigger_alert(self.alert_setting, "Polygon A", 0.6)
 
             # Assert IndicatorAlertHistory was created
             histories = IndicatorAlertHistory.objects.filter(
@@ -102,7 +104,7 @@ class IndicatorAlertHistoryTests(APITestCase):
             )
             self.assertTrue(histories.exists())
             new_history = histories.exclude(id=self.alert_history.id).last()
-            self.assertIn("Triggered via test", new_history.text)
+            self.assertIn("Polygon A", new_history.text)
 
             # Assert send_alert_email was called
             mock_send_email.assert_called_once()
@@ -219,3 +221,61 @@ class CategorizedAlertsViewTests(APITestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertGreaterEqual(len(response.data), 2)
+
+
+class MultiPolygonAlertTests(APITestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="polyuser",
+            password="testpass",
+            email="polyuser@example.com"
+        )
+        self.indicator = Indicator.objects.create(name="NDVI")
+
+        self.alert_setting = AlertSetting.objects.create(
+            name="Polygon NDVI Alert",
+            indicator=self.indicator,
+            user=self.user,
+            threshold_value=0.5,
+            threshold_comparison=2,  # Greater Than
+            enable_alert=True,
+            email_alert=True
+        )
+
+        self.result = UserAnalysisResults.objects.create(created_by=self.user)
+        self.raster_output = AnalysisRasterOutput.objects.create(
+            name="Polygon Raster Output",
+            size=1024,
+            status="complete",
+            analysis={
+                "per_polygon_stats": [
+                    {"name": "Polygon A", "value": 0.6},
+                    {"name": "Polygon B", "value": 0.4},
+                    {"name": "Polygon C", "value": 0.8}
+                ],
+                "indicator": self.indicator.id
+            },
+        )
+        self.result.raster_outputs.add(self.raster_output)
+
+    @patch("alerts.utils.send_alert_email")
+    def test_alerts_triggered_for_each_polygon(self, mock_send_email):
+        """Test alerts triggered individually per polygon over threshold."""
+        # Simulate processing alerts
+        process_alerts()
+
+        # Fetch all alert history records for the given setting
+        alerts = IndicatorAlertHistory.objects.filter(
+            alert_setting=self.alert_setting
+        )
+
+        # Expecting 2 alerts: Polygon A (0.6), Polygon C (0.8)
+        self.assertEqual(alerts.count(), 2)
+
+        # Extract triggered polygon names from alert messages
+        triggered_names = [a.text.split("'")[1] for a in alerts]
+        self.assertIn("Polygon A", triggered_names)
+        self.assertIn("Polygon C", triggered_names)
+
+        # Confirm email was sent twice
+        self.assertEqual(mock_send_email.call_count, 2)

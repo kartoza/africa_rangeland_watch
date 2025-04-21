@@ -17,14 +17,20 @@ def process_alerts():
     now = timezone.now()
 
     for setting in AlertSetting.objects.filter(enable_alert=True):
-        # Fetch the latest indicator value
-        value = get_latest_indicator_value(setting.indicator)
+        try:
+            # Fetch all (polygon_name, value) for the indicator
+            results = get_latest_indicator_value(setting.indicator)
 
-        # Check threshold logic
-        if check_threshold(setting, value):
-            trigger_alert(
-                setting,
-                f"Threshold met: {value} for {setting.name}"
-            )
-            setting.last_alert = now
-            setting.save()
+            for result in results:
+                name = result.get('name')
+                value = result.get('value')
+
+                if name is None or value is None:
+                    continue
+
+                if check_threshold(setting, value):
+                    trigger_alert(setting, value, name)
+                    setting.last_alert = now
+                    setting.save()
+        except Exception as e:
+            raise e

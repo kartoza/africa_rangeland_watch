@@ -17,18 +17,22 @@ def send_alert_email(user_email, subject, message):
     )
 
 
-def trigger_alert(alert_setting, alert_message):
+def trigger_alert(alert_setting, value, name):
     """Trigger alert and send email if enabled."""
+    message = (
+        f"Threshold met for '{name}': {value} "
+        f"({alert_setting.indicator.name})"
+    )
     # Record alert history
     IndicatorAlertHistory.objects.create(
         alert_setting=alert_setting,
-        text=alert_message,
+        text=message,
     )
 
     # Send email if enabled
     if alert_setting.email_alert and alert_setting.user.email:
         subject = f"[Alert] {alert_setting.name}"
-        send_alert_email(alert_setting.user.email, subject, alert_message)
+        send_alert_email(alert_setting.user.email, subject, message)
 
 
 def check_threshold(alert_setting, value: float) -> bool:
@@ -51,17 +55,15 @@ def check_threshold(alert_setting, value: float) -> bool:
     return False
 
 
-def get_latest_indicator_value(indicator: Indicator) -> float:
+def get_latest_indicator_value(indicator: Indicator) -> list[dict]:
     """
-    Retrieves the most recent analysis result value for the given indicator.
-    This assumes analysis result metadata stores
-    a single latest value per indicator.
+    Retrieves the latest values per polygon for the given indicator.
     """
 
     # Fetch the latest UserAnalysisResults linked to this indicator
     latest_result = (
         UserAnalysisResults.objects
-        .filter(raster_outputs__analysis__indicator=indicator)
+        .filter(raster_outputs__analysis__indicator=indicator.id)
         .order_by('-created_at')
         .prefetch_related('raster_outputs')
         .first()
@@ -77,11 +79,13 @@ def get_latest_indicator_value(indicator: Indicator) -> float:
             f"No raster output found in latest result for {indicator.name}"
         )
 
-    # Get mean from stored metadata
-    stats = raster.analysis.get('mean', None)
-    if stats is not None:
-        return float(stats)
+    stats_list = raster.analysis.get('per_polygon_stats', None)
+    if not stats_list or not isinstance(stats_list, list):
+        raise ValueError(f"No per-polygon stats found for {indicator.name}")
 
-    raise ValueError(
-        f"No usable value found in metadata for {indicator.name}"
-    )
+    # Validate each entry
+    return [
+        {"name": item.get("name"), "value": item.get("value")}
+        for item in stats_list
+        if item.get("name") is not None and item.get("value") is not None
+    ]
