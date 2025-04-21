@@ -20,6 +20,7 @@ import axios from "axios";
 import { useNotifications } from "../../components/NotificationContext";
 
 export default function NotificationsTab({ category }: { category: string }) {
+export default function NotificationsTab({ category }: { category: string }) {
   const [allNotifications, setAllNotifications] = useState<any[]>([]);
   const [currentPage, setCurrentPage] = useState(1);
   const { isOpen, onOpen, onClose } = useDisclosure();

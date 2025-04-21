@@ -43,14 +43,7 @@ class AnalysisAPI(APIView):
     def check_cache(self, data):
         """Check if results are already cached."""
         analysis_dict = {}
-        lat = (
-            float(data['latitude']) if data['latitude'] is not None else
-            None
-        )
-        lon = (
-            float(data['longitude']) if data['longitude'] is not None else
-            None
-        )
+        locations = data.get('locations', [])
         args = []
         kwargs = {}
         if data['analysisType'] == 'Temporal':
@@ -64,8 +57,7 @@ class AnalysisAPI(APIView):
             # check if all items are cached
             for analysis_dict in analysis_dict_list:
                 analysis_cache = AnalysisResultsCacheUtils({
-                    'lat': lat,
-                    'lon': lon,
+                    'locations': locations,
                     'analysis_dict': analysis_dict,
                     'args': args,
                     'kwargs': kwargs
@@ -96,8 +88,7 @@ class AnalysisAPI(APIView):
             kwargs['custom_geom'] = data.get('custom_geom', None)
 
         analysis_cache = AnalysisResultsCacheUtils({
-            'lat': lat,
-            'lon': lon,
+            'locations': locations,
             'analysis_dict': analysis_dict,
             'args': args,
             'kwargs': kwargs

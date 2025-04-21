@@ -11,25 +11,47 @@ setup.describe('login', () => {
 
   setup('login', async ({page}) => {
 
+    // Go to the base URL
     await page.goto(url);
+    // Check if the page has loaded
+    await expect(page).toHaveURL(url);
+    // Check if the page has the correct title
+    await expect(page.locator('h1')).toContainText('Africa Rangeland Watch');
+    await expect(page.getByRole('button', { name: 'Learn More' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'View Map' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Sign In' })).toBeVisible();
 
-    const buttonSelector = 'LOGIN';
+    // Click on the Sign In button
+    await page.getByRole('button', { name: 'Sign In' }).click();
+    await expect(page.getByRole('heading')).toContainText('Welcome Back!');
 
-    await page.waitForSelector(buttonSelector, {timeout: 2000});
+    // Check if the Sign In form is visible
+    await expect(page.getByRole('textbox', { name: 'Email' })).toBeEmpty();
+    await page.getByRole('textbox', { name: 'Email' }).click();
+    await page.getByRole('textbox', { name: 'Email' }).fill(user_email);
+    // Enter the password
+    await page.getByRole('textbox', { name: 'Password' }).click();
+    await page.getByRole('textbox', { name: 'Password' }).fill(password);
 
-    const initialURL = page.url();
+    // Check if the Sign In button is visible
+    await expect(page.getByRole('button', { name: 'Sign In' })).toBeVisible();
+    // Check if Google, GitHub and Apple icons are visible
+    await expect(page.getByRole('link', { name: 'Google Icon' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'GitHub Icon' })).toBeVisible();
+    await expect(page.getByRole('img', { name: 'Apple Icon' })).toBeVisible();
 
-    await page.click(buttonSelector);
+    // Click on the Sign In button
+    await page.getByRole('button', { name: 'Sign In' }).click();
+    await expect(page.locator('[id="chakra-modal-\\:r4\\:"]').getByText('Start New')).toBeVisible();
+    await page.locator('[id="chakra-modal-\\:r4\\:"]').getByText('Start New').click();
 
-    await page.waitForURL('**/login/');
+    // Check if the page has loaded
+    await expect(page.locator('h1')).toContainText('Africa Rangeland Watch');
+    await expect(page.getByRole('button', { name: 'Learn More' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'View Map' })).toBeVisible();
 
-    await expect(page.getByRole('heading', { name: 'Login' })).toBeVisible();
-
-    await page.getByPlaceholder('E-mail address').fill(user_email);
-    
-    await page.getByPlaceholder('Password').fill(password);
-    
-    await page.getByRole('button', { name: 'LOGIN' }).click();
+    // Check if the Sign In button is not visible
+    await expect(page.getByRole('button', { name: 'Sign In' })).not.toBeVisible();
 
     await page.context().storageState({ path: authFile });
     

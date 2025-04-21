@@ -143,15 +143,28 @@ export const analysisSlice = createSlice({
     setAnalysis(state, action: PayloadAction<AnalysisData>) {
       state.analysisData = action.payload
     },
-    setAnalysisLandscapeCommunity(state, action: PayloadAction<Community>) {
+    toggleAnalysisLandscapeCommunity(state, action: PayloadAction<Community>) {
       const value = action.payload
+      // check if community.featureId is already in locations
+      const locations = state.analysisData.locations || [];
+      const index = locations.findIndex((location) => location.communityFeatureId === value.featureId);
+      if (index > -1) {
+        // remove the location
+        locations.splice(index, 1);
+      } else {
+        // add the community to locations
+        locations.push({
+          lat: value?.latitude,
+          lon: value?.longitude,
+          community: value?.id ? '' + value?.id : null,
+          communityName: value?.name ? value?.name : null,
+          communityFeatureId: value?.featureId ? value?.featureId : null
+        })
+      }
+      // update the state with the new locations
       state.analysisData = {
         ...state.analysisData,
-        community: value?.id ? '' + value?.id : null,
-        latitude: value?.latitude ? value?.latitude : null,
-        longitude: value?.longitude ? value?.longitude : null,
-        communityName: value?.name ? value?.name : null,
-        communityFeatureId: value?.featureId ? value?.featureId : null,
+        locations: locations,
         custom_geom: null,
         userDefinedFeatureId: null,
         userDefinedFeatureName: null
@@ -190,7 +203,7 @@ export const analysisSlice = createSlice({
           // check if result is from spatial reference layer diff
           const data = action.payload.data;
           state.saveAnalysisFlag = true;
-          if (data.analysisType === 'Spatial' && data.latitude === null && data.longitude === null) {
+          if (data.analysisType === 'Spatial' && (data.locations === null || data.locations.length === 0)) {
             state.referenceLayerDiff = {
               ...action.payload.results,
               id: REFERENCE_LAYER_DIFF_ID
@@ -226,7 +239,7 @@ export const analysisSlice = createSlice({
           // check if result is from spatial reference layer diff
           const data = action.payload.data;
           state.saveAnalysisFlag = true;
-          if (data.analysisType === 'Spatial' && data.latitude === null && data.longitude === null) {
+          if (data.analysisType === 'Spatial' && (data.locations === null || data.locations.length === 0)) {
             state.referenceLayerDiff = {
               ...action.payload.results,
               id: REFERENCE_LAYER_DIFF_ID
@@ -258,8 +271,8 @@ export const analysisSlice = createSlice({
 
 export const {
   clearError, resetAnalysisResult, setAnalysis,
-  setAnalysisLandscapeCommunity, setAnalysisCustomGeom,
-  setMaxWaitAnalysisReached
+  setAnalysisCustomGeom,
+  setMaxWaitAnalysisReached, toggleAnalysisLandscapeCommunity
 } = analysisSlice.actions;
 
 export default analysisSlice.reducer;

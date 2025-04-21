@@ -77,8 +77,10 @@ class Command(BaseCommand):
         lat = -22.843383205972945
         lon = 31.64049468754881
         baseline = run_analysis(
-            lon=lon,
-            lat=lat,
+            locations=[{
+                'lon': lon,
+                'lat': lat,
+            }],
             analysis_dict=analysis_dict
         )
         print(baseline)
@@ -122,8 +124,10 @@ class Command(BaseCommand):
             ]
           }
         spatial = run_analysis(
-            lon=reference_layer_geojson['coordinates'][0][0][0],
-            lat=reference_layer_geojson['coordinates'][0][0][1],
+            locations=[{
+                'lon': reference_layer_geojson['coordinates'][0][0][0],
+                'lat': reference_layer_geojson['coordinates'][0][0][1],
+            }],
             analysis_dict=analysis_dict,
             **{'reference_layer': reference_layer_geojson}
         )
@@ -157,8 +161,10 @@ class Command(BaseCommand):
         lat = -22.843383205972945
         lon = 31.64049468754881
         temporal_output, temporal_output_plot = run_analysis(
-            lon=lon,
-            lat=lat,
+            locations=[{
+                'lon': lon,
+                'lat': lat,
+            }],
             analysis_dict=analysis_dict
         )
         print('Temporal Output: \n', temporal_output)
@@ -194,8 +200,10 @@ class Command(BaseCommand):
         lat = -22.843383205972945
         lon = 31.64049468754881
         temporal_output, temporal_output_plot = run_analysis(
-            lon=lon,
-            lat=lat,
+            locations=[{
+                'lon': lon,
+                'lat': lat,
+            }],
             analysis_dict=analysis_dict
         )
         print('Temporal Output: \n', temporal_output)
@@ -236,8 +244,10 @@ class Command(BaseCommand):
         lat = -22.843383205972945
         lon = 31.64049468754881
         temporal_output, temporal_output_plot = run_analysis(
-            lon=lon,
-            lat=lat,
+            locations=[{
+                'lon': lon,
+                'lat': lat,
+            }],
             analysis_dict=analysis_dict
         )
         print('Temporal Output: \n', temporal_output)
@@ -249,9 +259,9 @@ class Command(BaseCommand):
 
         initialize_engine_analysis()
 
-        self.export_image()
-        self.run_baseline_analysis()
-        self.run_spatial_analysis()
-        self.run_annual_temporal_analysis()
-        self.run_quarterly_temporal_analysis()
+        # self.export_image()
+        # self.run_baseline_analysis()
+        # self.run_spatial_analysis()
+        # self.run_annual_temporal_analysis()
+        # self.run_quarterly_temporal_analysis()
         self.run_monthly_temporal_analysis()
