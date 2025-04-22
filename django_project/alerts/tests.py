@@ -6,7 +6,7 @@ from alerts.models import Indicator, AlertSetting, IndicatorAlertHistory
 from base.models import Organisation, UserOrganisations
 from alerts.utils import trigger_alert
 from alerts.tasks import process_alerts
-from analysis.models import UserAnalysisResults, AnalysisRasterOutput
+from analysis.models import UserAnalysisResults
 
 
 class IndicatorTests(APITestCase):
@@ -242,21 +242,35 @@ class MultiPolygonAlertTests(APITestCase):
             email_alert=True
         )
 
-        self.result = UserAnalysisResults.objects.create(created_by=self.user)
-        self.raster_output = AnalysisRasterOutput.objects.create(
-            name="Polygon Raster Output",
-            size=1024,
-            status="complete",
-            analysis={
-                "per_polygon_stats": [
-                    {"name": "Polygon A", "value": 0.6},
-                    {"name": "Polygon B", "value": 0.4},
-                    {"name": "Polygon C", "value": 0.8}
-                ],
-                "indicator": self.indicator.id
-            },
+        self.result = UserAnalysisResults.objects.create(
+            created_by=self.user,
+            analysis_results={
+                "data": {
+                    "results": {
+                        "features": [
+                            {
+                                "properties": {
+                                    "Name": "Polygon A",
+                                    "NDVI": 0.6
+                                }
+                            },
+                            {
+                                "properties": {
+                                    "Name": "Polygon B",
+                                    "NDVI": 0.4
+                                }
+                            },
+                            {
+                                "properties": {
+                                    "Name": "Polygon C",
+                                    "NDVI": 0.8
+                                }
+                            }
+                        ]
+                    }
+                }
+            }
         )
-        self.result.raster_outputs.add(self.raster_output)
 
     @patch("alerts.utils.send_alert_email")
     def test_alerts_triggered_for_each_polygon(self, mock_send_email):

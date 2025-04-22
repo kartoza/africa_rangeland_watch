@@ -57,35 +57,38 @@ def check_threshold(alert_setting, value: float) -> bool:
 
 def get_latest_indicator_value(indicator: Indicator) -> list[dict]:
     """
-    Retrieves the latest values per polygon for the given indicator.
+    Retrieves the latest values per polygon for the given indicator
+    directly from analysis_results JSON.
     """
-
-    # Fetch the latest UserAnalysisResults linked to this indicator
     latest_result = (
         UserAnalysisResults.objects
-        .filter(raster_outputs__analysis__indicator=indicator.id)
         .order_by('-created_at')
-        .prefetch_related('raster_outputs')
         .first()
     )
 
     if not latest_result:
         raise ValueError(f"No results found for indicator: {indicator.name}")
 
-    # First raster output
-    raster = latest_result.raster_outputs.first()
-    if not raster:
+    features = (
+        latest_result.analysis_results
+        .get('results', {})
+        .get('features', [])
+    )
+
+    if not features:
         raise ValueError(
-            f"No raster output found in latest result for {indicator.name}"
+            f"No features found in analysis result for {indicator.name}"
         )
 
-    stats_list = raster.analysis.get('per_polygon_stats', None)
-    if not stats_list or not isinstance(stats_list, list):
-        raise ValueError(f"No per-polygon stats found for {indicator.name}")
+    per_polygon = []
+    for feature in features:
+        props = feature.get("properties", {})
+        name = props.get("Name")
+        value = props.get(indicator.name)
+        if name is not None and value is not None:
+            per_polygon.append({"name": name, "value": value})
 
-    # Validate each entry
-    return [
-        {"name": item.get("name"), "value": item.get("value")}
-        for item in stats_list
-        if item.get("name") is not None and item.get("value") is not None
-    ]
+    if not per_polygon:
+        raise ValueError(f"No valid polygon stats found for {indicator.name}")
+
+    return per_polygon

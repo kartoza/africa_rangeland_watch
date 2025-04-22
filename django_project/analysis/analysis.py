@@ -852,10 +852,18 @@ def initialize_engine_analysis():
     Initializes the Earth Engine API for analysis.
     """
     if os.path.exists(SERVICE_ACCOUNT_KEY):
+        print(
+            "Service account key file found. Initializing Earth Engine..."
+        )
+        print(f'Service account key file: {SERVICE_ACCOUNT_KEY}')
         credentials = ee.ServiceAccountCredentials(
             SERVICE_ACCOUNT,
             SERVICE_ACCOUNT_KEY)
     else:
+        print(
+            "Service account key file found. Initializing Earth Engine..."
+        )
+        print(f'Service account key file: {SERVICE_ACCOUNT_KEY}')
         credentials = ee.ServiceAccountCredentials(
             SERVICE_ACCOUNT,
             key_data=base64.b64decode(SERVICE_ACCOUNT_KEY).decode('utf-8')
