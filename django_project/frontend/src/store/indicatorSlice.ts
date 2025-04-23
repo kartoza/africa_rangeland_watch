@@ -84,6 +84,39 @@ export const updateAlertSettingAPI = createAsyncThunk(
   }
 );
 
+export const createAlertSettingAPI = createAsyncThunk(
+  "indicators/createAlertSettingAPI",
+  async (
+    payload: { indicatorId: number; updates: Partial<AlertSetting> },
+    { rejectWithValue }
+  ) => {
+    setCSRFToken();
+
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+      return rejectWithValue("Authorization token is missing");
+    }
+
+    const response = await fetch(`/api/alert-settings/`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Token ${token}`,
+      },
+      body: JSON.stringify(payload.updates),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      return rejectWithValue(errorData.detail || "Failed to create alert setting");
+    }
+
+    const data = await response.json();
+    return { indicatorId: payload.indicatorId, alertSetting: data };
+  }
+);
+
+
 
 // Slice definition
 const indicatorsSlice = createSlice({
@@ -134,9 +167,26 @@ const indicatorsSlice = createSlice({
       .addCase(updateAlertSettingAPI.rejected, (state, action) => {
         state.loading = false;
         state.error = action.error.message || "Something went wrong";
+      })
+      .addCase(createAlertSettingAPI.fulfilled, (state, action) => {
+        const { indicatorId, alertSetting } = action.payload;
+        const indicator = state.indicators.find(ind => ind.id === indicatorId);
+        if (indicator) {
+          indicator.alert_settings.push(alertSetting);
+        }
+      })
+      .addCase(createAlertSettingAPI.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(createAlertSettingAPI.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string || "Failed to create alert setting";
       });
   },
 });
+
+
 
 // Export actions and reducer
 export const { updateAlertSetting } = indicatorsSlice.actions;

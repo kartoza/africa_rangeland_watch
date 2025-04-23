@@ -9,6 +9,8 @@ from .serializers import (
     IndicatorAlertHistorySerializer
 )
 from django.db.models import Prefetch, Q
+import logging
+logger = logging.getLogger(__name__)
 
 
 class IndicatorViewSet(viewsets.ModelViewSet):
@@ -46,6 +48,7 @@ class AlertSettingViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         """Associate the alert setting with the currently logged-in user."""
+        logger.info(f"Creating alert setting for user: {self.request.user}")
         serializer.save(user=self.request.user)
 
 

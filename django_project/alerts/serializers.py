@@ -8,6 +8,7 @@ class AlertSettingSerializer(serializers.ModelSerializer):
     indicator = serializers.PrimaryKeyRelatedField(
         queryset=Indicator.objects.all()
     )
+    user = serializers.PrimaryKeyRelatedField(read_only=True)
 
     class Meta:
         model = AlertSetting
