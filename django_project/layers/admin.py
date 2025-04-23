@@ -4,7 +4,9 @@ from .models import (
     InputLayer,
     DataFeedSetting,
     LayerGroupType,
-    ExportLayerRequest
+    ExportLayerRequest,
+    ExternalLayer,
+    ExternalLayerSource,
 )
 
 
@@ -91,3 +93,29 @@ class ExportLayerRequestAdmin(admin.ModelAdmin):
     """Admin for ExportLayerRequest model."""
 
     list_display = ('created_at', 'requested_by', 'format', 'status')
+
+
+@admin.register(ExternalLayerSource)
+class ExternalLayerSourceAdmin(admin.ModelAdmin):
+    list_display = (
+        "name", "provider", "fetch_type", "frequency",
+        "active", "url", "updated_at"
+    )
+    list_filter = ("provider", "fetch_type", "frequency", "active")
+    search_fields = ("name", "provider__name", "url")
+    readonly_fields = ("created_at", "updated_at")
+
+
+@admin.register(ExternalLayer)
+class ExternalLayerAdmin(admin.ModelAdmin):
+    list_display = (
+        "name",
+        "source",
+        "layer_type",
+        "is_public",
+        "is_auto_published",
+        "created_at",
+    )
+    list_filter = ("source", "layer_type", "is_public", "is_auto_published")
+    search_fields = ("name", "source__name")
+    readonly_fields = ("created_at", "updated_at")
