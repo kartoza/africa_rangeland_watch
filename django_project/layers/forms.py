@@ -7,4 +7,11 @@ class ExternalLayerUploadForm(forms.ModelForm):
 
     class Meta:
         model = ExternalLayer
-        fields = ["name", "layer_type", "source", "file", "is_public", "is_auto_published"]
+        fields = [
+            "name",
+            "layer_type",
+            "source",
+            "file",
+            "is_public",
+            "is_auto_published",
+        ]
