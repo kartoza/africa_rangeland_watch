@@ -394,4 +394,4 @@ class ExternalLayer(models.Model):
         ordering = ["-created_at"]
 
     def __str__(self):
-        return f"{self.name} ({self.provider.name})"
+        return f"{self.name} ({self.source.name})"

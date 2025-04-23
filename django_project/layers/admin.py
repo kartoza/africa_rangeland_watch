@@ -8,6 +8,8 @@ from .models import (
     ExternalLayer,
     ExternalLayerSource,
 )
+from .forms import ExternalLayerUploadForm
+from .utils import ingest_external_layer
 
 
 @admin.register(DataProvider)
@@ -108,6 +110,7 @@ class ExternalLayerSourceAdmin(admin.ModelAdmin):
 
 @admin.register(ExternalLayer)
 class ExternalLayerAdmin(admin.ModelAdmin):
+    form = ExternalLayerUploadForm
     list_display = (
         "name",
         "source",
@@ -119,3 +122,20 @@ class ExternalLayerAdmin(admin.ModelAdmin):
     list_filter = ("source", "layer_type", "is_public", "is_auto_published")
     search_fields = ("name", "source__name")
     readonly_fields = ("created_at", "updated_at")
+
+    def save_model(self, request, obj, form, change):
+        if not change:
+            uploaded_file = form.cleaned_data["file"]
+            source = form.cleaned_data["source"]
+
+            layer = ingest_external_layer(
+                source, uploaded_file, created_by=request.user
+            )
+
+            layer.name = form.cleaned_data["name"]
+            layer.is_public = form.cleaned_data["is_public"]
+            layer.is_auto_published = form.cleaned_data["is_auto_published"]
+            layer.save()
+
+        else:
+            super().save_model(request, obj, form, change)
