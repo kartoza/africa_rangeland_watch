@@ -245,29 +245,27 @@ class MultiPolygonAlertTests(APITestCase):
         self.result = UserAnalysisResults.objects.create(
             created_by=self.user,
             analysis_results={
-                "data": {
-                    "results": {
-                        "features": [
-                            {
-                                "properties": {
-                                    "Name": "Polygon A",
-                                    "NDVI": 0.6
-                                }
-                            },
-                            {
-                                "properties": {
-                                    "Name": "Polygon B",
-                                    "NDVI": 0.4
-                                }
-                            },
-                            {
-                                "properties": {
-                                    "Name": "Polygon C",
-                                    "NDVI": 0.8
-                                }
+                "results": {
+                    "features": [
+                        {
+                            "properties": {
+                                "Name": "Polygon A",
+                                "NDVI": 0.6
                             }
-                        ]
-                    }
+                        },
+                        {
+                            "properties": {
+                                "Name": "Polygon B",
+                                "NDVI": 0.4
+                            }
+                        },
+                        {
+                            "properties": {
+                                "Name": "Polygon C",
+                                "NDVI": 0.8
+                            }
+                        }
+                    ]
                 }
             }
         )
