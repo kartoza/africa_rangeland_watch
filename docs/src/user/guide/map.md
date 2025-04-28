@@ -26,7 +26,7 @@ The image below illustrates the interactive map page of the ARW platform.
 
 ### Layers
 
-The interactive map feature allows you to view and interact with various layers of informations.
+The interactive map feature allows you to view and interact with various layers of information.
 
 To access the layers, click on the 1️⃣ `Layers`, this section is selected by default. This section allows you to apply various types of layers on the map, enabling customised visualisation. This is how it looks.
 
@@ -82,7 +82,7 @@ Bare ground cover refers to the proportion of the landscape where the surface is
 
 ### Analysis?
 
-Analysis allows you to select specific landscape from the 1️⃣ `Select Landscape` drop down menu.
+Analysis allows you to select a specific landscape from the 1️⃣ `Select Landscape` drop down menu.
 
 [![Analysis Section](./img/guide-map-img-5.png)](./img/guide-map-img-5.png)
 
@@ -121,6 +121,10 @@ Available options in `Select analysis type` are:
 
     [![BACI Analysis Type](./img/guide-map-img-9.png)](./img/guide-map-img-9.png)
 
+**Note**: One can now run analysis for multiple polygons by selecting them on the map.
+
+[![Select Multiple Polygons](./img/guide-map-img-25.png)](./img/guide-map-img-25.png)
+
 After filling in the necessary details, you can proceed with the analysis by clicking on the 3️⃣ `Run Analysis` button after running the analysis successfully you can click on the 4️⃣ `Save Results` button to save analysis result. If you wish to reset the form, simply click on the 2️⃣ `Reset Form` button.
 
 After saving the analysis results, you will be notified by a 1️⃣ `toast notification` stating that the analysis results have been saved. You can view the saved analysis on the [Analysis Results](./Analysis-result.md) page.
@@ -128,11 +132,11 @@ After saving the analysis results, you will be notified by a 1️⃣ `toast noti
 [![Notification](./img/guide-map-img-24.png)](./img/guide-map-img-24.png)
 
 
-### How to Upload Shape File
+### How to Upload Shapefile
 
-Click on the 1️⃣ `Upload` button and then click on the 2️⃣ `Select File` button to upload your shape file.
+Click on the 1️⃣ `Upload` button and then click on the 2️⃣ `Select File` button to upload your shapefile.
 
-[![Upload Shape File](./img/guide-map-img-17.png)](./img/guide-map-img-17.png)
+[![Upload Shapefile](./img/guide-map-img-17.png)](./img/guide-map-img-17.png)
 
 Select the desired 1️⃣ `File` then click on the 2️⃣ `Select` button to upload the file or can click on the 3️⃣ `Cancel` button to close the file explorer.
 
