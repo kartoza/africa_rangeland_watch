@@ -408,7 +408,7 @@ class FetchHistory(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
-    
+
     def __str__(self):
         created = self.created_at.strftime('%Y-%m-%d %H:%M:%S')
         return f"{self.source.name} - {self.status} - {created}"
