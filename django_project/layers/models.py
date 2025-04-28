@@ -395,3 +395,20 @@ class ExternalLayer(models.Model):
 
     def __str__(self):
         return f"{self.name} ({self.source.name})"
+
+
+class FetchHistory(models.Model):
+    """Model to store the history of fetch operations for external layers."""
+    source = models.ForeignKey(ExternalLayerSource, on_delete=models.CASCADE)
+    status = models.CharField(
+        max_length=20, choices=[("success", "Success"), ("failure", "Failure")]
+    )
+    message = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+    
+    def __str__(self):
+        created = self.created_at.strftime('%Y-%m-%d %H:%M:%S')
+        return f"{self.source.name} - {self.status} - {created}"

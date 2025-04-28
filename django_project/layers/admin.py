@@ -7,6 +7,7 @@ from .models import (
     ExportLayerRequest,
     ExternalLayer,
     ExternalLayerSource,
+    FetchHistory,
 )
 from .forms import ExternalLayerUploadForm
 from .utils import ingest_external_layer
@@ -139,3 +140,12 @@ class ExternalLayerAdmin(admin.ModelAdmin):
 
         else:
             super().save_model(request, obj, form, change)
+
+
+@admin.register(FetchHistory)
+class FetchHistoryAdmin(admin.ModelAdmin):
+    """Admin for FetchHistory model."""
+    list_display = ("source", "status", "created_at")
+    list_filter = ("status", "source")
+    search_fields = ("source__name", "message")
+    readonly_fields = ("source", "status", "message", "created_at")
