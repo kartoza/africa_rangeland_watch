@@ -988,7 +988,7 @@ def get_s2_cloud_masked(
     return s2.select(select_bands)
 
 
-def get_nrt_sentinel(aoi, months):
+def get_nrt_sentinel(aoi, months, start_date, end_date):
     """
     Retrieves a near real-time Sentinel-2 image by
      computing the median over the past specified number of months.
@@ -1000,6 +1000,10 @@ def get_nrt_sentinel(aoi, months):
     months : int
         The number of months in the past over which
         to compute the median image.
+    start_date : str
+        The start date (inclusive) in 'YYYY-MM-DD' format.
+    end_date : str
+        The end date (exclusive) in 'YYYY-MM-DD' format.
 
     Returns
     -------
@@ -1011,10 +1015,11 @@ def get_nrt_sentinel(aoi, months):
     >>> # Define an area of interest
     >>> aoi = ee.Geometry.Rectangle([30.0, -1.0, 30.1, -0.9])
     >>> # Get a near real-time image over the past 2 months
-    >>> nrt_image = get_nrt_sentinel(aoi, months=2)
+    >>> nrt_image = get_nrt_sentinel(
+        aoi, months=2, '2022-06-01', '2025-01-01')
     """
     col = get_s2_cloud_masked(
-        aoi, '2022-06-01', '2025-01-01')
+        aoi, start_date, end_date)
     now_dt = ee.Date(datetime.datetime.now(datetime.UTC))
     nrt_img = col.filterDate(
         now_dt.advance(-months, 'month'), now_dt).median()
