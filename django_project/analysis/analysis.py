@@ -764,7 +764,7 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
                 )
             )
         elif res == 'Monthly':
-            select_geo = selected_geos
+            select_geo = communities.filterBounds(selected_geos)
             if custom_geom:
                 select_geo = (
                     ee.Geometry.Polygon(custom_geom['coordinates']) if
