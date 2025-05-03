@@ -8,6 +8,7 @@ import { CategoryScale } from "chart.js";
 import Chart from "chart.js/auto";
 import {FeatureCollection} from "geojson";
 import 'chartjs-adapter-date-fns';
+import { getTrendLineData, formatMonthYear } from "../../../utils/chartUtils";
 
 import './style.css';
 
@@ -88,11 +89,6 @@ export function StatisticTable({analysis}: Props) {
       </table>
     </Box>
   );
-}
-
-function formatMonthYear(month: number, year: number) {
-  const date = new Date(year, month - 1); // Month is zero-based in JS Date
-  return new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(date);
 }
 
 
@@ -176,7 +172,6 @@ export function BarChart({ analysis }: Props) {
 
 export function LineChart({ analysis }: Props) {
   // Extracting data for the chart
-
   const jsonData = analysis.results[1];
   if (jsonData.features.length == 0) {
     return
@@ -205,8 +200,19 @@ export function LineChart({ analysis }: Props) {
     datasets[key] = {
       label: key,
       data: data,
-      backgroundColor: COLORS[i % COLORS.length]
+      backgroundColor: COLORS[i % COLORS.length],
+      fill: false,
     };
+
+    datasets[`trends_${i}`] = {
+      label: '',
+      data: getTrendLineData(data),
+      borderColor: i % 2 === 0 ? "blue" : "red",
+      fill: false,
+      pointRadius: 0,
+      pointHoverRadius: 0,
+      tension: 0,
+    }
   }
 
   let chartData:any = {
@@ -240,6 +246,11 @@ export function LineChart({ analysis }: Props) {
     plugins: {
       legend: {
         position: 'top',
+        labels: {
+          filter: function (item: any, chartData: any) {
+            return item.text !== '';
+          }
+        }
       },
     },
   };
