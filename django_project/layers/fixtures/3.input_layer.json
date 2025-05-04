@@ -1,502 +1,407 @@
 [
-    {
-        "model": "layers.inputlayer",
-        "pk": "305160a2-fa0a-4e18-9bb3-a78b9ba5357f",
-        "fields": {
-            "name": "EVI 2015-2020",
-            "layer_type": "raster",
-            "data_provider": 1,
-            "url": "",
-            "group": 1,
-            "metadata": {
-                "unit": "",
-                "colors": [
-                    "#FFFFFF",
-                    "#CE7E45",
-                    "#DF923D",
-                    "#F1B555",
-                    "#FCD163",
-                    "#99B718",
-                    "#74A901",
-                    "#66A000",
-                    "#529400",
-                    "#3E8601",
-                    "#207401",
-                    "#056201",
-                    "#004C00",
-                    "#023B01",
-                    "#012E01",
-                    "#011D01",
-                    "#011301"
-                ],
-                "maxValue": 1,
-                "minValue": 0,
-                "opacity": 0.8
-            },
-            "created_by": null,
-            "updated_by": null,
-            "created_at": "2024-11-20T16:40:12.599Z",
-            "updated_at": "2024-11-20T16:40:12.599Z"
-        }
-    },
-    {
-        "model": "layers.inputlayer",
-        "pk": "5662f959-aa71-4c91-b5f4-c1300e12f614",
-        "fields": {
-            "name": "Bare ground",
-            "layer_type": "raster",
-            "data_provider": 1,
-            "url": "",
-            "group": 2,
-            "metadata": {
-                "unit": "%",
-                "colors": [
-                    "#FFFFCC",
-                    "#FFEDA0",
-                    "#FED976",
-                    "#FEB24C",
-                    "#FD8D3C",
-                    "#FC4E2A",
-                    "#E31A1C",
-                    "#B10026"
-                ],
-                "maxValue": 100,
-                "minValue": 0,
-                "opacity": 0.7
-            },
-            "created_by": null,
-            "updated_by": null,
-            "created_at": "2024-11-20T16:40:12.618Z",
-            "updated_at": "2024-11-20T16:40:12.618Z"
-        }
-    },
-    {
-        "model": "layers.inputlayer",
-        "pk": "5a7499e7-802c-4f19-9af7-37765b9a7672",
-        "fields": {
-            "name": "Grazing capacity 2015-2020",
-            "layer_type": "raster",
-            "data_provider": 1,
-            "url": "",
-            "group": 1,
-            "metadata": {
-                "unit": "LSU/ha",
-                "colors": [
-                    "#440154",
-                    "#472878",
-                    "#3E4A89",
-                    "#31688E",
-                    "#25838E",
-                    "#1E9E89",
-                    "#35B779",
-                    "#6CCE59",
-                    "#B5DE2C",
-                    "#FDE725"
-                ],
-                "maxValue": 0.3,
-                "minValue": 0,
-                "opacity": 0.7
-            },
-            "created_by": null,
-            "updated_by": null,
-            "created_at": "2024-11-20T16:40:12.611Z",
-            "updated_at": "2024-11-20T16:40:12.611Z"
-        }
-    },
-    {
-        "model": "layers.inputlayer",
-        "pk": "5c9ab885-5626-49e5-805c-cbf2bd6aa5ef",
-        "fields": {
-            "name": "NDVI",
-            "layer_type": "raster",
-            "data_provider": 1,
-            "url": "",
-            "group": 2,
-            "metadata": {
-                "unit": "",
-                "colors": [
-                    "#FFFFFF",
-                    "#CE7E45",
-                    "#DF923D",
-                    "#F1B555",
-                    "#FCD163",
-                    "#99B718",
-                    "#74A901",
-                    "#66A000",
-                    "#529400",
-                    "#3E8601",
-                    "#207401",
-                    "#056201",
-                    "#004C00",
-                    "#023B01",
-                    "#012E01",
-                    "#011D01",
-                    "#011301"
-                ],
-                "maxValue": 1,
-                "minValue": 0,
-                "opacity": 0.7
-            },
-            "created_by": null,
-            "updated_by": null,
-            "created_at": "2024-11-20T16:40:12.617Z",
-            "updated_at": "2024-11-20T16:40:12.617Z"
-        }
-    },
-    {
-        "model": "layers.inputlayer",
-        "pk": "870bbe01-7798-4312-a44c-e1a18c3c1b3f",
-        "fields": {
-            "name": "NDVI 2015-2020",
-            "layer_type": "raster",
-            "data_provider": 1,
-            "url": "",
-            "group": 1,
-            "metadata": {
-                "unit": "",
-                "colors": [
-                    "#FFFFFF",
-                    "#CE7E45",
-                    "#DF923D",
-                    "#F1B555",
-                    "#FCD163",
-                    "#99B718",
-                    "#74A901",
-                    "#66A000",
-                    "#529400",
-                    "#3E8601",
-                    "#207401",
-                    "#056201",
-                    "#004C00",
-                    "#023B01",
-                    "#012E01",
-                    "#011D01",
-                    "#011301"
-                ],
-                "maxValue": 1,
-                "minValue": 0,
-                "opacity": 0.8
-            },
-            "created_by": null,
-            "updated_by": null,
-            "created_at": "2024-11-20T16:40:12.605Z",
-            "updated_at": "2024-11-20T16:40:12.605Z"
-        }
-    },
-    {
-        "model": "layers.inputlayer",
-        "pk": "9ad536d5-e324-41d6-8d88-0819ef7c1d55",
-        "fields": {
-            "name": "Grass cover 2015-2020",
-            "layer_type": "raster",
-            "data_provider": 1,
-            "url": "",
-            "group": 1,
-            "metadata": {
-                "unit": "%",
-                "colors": [
-                    "#FFFFD9",
-                    "#EDF8B1",
-                    "#C7E9B4",
-                    "#7FCDBB",
-                    "#41B6C4",
-                    "#1D91C0",
-                    "#225EA8",
-                    "#0C2C84"
-                ],
-                "maxValue": 60,
-                "minValue": 0,
-                "opacity": 0.7
-            },
-            "created_by": null,
-            "updated_by": null,
-            "created_at": "2024-11-20T16:40:12.609Z",
-            "updated_at": "2024-11-20T16:40:12.609Z"
-        }
-    },
-    {
-        "model": "layers.inputlayer",
-        "pk": "c0f48a8d-425f-43f8-8edd-e6f3ef74b79e",
-        "fields": {
-            "name": "Soil carbon change 1984-2019",
-            "layer_type": "raster",
-            "data_provider": 1,
-            "url": "",
-            "group": 1,
-            "metadata": {
-                "unit": "kg/m2",
-                "colors": [
-                    "#B35806",
-                    "#E08214",
-                    "#FDB863",
-                    "#FEE0B6",
-                    "#D8DAEB",
-                    "#B2ABD2",
-                    "#8073AC",
-                    "#542788"
-                ],
-                "maxValue": 0.5,
-                "minValue": -0.5,
-                "opacity": 0.7
-            },
-            "created_by": null,
-            "updated_by": null,
-            "created_at": "2024-11-20T16:40:12.615Z",
-            "updated_at": "2024-11-20T16:40:12.615Z"
-        }
-    },
-    {
-        "model": "layers.inputlayer",
-        "pk": "cf6272d3-55f9-4bbe-8201-bdc5b255d42a",
-        "fields": {
-            "name": "Woody plant cover 2015-2020",
-            "layer_type": "raster",
-            "data_provider": 1,
-            "url": "",
-            "group": 1,
-            "metadata": {
-                "unit": "%",
-                "colors": [
-                    "#FFFFE5",
-                    "#F7FCB9",
-                    "#D9F0A3",
-                    "#ADDD8E",
-                    "#78C679",
-                    "#41AB5D",
-                    "#238443",
-                    "#005A32"
-                ],
-                "maxValue": 60,
-                "minValue": 0,
-                "opacity": 0.7
-            },
-            "created_by": null,
-            "updated_by": null,
-            "created_at": "2024-11-20T16:40:12.610Z",
-            "updated_at": "2024-11-20T16:40:12.610Z"
-        }
-    },
-    {
-        "model": "layers.inputlayer",
-        "pk": "d5534c5c-4fb7-4b48-8680-a3f875dc70f4",
-        "fields": {
-            "name": "Bare ground cover 2015-2020",
-            "layer_type": "raster",
-            "data_provider": 1,
-            "url": "",
-            "group": 1,
-            "metadata": {
-                "unit": "%",
-                "colors": [
-                    "#FFFFCC",
-                    "#FFEDA0",
-                    "#FED976",
-                    "#FEB24C",
-                    "#FD8D3C",
-                    "#FC4E2A",
-                    "#E31A1C",
-                    "#B10026"
-                ],
-                "maxValue": 60,
-                "minValue": 0,
-                "opacity": 0.8
-            },
-            "created_by": null,
-            "updated_by": null,
-            "created_at": "2024-11-20T16:40:12.607Z",
-            "updated_at": "2024-11-20T16:40:12.607Z"
-        }
-    },
-    {
-        "model": "layers.inputlayer",
-        "pk": "d5e215df-c02a-4c8a-835a-8a77b0bfaaf5",
-        "fields": {
-            "name": "Soil carbon 1984-2019",
-            "layer_type": "raster",
-            "data_provider": 1,
-            "url": "",
-            "group": 1,
-            "metadata": {
-                "unit": "kg/m2",
-                "colors": [
-                    "#fffcb9",
-                    "#fcd27d",
-                    "#b6bb5c",
-                    "#498939",
-                    "#0f747b",
-                    "#045375",
-                    "#3c0f73"
-                ],
-                "maxValue": 15,
-                "minValue": 2,
-                "opacity": 0.7
-            },
-            "created_by": null,
-            "updated_by": null,
-            "created_at": "2024-11-20T16:40:12.614Z",
-            "updated_at": "2024-11-20T16:40:12.614Z"
-        }
-    },
-    {
-        "model": "layers.inputlayer",
-        "pk": "f6f135b1-4992-405f-af5d-4b1976747d3d",
-        "fields": {
-            "name": "EVI",
-            "layer_type": "raster",
-            "data_provider": 1,
-            "url": "",
-            "group": 2,
-            "metadata": {
-                "unit": "",
-                "colors": [
-                    "#FFFFFF",
-                    "#CE7E45",
-                    "#DF923D",
-                    "#F1B555",
-                    "#FCD163",
-                    "#99B718",
-                    "#74A901",
-                    "#66A000",
-                    "#529400",
-                    "#3E8601",
-                    "#207401",
-                    "#056201",
-                    "#004C00",
-                    "#023B01",
-                    "#012E01",
-                    "#011D01",
-                    "#011301"
-                ],
-                "maxValue": 1,
-                "minValue": 0,
-                "opacity": 0.7
-            },
-            "created_by": null,
-            "updated_by": null,
-            "created_at": "2024-11-20T16:40:12.616Z",
-            "updated_at": "2024-11-20T16:40:12.616Z"
-        }
-    },
-    {
-        "model": "layers.inputlayer",
-        "pk": "fe9c8205-4165-40a0-931e-1d9d2ddb0c9b",
-        "fields": {
-            "name": "Fire frequency 2000-2020",
-            "layer_type": "raster",
-            "data_provider": 1,
-            "url": "",
-            "group": 1,
-            "metadata": {
-                "unit": "fires/year",
-                "colors": [
-                    "#fff600",
-                    "#ff9d00",
-                    "#ff0000",
-                    "#ff07cd"
-                ],
-                "maxValue": 1,
-                "minValue": 0,
-                "opacity": 0.7
-            },
-            "created_by": null,
-            "updated_by": null,
-            "created_at": "2024-11-20T16:40:12.612Z",
-            "updated_at": "2024-11-20T16:40:12.612Z"
-        }
-    },
-    {
-        "model": "layers.inputlayer",
-        "pk": "f22c73f2-7c7e-4ae6-b6fd-12cafd72bbf6",
-        "fields": {
-            "name": "Grass cover",
-            "layer_type": "raster",
-            "data_provider": 1,
-            "url": "",
-            "group": 2,
-            "metadata": {
-                "unit": "%",
-                "colors": [
-                    "#FFFFD9",
-                    "#EDF8B1",
-                    "#C7E9B4",
-                    "#7FCDBB",
-                    "#41B6C4",
-                    "#1D91C0",
-                    "#225EA8",
-                    "#0C2C84"
-                ],
-                "maxValue": 60,
-                "minValue": 0,
-                "opacity": 0.7
-            },
-            "created_by": null,
-            "updated_by": null,
-            "created_at": "2025-05-01T00:00:00Z",
-            "updated_at": "2025-05-01T00:00:00Z"
-        }
-    },
-    {
-        "model": "layers.inputlayer",
-        "pk": "afb927c5-1a4c-47b5-b2f6-c62f40e88c21",
-        "fields": {
-            "name": "Woody plant cover",
-            "layer_type": "raster",
-            "data_provider": 1,
-            "url": "",
-            "group": 2,
-            "metadata": {
-                "unit": "%",
-                "colors": [
-                    "#FFFFE5",
-                    "#F7FCB9",
-                    "#D9F0A3",
-                    "#ADDD8E",
-                    "#78C679",
-                    "#41AB5D",
-                    "#238443",
-                    "#005A32"
-                ],
-                "maxValue": 60,
-                "minValue": 0,
-                "opacity": 0.7
-            },
-            "created_by": null,
-            "updated_by": null,
-            "created_at": "2025-05-01T00:00:00Z",
-            "updated_at": "2025-05-01T00:00:00Z"
-        }
-    },
-    {
-        "model": "layers.inputlayer",
-        "pk": "3395d6f7-93a0-4481-b054-26a448275b90",
-        "fields": {
-            "name": "Grazing capacity",
-            "layer_type": "raster",
-            "data_provider": 1,
-            "url": "",
-            "group": 2,
-            "metadata": {
-                "unit": "LSU/ha",
-                "colors": [
-                    "#440154",
-                    "#472878",
-                    "#3E4A89",
-                    "#31688E",
-                    "#25838E",
-                    "#1E9E89",
-                    "#35B779",
-                    "#6CCE59",
-                    "#B5DE2C",
-                    "#FDE725"
-                ],
-                "maxValue": 0.3,
-                "minValue": 0,
-                "opacity": 0.7
-            },
-            "created_by": null,
-            "updated_by": null,
-            "created_at": "2025-05-01T00:00:00Z",
-            "updated_at": "2025-05-01T00:00:00Z"
-        }
+{
+    "model": "layers.inputlayer",
+    "pk": "305160a2-fa0a-4e18-9bb3-a78b9ba5357f",
+    "fields": {
+        "name": "EVI 2015-2020",
+        "layer_type": "raster",
+        "data_provider": 1,
+        "url": "",
+        "group": 1,
+        "metadata": {
+            "unit": "",
+            "colors": [
+                "#FFFFFF",
+                "#CE7E45",
+                "#DF923D",
+                "#F1B555",
+                "#FCD163",
+                "#99B718",
+                "#74A901",
+                "#66A000",
+                "#529400",
+                "#3E8601",
+                "#207401",
+                "#056201",
+                "#004C00",
+                "#023B01",
+                "#012E01",
+                "#011D01",
+                "#011301"
+            ],
+            "maxValue": 1,
+            "minValue": 0,
+            "opacity": 0.8
+        },
+        "created_by": null,
+        "updated_by": null,
+        "created_at": "2024-11-20T16:40:12.599Z",
+        "updated_at": "2024-11-20T16:40:12.599Z"
     }
+},
+{
+    "model": "layers.inputlayer",
+    "pk": "5662f959-aa71-4c91-b5f4-c1300e12f614",
+    "fields": {
+        "name": "Bare ground",
+        "layer_type": "raster",
+        "data_provider": 1,
+        "url": "",
+        "group": 2,
+        "metadata": {
+            "unit": "%",
+            "colors": [
+                "#FFFFCC",
+                "#FFEDA0",
+                "#FED976",
+                "#FEB24C",
+                "#FD8D3C",
+                "#FC4E2A",
+                "#E31A1C",
+                "#B10026"
+            ],
+            "maxValue": 100,
+            "minValue": 0,
+            "opacity": 0.7
+        },
+        "created_by": null,
+        "updated_by": null,
+        "created_at": "2024-11-20T16:40:12.618Z",
+        "updated_at": "2024-11-20T16:40:12.618Z"
+    }
+},
+{
+    "model": "layers.inputlayer",
+    "pk": "5a7499e7-802c-4f19-9af7-37765b9a7672",
+    "fields": {
+        "name": "Grazing capacity 2015-2020",
+        "layer_type": "raster",
+        "data_provider": 1,
+        "url": "",
+        "group": 1,
+        "metadata": {
+            "unit": "LSU/ha",
+            "colors": [
+                "#440154",
+                "#472878",
+                "#3E4A89",
+                "#31688E",
+                "#25838E",
+                "#1E9E89",
+                "#35B779",
+                "#6CCE59",
+                "#B5DE2C",
+                "#FDE725"
+            ],
+            "maxValue": 0.3,
+            "minValue": 0,
+            "opacity": 0.7
+        },
+        "created_by": null,
+        "updated_by": null,
+        "created_at": "2024-11-20T16:40:12.611Z",
+        "updated_at": "2024-11-20T16:40:12.611Z"
+    }
+},
+{
+    "model": "layers.inputlayer",
+    "pk": "5c9ab885-5626-49e5-805c-cbf2bd6aa5ef",
+    "fields": {
+        "name": "NDVI",
+        "layer_type": "raster",
+        "data_provider": 1,
+        "url": "",
+        "group": 2,
+        "metadata": {
+            "unit": "",
+            "colors": [
+                "#FFFFFF",
+                "#CE7E45",
+                "#DF923D",
+                "#F1B555",
+                "#FCD163",
+                "#99B718",
+                "#74A901",
+                "#66A000",
+                "#529400",
+                "#3E8601",
+                "#207401",
+                "#056201",
+                "#004C00",
+                "#023B01",
+                "#012E01",
+                "#011D01",
+                "#011301"
+            ],
+            "maxValue": 1,
+            "minValue": 0,
+            "opacity": 0.7
+        },
+        "created_by": null,
+        "updated_by": null,
+        "created_at": "2024-11-20T16:40:12.617Z",
+        "updated_at": "2024-11-20T16:40:12.617Z"
+    }
+},
+{
+    "model": "layers.inputlayer",
+    "pk": "870bbe01-7798-4312-a44c-e1a18c3c1b3f",
+    "fields": {
+        "name": "NDVI 2015-2020",
+        "layer_type": "raster",
+        "data_provider": 1,
+        "url": "",
+        "group": 1,
+        "metadata": {
+            "unit": "",
+            "colors": [
+                "#FFFFFF",
+                "#CE7E45",
+                "#DF923D",
+                "#F1B555",
+                "#FCD163",
+                "#99B718",
+                "#74A901",
+                "#66A000",
+                "#529400",
+                "#3E8601",
+                "#207401",
+                "#056201",
+                "#004C00",
+                "#023B01",
+                "#012E01",
+                "#011D01",
+                "#011301"
+            ],
+            "maxValue": 1,
+            "minValue": 0,
+            "opacity": 0.8
+        },
+        "created_by": null,
+        "updated_by": null,
+        "created_at": "2024-11-20T16:40:12.605Z",
+        "updated_at": "2024-11-20T16:40:12.605Z"
+    }
+},
+{
+    "model": "layers.inputlayer",
+    "pk": "9ad536d5-e324-41d6-8d88-0819ef7c1d55",
+    "fields": {
+        "name": "Grass cover 2015-2020",
+        "layer_type": "raster",
+        "data_provider": 1,
+        "url": "",
+        "group": 1,
+        "metadata": {
+            "unit": "%",
+            "colors": [
+                "#FFFFD9",
+                "#EDF8B1",
+                "#C7E9B4",
+                "#7FCDBB",
+                "#41B6C4",
+                "#1D91C0",
+                "#225EA8",
+                "#0C2C84"
+            ],
+            "maxValue": 60,
+            "minValue": 0,
+            "opacity": 0.7
+        },
+        "created_by": null,
+        "updated_by": null,
+        "created_at": "2024-11-20T16:40:12.609Z",
+        "updated_at": "2024-11-20T16:40:12.609Z"
+    }
+},
+{
+    "model": "layers.inputlayer",
+    "pk": "c0f48a8d-425f-43f8-8edd-e6f3ef74b79e",
+    "fields": {
+        "name": "Soil carbon change 1984-2019",
+        "layer_type": "raster",
+        "data_provider": 1,
+        "url": "",
+        "group": 1,
+        "metadata": {
+            "unit": "kg/m2",
+            "colors": [
+                "#B35806",
+                "#E08214",
+                "#FDB863",
+                "#FEE0B6",
+                "#D8DAEB",
+                "#B2ABD2",
+                "#8073AC",
+                "#542788"
+            ],
+            "maxValue": 0.5,
+            "minValue": -0.5,
+            "opacity": 0.7
+        },
+        "created_by": null,
+        "updated_by": null,
+        "created_at": "2024-11-20T16:40:12.615Z",
+        "updated_at": "2024-11-20T16:40:12.615Z"
+    }
+},
+{
+    "model": "layers.inputlayer",
+    "pk": "cf6272d3-55f9-4bbe-8201-bdc5b255d42a",
+    "fields": {
+        "name": "Woody plant cover 2015-2020",
+        "layer_type": "raster",
+        "data_provider": 1,
+        "url": "",
+        "group": 1,
+        "metadata": {
+            "unit": "%",
+            "colors": [
+                "#FFFFE5",
+                "#F7FCB9",
+                "#D9F0A3",
+                "#ADDD8E",
+                "#78C679",
+                "#41AB5D",
+                "#238443",
+                "#005A32"
+            ],
+            "maxValue": 60,
+            "minValue": 0,
+            "opacity": 0.7
+        },
+        "created_by": null,
+        "updated_by": null,
+        "created_at": "2024-11-20T16:40:12.610Z",
+        "updated_at": "2024-11-20T16:40:12.610Z"
+    }
+},
+{
+    "model": "layers.inputlayer",
+    "pk": "d5534c5c-4fb7-4b48-8680-a3f875dc70f4",
+    "fields": {
+        "name": "Bare ground cover 2015-2020",
+        "layer_type": "raster",
+        "data_provider": 1,
+        "url": "",
+        "group": 1,
+        "metadata": {
+            "unit": "%",
+            "colors": [
+                "#FFFFCC",
+                "#FFEDA0",
+                "#FED976",
+                "#FEB24C",
+                "#FD8D3C",
+                "#FC4E2A",
+                "#E31A1C",
+                "#B10026"
+            ],
+            "maxValue": 60,
+            "minValue": 0,
+            "opacity": 0.8
+        },
+        "created_by": null,
+        "updated_by": null,
+        "created_at": "2024-11-20T16:40:12.607Z",
+        "updated_at": "2024-11-20T16:40:12.607Z"
+    }
+},
+{
+    "model": "layers.inputlayer",
+    "pk": "d5e215df-c02a-4c8a-835a-8a77b0bfaaf5",
+    "fields": {
+        "name": "Soil carbon 1984-2019",
+        "layer_type": "raster",
+        "data_provider": 1,
+        "url": "",
+        "group": 1,
+        "metadata": {
+            "unit": "kg/m2",
+            "colors": [
+                "#fffcb9",
+                "#fcd27d",
+                "#b6bb5c",
+                "#498939",
+                "#0f747b",
+                "#045375",
+                "#3c0f73"
+            ],
+            "maxValue": 15,
+            "minValue": 2,
+            "opacity": 0.7
+        },
+        "created_by": null,
+        "updated_by": null,
+        "created_at": "2024-11-20T16:40:12.614Z",
+        "updated_at": "2024-11-20T16:40:12.614Z"
+    }
+},
+{
+    "model": "layers.inputlayer",
+    "pk": "f6f135b1-4992-405f-af5d-4b1976747d3d",
+    "fields": {
+        "name": "EVI",
+        "layer_type": "raster",
+        "data_provider": 1,
+        "url": "",
+        "group": 2,
+        "metadata": {
+            "unit": "",
+            "colors": [
+                "#FFFFFF",
+                "#CE7E45",
+                "#DF923D",
+                "#F1B555",
+                "#FCD163",
+                "#99B718",
+                "#74A901",
+                "#66A000",
+                "#529400",
+                "#3E8601",
+                "#207401",
+                "#056201",
+                "#004C00",
+                "#023B01",
+                "#012E01",
+                "#011D01",
+                "#011301"
+            ],
+            "maxValue": 1,
+            "minValue": 0,
+            "opacity": 0.7
+        },
+        "created_by": null,
+        "updated_by": null,
+        "created_at": "2024-11-20T16:40:12.616Z",
+        "updated_at": "2024-11-20T16:40:12.616Z"
+    }
+},
+{
+    "model": "layers.inputlayer",
+    "pk": "fe9c8205-4165-40a0-931e-1d9d2ddb0c9b",
+    "fields": {
+        "name": "Fire frequency 2000-2020",
+        "layer_type": "raster",
+        "data_provider": 1,
+        "url": "",
+        "group": 1,
+        "metadata": {
+            "unit": "fires/year",
+            "colors": [
+                "#fff600",
+                "#ff9d00",
+                "#ff0000",
+                "#ff07cd"
+            ],
+            "maxValue": 1,
+            "minValue": 0,
+            "opacity": 0.7
+        },
+        "created_by": null,
+        "updated_by": null,
+        "created_at": "2024-11-20T16:40:12.612Z",
+        "updated_at": "2024-11-20T16:40:12.612Z"
+    }
+}
 ]
