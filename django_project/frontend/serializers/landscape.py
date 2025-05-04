@@ -8,7 +8,7 @@ Africa Rangeland Watch (ARW).
 from rest_framework import serializers
 from django.core.cache import cache
 
-from analysis.models import Landscape
+from analysis.models import Landscape, LandscapeCommunity
 
 
 class LandscapeSerializer(serializers.ModelSerializer):
@@ -37,3 +37,28 @@ class LandscapeSerializer(serializers.ModelSerializer):
     class Meta:  # noqa
         model = Landscape
         fields = ['id', 'name', 'bbox', 'zoom', 'urls']
+
+
+class LandscapeCommunitySerializer(serializers.ModelSerializer):
+    """Serializer for LandscapeCommunity model."""
+
+    landscape_name = serializers.CharField(
+        source="landscape.name", read_only=True
+    )
+    bbox = serializers.SerializerMethodField()
+
+    class Meta:
+        model = LandscapeCommunity
+        fields = [
+            "id",
+            "community_name",
+            "landscape",
+            "landscape_name",
+            "bbox"
+        ]
+
+    def get_bbox(self, obj: LandscapeCommunity):
+        """Convert bbox polygon to its extent."""
+        if obj.geometry:
+            return obj.geometry.extent
+        return None

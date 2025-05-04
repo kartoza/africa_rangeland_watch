@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react";
 import {
-  Table, Thead, Tbody, Tr, Th, Td, Switch, Select, Input, Checkbox, Button, Spinner, Box, Text, useToast,
+  Table, Thead, Tbody, Tr, Th, Td, Switch, Input, Checkbox, Button, Spinner, Box, Text, useToast,
   Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter,
   useDisclosure
 } from "@chakra-ui/react";
+import { Select  as DropSelect } from "@chakra-ui/react";
+import AsyncSelect from "react-select/async";
 import { ChevronDownIcon } from "@chakra-ui/icons";
 import { formatDistanceToNow } from "date-fns";
 import { useSelector, useDispatch } from "react-redux";
@@ -16,6 +18,11 @@ import {
 } from "../../store/indicatorSlice";
 import { debounce } from "lodash";
 
+type LocationOption = {
+  label: string;
+  value: number;
+};
+
 export default function SystemTab() {
   const dispatch: AppDispatch = useDispatch();
   const { indicators, loading, error } = useSelector((state: RootState) => state.indicators);
@@ -23,6 +30,7 @@ export default function SystemTab() {
   const [isUpdating, setIsUpdating] = useState(false); // State for loader overlay
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [selectedIndicator, setSelectedIndicator] = useState<number | null>(null);
+  const [selectedLocation, setSelectedLocation] = useState<number | null>(null);
   const [newAlertData, setNewAlertData] = useState({
     name: "",
     threshold_value: 0,
@@ -32,6 +40,32 @@ export default function SystemTab() {
     anomaly_detection_alert: false,
     enable_alert: true,
   });
+  const [locations, setLocations] = useState<
+    { id: number; community_name: string; landscape_name: string }[]
+  >([]);
+  const loadLocationOptions = async (inputValue: string): Promise<LocationOption[]> => {
+    try {
+      const response = await fetch(`/api/landscape-communities/?search=${inputValue}`);
+      const data = await response.json();
+  
+      const fetchedLocations = data.results || data;
+  
+      // Update local state for label rendering
+      setLocations((prev) => {
+        const existingIds = new Set(prev.map((l) => l.id));
+        const newOnes = fetchedLocations.filter((l: any) => !existingIds.has(l.id));
+        return [...prev, ...newOnes];
+      });
+  
+      return fetchedLocations.map((loc: any) => ({
+        label: `${loc.landscape_name} - ${loc.community_name}`,
+        value: loc.id,
+      }));
+    } catch (error) {
+      console.error("Error loading location options:", error);
+      return [];
+    }
+  };
   const toast = useToast(); // For showing notifications
 
   useEffect(() => {
@@ -114,7 +148,30 @@ export default function SystemTab() {
               value={newAlertData.name}
               onChange={(e) => setNewAlertData({ ...newAlertData, name: e.target.value })}
             />
-            <Select
+            <Box mb={3}>
+              <AsyncSelect
+                cacheOptions
+                loadOptions={loadLocationOptions}
+                defaultOptions={false}
+                onChange={(option: LocationOption | null) =>
+                  setSelectedLocation(option?.value ?? null)
+                }
+                value={
+                  selectedLocation
+                    ? {
+                        label:
+                          locations.find((l) => l.id === selectedLocation)?.landscape_name +
+                          " - " +
+                          locations.find((l) => l.id === selectedLocation)?.community_name,
+                        value: selectedLocation,
+                      }
+                    : null
+                }
+                placeholder="Search for a location..."
+                isClearable
+              />
+            </Box>
+            <DropSelect
               placeholder="Select Indicator"
               mb={3}
               value={selectedIndicator ?? ""}
@@ -125,8 +182,8 @@ export default function SystemTab() {
                   {indicator.name}
                 </option>
               ))}
-            </Select>
-            <Select
+            </DropSelect>
+            <DropSelect
               mb={3}
               value={newAlertData.threshold_comparison}
               onChange={(e) => setNewAlertData({ ...newAlertData, threshold_comparison: Number(e.target.value) })}
@@ -134,7 +191,7 @@ export default function SystemTab() {
               <option value={1}>Less Than</option>
               <option value={2}>Greater Than</option>
               <option value={3}>Equal To</option>
-            </Select>
+            </DropSelect>
             <Input
               placeholder="Threshold Value"
               type="number"
@@ -186,6 +243,7 @@ export default function SystemTab() {
                     updates: {
                       ...newAlertData,
                       indicator: selectedIndicator,
+                      location: selectedLocation,
                     },
                   }));
                   dispatch(fetchIndicators()); // Refresh data
@@ -322,7 +380,7 @@ export default function SystemTab() {
                                 />
                               </Td>
                               <Td>
-                                <Select
+                                <DropSelect
                                   defaultValue={alertSetting.threshold_comparison}
                                   onChange={(e) => handleUpdateAlertSetting(indicator.id, alertSetting.id, "threshold_comparison", parseFloat(e.target.value))}
                                   border="1px solid gray"
@@ -330,7 +388,7 @@ export default function SystemTab() {
                                   <option value={1}>Less Than</option>
                                   <option value={2}>Greater Than</option>
                                   <option value={3}>Equal To</option>
-                                </Select>
+                                </DropSelect>
                               </Td>
                               <Td>
                                 <Input

@@ -6,6 +6,7 @@ interface AlertSetting {
   id: number;
   name: string;
   indicator: number;
+  location: number;
   enable_alert: boolean;
   last_alert: string;
   threshold_comparison: number;
@@ -96,7 +97,7 @@ export const createAlertSettingAPI = createAsyncThunk(
     if (!token) {
       return rejectWithValue("Authorization token is missing");
     }
-
+    console.log("Sending payload to backend:", payload.updates);
     const response = await fetch(`/api/alert-settings/`, {
       method: "POST",
       headers: {
