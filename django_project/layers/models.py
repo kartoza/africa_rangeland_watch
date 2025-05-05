@@ -312,6 +312,11 @@ class ExternalLayerSource(models.Model):
     ]
 
     name = models.CharField(max_length=255)
+    slug = models.SlugField(
+        max_length=100,
+        unique=True,
+        help_text="Short unique identifier for this data source (e.g., 'wri')"
+    )
     provider = models.ForeignKey(
         DataProvider, on_delete=models.CASCADE, related_name="sources"
     )

@@ -7,10 +7,15 @@ Africa Rangeland Watch (ARW).
 
 import requests
 import os
+import time
+import tempfile
+import ee
 import rasterio
 from datetime import datetime
 from django.core.files.base import ContentFile
-from layers.models import ExternalLayer
+from analysis.analysis import initialize_engine_analysis
+from analysis.utils import get_gdrive_file
+from layers.models import ExternalLayer, ExternalLayerSource
 
 
 def upload_file(url, file_path, field_name="file", auth_header=None):
@@ -96,3 +101,89 @@ def ingest_external_layer(source, uploaded_file, created_by=None):
     os.remove(temp_path)
 
     return layer
+
+
+def export_image(asset_id, region=None, scale=1000, folder=None):
+    """
+    Export a GEE image to Drive and download it locally.
+
+    :param asset_id: GEE image asset ID (ImageCollection)
+    :param region: Optional ee.Geometry (defaults to a southern Africa)
+    :param scale: Pixel scale in meters
+    :param folder: (Optional) Name of folder in Drive to store export
+    :return: (local_path, filename)
+    """
+    initialize_engine_analysis()
+
+    filename = f"{asset_id.split('/')[-1]}_{int(time.time())}.tif"
+
+    if region is None:
+        region = ee.Geometry.Rectangle([16.45, -34.85, 32.90, -22.13])
+
+    image = ee.ImageCollection(asset_id).mosaic()
+
+    export_params = {
+        'image': image,
+        'description': filename.replace('.tif', ''),
+        'fileNamePrefix': filename.replace('.tif', ''),
+        'region': region,
+        'scale': scale,
+        'fileFormat': 'GeoTIFF'
+    }
+
+    if folder:
+        export_params['folder'] = folder
+
+    task = ee.batch.Export.image.toDrive(**export_params)
+    task.start()
+
+    print(f"[GEE] Export task started: {filename}")
+    while task.active():
+        print("[GEE] Waiting for export to finish...")
+        time.sleep(10)
+
+    status = task.status()
+    if status['state'] != 'COMPLETED':
+        raise RuntimeError(f"[GEE] Export failed: {status}")
+
+    print(f"[GEE] Export completed: {filename}")
+
+    # Download file from Drive
+    gfile = get_gdrive_file(filename)
+    if not gfile:
+        raise FileNotFoundError(
+            f"[GDrive] File not found in Drive: {filename}"
+        )
+
+    temp_dir = tempfile.gettempdir()
+    local_path = os.path.join(temp_dir, filename)
+    gfile.GetContentFile(local_path)
+
+    print(f"[Local] File downloaded to: {local_path}")
+    return local_path, filename
+
+
+def fetch_global_pasture_watch_data(source: ExternalLayerSource):
+    """
+    Fetches pasture data from GEE and stores as ExternalLayer.
+    """
+    ASSET_ID = "projects/global-pasture-watch/assets/ggc-30m/v1/grassland_c"
+
+    # Export to GeoTIFF (local or cloud bucket)
+    temp_path, filename = export_image(asset_id=ASSET_ID)
+
+    # Extract metadata from GeoTIFF
+    metadata = extract_raster_metadata(temp_path)
+
+    # Save to DB
+    with open(temp_path, "rb") as f:
+        layer = ExternalLayer.objects.create(
+            name=filename,
+            layer_type="raster",
+            metadata=metadata,
+            created_by=None,
+            source=source,
+            is_public=True,
+            is_auto_published=True
+        )
+        layer.file.save(filename, ContentFile(f.read()))

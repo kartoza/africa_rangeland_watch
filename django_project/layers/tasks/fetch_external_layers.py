@@ -10,7 +10,9 @@ def fetch_source_data(source):
 
     :param source: ExternalLayerSource instance
     """
-    pass
+    if source.slug == "wri":
+        from layers.utils import fetch_global_pasture_watch_data
+        return fetch_global_pasture_watch_data(source)
 
 
 @app.task(name="fetch_external_layers_task")
