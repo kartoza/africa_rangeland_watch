@@ -105,22 +105,22 @@ export default function EarthRangerEventsPage() {
                               : "Unknown"}
                           </Td>
                           <Td>
-														<Box
-															w="10px"
-															h="10px"
-															borderRadius="50%"
-															backgroundColor={
-																event.priority_label === "Red"
-																	? "red.500"
-																	: event.priority_label === "Green"
-																	? "green.500"
-																	: event.priority_label === "Yellow"
-																	? "yellow.400"
-																	: "gray.400" // fallback for "Unknown"
-															}
-															mx="auto" // center the circle inside the cell
-														/>
-													</Td>
+                            <Box
+                              w="10px"
+                              h="10px"
+                              borderRadius="50%"
+                              backgroundColor={
+                                event.priority_label === "Red"
+                                  ? "red.500"
+                                  : event.priority_label === "Green"
+                                    ? "green.500"
+                                    : event.priority_label === "Yellow"
+                                      ? "yellow.400"
+                                      : "gray.400" // fallback for "Unknown"
+                              }
+                              mx="auto" // center the circle inside the cell
+                            />
+                          </Td>
                           <Td>
                             <Button
                               size="sm"
@@ -140,12 +140,12 @@ export default function EarthRangerEventsPage() {
                           <Tr bg="gray.50">
                             <Td colSpan={6}>
                               <Box p={4} color="black">
-															<Text mb={2} color="gray.800">
-																<strong>Comment:</strong> {event.event_details?.Comment || "No Comment"}
-															</Text>
-															<Text mb={2} color="gray.800">
-																<strong>Village:</strong> {event.event_details?.Auc_vill_name || "Unknown"}
-															</Text>
+                                <Text mb={2} color="gray.800">
+                                  <strong>Comment:</strong> {event.event_details?.Comment || "No Comment"}
+                                </Text>
+                                <Text mb={2} color="gray.800">
+                                  <strong>Village:</strong> {event.event_details?.Auc_vill_name || "Unknown"}
+                                </Text>
                               </Box>
                             </Td>
                           </Tr>
