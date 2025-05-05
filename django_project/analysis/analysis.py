@@ -678,6 +678,7 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
         return analysis_cache.create_analysis_cache(reduced.getInfo())
 
     if analysis_dict['analysisType'] == "Baseline":
+        print("Running baseline analysis")
         has_dates = (
             analysis_dict['Baseline']['startDate'] and
             analysis_dict['Baseline']['endDate']
@@ -704,6 +705,7 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
                 select = baseline_table.filterBounds(custom_geom)
             else:
                 select = baseline_table.filterBounds(selected_geos)
+        print("Baseline analysis done")
         return analysis_cache.create_analysis_cache(select.getInfo())
 
     if analysis_dict['analysisType'] == "Temporal":
@@ -852,18 +854,10 @@ def initialize_engine_analysis():
     Initializes the Earth Engine API for analysis.
     """
     if os.path.exists(SERVICE_ACCOUNT_KEY):
-        print(
-            "Service account key file found. Initializing Earth Engine..."
-        )
-        print(f'Service account key file: {SERVICE_ACCOUNT_KEY}')
         credentials = ee.ServiceAccountCredentials(
             SERVICE_ACCOUNT,
             SERVICE_ACCOUNT_KEY)
     else:
-        print(
-            "Service account key file found. Initializing Earth Engine..."
-        )
-        print(f'Service account key file: {SERVICE_ACCOUNT_KEY}')
         credentials = ee.ServiceAccountCredentials(
             SERVICE_ACCOUNT,
             key_data=base64.b64decode(SERVICE_ACCOUNT_KEY).decode('utf-8')
