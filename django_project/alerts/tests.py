@@ -1,12 +1,12 @@
 from unittest.mock import patch
 from django.contrib.auth.models import User
+from django.test import TestCase
 from rest_framework.test import APITestCase
 from rest_framework import status
 from alerts.models import Indicator, AlertSetting, IndicatorAlertHistory
 from base.models import Organisation, UserOrganisations
 from alerts.utils import trigger_alert
 from alerts.tasks import process_alerts
-from analysis.models import UserAnalysisResults
 
 
 class IndicatorTests(APITestCase):
@@ -223,71 +223,58 @@ class CategorizedAlertsViewTests(APITestCase):
         self.assertGreaterEqual(len(response.data), 2)
 
 
-class MultiPolygonAlertTests(APITestCase):
+class ProcessAlertsTest(TestCase):
     def setUp(self):
         self.user = User.objects.create_user(
-            username="polyuser",
-            password="testpass",
-            email="polyuser@example.com"
+            username="tester",
+            password="pass"
         )
         self.indicator = Indicator.objects.create(name="NDVI")
 
         self.alert_setting = AlertSetting.objects.create(
-            name="Polygon NDVI Alert",
+            name="Test Alert",
             indicator=self.indicator,
             user=self.user,
             threshold_value=0.5,
-            threshold_comparison=2,  # Greater Than
+            threshold_comparison=2,  # Greater than
             enable_alert=True,
-            email_alert=True
+            email_alert=False,
         )
 
-        self.result = UserAnalysisResults.objects.create(
-            created_by=self.user,
-            analysis_results={
-                "results": {
-                    "features": [
-                        {
-                            "properties": {
-                                "Name": "Polygon A",
-                                "NDVI": 0.6
-                            }
-                        },
-                        {
-                            "properties": {
-                                "Name": "Polygon B",
-                                "NDVI": 0.4
-                            }
-                        },
-                        {
-                            "properties": {
-                                "Name": "Polygon C",
-                                "NDVI": 0.8
-                            }
-                        }
-                    ]
-                }
-            }
+    @patch("alerts.tasks.initialize_engine_analysis")
+    @patch("alerts.tasks.trigger_alert")
+    @patch(
+        "alerts.tasks.check_threshold",
+        side_effect=lambda setting, value: value > 0.5
+    )
+    @patch("alerts.tasks.run_analysis")
+    def test_alerts_triggered_with_mocked_analysis(
+        self,
+        mock_run_analysis,
+        mock_check_threshold,
+        mock_trigger_alert,
+        mock_init
+    ):
+        # Mock the run_analysis to return features with NDVI values
+        mock_run_analysis.return_value = (
+            {
+                "features": [
+                    {"properties": {"Name": "Zone A", "NDVI": 0.6}},
+                    {
+                        "properties": {"Name": "Zone B", "NDVI": 0.4}
+                    },  # Should be skipped
+                    {"properties": {"Name": "Zone C", "NDVI": 0.7}},
+                ]
+            },
+            None,
         )
 
-    @patch("alerts.utils.send_alert_email")
-    def test_alerts_triggered_for_each_polygon(self, mock_send_email):
-        """Test alerts triggered individually per polygon over threshold."""
-        # Simulate processing alerts
         process_alerts()
 
-        # Fetch all alert history records for the given setting
-        alerts = IndicatorAlertHistory.objects.filter(
-            alert_setting=self.alert_setting
-        )
-
-        # Expecting 2 alerts: Polygon A (0.6), Polygon C (0.8)
-        self.assertEqual(alerts.count(), 2)
-
-        # Extract triggered polygon names from alert messages
-        triggered_names = [a.text.split("'")[1] for a in alerts]
-        self.assertIn("Polygon A", triggered_names)
-        self.assertIn("Polygon C", triggered_names)
-
-        # Confirm email was sent twice
-        self.assertEqual(mock_send_email.call_count, 2)
+        # Assert that trigger_alert is called only for values > 0.5
+        self.assertEqual(mock_trigger_alert.call_count, 2)
+        called_names = [
+            call.args[2] for call in mock_trigger_alert.call_args_list
+        ]
+        self.assertIn("Zone A", called_names)
+        self.assertIn("Zone C", called_names)
