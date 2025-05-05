@@ -286,7 +286,7 @@ class AnalysisRasterOutput(models.Model):
     )
     # should have: analysisType, variable, landscape,
     # temporalResolution, year, month, quarter,
-    # communityName
+    # locations
     analysis = models.JSONField(default=dict)
 
     def __str__(self):
@@ -311,7 +311,14 @@ class AnalysisRasterOutput(models.Model):
                 f"{analysis.get('year')}"
             )
         variable = analysis.get('variable').lower().replace(' ', '_')
-        community = analysis.get('communityName').replace(' ', '_')
+        locations = analysis.get('locations')
+        if len(locations) > 1:
+            community = analysis.get('landscape', '').replace(' ', '_')
+        else:
+            community = locations[0].get(
+                'communityName',
+                ''
+            ).replace(' ', '_')
         return (
             f'{community}_{variable}_{analysis_type}_'
             f'{temporal_res}_{date_str}.tif'
@@ -328,7 +335,7 @@ class AnalysisRasterOutput(models.Model):
                 'year': data['period']['year'],
                 'month': data['period'].get('month'),
                 'quarter': data['period'].get('quarter'),
-                'communityName': data['communityName']
+                'locations': data['locations']
             }
         ]
         comp_years = data['comparisonPeriod']['year']
@@ -347,7 +354,7 @@ class AnalysisRasterOutput(models.Model):
                 'year': comp_year,
                 'month': comp_months[idx],
                 'quarter': comp_quarters[idx],
-                'communityName': data['communityName']
+                'locations': data['locations']
             }
             results.append(analysis)
         return results

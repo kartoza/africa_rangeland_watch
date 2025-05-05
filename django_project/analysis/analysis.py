@@ -764,7 +764,9 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
                 )
             )
         elif res == 'Monthly':
-            select_geo = selected_geos
+            select_geo = communities.filter(
+                ee.Filter.inList('Name', select_names)
+            )
             if custom_geom:
                 select_geo = (
                     ee.Geometry.Polygon(custom_geom['coordinates']) if
@@ -1833,7 +1835,10 @@ def calculate_temporal(
     ee.ImageCollection
     """
     input_layer = InputLayer()
-    selected_area = input_layer.get_selected_area(aoi, is_custom_geom)
+    selected_area = (
+        input_layer.get_selected_area(aoi, is_custom_geom) if
+        is_custom_geom else aoi
+    )
     geo = selected_area.geometry().bounds()
 
     classifier = train_bgt(
