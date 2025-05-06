@@ -48,6 +48,9 @@ class MapConfigAPI(APIView):
                 ),
                 'max_wait_analysis_run_time': (
                     preferences.max_wait_analysis_run_time
+                ),
+                'number_of_decimal_places': (
+                    preferences.number_of_decimal_places
                 )
             }
         )

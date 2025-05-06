@@ -82,6 +82,14 @@ class Preferences(SingletonModel):
         )
     )
 
+    number_of_decimal_places = models.IntegerField(
+        default=2,
+        help_text=(
+            "The number of decimal places to show in the UI, "
+            "e.g. table in Baseline Analysis results."
+        )
+    )
+
 
 class UserSession(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
