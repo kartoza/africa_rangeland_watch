@@ -37,6 +37,7 @@ const COLORS = [
 ];
 
 // Export Settings
+const EXPORT_SCALE = 5.0; // scale to 500% of original size
 const EXPORT_BASELINE_RATIO = 1.0; // no reduction
 const EXPORT_CHART_RATIO = 0.85; // reduce to 85% of original size
 const EXPORT_Y_POSITION = 10; // y position of the chart in mm
@@ -84,7 +85,7 @@ export function StatisticTable({analysis, decimalPlaces}: Props) {
 
   return (
     <Box>
-      <table id="Temporal-Statistics-Table" border={1}>
+      <table id="Temporal-Statistics-Table" border={1} cellPadding={8}>
         <thead>
           <tr>
             <th>Year</th>
@@ -453,10 +454,11 @@ export default function AnalysisResult() {
 
     // convert the clone to canvas
     const canvas = await html2canvas(clone, {
-      backgroundColor: "white"
+      backgroundColor: "white",
+      scale: EXPORT_SCALE,
     });
     document.body.removeChild(clone); 
-    const imgData = canvas.toDataURL("image/png");
+    const imgData = canvas.toDataURL("image/jpeg");
     const imgWidth = canvas.width;
     const imgHeight = canvas.height;
 
@@ -476,7 +478,7 @@ export default function AnalysisResult() {
     const y = EXPORT_Y_POSITION;
 
     // Add the chart image
-    pdf.addImage(imgData, "PNG", x, y, finalImgWidth, finalImgHeight);
+    pdf.addImage(imgData, "JPEG", x, y, finalImgWidth, finalImgHeight);
   
     let fileName = '';
     if (analysis.data.analysisType === "Baseline") {
