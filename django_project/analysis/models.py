@@ -178,6 +178,7 @@ class Project(models.Model):
     def __str__(self):
         return self.name
 
+
 class Landscape(models.Model):
     """Model that represents the landscape."""
 
