@@ -36,6 +36,11 @@ const COLORS = [
   "#008080"  // Teal
 ];
 
+// Export Settings
+const EXPORT_BASELINE_RATIO = 1.0; // no reduction
+const EXPORT_CHART_RATIO = 0.85; // reduce to 85% of original size
+const EXPORT_Y_POSITION = 10; // y position of the chart in mm
+
 const splitAndTruncateString = (str: string, maxLength: number) => {
   const words = str.split(' ');
   const maxLines = 2;
@@ -370,11 +375,11 @@ export function RenderBaseline({ analysis, decimalPlaces }: Props) {
   </Box>
 }
 
-export function RenderTemporal({ analysis }: Props) {
+export function RenderTemporal({ analysis, decimalPlaces }: Props) {
   return <Box maxWidth={400} overflowX={"auto"}>
     <BarChart analysis={analysis}></BarChart>
     <LineChart analysis={analysis}></LineChart>
-    <StatisticTable analysis={analysis}/>
+    <StatisticTable analysis={analysis} decimalPlaces={decimalPlaces}/>
   </Box>
 }
 
@@ -386,14 +391,14 @@ export function RenderSpatial({ analysis }: Props) {
 }
 
 
-export function RenderResult({ analysis }: Props) {
+export function RenderResult({ analysis, decimalPlaces }: Props) {
   switch (analysis.data.analysisType) {
     case "Baseline":
-      return <RenderBaseline analysis={analysis}/>
+      return <RenderBaseline analysis={analysis} decimalPlaces={decimalPlaces}/>
     case "Temporal":
       return <RenderTemporal analysis={analysis}/>
     case "Spatial":
-      return <RenderSpatial analysis={analysis}/>
+      return <RenderSpatial analysis={analysis} decimalPlaces={decimalPlaces}/>
     default:
       return null
   }
@@ -406,64 +411,72 @@ export default function AnalysisResult() {
     error,
     analysis
   } = useSelector((state: RootState) => state.analysis);
+  const { mapConfig } = useSelector((state: RootState) => state.mapConfig);
   const containerRef = useRef<HTMLDivElement>(null);
 
   const downloadPDF = async () => {
     if (!containerRef.current) return;
-  
-    // Hide the dashboard name and icons temporarily
-    const iconsElement = document.getElementById("download-button");
-  
+
+    const clone = containerRef.current.cloneNode(true) as HTMLDivElement;
+
+    // remove the download button
+    const iconsElement = clone.querySelector("#download-button") as HTMLDivElement;
     if (iconsElement) iconsElement.style.display = "none";
 
     // remove box shadow
-    containerRef.current.style.boxShadow = "none";
+    clone.style.boxShadow = "none";
 
-    const pdfOrientation = analysis.data.analysisType === "Baseline" ? "l" : "p";
-  
     // if Baseline, we need to expand the table
-    let originalScrollLeft = null;
-    let originalWidth = null;
     if (analysis.data.analysisType === "Baseline") {
-      const table = document.getElementById("BaselineTableContainer");
+      const table = clone.querySelector("#BaselineTableContainer") as HTMLDivElement;
       if (table) {
-        originalScrollLeft = table.scrollLeft;
-        originalWidth = table.style.width;
-
-        // Expand to full scrollable width
-        table.style.width = table.scrollWidth + 'px';
-
-        console.log('table.scrollWidth ',table.scrollWidth)
+        table.style.maxWidth = "none";
+        table.style.overflowX = "visible";
       }
     }
 
-    const canvas = await html2canvas(containerRef.current, {
+    // Copy all canvas drawings
+    const originalCanvases = containerRef.current.querySelectorAll('canvas');
+    const clonedCanvases = clone.querySelectorAll('canvas');
+
+    originalCanvases.forEach((origCanvas, i) => {
+        const clonedCanvas = clonedCanvases[i];
+        const ctx = clonedCanvas.getContext('2d');
+        ctx.drawImage(origCanvas, 0, 0);
+    });
+
+    // Set styles to avoid showing the clone
+    clone.style.position = 'absolute';
+    clone.style.top = '-9999px';
+    clone.style.left = '-9999px';
+    document.body.appendChild(clone);
+
+    // convert the clone to canvas
+    const canvas = await html2canvas(clone, {
       backgroundColor: "white"
     });
+    document.body.removeChild(clone); 
     const imgData = canvas.toDataURL("image/png");
+    const imgWidth = canvas.width;
+    const imgHeight = canvas.height;
+
+    // Create a new jsPDF instance
+    const pdfOrientation = analysis.data.analysisType === "Baseline" ? "l" : "p";
     const pdf = new jsPDF(pdfOrientation, "mm", "a4");
-  
-    // Restore the hidden elements
-    if (iconsElement) iconsElement.style.display = "block";
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
 
-    // Restore box shadow
-    containerRef.current.style.boxShadow = "0px 0px 5px 0px #00000030";
-  
-    // Restore the table width
-    if (analysis.data.analysisType === "Baseline") {
-      const table = document.getElementById("BaselineTableContainer");
-      if (table) {
-        table.style.width = originalWidth;
-        table.scrollLeft = originalScrollLeft;
-      }
-    }
+    // Calculate image dimensions while preserving aspect ratio
+    const ratio = Math.min(pageWidth / imgWidth, pageHeight / imgHeight);
+    const reducedRatio = ratio * (analysis.data.analysisType === "Baseline" ? EXPORT_BASELINE_RATIO : EXPORT_CHART_RATIO);
+    const finalImgWidth = imgWidth * reducedRatio;
+    const finalImgHeight = imgHeight * reducedRatio;
+    // center the image
+    const x = (pageWidth - finalImgWidth) / 2;
+    const y = EXPORT_Y_POSITION;
 
-    console.log(canvas.width, canvas.height)
-    const imgWidth = 200;
-    const imgHeight = (canvas.height * imgWidth) / canvas.width;
-  
     // Add the chart image
-    pdf.addImage(imgData, "PNG", 10, 10, imgWidth, imgHeight);
+    pdf.addImage(imgData, "PNG", x, y, finalImgWidth, finalImgHeight);
   
     let fileName = '';
     if (analysis.data.analysisType === "Baseline") {
@@ -515,7 +528,8 @@ export default function AnalysisResult() {
           onClick={downloadPDF} 
           colorScheme="teal" 
           aria-label="Download"
-          size="sm" 
+          size="sm"
+          disabled={loading || error !== null}
         />
       </Flex>
       {header && (
@@ -536,7 +550,7 @@ export default function AnalysisResult() {
             <Center p={16} color={'red'}>
               {error}
             </Center>
-          </Box> : <RenderResult analysis={analysis}/>
+          </Box> : <RenderResult analysis={analysis} decimalPlaces={mapConfig.number_of_decimal_places}/>
       }
     </Box>
   )
