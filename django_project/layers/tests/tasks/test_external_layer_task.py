@@ -14,6 +14,7 @@ class FetchExternalLayersTaskTests(TestCase):
         self.manual_source = ExternalLayerSource.objects.create(
             name="Manual Source",
             fetch_type="manual",
+            slug="manual",
             frequency="manual",
             provider=self.provider,
         )
@@ -21,6 +22,7 @@ class FetchExternalLayersTaskTests(TestCase):
         self.automatic_source = ExternalLayerSource.objects.create(
             name="RAMONA Source",
             fetch_type="api",
+            slug="ramona",
             frequency="weekly",
             provider=self.provider,
         )
