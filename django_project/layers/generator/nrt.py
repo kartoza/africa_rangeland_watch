@@ -107,7 +107,7 @@ class NearRealTimeGenerator(BaseLayerGenerator):
             )
             logger.error(ex)
             return None
-    
+
     def _generate_grass_cover_layer(self, nrt_img, aoi, landscape: Landscape):
         """Generate grass cover layer for a landscape."""
         try:
@@ -134,7 +134,7 @@ class NearRealTimeGenerator(BaseLayerGenerator):
             logger.error(f'_generate_grass_cover_layer failed on {landscape}')
             logger.error(ex)
             return None
-        
+
     def _generate_tree_cover_layer(self, nrt_img, aoi, landscape: Landscape):
         """Generate tree plant cover layer for a landscape."""
         try:
