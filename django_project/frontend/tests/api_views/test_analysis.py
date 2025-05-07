@@ -21,7 +21,8 @@ class AnalysisAPITest(BaseAPIViewTest):
     """Analysis api test case."""
 
     fixtures = [
-        '1.landscape.json'
+        '1.project.json',
+        '2.landscape.json'
     ]
 
     @patch('analysis.runner._temporal_analysis')
