@@ -107,6 +107,60 @@ class NearRealTimeGenerator(BaseLayerGenerator):
             )
             logger.error(ex)
             return None
+    
+    def _generate_grass_cover_layer(self, nrt_img, aoi, landscape: Landscape):
+        """Generate grass cover layer for a landscape."""
+        try:
+            classifier = train_bgt(
+                aoi,
+                GEEAsset.fetch_asset_source('random_forest_training')
+            )
+            grass = classify_bgt(nrt_img, classifier).select('grass')
+
+            grass_layer = InputLayer.objects.get(
+                name='Grass cover',
+                data_provider=self.get_provider(),
+                group__name='near-real-time'
+            )
+
+            return LayerCacheResult(
+                grass_layer,
+                grass.getMapId(
+                    self.metadata_to_vis_params(grass_layer)
+                )['tile_fetcher'].url_format,
+                f'{landscape.id}'
+            )
+        except Exception as ex:
+            logger.error(f'_generate_grass_cover_layer failed on {landscape}')
+            logger.error(ex)
+            return None
+        
+    def _generate_tree_cover_layer(self, nrt_img, aoi, landscape: Landscape):
+        """Generate tree plant cover layer for a landscape."""
+        try:
+            classifier = train_bgt(
+                aoi,
+                GEEAsset.fetch_asset_source('random_forest_training')
+            )
+            tree = classify_bgt(nrt_img, classifier).select('tree')
+
+            tree_layer = InputLayer.objects.get(
+                name='tree plant cover',
+                data_provider=self.get_provider(),
+                group__name='near-real-time'
+            )
+
+            return LayerCacheResult(
+                tree_layer,
+                tree.getMapId(
+                    self.metadata_to_vis_params(tree_layer)
+                )['tile_fetcher'].url_format,
+                f'{landscape.id}'
+            )
+        except Exception as ex:
+            logger.error(f'_generate_tree_cover_layer failed on {landscape}')
+            logger.error(ex)
+            return None
 
     def _generate(self):
         """Generate layers for Near-Real Time."""
@@ -132,5 +186,12 @@ class NearRealTimeGenerator(BaseLayerGenerator):
             bg = self._generate_bare_ground_layer(nrt_img, aoi, landscape)
             if bg:
                 results.append(bg)
+            grass = self._generate_grass_cover_layer(nrt_img, landscape)
+            if grass:
+                results.append(grass)
+
+            tree = self._generate_tree_cover_layer(nrt_img, landscape)
+            if tree:
+                results.append(tree)
 
         return results

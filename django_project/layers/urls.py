@@ -2,7 +2,8 @@ from django.urls import path
 from .views import (
     delete_layer,
     download_layer,
-    user_input_layers
+    user_input_layers,
+    trigger_cog_export,
 )
 
 urlpatterns = [
@@ -20,5 +21,10 @@ urlpatterns = [
         'download-layer/<uuid:uuid>/',
         download_layer,
         name='download_layer'
+    ),
+    path(
+        'nrt-layer/<uuid:uuid>/export/',
+        trigger_cog_export,
+        name='trigger_cog_export'
     ),
 ]

@@ -1,13 +1,17 @@
 import os
 import mimetypes
 from collections import defaultdict
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
 from django.shortcuts import render  # noqa: F401
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
+
 from django.shortcuts import get_object_or_404
 from django.http import FileResponse
 
 from cloud_native_gis.models import Layer
+from .tasks.export_nrt_cog import export_ee_image_to_cog
 from .models import InputLayer
 
 
@@ -77,3 +81,15 @@ def download_layer(request, uuid):
     response['Content-Disposition'] = f'attachment; filename="{file_name}"'
 
     return response
+
+
+@login_required
+@api_view(['POST'])
+def trigger_cog_export(request, layer_id):
+    """Trigger COG export task for a given NRT InputLayer."""
+    try:
+        layer = InputLayer.objects.get(uuid=layer_id)
+        export_ee_image_to_cog.delay(str(layer.uuid))
+        return Response({"message": "Export task triggered."})
+    except InputLayer.DoesNotExist:
+        return Response({"error": "Layer not found."}, status=404)

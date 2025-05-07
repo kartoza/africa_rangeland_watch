@@ -465,38 +465,5 @@
             "created_at": "2025-05-01T00:00:00Z",
             "updated_at": "2025-05-01T00:00:00Z"
         }
-    },
-    {
-        "model": "layers.inputlayer",
-        "pk": "3395d6f7-93a0-4481-b054-26a448275b90",
-        "fields": {
-            "name": "Grazing capacity",
-            "layer_type": "raster",
-            "data_provider": 1,
-            "url": "",
-            "group": 2,
-            "metadata": {
-                "unit": "LSU/ha",
-                "colors": [
-                    "#440154",
-                    "#472878",
-                    "#3E4A89",
-                    "#31688E",
-                    "#25838E",
-                    "#1E9E89",
-                    "#35B779",
-                    "#6CCE59",
-                    "#B5DE2C",
-                    "#FDE725"
-                ],
-                "maxValue": 0.3,
-                "minValue": 0,
-                "opacity": 0.7
-            },
-            "created_by": null,
-            "updated_by": null,
-            "created_at": "2025-05-01T00:00:00Z",
-            "updated_at": "2025-05-01T00:00:00Z"
-        }
     }
 ]
