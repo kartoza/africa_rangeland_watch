@@ -1,10 +1,8 @@
 import ee
 import logging
 import os
-import datetime
 import pandas as pd
 from django.core.management.base import BaseCommand
-from django.contrib.gis.geos import Polygon
 import json
 from analysis.analysis import (
     initialize_engine_analysis,
@@ -13,7 +11,7 @@ from analysis.analysis import (
     train_bgt,
     export_table_to_drive
 )
-from analysis.models import Landscape, Project, GEEAsset
+from analysis.models import GEEAsset
 from analysis.utils import (
     gdrive_file_list,
     gdrive_delete_folder
@@ -21,6 +19,7 @@ from analysis.utils import (
 
 
 class Command(BaseCommand):
+    """Command to pre-export monthly temporal data for Communities Area."""
     help = 'Pre-Export monthly temporal data for Communities Area.'
 
     projects = {
@@ -36,32 +35,49 @@ class Command(BaseCommand):
     }
 
     def geometry_drakensberg(self):
+        """Get the geometry for the Drakensberg Sub-Escarpment."""
         return ee.Geometry.Polygon(
-            [[[30.776846960049554, -27.785834593420404],
-            [30.776846960049554, -28.48337879171887],
-            [31.606314733487054, -28.48337879171887],
-            [31.606314733487054, -27.785834593420404]]]
+            [
+                [
+                    [30.776846960049554, -27.785834593420404],
+                    [30.776846960049554, -28.48337879171887],
+                    [31.606314733487054, -28.48337879171887],
+                    [31.606314733487054, -27.785834593420404]
+                ]
+            ]
         )
 
     def geometry_regen(self):
+        """Get the geometry for the ReGen Agric."""
         return ee.Geometry.MultiPolygon(
-            [[[[28.68534673367544, -30.458023749705003],
-            [28.68534673367544, -30.953937876315717],
-            [29.23466313992544, -30.953937876315717],
-            [29.23466313992544, -30.458023749705003]]],
-            [[[28.7890869564936, -32.05624939716554],
-            [28.7890869564936, -32.208593381736804],
-            [28.883844036571723, -32.208593381736804],
-            [28.883844036571723, -32.05624939716554]]]]
+            [
+                [
+                    [
+                        [28.68534673367544, -30.458023749705003],
+                        [28.68534673367544, -30.953937876315717],
+                        [29.23466313992544, -30.953937876315717],
+                        [29.23466313992544, -30.458023749705003]
+                    ]
+                ],
+                [
+                    [
+                        [28.7890869564936, -32.05624939716554],
+                        [28.7890869564936, -32.208593381736804],
+                        [28.883844036571723, -32.208593381736804],
+                        [28.883844036571723, -32.05624939716554]
+                    ]
+                ]
+            ]
         )
 
     def generate_temporal_assets(self, year):
+        """Generate temporal assets for the given year."""
         print(f"Generating temporal assets for year: {year}")
         input_layer = InputLayer()
-        communities = input_layer.get_communities()        
+        communities = input_layer.get_communities()
         # Define the start and end dates for the analysis
         start_date = f"{year}-01-01"
-        end_date = f"{year+1}-01-01"
+        end_date = f"{year + 1}-01-01"
         if year == 2015:
             # set start date of S2 Harmonized asset
             start_date = "2015-07-01"
@@ -106,7 +122,6 @@ class Command(BaseCommand):
                 lambda feature: feature.setGeometry(None)
             )
 
-            # print(f"Result: {monthly_table.getInfo()}")
             # export to csv in drive
             filename = f"{idx}_temporal_monthly_{year}"
             status = export_table_to_drive(
@@ -121,7 +136,7 @@ class Command(BaseCommand):
                     'status': status,
                     'year': year
                 })
-        
+
         if failed_exports:
             # dump to json
             filename = (
@@ -133,6 +148,7 @@ class Command(BaseCommand):
             print(f"Failed exports saved to {filename}")
 
     def download_csv_files(self, year):
+        """Download CSV files for the given year."""
         folder_name = 'temporal_monthly'
         if not os.path.exists(folder_name):
             os.makedirs(folder_name)
@@ -148,6 +164,7 @@ class Command(BaseCommand):
             print(f"No files found in folder: {folder_name}")
 
     def clear_csv_files(self):
+        """Clear CSV files in the temporal_monthly folder."""
         folder_name = 'temporal_monthly'
         success = gdrive_delete_folder(folder_name)
         if success:
@@ -156,6 +173,7 @@ class Command(BaseCommand):
             print(f"Failed to delete folder: {folder_name}")
 
     def merge_csv_files(self, year):
+        """Merge CSV files for the given year."""
         folder_name = 'temporal_monthly'
         dataframes = []
         total_files = 0
@@ -189,10 +207,13 @@ class Command(BaseCommand):
 
         initialize_engine_analysis()
 
-        self.generate_temporal_assets(2019)
+        self.generate_temporal_assets(2024)
 
         # Download and merge CSV files for the year 2019
         # self.download_csv_files(2019)
         # self.merge_csv_files(2019)
 
-        # next step: upload to GEE from https://code.earthengine.google.com/
+        # next steps:
+        # 1. upload to GEE from https://code.earthengine.google.com/
+        # 2. Set public access to the asset
+        # 3. update fixture 3.gee_asset.json
