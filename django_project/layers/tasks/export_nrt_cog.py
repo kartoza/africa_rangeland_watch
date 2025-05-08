@@ -11,6 +11,7 @@ from celery import shared_task
 from cloud_native_gis.models.layer import Layer
 from layers.models import InputLayer
 from analysis.utils import get_gdrive_file, delete_gdrive_file
+from layers.utils import get_nrt_image
 
 
 @shared_task(name="export_ee_image_to_cog")
@@ -22,11 +23,7 @@ def export_ee_image_to_cog(input_layer_id, export_folder="ARW-NRT-Exports"):
         # Load InputLayer
         input_layer = InputLayer.objects.get(uuid=input_layer_id)
 
-        # Define Earth Engine image - this part depends on your implementation.
-        # You can customize this to use a factory, or pass serialized params.
-        ee_image = ee.Image(
-            input_layer.metadata["eeAssetId"]
-        )  # Optional field in metadata
+        ee_image, region = get_nrt_image(input_layer)
         file_name = (
             f"{input_layer.name.replace(' ', '_')}_{input_layer_id}.tif"
         )
@@ -37,7 +34,7 @@ def export_ee_image_to_cog(input_layer_id, export_folder="ARW-NRT-Exports"):
             "folder": export_folder,
             "fileNamePrefix": file_name.replace(".tif", ""),
             "scale": 30,
-            "region": ee_image.geometry(),  # or define a clipped AOI
+            "region": region,
             "fileFormat": "GeoTIFF",
             "formatOptions": {"cloudOptimized": True},
         }
