@@ -1982,8 +1982,7 @@ def calculate_temporal_to_img(
     geo = selected_area.geometry().bounds()
 
     col = get_sentinel_by_resolution(
-        geo, start_date, end_date, resolution, resolution_step,
-        sentinel2_asset_key='sentinel2_harmonized'
+        geo, start_date, end_date, resolution, resolution_step
     )
 
     if band == 'bare':
