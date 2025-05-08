@@ -16,7 +16,8 @@ class LandscapeAPITest(BaseAPIViewTest):
     """Landscape api test case."""
 
     fixtures = [
-        '1.landscape.json'
+        '1.project.json',
+        '2.landscape.json'
     ]
 
     def test_get_landscape_list(self):
