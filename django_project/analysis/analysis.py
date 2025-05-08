@@ -5,6 +5,8 @@ from dateutil.relativedelta import relativedelta
 
 import ee
 import os
+from functools import reduce
+
 from analysis.models import AnalysisResultsCache, GEEAsset
 
 SERVICE_ACCOUNT_KEY = os.environ.get('SERVICE_ACCOUNT_KEY', '')
@@ -572,7 +574,7 @@ def get_rel_diff(
         reference_layer: dict
 ):
     """
-    Get relative difference between reference layer and
+    Get relative difference between reference layer.
     """
     # Select the image layer from the spatial layer dictionary
     # based on the variable in analysisDict
@@ -601,6 +603,83 @@ def get_rel_diff(
                 .divide(ee.Image(mean))
                 .multiply(ee.Image(100)))
     return rel_diff
+
+
+def run_monthly_analysis(
+        start_date, end_date, select_geo, is_custom_geom,
+        select_names, analysis_cache
+):
+    """Run monthly analysis."""
+    current_date = datetime.datetime.now().date()
+    # use start date of 2015-01-01
+    date_ranges = _split_dates_by_year(
+        datetime.date(2015, 1, 1),
+        end_date
+    )
+
+    # Map function to create a 'date' property
+    def add_date(ft):
+        date = ee.Date.parse(
+            'yyyy-MM-dd',
+            ee.String(ft.get('year')).cat(ee.String('-01-01'))
+        ).advance(
+            ee.Number(ft.get('month')), 'months'
+        ).advance(-1, 'months')
+        return ft.set('date', date.millis())
+
+    collections = []
+    for year_start, year_end in date_ranges:
+        if year_start.year == current_date.year:
+            # add 1 month
+            test_dt = (
+                year_end + relativedelta(months=1)
+            ).isoformat()
+            monthly_table = calculate_temporal(
+                select_geo,
+                year_start.isoformat(),
+                test_dt,
+                resolution='month',
+                resolution_step=1,
+                is_custom_geom=is_custom_geom
+            )
+            monthly_table = monthly_table.map(
+                lambda feature: feature.setGeometry(None)
+            )
+        else:
+            asset_key = f'monthly_temporal_{year_start.year}'
+            asset = GEEAsset.fetch_asset_source(asset_key)
+            monthly_table = ee.FeatureCollection(asset)
+            monthly_table = monthly_table.filter(
+                ee.Filter.inList('Name', select_names)
+            )
+
+        monthly_table = monthly_table.select(
+            ['Name', 'ndvi', 'evi', 'bare', 'year', 'month'],
+            ['Name', 'NDVI', 'EVI', 'Bare ground', 'year', 'month']
+        )
+
+        monthly_table = monthly_table.map(add_date)
+        collections.append(monthly_table)
+
+    # Merge them all into one
+    merged_fc = reduce(lambda x, y: x.merge(y), collections)
+    to_plot_ts = merged_fc.sort('Name').sort('date')
+    # For plotting, just use the reference periods
+    date_list_ee = ee.List(
+        [
+            start_date.isoformat(),
+            end_date.isoformat()
+        ]
+    ).map(lambda d: ee.Date(d).millis())
+    to_plot = to_plot_ts.filter(
+        ee.Filter.inList('date', date_list_ee)
+    )
+    return analysis_cache.create_analysis_cache(
+        (
+            to_plot.getInfo(),
+            to_plot_ts.getInfo()
+        )
+    )
 
 
 def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
@@ -777,56 +856,13 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
             test_month = int(analysis_dict['Temporal']['Monthly']['test'])
             baseline_dt = datetime.date(
                 baseline_yr, baseline_month, 1
-            ).isoformat()
-            # advance 1 month test_dt to include last month
-            test_dt = (
-                datetime.date(test_yr, test_month, 1) + relativedelta(months=1)
-            ).isoformat()
-            monthly_table = calculate_temporal(
-                select_geo,
-                baseline_dt,
-                test_dt,
-                resolution='month',
-                resolution_step=1,
-                is_custom_geom=(custom_geom is not None)
             )
-            monthly_table = monthly_table.map(
-                lambda feature: feature.setGeometry(None)
+            test_dt = datetime.date(
+                test_yr, test_month, 1
             )
-            # Format the table correctly
-            monthly_table = monthly_table.select(
-                ['Name', 'ndvi', 'evi', 'bare', 'year', 'month'],
-                ['Name', 'NDVI', 'EVI', 'Bare ground', 'year', 'month']
-            )
-
-            # Map function to create a 'date' property
-            def add_date(ft):
-                date = ee.Date.parse(
-                    'yyyy-MM-dd',
-                    ee.String(ft.get('year')).cat(ee.String('-01-01'))
-                ).advance(
-                    ee.Number(ft.get('month')), 'months'
-                ).advance(-1, 'months')
-                return ft.set('date', date.millis())
-            monthly_table = monthly_table.map(add_date)
-            monthly_table = monthly_table.map(
-                lambda feature: feature.setGeometry(None)
-            )
-            date_list_ee = ee.List(
-                [
-                    baseline_dt,
-                    datetime.date(test_yr, test_month, 1).isoformat()
-                ]
-            ).map(lambda d: ee.Date(d).millis())
-            to_plot_ts = monthly_table.sort('Name').sort('date')
-            to_plot = to_plot_ts.filter(
-                ee.Filter.inList('date', date_list_ee)
-            )
-            return analysis_cache.create_analysis_cache(
-                (
-                    to_plot.getInfo(),
-                    to_plot_ts.getInfo()
-                )
+            return run_monthly_analysis(
+                baseline_dt, test_dt, select_geo, custom_geom is not None,
+                select_names, analysis_cache
             )
         else:
             to_plot = temporal_table_yr.filter(
@@ -1307,6 +1343,25 @@ def get_latest_stats(geo, communities_select):
     return feats
 
 
+def _start_export_task(task: ee.batch.Task, description):
+    task.start()
+    print(f"Export task '{description}' started.")
+
+    while task.active():
+        status = task.status()
+        print(f"Task status: {status['state']}")
+        time.sleep(10)
+
+    final_status = task.status()
+    print(f"Final task status: {final_status['state']}")
+    if final_status['state'] == 'COMPLETED':
+        print('Export completed successfully.')
+    else:
+        print('Export failed. Details:')
+        print(final_status)
+    return final_status
+
+
 # TODO : Export image to google cloud storage
 def export_image_to_drive(
         image,
@@ -1361,22 +1416,33 @@ def export_image_to_drive(
         }
     )
 
-    task.start()
-    print(f"Export task '{description}' started.")
+    return _start_export_task(task, description)
 
-    while task.active():
-        status = task.status()
-        print(f"Task status: {status['state']}")
-        time.sleep(10)
 
-    final_status = task.status()
-    print(f"Final task status: {final_status['state']}")
-    if final_status['state'] == 'COMPLETED':
-        print('Export completed successfully.')
-    else:
-        print('Export failed. Details:')
-        print(final_status)
-    return final_status
+def export_table_to_drive(feature_collection, description, folder):
+    """
+    Exports a FeatureCollection to Google Drive.
+
+    Parameters
+    ----------
+    feature_collection : ee.FeatureCollection
+        The FeatureCollection to export.
+    description : str
+        Description of the export task.
+    folder : str
+        Google Drive folder where the file will be saved.
+
+    Returns
+    -------
+    None
+    """
+    task = ee.batch.Export.table.toDrive(
+        collection=feature_collection,
+        description=description,
+        folder=folder,
+        fileFormat='CSV'
+    )
+    return _start_export_task(task, description)
 
 
 def spatial_get_date_filter(analysis_dict):
@@ -1805,7 +1871,8 @@ def get_sentinel_by_resolution(
     ee.ImageCollection
     """
     sentinel_2 = get_s2_cloud_masked(
-        aoi, start_date, end_date, scene_cloud_threshold=50
+        aoi, start_date, end_date, scene_cloud_threshold=50,
+        sentinel2_asset_key='sentinel2_harmonized'
     )
     sent_quarterly = (
         quarterly_medians(
@@ -1934,3 +2001,19 @@ def calculate_temporal_to_img(
 
     col = col.select(band)
     return col
+
+
+def _split_dates_by_year(start_date: datetime.date, end_date: datetime.date):
+    if start_date > end_date:
+        raise ValueError("start_date must be before or equal to end_date")
+
+    current_year = start_date.year
+    results = []
+
+    while current_year <= end_date.year:
+        year_start = max(start_date, datetime.date(current_year, 1, 1))
+        year_end = min(end_date, datetime.date(current_year, 12, 31))
+        results.append((year_start, year_end))
+        current_year += 1
+
+    return results
