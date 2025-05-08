@@ -5,6 +5,7 @@ from dateutil.relativedelta import relativedelta
 
 import ee
 import os
+
 from analysis.models import AnalysisResultsCache, GEEAsset
 
 SERVICE_ACCOUNT_KEY = os.environ.get('SERVICE_ACCOUNT_KEY', '')
@@ -1298,6 +1299,25 @@ def get_latest_stats(geo, communities_select):
     return feats
 
 
+def _start_export_task(task: ee.batch.Task, description):
+    task.start()
+    print(f"Export task '{description}' started.")
+
+    while task.active():
+        status = task.status()
+        print(f"Task status: {status['state']}")
+        time.sleep(10)
+
+    final_status = task.status()
+    print(f"Final task status: {final_status['state']}")
+    if final_status['state'] == 'COMPLETED':
+        print('Export completed successfully.')
+    else:
+        print('Export failed. Details:')
+        print(final_status)
+    return final_status
+
+
 # TODO : Export image to google cloud storage
 def export_image_to_drive(
         image,
@@ -1352,22 +1372,33 @@ def export_image_to_drive(
         }
     )
 
-    task.start()
-    print(f"Export task '{description}' started.")
+    return _start_export_task(task, description)
 
-    while task.active():
-        status = task.status()
-        print(f"Task status: {status['state']}")
-        time.sleep(10)
 
-    final_status = task.status()
-    print(f"Final task status: {final_status['state']}")
-    if final_status['state'] == 'COMPLETED':
-        print('Export completed successfully.')
-    else:
-        print('Export failed. Details:')
-        print(final_status)
-    return final_status
+def export_table_to_drive(feature_collection, description, folder):
+    """
+    Exports a FeatureCollection to Google Drive.
+
+    Parameters
+    ----------
+    feature_collection : ee.FeatureCollection
+        The FeatureCollection to export.
+    description : str
+        Description of the export task.
+    folder : str
+        Google Drive folder where the file will be saved.
+
+    Returns
+    -------
+    None
+    """
+    task = ee.batch.Export.table.toDrive(
+        collection=feature_collection,
+        description=description,
+        folder=folder,
+        fileFormat='CSV'
+    )
+    return _start_export_task(task, description)
 
 
 def spatial_get_date_filter(analysis_dict):
@@ -1796,7 +1827,8 @@ def get_sentinel_by_resolution(
     ee.ImageCollection
     """
     sentinel_2 = get_s2_cloud_masked(
-        aoi, start_date, end_date, scene_cloud_threshold=50
+        aoi, start_date, end_date, scene_cloud_threshold=50,
+        sentinel2_asset_key='sentinel2_harmonized'
     )
     sent_quarterly = (
         quarterly_medians(
@@ -1901,7 +1933,8 @@ def calculate_temporal_to_img(
     geo = selected_area.geometry().bounds()
 
     col = get_sentinel_by_resolution(
-        geo, start_date, end_date, resolution, resolution_step
+        geo, start_date, end_date, resolution, resolution_step,
+        sentinel2_asset_key='sentinel2_harmonized'
     )
 
     if band == 'bare':
