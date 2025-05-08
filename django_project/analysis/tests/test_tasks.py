@@ -16,7 +16,7 @@ from analysis.models import UserAnalysisResults, AnalysisRasterOutput
 class TestStoreAnalysisRasterOutput(TestCase):
 
     fixtures = [
-        '2.gee_asset.json',
+        '3.gee_asset.json',
         '1.layer_group_type.json',
         '2.data_provider.json',
         '3.input_layer.json'

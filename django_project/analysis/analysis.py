@@ -897,7 +897,8 @@ def add_indices(image):
 
 def get_s2_cloud_masked(
     aoi, start_date, end_date,
-    scene_cloud_threshold=None, cloud_mask_probability=None
+    scene_cloud_threshold=None, cloud_mask_probability=None,
+    sentinel2_asset_key='sentinel2_sr_harmonized'
 ):
     """
     Retrieves a cloud-masked Sentinel-2 image collection over
@@ -911,7 +912,15 @@ def get_s2_cloud_masked(
         The start date (inclusive) in 'YYYY-MM-DD' format.
     end_date : str
         The end date (exclusive) in 'YYYY-MM-DD' format.
-
+    scene_cloud_threshold : float, optional
+        The maximum allowable cloud percentage for the images.
+        Default is 20.
+    cloud_mask_probability : float, optional
+        The probability threshold for cloud masking.
+        Default is 30.
+    sentinel2_asset_key : str, optional
+        The asset key for the Sentinel-2 image collection.
+        Default is 'sentinel2_sr_harmonized'.
     Returns
     -------
     ee.ImageCollection
@@ -936,12 +945,12 @@ def get_s2_cloud_masked(
         cloud_mask_probability or DEFAULT_CLOUD_MASK_PROBABILITY
     )
     s2_sr = ee.ImageCollection(
-        GEEAsset.fetch_asset_source('sentinel2_harmonized')
+        GEEAsset.fetch_asset_source(sentinel2_asset_key)
     ) \
         .filterBounds(aoi) \
         .filterDate(start_date, end_date) \
         .filter(
-            ee.Filter.lte('CLOUDY_PIXEL_PERCENTAGE', scene_cloud_threshold))
+            ee.Filter.lt('CLOUDY_PIXEL_PERCENTAGE', scene_cloud_threshold))
 
     s2_clouds = ee.ImageCollection(
         GEEAsset.fetch_asset_source('sentinel2_clouds')
@@ -1842,7 +1851,7 @@ def get_sentinel_by_resolution(
 
 def calculate_temporal(
     aoi, start_date, end_date, resolution, resolution_step,
-    is_custom_geom=False
+    is_custom_geom=False, classifier=None
 ):
     """
     Calculate temporal timeseries stats.
@@ -1852,15 +1861,18 @@ def calculate_temporal(
     aoi : ee.Polygon or ee.FeatureCollection
         Polygon area of interest.
     start_date : str
-        Start date to calculate baseline.
+        Start date to calculate temporal analysis.
     end_date : str
-        End date to calculate baseline.
+        End date to calculate temporal analysis.
     resolution : str
         Temporal resolution: month or year.
     resolution_step : str
         Resolution: 1 for each month or 3 for quarterly.
     is_custom_geom : boolean
         If False, then use Communities polygon that intersects with aoi.
+    classifier : ee.Classifier
+        A trained classifier to apply to the image.
+        If None, a new classifier will be trained.
 
     Returns
     -------
@@ -1873,9 +1885,11 @@ def calculate_temporal(
     )
     geo = selected_area.geometry().bounds()
 
-    classifier = train_bgt(
-        geo, GEEAsset.fetch_asset_source('random_forest_training')
-    )
+    # Get the classifier
+    if classifier is None:
+        classifier = train_bgt(
+            geo, GEEAsset.fetch_asset_source('random_forest_training')
+        )
     col = get_sentinel_by_resolution(
         geo, start_date, end_date, resolution, resolution_step
     )

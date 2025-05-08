@@ -166,6 +166,19 @@ class Analysis(models.Model):
         return f"Analysis {self.uuid}"
 
 
+class Project(models.Model):
+    """Model to represent a project."""
+
+    name = models.CharField(
+        max_length=512,
+        unique=True,
+        help_text="The name of the project."
+    )
+
+    def __str__(self):
+        return self.name
+
+
 class Landscape(models.Model):
     """Model that represents the landscape."""
 
@@ -192,8 +205,20 @@ class Landscape(models.Model):
         help_text="Zoom level of the landscape."
     )
 
+    projects = models.ManyToManyField(
+        Project,
+        related_name='landscapes',
+        blank=True,
+        help_text="The projects associated with this landscape."
+    )
+
     def __str__(self):
         return self.name
+
+    @property
+    def project_names(self):
+        """Get the names of the projects associated with this landscape."""
+        return ', '.join([project.name for project in self.projects.all()])
 
     class Meta:  # noqa: D106
         ordering = ('name',)
@@ -209,8 +234,9 @@ class Landscape(models.Model):
         communities = ee.FeatureCollection(
             'projects/ee-yekelaso1818/assets/CSA/CSA_master_20241202'
         )
+        projects = [project.name for project in self.projects.all()]
         communities = communities.filter(
-            ee.Filter.eq('Project', self.project_name)
+            ee.Filter.inList('Project', projects)
         )
         communities = communities.getInfo()['features']
         for community in communities:

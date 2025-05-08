@@ -24,7 +24,7 @@
     "pk": 3,
     "fields": {
         "key": "communities",
-        "source": "projects/ee-yekelaso1818/assets/CSA/CSA_master_20241007",
+        "source": "projects/ee-yekelaso1818/assets/CSA/CSA_master_20241202",
         "type": "table",
         "metadata": {}
     }
@@ -93,7 +93,7 @@
     "pk": 9,
     "fields": {
         "key": "sentinel2_harmonized",
-        "source": "COPERNICUS/S2_SR_HARMONIZED",
+        "source": "COPERNICUS/S2_HARMONIZED",
         "type": "image_collection",
         "metadata": {}
     }
@@ -248,6 +248,16 @@
             "start_date": "2000-02-18",
             "end_date": "2025-02-18"
         }
+    }
+},
+{
+    "model": "analysis.geeasset",
+    "pk": 24,
+    "fields": {
+        "key": "sentinel2_sr_harmonized",
+        "source": "COPERNICUS/S2_SR_HARMONIZED",
+        "type": "image_collection",
+        "metadata": {}
     }
 }
 ]
