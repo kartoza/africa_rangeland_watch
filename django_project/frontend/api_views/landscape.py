@@ -6,13 +6,16 @@ Africa Rangeland Watch (ARW).
 """
 from cloud_native_gis.utils.vector_tile import querying_vector_tile
 from django.http import Http404, HttpResponse
+from rest_framework import filters
 from rest_framework.decorators import action
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.viewsets import mixins, GenericViewSet
 
 from analysis.models import Landscape, LandscapeCommunity
 from core.pagination import Pagination
-from frontend.serializers.landscape import LandscapeSerializer
+from frontend.serializers.landscape import (
+    LandscapeSerializer, LandscapeCommunitySerializer
+)
 from layers.models import InputLayer
 
 
@@ -62,3 +65,14 @@ class LandscapeViewSet(
         if not len(tiles):
             raise Http404()
         return HttpResponse(tiles, content_type="application/x-protobuf")
+
+
+class LandscapeCommunityViewSet(mixins.ListModelMixin, GenericViewSet):
+    """ViewSet to list landscape communities."""
+    queryset = LandscapeCommunity.objects.all()\
+        .select_related("landscape")\
+        .order_by("landscape__name", "community_name")
+    serializer_class = LandscapeCommunitySerializer
+    permission_classes = [IsAuthenticated]
+    filter_backends = [filters.SearchFilter]
+    search_fields = ["landscape__name", "community_name"]

@@ -5,6 +5,7 @@ from .views import (
     IndicatorAlertHistoryViewSet,
     CategorizedAlertsView,
 )
+from frontend.api_views.landscape import LandscapeCommunityViewSet
 
 router = DefaultRouter()
 router.register(
@@ -26,6 +27,11 @@ router.register(
     r'categorized-alerts',
     CategorizedAlertsView,
     basename='categorized-alert'
+)
+router.register(
+    r'landscape-communities',
+    LandscapeCommunityViewSet,
+    basename='landscape-communities'
 )
 
 urlpatterns = router.urls

@@ -282,7 +282,7 @@ class LandscapeCommunity(models.Model):
 
     def __str__(self):
         """Return string representation of LandscapeArea."""
-        return self.community_name
+        return self.community_name or "Unknown"
 
 
 class AnalysisRasterOutput(models.Model):
