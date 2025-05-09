@@ -1,5 +1,8 @@
 from django.contrib import admin
-from .models import AlertSetting, IndicatorAlertHistory, Indicator
+from .models import (
+    AlertSetting, IndicatorAlertHistory, Indicator,
+    NotificationReadStatus
+)
 
 
 @admin.register(AlertSetting)
@@ -47,3 +50,8 @@ class IndicatorAlertHistoryAdmin(admin.ModelAdmin):
 class IndicatorAdmin(admin.ModelAdmin):
     list_display = ('name',)
     search_fields = ('name',)
+
+
+@admin.register(NotificationReadStatus)
+class NotificationReadStatusAdmin(admin.ModelAdmin):
+    list_display = ('user', 'notification', 'read_at')

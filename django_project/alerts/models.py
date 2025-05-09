@@ -138,3 +138,17 @@ class IndicatorAlertHistory(models.Model):
         verbose_name = "Indicator Alert History"
         verbose_name_plural = "Indicator Alert Histories"
         ordering = ['-created_at']
+
+
+class NotificationReadStatus(models.Model):
+    """Model to track the read status of notifications."""
+
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    notification = models.ForeignKey(
+        IndicatorAlertHistory, on_delete=models.CASCADE
+    )
+    read_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        """Meta class for the NotificationReadStatus model."""
+        unique_together = ("user", "notification")

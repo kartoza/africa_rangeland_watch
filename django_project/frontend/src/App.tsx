@@ -12,6 +12,7 @@ import store from "./store";
 import ProjectRoutes from "./Routes";
 import { SessionProvider } from "./sessionProvider";
 import { MapProvider } from './MapContext';
+import { NotificationProvider } from "./components/NotificationContext";
 
 Sentry.init({
     dsn: (window as any).sentryDsn,
@@ -43,11 +44,13 @@ function App() {
       <ChakraProvider theme={theme}>
         <Provider store={store}>
           <SessionProvider>
-            <MapProvider>
-              <Router>
-                <ProjectRoutes />
-              </Router>
-            </MapProvider>
+            <NotificationProvider>
+              <MapProvider>
+                <Router>
+                  <ProjectRoutes />
+                </Router>
+              </MapProvider>
+            </NotificationProvider>
           </SessionProvider>
         </Provider>
       </ChakraProvider>

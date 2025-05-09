@@ -1,8 +1,12 @@
+from unittest.mock import patch
 from django.contrib.auth.models import User
+from django.test import TestCase
 from rest_framework.test import APITestCase
 from rest_framework import status
 from alerts.models import Indicator, AlertSetting, IndicatorAlertHistory
 from base.models import Organisation, UserOrganisations
+from alerts.utils import trigger_alert
+from alerts.tasks import process_alerts
 
 
 class IndicatorTests(APITestCase):
@@ -54,7 +58,10 @@ class IndicatorAlertHistoryTests(APITestCase):
 
     def setUp(self):
         self.user = User.objects.create_user(
-            username='testuser', password='testpass')
+            username='testuser',
+            password='testpass',
+            email='testuser@example.com'
+        )
         self.client.force_authenticate(user=self.user)
         self.indicator = Indicator.objects.create(name="Temperature")
         self.alert_setting = AlertSetting.objects.create(
@@ -82,6 +89,25 @@ class IndicatorAlertHistoryTests(APITestCase):
         response = self.client.get('/api/alert-histories/')
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 7)
+
+    def test_trigger_alert_creates_history_and_sends_email(self):
+        """Test that trigger_alert creates a history and sends email."""
+        with patch("alerts.utils.send_alert_email") as mock_send_email:
+            self.alert_setting.email_alert = True
+            self.alert_setting.save()
+
+            trigger_alert(self.alert_setting, "Polygon A", 0.6)
+
+            # Assert IndicatorAlertHistory was created
+            histories = IndicatorAlertHistory.objects.filter(
+                alert_setting=self.alert_setting
+            )
+            self.assertTrue(histories.exists())
+            new_history = histories.exclude(id=self.alert_history.id).last()
+            self.assertIn("Polygon A", new_history.text)
+
+            # Assert send_alert_email was called
+            mock_send_email.assert_called_once()
 
 
 class CategorizedAlertsViewTests(APITestCase):
@@ -195,3 +221,60 @@ class CategorizedAlertsViewTests(APITestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertGreaterEqual(len(response.data), 2)
+
+
+class ProcessAlertsTest(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            username="tester",
+            password="pass"
+        )
+        self.indicator = Indicator.objects.create(name="NDVI")
+
+        self.alert_setting = AlertSetting.objects.create(
+            name="Test Alert",
+            indicator=self.indicator,
+            user=self.user,
+            threshold_value=0.5,
+            threshold_comparison=2,  # Greater than
+            enable_alert=True,
+            email_alert=False,
+        )
+
+    @patch("alerts.tasks.initialize_engine_analysis")
+    @patch("alerts.tasks.trigger_alert")
+    @patch(
+        "alerts.tasks.check_threshold",
+        side_effect=lambda setting, value: value > 0.5
+    )
+    @patch("alerts.tasks.run_analysis")
+    def test_alerts_triggered_with_mocked_analysis(
+        self,
+        mock_run_analysis,
+        mock_check_threshold,
+        mock_trigger_alert,
+        mock_init
+    ):
+        # Mock the run_analysis to return features with NDVI values
+        mock_run_analysis.return_value = (
+            {
+                "features": [
+                    {"properties": {"Name": "Zone A", "NDVI": 0.6}},
+                    {
+                        "properties": {"Name": "Zone B", "NDVI": 0.4}
+                    },  # Should be skipped
+                    {"properties": {"Name": "Zone C", "NDVI": 0.7}},
+                ]
+            },
+            None,
+        )
+
+        process_alerts()
+
+        # Assert that trigger_alert is called only for values > 0.5
+        self.assertEqual(mock_trigger_alert.call_count, 2)
+        called_names = [
+            call.args[2] for call in mock_trigger_alert.call_args_list
+        ]
+        self.assertIn("Zone A", called_names)
+        self.assertIn("Zone C", called_names)
