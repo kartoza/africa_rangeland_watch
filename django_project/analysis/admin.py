@@ -13,10 +13,19 @@ from .models import (
     GEEAsset,
     AnalysisResultsCache,
     AnalysisRasterOutput,
-    AnalysisTask
+    AnalysisTask,
+    Project
 )
 from analysis.utils import get_gdrive_file
 from analysis.tasks import generate_temporal_analysis_raster_output
+
+
+@admin.register(Project)
+class ProjectAdmin(admin.ModelAdmin):
+    """Admin for Project model."""
+
+    list_display = ('name',)
+    search_fields = ('name',)
 
 
 @admin.register(Analysis)
@@ -92,7 +101,7 @@ def fetch_landscape_area(modeladmin, request, queryset):
 class LandscapeAdmin(OSMGeoAdmin):
     """Admin for landscape model."""
 
-    list_display = ('name', 'project_name')
+    list_display = ('name', 'project_names')
     search_fields = ('name',)
 
     map_template = 'gis/admin/osm.html'

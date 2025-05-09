@@ -143,6 +143,16 @@ export default function Sidebar(props: Props) {
           </MenuItem>
           <MenuItem
             style={{
+              backgroundColor: isActive("/earthranger/events")
+                ? "#a8d159"
+                : "transparent",
+            }}
+            onClick={() => navigate("/earthranger/events")}
+          >
+            Earthranger Events
+          </MenuItem>
+          <MenuItem
+            style={{
               backgroundColor: isActive("/uploaded-resources")
                 ? "#a8d159"
                 : "transparent",

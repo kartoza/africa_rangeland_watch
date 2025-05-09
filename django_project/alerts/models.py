@@ -36,6 +36,14 @@ class AlertSetting(models.Model):
         on_delete=models.CASCADE,
     )
 
+    location = models.ForeignKey(
+        'analysis.LandscapeCommunity',
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        help_text="Location to which this alert applies."
+    )
+
     enable_alert = models.BooleanField(
         default=False,
         help_text="Indicates if the alert is enabled."

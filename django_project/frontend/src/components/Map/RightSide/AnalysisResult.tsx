@@ -1,13 +1,17 @@
-import React from 'react';
-import { Box, Center, Spinner, Table, Text } from "@chakra-ui/react";
+import React, { useRef } from 'react';
+import { Box, Center, Spinner, Table, Text, Flex, IconButton } from "@chakra-ui/react";
+import { FiDownload } from "react-icons/fi";
 import { useSelector } from "react-redux";
 import { RootState } from "../../../store";
 import { Analysis } from "../../../store/analysisSlice";
 import { Bar, Line } from "react-chartjs-2";
 import { CategoryScale } from "chart.js";
 import Chart from "chart.js/auto";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas";
 import {FeatureCollection} from "geojson";
 import 'chartjs-adapter-date-fns';
+import { getTrendLineData, formatMonthYear } from "../../../utils/chartUtils";
 
 import './style.css';
 
@@ -15,8 +19,10 @@ Chart.register(CategoryScale);
 
 interface Props {
   analysis: Analysis;
+  decimalPlaces?: number;
 }
 
+const DEFAULT_DECIMAL_PLACES = 3;
 const COLORS = [
   "#FF0000", // Red
   "#0000FF", // Blue
@@ -29,6 +35,12 @@ const COLORS = [
   "#00FF00", // Lime
   "#008080"  // Teal
 ];
+
+// Export Settings
+const EXPORT_SCALE = 5.0; // scale to 500% of original size
+const EXPORT_BASELINE_RATIO = 1.0; // no reduction
+const EXPORT_CHART_RATIO = 0.85; // reduce to 85% of original size
+const EXPORT_Y_POSITION = 10; // y position of the chart in mm
 
 const splitAndTruncateString = (str: string, maxLength: number) => {
   const words = str.split(' ');
@@ -47,9 +59,10 @@ const splitAndTruncateString = (str: string, maxLength: number) => {
 }
 
 
-export function StatisticTable({analysis}: Props) {
+export function StatisticTable({analysis, decimalPlaces}: Props) {
   const statistics = analysis.results[0].statistics;
   const variable = analysis.data.variable;
+  const _decimalPlaces = decimalPlaces || DEFAULT_DECIMAL_PLACES;
 
   const renderRows = () => {
     const rows: any[] = [];
@@ -60,9 +73,9 @@ export function StatisticTable({analysis}: Props) {
           <tr key={`${year}-${area}`}>
             <td>{year}</td>
             <td>{area}</td>
-            <td>{data.min !== null ? data.min.toFixed(3) : 'N/A'}</td>
-            <td>{data.max !== null ? data.max.toFixed(3) : 'N/A'}</td>
-            <td>{data.mean !== null ? data.mean.toFixed(3) : 'N/A'}</td>
+            <td>{data.min !== null ? data.min.toFixed(_decimalPlaces) : 'N/A'}</td>
+            <td>{data.max !== null ? data.max.toFixed(_decimalPlaces) : 'N/A'}</td>
+            <td>{data.mean !== null ? data.mean.toFixed(_decimalPlaces) : 'N/A'}</td>
           </tr>
         );
       });
@@ -72,7 +85,7 @@ export function StatisticTable({analysis}: Props) {
 
   return (
     <Box>
-      <table id="Temporal-Statistics-Table" border={1}>
+      <table id="Temporal-Statistics-Table" border={1} cellPadding={8}>
         <thead>
           <tr>
             <th>Year</th>
@@ -88,11 +101,6 @@ export function StatisticTable({analysis}: Props) {
       </table>
     </Box>
   );
-}
-
-function formatMonthYear(month: number, year: number) {
-  const date = new Date(year, month - 1); // Month is zero-based in JS Date
-  return new Intl.DateTimeFormat('en-US', { month: 'long', year: 'numeric' }).format(date);
 }
 
 
@@ -176,7 +184,6 @@ export function BarChart({ analysis }: Props) {
 
 export function LineChart({ analysis }: Props) {
   // Extracting data for the chart
-
   const jsonData = analysis.results[1];
   if (jsonData.features.length == 0) {
     return
@@ -205,8 +212,19 @@ export function LineChart({ analysis }: Props) {
     datasets[key] = {
       label: key,
       data: data,
-      backgroundColor: COLORS[i % COLORS.length]
+      backgroundColor: COLORS[i % COLORS.length],
+      fill: false,
     };
+
+    datasets[`trends_${i}`] = {
+      label: '',
+      data: getTrendLineData(data),
+      borderColor: i % 2 === 0 ? "blue" : "red",
+      fill: false,
+      pointRadius: 0,
+      pointHoverRadius: 0,
+      tension: 0,
+    }
   }
 
   let chartData:any = {
@@ -240,6 +258,11 @@ export function LineChart({ analysis }: Props) {
     plugins: {
       legend: {
         position: 'top',
+        labels: {
+          filter: function (item: any, chartData: any) {
+            return item.text !== '';
+          }
+        }
       },
     },
   };
@@ -304,13 +327,28 @@ function SpatialBarChart({ analysis }: Props) {
 }
 
 
-export function RenderBaseline({ analysis }: Props) {
-  const keys = Object.keys(analysis.results.columns)
-  return <Box maxWidth={400} overflowX={"auto"}>
+export function RenderBaseline({ analysis, decimalPlaces }: Props) {
+  const _decimalPlaces = decimalPlaces || DEFAULT_DECIMAL_PLACES;
+  const excludeColumns: string[] = [
+    'system:index',
+    'Project'
+  ];
+  let keys: string[] = ['Name'];
+  const _keys = Object.keys(analysis.results.columns);
+  for (let i = 0; i < _keys.length; i++) {
+    const key = _keys[i];
+    if (keys.includes(key)) {
+      continue;
+    }
+    if (excludeColumns.includes(key)) {
+      continue;
+    }
+    keys.push(key);
+  }
+  return <Box id="BaselineTableContainer" maxWidth={400} overflowX={"auto"}>
     <Table className='BaselineAnalysisResultTable' cellPadding={8}>
       <thead>
       <tr>
-        <th>Name</th>
         {
           keys.map(
             (column: string) => <th key={column}>{column}</th>
@@ -323,11 +361,10 @@ export function RenderBaseline({ analysis }: Props) {
         analysis.results.features.map((feature: any, index: any) => {
           const properties = feature.properties;
           return <tr key={index}>
-            <td>{properties.Name}</td>
             {
               keys.map(
                 (column: string) => <td key={column}>
-                  {properties[column]}
+                  {typeof properties[column] === 'number' ? properties[column].toFixed(_decimalPlaces) : properties[column]}
                 </td>
               )
             }
@@ -339,11 +376,11 @@ export function RenderBaseline({ analysis }: Props) {
   </Box>
 }
 
-export function RenderTemporal({ analysis }: Props) {
+export function RenderTemporal({ analysis, decimalPlaces }: Props) {
   return <Box maxWidth={400} overflowX={"auto"}>
     <BarChart analysis={analysis}></BarChart>
     <LineChart analysis={analysis}></LineChart>
-    <StatisticTable analysis={analysis}/>
+    <StatisticTable analysis={analysis} decimalPlaces={decimalPlaces}/>
   </Box>
 }
 
@@ -355,14 +392,14 @@ export function RenderSpatial({ analysis }: Props) {
 }
 
 
-export function RenderResult({ analysis }: Props) {
+export function RenderResult({ analysis, decimalPlaces }: Props) {
   switch (analysis.data.analysisType) {
     case "Baseline":
-      return <RenderBaseline analysis={analysis}/>
+      return <RenderBaseline analysis={analysis} decimalPlaces={decimalPlaces}/>
     case "Temporal":
       return <RenderTemporal analysis={analysis}/>
     case "Spatial":
-      return <RenderSpatial analysis={analysis}/>
+      return <RenderSpatial analysis={analysis} decimalPlaces={decimalPlaces}/>
     default:
       return null
   }
@@ -375,18 +412,136 @@ export default function AnalysisResult() {
     error,
     analysis
   } = useSelector((state: RootState) => state.analysis);
+  const { mapConfig } = useSelector((state: RootState) => state.mapConfig);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  const downloadPDF = async () => {
+    if (!containerRef.current) return;
+
+    const clone = containerRef.current.cloneNode(true) as HTMLDivElement;
+
+    // remove the download button
+    const iconsElement = clone.querySelector("#download-button") as HTMLDivElement;
+    if (iconsElement) iconsElement.style.display = "none";
+
+    // remove box shadow
+    clone.style.boxShadow = "none";
+
+    // if Baseline, we need to expand the table
+    if (analysis.data.analysisType === "Baseline") {
+      const table = clone.querySelector("#BaselineTableContainer") as HTMLDivElement;
+      if (table) {
+        table.style.maxWidth = "none";
+        table.style.overflowX = "visible";
+      }
+    }
+
+    // Copy all canvas drawings
+    const originalCanvases = containerRef.current.querySelectorAll('canvas');
+    const clonedCanvases = clone.querySelectorAll('canvas');
+
+    originalCanvases.forEach((origCanvas, i) => {
+        const clonedCanvas = clonedCanvases[i];
+        const ctx = clonedCanvas.getContext('2d');
+        ctx.drawImage(origCanvas, 0, 0);
+    });
+
+    // Set styles to avoid showing the clone
+    clone.style.position = 'absolute';
+    clone.style.top = '-9999px';
+    clone.style.left = '-9999px';
+    document.body.appendChild(clone);
+
+    // convert the clone to canvas
+    const canvas = await html2canvas(clone, {
+      backgroundColor: "white",
+      scale: EXPORT_SCALE,
+    });
+    document.body.removeChild(clone); 
+    const imgData = canvas.toDataURL("image/jpeg");
+    const imgWidth = canvas.width;
+    const imgHeight = canvas.height;
+
+    // Create a new jsPDF instance
+    const pdfOrientation = analysis.data.analysisType === "Baseline" ? "l" : "p";
+    const pdf = new jsPDF(pdfOrientation, "mm", "a4");
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+
+    // Calculate image dimensions while preserving aspect ratio
+    const ratio = Math.min(pageWidth / imgWidth, pageHeight / imgHeight);
+    const reducedRatio = ratio * (analysis.data.analysisType === "Baseline" ? EXPORT_BASELINE_RATIO : EXPORT_CHART_RATIO);
+    const finalImgWidth = imgWidth * reducedRatio;
+    const finalImgHeight = imgHeight * reducedRatio;
+    // center the image
+    const x = (pageWidth - finalImgWidth) / 2;
+    const y = EXPORT_Y_POSITION;
+
+    // Add the chart image
+    pdf.addImage(imgData, "JPEG", x, y, finalImgWidth, finalImgHeight);
+  
+    let fileName = '';
+    if (analysis.data.analysisType === "Baseline") {
+      fileName = 'Baseline Analysis';
+    } else if (analysis.data.analysisType === "Temporal") {
+      fileName = `${analysis.data.temporalResolution} Temporal Analysis on ${analysis.data.variable}`;
+    } else if (analysis.data.analysisType === "Spatial") {
+      fileName = `Spatial Analysis on ${analysis.data.variable}`;
+    }
+
+    pdf.save(`${fileName}.pdf`);
+  }
+
   if (!loading && !error && !analysis) {
     return null
   }
+
+  let header = null;
+  if (analysis?.data.analysisType === "Baseline") {
+    header = 'Baseline Analysis'
+    if (analysis?.data.baselineStartDate && analysis.data.baselineEndDate) {
+      let startDate = new Date(analysis.data.baselineStartDate);
+      let endDate = new Date(analysis.data.baselineEndDate);
+      const currentLocale = navigator.language || 'en-US';
+      header += ` (${startDate.toLocaleDateString(currentLocale, { day: 'numeric', month: 'long', year: 'numeric' })} - ${endDate.toLocaleDateString(currentLocale, { day: 'numeric', month: 'long', year: 'numeric' })})`
+    }
+  } else if (analysis?.data.analysisType === "Temporal") {
+    header = `${analysis.data.temporalResolution} Temporal Analysis on ${analysis.data.variable}`
+  } else if (analysis?.data.analysisType === "Spatial") {
+    header = `Spatial Analysis on ${analysis.data.variable}`
+    if (analysis.data.spatialStartYear && analysis.data.spatialEndYear) {
+      header += ` (${analysis.data.spatialStartYear} - ${analysis.data.spatialEndYear})`
+    }
+  }
+
   return (
-    <Box backgroundColor='white'
+    <Box ref={containerRef} backgroundColor='white'
          borderRadius={8}
          boxShadow="0px 0px 5px 0px #00000030"
          pointerEvents='auto'
          p={4}>
-      <Text fontSize="1.5rem" fontWeight={600} color='green.600'>
-        Statistics
-      </Text>
+      <Flex width="100%" align="center" justify="space-between">
+        <Text fontSize="1.5rem" fontWeight={600} color='green.600'>
+          Statistics
+        </Text>
+        <IconButton
+          id="download-button"
+          icon={<FiDownload />} 
+          onClick={downloadPDF} 
+          colorScheme="teal" 
+          aria-label="Download"
+          size="sm"
+          disabled={loading || error !== null}
+        />
+      </Flex>
+      {header && (
+        <Box id="analysis-header" marginTop={2} marginBottom={2}>
+          <Text fontSize="1.0rem" fontWeight={600} color='green.600'>
+            {header}
+          </Text>
+        </Box>
+      )}
+      
       {
         loading ?
           <Box>
@@ -397,7 +552,7 @@ export default function AnalysisResult() {
             <Center p={16} color={'red'}>
               {error}
             </Center>
-          </Box> : <RenderResult analysis={analysis}/>
+          </Box> : <RenderResult analysis={analysis} decimalPlaces={mapConfig.number_of_decimal_places}/>
       }
     </Box>
   )

@@ -3,6 +3,7 @@ from .models import (
     Indicator, AlertSetting, IndicatorAlertHistory,
     NotificationReadStatus
 )
+from analysis.models import LandscapeCommunity
 
 
 class AlertSettingSerializer(serializers.ModelSerializer):
@@ -11,6 +12,12 @@ class AlertSettingSerializer(serializers.ModelSerializer):
     indicator = serializers.PrimaryKeyRelatedField(
         queryset=Indicator.objects.all()
     )
+    user = serializers.PrimaryKeyRelatedField(read_only=True)
+
+    location = serializers.PrimaryKeyRelatedField(
+        queryset=LandscapeCommunity.objects.all(),
+        required=False,
+    )
 
     class Meta:
         model = AlertSetting
@@ -18,7 +25,7 @@ class AlertSettingSerializer(serializers.ModelSerializer):
             'id', 'name', 'indicator', 'enable_alert',
             'last_alert', 'threshold_comparison', 'threshold_value',
             'anomaly_detection_alert', 'email_alert', 'in_app_alert',
-            'created_at', 'updated_at', 'user'
+            'created_at', 'updated_at', 'user', 'location'
         ]
         read_only_fields = ['created_at', 'updated_at']
 

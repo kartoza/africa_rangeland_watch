@@ -16,7 +16,7 @@ from analysis.models import UserAnalysisResults, AnalysisRasterOutput
 class TestStoreAnalysisRasterOutput(TestCase):
 
     fixtures = [
-        '2.gee_asset.json',
+        '3.gee_asset.json',
         '1.layer_group_type.json',
         '2.data_provider.json',
         '3.input_layer.json'
@@ -78,7 +78,7 @@ class TestStoreAnalysisRasterOutput(TestCase):
             mock_analysis_result.raster_output_path.endswith('.tif')
         )
 
-    @patch('ee.Filter')
+    @patch('analysis.tasks.ee')
     @patch('analysis.tasks.InputLayer')
     @patch('analysis.tasks.export_image_to_drive')
     @patch('analysis.tasks.calculate_temporal_to_img')
@@ -89,7 +89,7 @@ class TestStoreAnalysisRasterOutput(TestCase):
         self, mock_initialize_engine_analysis,
         mock_get_gdrive_file, mock_delete_gdrive_file,
         mock_calculate_temporal_to_img,
-        mock_export_image_to_drive, mock_input_layer, mock_filter
+        mock_export_image_to_drive, mock_input_layer, mock_ee
     ):
         # Mock data
         mock_raster_output = AnalysisRasterOutput.objects.create(
@@ -97,7 +97,15 @@ class TestStoreAnalysisRasterOutput(TestCase):
                 'analysisType': 'Temporal',
                 'temporalResolution': 'Annual',
                 'year': 2021,
-                'communityName': 'Test Community',
+                'locations': [
+                    {
+                        'lat': -23.035376296859013,
+                        'lon': 32.192377992891466,
+                        'community': '00000000000000000161',
+                        'communityName': 'LNP-BNP corridor',
+                        'communityFeatureId': 430
+                    }
+                ],
                 'variable': 'Bare ground'
             },
             name='mock_filename',
@@ -108,13 +116,13 @@ class TestStoreAnalysisRasterOutput(TestCase):
         )
         self.assertEqual(
             filename,
-            'Test_Community_bare_ground_temporal_annual_2021.tif'
+            'LNP-BNP_corridor_bare_ground_temporal_annual_2021.tif'
         )
 
         # Mock return values
         mock_input_layer.get_countries.return_value = MagicMock()
         mock_input_layer.get_communities.return_value = MagicMock()
-        mock_filter.return_value = MagicMock()
+        mock_ee.return_value = MagicMock()
         mock_calculate_temporal_to_img.return_value = MagicMock()
         mock_export_image_to_drive.return_value = {'state': 'COMPLETED'}
         gdrive_file = MagicMock()
@@ -142,7 +150,7 @@ class TestStoreAnalysisRasterOutput(TestCase):
         self.assertEqual(mock_raster_output.status, 'COMPLETED')
         self.assertEqual(mock_raster_output.size, 100)
 
-    @patch('ee.Filter')
+    @patch('analysis.tasks.ee')
     @patch('analysis.tasks.InputLayer')
     @patch('analysis.tasks.export_image_to_drive')
     @patch('analysis.tasks.calculate_temporal_to_img')
@@ -153,7 +161,7 @@ class TestStoreAnalysisRasterOutput(TestCase):
         self, mock_initialize_engine_analysis,
         mock_get_gdrive_file, mock_delete_gdrive_file,
         mock_calculate_temporal_to_img,
-        mock_export_image_to_drive, mock_input_layer, mock_filter
+        mock_export_image_to_drive, mock_input_layer, mock_ee
     ):
         # Mock data
         mock_raster_output = AnalysisRasterOutput.objects.create(
@@ -162,7 +170,15 @@ class TestStoreAnalysisRasterOutput(TestCase):
                 'temporalResolution': 'Quarterly',
                 'year': 2021,
                 'quarter': 1,
-                'communityName': 'Test Community',
+                'locations': [
+                    {
+                        'lat': -23.035376296859013,
+                        'lon': 32.192377992891466,
+                        'community': '00000000000000000161',
+                        'communityName': 'LNP-BNP corridor',
+                        'communityFeatureId': 430
+                    }
+                ],
                 'variable': 'Bare ground'
             },
             name='mock_filename',
@@ -173,13 +189,13 @@ class TestStoreAnalysisRasterOutput(TestCase):
         )
         self.assertEqual(
             filename,
-            'Test_Community_bare_ground_temporal_quarterly_Q1_2021.tif'
+            'LNP-BNP_corridor_bare_ground_temporal_quarterly_Q1_2021.tif'
         )
 
         # Mock return values
         mock_input_layer.get_countries.return_value = MagicMock()
         mock_input_layer.get_communities.return_value = MagicMock()
-        mock_filter.return_value = MagicMock()
+        mock_ee.return_value = MagicMock()
         mock_calculate_temporal_to_img.return_value = MagicMock()
         mock_export_image_to_drive.return_value = {'state': 'COMPLETED'}
         mock_get_gdrive_file.return_value = None
