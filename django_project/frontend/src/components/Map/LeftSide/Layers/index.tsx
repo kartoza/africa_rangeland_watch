@@ -36,6 +36,7 @@ export default function Layers(
   const dispatch = useDispatch<AppDispatch>();
   const [isDownloading, setIsDownloading] = useState<string | null>(null);
   const { selected: selectedLandscape } = useSelector((state: RootState) => state.landscape);
+  const selectedNrt = useSelector((state: RootState) => state.layer.selectedNrt);
 
   const handleNrtLayerChecked = (layer: Layer) => {
     let _copyLayer = {...layer}
@@ -139,20 +140,31 @@ export default function Layers(
           <Box mb={4}>
             <LandscapeSelector landscapes={landscapes}/>
           </Box>
-          {
-            layers && selectedLandscape ?
-              layers?.filter(
-                layer => layer.group === GroupName.NearRealtimeGroup
-              ).map(
-                layer => <LayerCheckbox
-                  key={layer.id}
-                  layer={layer}
-                  onToggle={(checked) => checked ? handleNrtLayerChecked(layer) : onLayerUnchecked(layer)}
-                />
-              ) : (
-                layers ? null : <LeftSideLoading/>
-              )
-          }
+          {layers && selectedLandscape ? (
+            layers
+              .filter(layer => layer.group === GroupName.NearRealtimeGroup)
+              .map(layer => (
+                <Box key={layer.id} display="flex" alignItems="center" justifyContent="space-between" pl={2}>
+                  <LayerCheckbox
+                    layer={layer}
+                    onToggle={(checked) => checked ? handleNrtLayerChecked(layer) : onLayerUnchecked(layer)}
+                  />
+                  {selectedNrt?.id === layer.id && (
+                    <Button
+                      size="xs"
+                      ml={2}
+                      colorScheme="blue"
+                      onClick={(e) => handleDownloadNrt(layer.id, e)}
+                      isLoading={isDownloading === layer.id}
+                    >
+                      Download
+                    </Button>
+                  )}
+                </Box>
+              ))
+          ) : (
+            layers ? null : <LeftSideLoading />
+          )}
         </AccordionPanel>
       </AccordionItem>
 
@@ -171,27 +183,17 @@ export default function Layers(
             fontSize='13px'
           >
             {
-              layers && selectedLandscape ?
-              layers.filter(layer => layer.group === GroupName.NearRealtimeGroup)
-                .map(layer => (
-                  <Box key={layer.id} display="flex" alignItems="center" justifyContent="space-between" pl={2}>
-                    <LayerCheckbox
-                      layer={layer}
-                      onToggle={(checked) => checked ? handleNrtLayerChecked(layer) : onLayerUnchecked(layer)}
-                    />
-                    <Button
-                      size="xs"
-                      ml={2}
-                      colorScheme="blue"
-                      onClick={(e) => handleDownloadNrt(layer.id, e)}
-                      isLoading={isDownloading === layer.id}
-                    >
-                      Download
-                    </Button>
-                  </Box>
-                )) : (
-                  layers ? null : <LeftSideLoading/>
-                )
+              layers ?
+                layers?.filter(
+                  layer => layer.group === GroupName.UserDefinedGroup
+                ).map(
+                  layer => <LayerCheckbox
+                    key={layer.id}
+                    layer={layer}
+                    onToggle={(checked) => checked ? onLayerChecked(layer) : onLayerUnchecked(layer)}
+                  />
+                ) :
+                <LeftSideLoading/>
             }
           </AccordionPanel>
         </AccordionItem>
@@ -201,4 +203,3 @@ export default function Layers(
     </Accordion>
   )
 }
-
