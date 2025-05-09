@@ -65,7 +65,11 @@ export const saveAnalysis = createAsyncThunk(
 const userAnalysisSlice = createSlice({
   name: 'analysis',
   initialState,
-  reducers: {},
+  reducers: {
+    clearSavedAnalysisFlag(state) {
+      state.savedAnalysisFlag = false;
+    },
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchAnalysis.pending, (state) => {
@@ -107,6 +111,6 @@ const userAnalysisSlice = createSlice({
 });
 
 // Export the actions, though we don't have any reducers in this case
-export const { } = userAnalysisSlice.actions;
+export const { clearSavedAnalysisFlag } = userAnalysisSlice.actions;
 
 export default userAnalysisSlice.reducer;

@@ -28,7 +28,7 @@ import AnalysisSpatialYearFilter from "./AnalysisSpatialYearFilter";
 import BaselineDateRangeSelector from './BaselineDateRangeSelector';
 import { LayerCheckboxProps } from '../Layers';
 import { useSession } from '../../../../sessionProvider';
-import { saveAnalysis } from '../../../../store/userAnalysisSlice';
+import { saveAnalysis, clearSavedAnalysisFlag } from '../../../../store/userAnalysisSlice';
 
 
 interface Props extends LayerCheckboxProps {
@@ -101,6 +101,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
           color: "white",
         },
       });
+      dispatch(clearSavedAnalysisFlag());
     }
   }, [savedAnalysisFlag]);
 

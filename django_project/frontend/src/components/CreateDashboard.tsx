@@ -19,7 +19,7 @@ import {
   } from "@chakra-ui/react";
 import React, { useEffect, useState } from "react";
 import { useSelector, useDispatch } from 'react-redux';
-import { createDashboard, DashboardData } from "../store/dashboardSlice";
+import { createDashboard, DashboardData, clearDashboardCreated } from "../store/dashboardSlice";
 import { AppDispatch, RootState } from "../store"
 import CONFIG from "../config";
 
@@ -62,6 +62,7 @@ import CONFIG from "../config";
                   color: "white",
                 },
               });
+              dispatch(clearDashboardCreated());
               onClose();
         }
       }, [dashboardCreated]);
