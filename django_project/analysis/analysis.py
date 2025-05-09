@@ -757,7 +757,6 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
         return analysis_cache.create_analysis_cache(reduced.getInfo())
 
     if analysis_dict['analysisType'] == "Baseline":
-        print("Running baseline analysis")
         has_dates = (
             analysis_dict['Baseline']['startDate'] and
             analysis_dict['Baseline']['endDate']
@@ -784,7 +783,6 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
                 select = baseline_table.filterBounds(custom_geom)
             else:
                 select = baseline_table.filterBounds(selected_geos)
-        print("Baseline analysis done")
         return analysis_cache.create_analysis_cache(select.getInfo())
 
     if analysis_dict['analysisType'] == "Temporal":
