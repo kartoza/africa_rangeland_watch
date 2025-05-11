@@ -8,6 +8,11 @@ from alerts.utils import (
 from analysis.analysis import (
     run_analysis, initialize_engine_analysis
 )
+from analysis.runner import AnalysisRunner
+from analysis.models import AnalysisTask, TaskStatus
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 @shared_task
@@ -18,78 +23,49 @@ def process_alerts():
     """
     initialize_engine_analysis()
     now = timezone.now()
+    runner = AnalysisRunner()
 
-    for setting in AlertSetting.objects.filter(enable_alert=True):
-        try:
-            # Use a fixed test location from Bahine NP (South Africa region)
-            # for demonstration purposes
-            # TODO: once UI branch is merged, use the selected location
-            # from the UI
-            locations = [{
-                "lat": -22.803599260196123,
-                "lon": 32.40031084532916
-            }]
+    task = AnalysisTask.objects.create(
+        analysis_inputs={"type": "alert_processing"},
+        status=TaskStatus.RUNNING
+    )
 
-            analysis_dict = {
+    try:
+        for setting in AlertSetting.objects.filter(enable_alert=True):
+            locations = []
+            if getattr(
+                setting, "location", None
+            ) and setting.location.geometry:
+                centroid = setting.location.geometry.centroid
+                locations = [{
+                    "lat": centroid.y,
+                    "lon": centroid.x
+                }]
+
+            data = {
                 "analysisType": "Baseline",
-                "variable": setting.indicator.name,
                 "landscape": getattr(setting, "landscape_name", ""),
-                "Temporal": {
-                    "Annual": {
-                        "ref": 2022,
-                        "test": 2023
-                    },
-                    "Quarterly": {
-                        "ref": "Q1-2022",
-                        "test": "Q1-2023"
-                    },
-                },
-                "t_resolution": "Annual",  # or "Quarterly"
-                "Baseline": {
-                    "startDate": "2022-01-01",
-                    "endDate": "2022-12-31"
-                },
-                "Spatial": {
-                    "start_year": 2022,
-                    "end_year": 2023
-                },
+                "variable": setting.indicator.name,
+                "baselineStartDate": "2022-01-01",
+                "baselineEndDate": "2022-12-31",
+                "locations": locations,
+                "custom_geom": getattr(setting, "custom_geom", None)
             }
 
-            kwargs = {}
-            # Check if the setting has a custom geometry
-            # and use it as the reference layer
-            # if it exists
-            if hasattr(setting, "custom_geom") and setting.custom_geom:
-                kwargs["reference_layer"] = setting.custom_geom
-            else:
-                # Provide a fallback reference layer
-                kwargs["reference_layer"] = {
-                    "type": "Polygon",
-                    "coordinates": [[
-                        [32.399, -22.804],
-                        [32.401, -22.804],
-                        [32.401, -22.802],
-                        [32.399, -22.802],
-                        [32.399, -22.804]
-                    ]]
-                }
+            # Use AnalysisRunner to build analysis_dict
+            analysis_dict = runner.get_analysis_dict_baseline(data)
 
-            analysis_result = run_analysis(locations, analysis_dict, **kwargs)
+            analysis_result = run_analysis(
+                data["locations"],
+                analysis_dict,
+                custom_geom=data.get("custom_geom"),
+            )
 
             features = (
                 analysis_result[0].get("features", [])
                 if isinstance(analysis_result, tuple)
                 else analysis_result.get("features", [])
             )
-            if not analysis_result:
-                continue
-
-            # Extract features safely
-            if isinstance(analysis_result, tuple):
-                features = analysis_result[0].get("features", [])
-            else:
-                features = analysis_result.get("features", [])
-
             if not features:
                 continue
 
@@ -105,6 +81,12 @@ def process_alerts():
                     trigger_alert(setting, value, name)
                     setting.last_alert = now
                     setting.save()
+    except Exception as e:
+        logger.error("Alert processing task failed", exc_info=True)
+        task.status = TaskStatus.FAILED
+        task.error = {"message": str(e)}
 
-        except Exception as e:
-            print(f"Failed to process alert for {setting.id}: {e}")
+    finally:
+        task.completed_at = timezone.now()
+        task.updated_at = timezone.now()
+        task.save()
