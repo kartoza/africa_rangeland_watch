@@ -40,6 +40,8 @@ def user_input_layers(request):
             "created_at": layer.created_at,
             "updated_at": layer.updated_at,
             "layer_id": gis_layer.id if gis_layer else None,
+            "metadata": layer.metadata,
+            "url": layer.url,
         })
 
     # Return grouped layers as a JsonResponse
@@ -85,10 +87,12 @@ def download_layer(request, uuid):
 
 @login_required
 @api_view(['POST'])
-def trigger_cog_export(request, layer_id):
+def trigger_cog_export(request, uuid):
     """Trigger COG export task for a given NRT InputLayer."""
     try:
-        layer = InputLayer.objects.get(uuid=layer_id)
+        layer = get_object_or_404(
+            InputLayer, uuid=uuid
+        )
         export_ee_image_to_cog.delay(str(layer.uuid))
         return Response({"message": "Export task triggered."})
     except InputLayer.DoesNotExist:
