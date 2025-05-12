@@ -44,11 +44,6 @@ class NearRealTimeGenerator(BaseLayerGenerator):
                 data_provider=self.get_provider(),
                 group__name='near-real-time'
             )
-            evi_layer.metadata = {
-                **(evi_layer.metadata or {}),
-                "landscape_id": landscape.id
-            }
-            evi_layer.save()
 
             return LayerCacheResult(
                 evi_layer,
@@ -74,11 +69,6 @@ class NearRealTimeGenerator(BaseLayerGenerator):
                 data_provider=self.get_provider(),
                 group__name='near-real-time'
             )
-            ndvi_layer.metadata = {
-                **(ndvi_layer.metadata or {}),
-                "landscape_id": landscape.id
-            }
-            ndvi_layer.save()
 
             return LayerCacheResult(
                 ndvi_layer,
@@ -109,11 +99,6 @@ class NearRealTimeGenerator(BaseLayerGenerator):
                 data_provider=self.get_provider(),
                 group__name='near-real-time'
             )
-            bg_layer.metadata = {
-                **(bg_layer.metadata or {}),
-                "landscape_id": landscape.id
-            }
-            bg_layer.save()
 
             return LayerCacheResult(
                 bg_layer,
@@ -143,11 +128,6 @@ class NearRealTimeGenerator(BaseLayerGenerator):
                 data_provider=self.get_provider(),
                 group__name='near-real-time'
             )
-            grass_layer.metadata = {
-                **(grass_layer.metadata or {}),
-                "landscape_id": landscape.id
-            }
-            grass_layer.save()
 
             return LayerCacheResult(
                 grass_layer,
@@ -175,11 +155,6 @@ class NearRealTimeGenerator(BaseLayerGenerator):
                 data_provider=self.get_provider(),
                 group__name='near-real-time'
             )
-            tree_layer.metadata = {
-                **(tree_layer.metadata or {}),
-                "landscape_id": landscape.id
-            }
-            tree_layer.save()
 
             return LayerCacheResult(
                 tree_layer,
@@ -202,11 +177,6 @@ class NearRealTimeGenerator(BaseLayerGenerator):
                 data_provider=self.get_provider(),
                 group__name='near-real-time'
             )
-            fire_layer.metadata = {
-                **(fire_layer.metadata or {}),
-                "landscape_id": landscape.id
-            }
-            fire_layer.save()
 
             fire_img = calculate_firefreq(aoi, self.NRT_START_DATE, nrt_end_dt)
 
@@ -233,11 +203,6 @@ class NearRealTimeGenerator(BaseLayerGenerator):
                 data_provider=self.get_provider(),
                 group__name='near-real-time'
             )
-            soil_layer.metadata = {
-                **(soil_layer.metadata or {}),
-                "landscape_id": landscape.id
-            }
-            soil_layer.save()
 
             soil_img = get_soil_carbon(
                 start_date=datetime.date.fromisoformat(self.NRT_START_DATE),
@@ -265,11 +230,6 @@ class NearRealTimeGenerator(BaseLayerGenerator):
                 data_provider=self.get_provider(),
                 group__name='near-real-time'
             )
-            grazing_layer.metadata = {
-                **(grazing_layer.metadata or {}),
-                "landscape_id": landscape.id
-            }
-            grazing_layer.save()
 
             grazing_img = get_grazing_capacity_layer.clip(aoi)
 
@@ -296,11 +256,6 @@ class NearRealTimeGenerator(BaseLayerGenerator):
                 data_provider=self.get_provider(),
                 group__name='near-real-time'
             )
-            change_layer.metadata = {
-                **(change_layer.metadata or {}),
-                "landscape_id": landscape.id
-            }
-            change_layer.save()
 
             change_img = get_soil_carbon_change(
                 start_date=datetime.date.fromisoformat(self.NRT_START_DATE),

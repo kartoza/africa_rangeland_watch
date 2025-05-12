@@ -40,7 +40,6 @@ def user_input_layers(request):
             "created_at": layer.created_at,
             "updated_at": layer.updated_at,
             "layer_id": gis_layer.id if gis_layer else None,
-            "metadata": layer.metadata,
             "url": layer.url,
         })
 
@@ -90,6 +89,11 @@ def download_layer(request, uuid):
 def trigger_cog_export(request, uuid):
     """Trigger COG export task for a given NRT InputLayer."""
     try:
+        landscape_id = request.data.get("landscape_id")
+        if not landscape_id:
+            return Response(
+                {"error": "landscape_id is required"}, status=400
+            )
         layer = get_object_or_404(
             InputLayer, uuid=uuid
         )

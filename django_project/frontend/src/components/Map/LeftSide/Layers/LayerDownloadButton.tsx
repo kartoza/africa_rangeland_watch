@@ -8,9 +8,10 @@ interface Props {
   layerId: string;
   isSelected: boolean;
   layerUrl?: string;
+  landscapeId?: string;
 }
 
-export default function CogDownloadButton({ layerId, isSelected, layerUrl }: Props) {
+export default function CogDownloadButton({ layerId, isSelected, layerUrl, landscapeId }: Props) {
   const [status, setStatus] = useState<"idle" | "processing" | "ready">("idle");
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -32,7 +33,11 @@ export default function CogDownloadButton({ layerId, isSelected, layerUrl }: Pro
     setCSRFToken();
     setStatus("processing");
   
-    await axios.post(`/nrt-layer/${layerId}/export/`);
+    await axios.post(`/nrt-layer/${layerId}/export/`,
+      {
+        landscape_id: landscapeId,
+      },
+    );
   
     const interval = setInterval(async () => {
       const res = await fetch(`/user-input-layers/`);

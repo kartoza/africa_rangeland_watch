@@ -41,12 +41,12 @@ def upload_file(url, file_path, field_name="file", auth_header=None):
     return response.status_code == 200
 
 
-def get_nrt_image(input_layer):
+def get_nrt_image(input_layer, landscape_id):
     """
     Reconstruct the NRT image for export using a 30-day median composite.
     """
     # Get AOI from Landscape model
-    landscape = Landscape.objects.get(id=input_layer.metadata["landscape_id"])
+    landscape = Landscape.objects.get(id=landscape_id)
     aoi = ee.Geometry.Polygon(list(landscape.bbox.coords[0]))
     print(f"Landscape: {landscape}")
     print(f"AOI bounds: {aoi.bounds().getInfo()}")

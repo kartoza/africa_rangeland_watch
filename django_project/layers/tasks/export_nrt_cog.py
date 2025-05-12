@@ -15,7 +15,11 @@ from layers.utils import get_nrt_image
 
 
 @shared_task(name="export_ee_image_to_cog")
-def export_ee_image_to_cog(input_layer_id, export_folder="ARW-NRT-Exports"):
+def export_ee_image_to_cog(
+    input_layer_id,
+    landscape_id,
+    export_folder="ARW-NRT-Exports"
+):
     """
     Export EE image associated with InputLayer
     to GDrive as COG and download it."""
@@ -23,7 +27,7 @@ def export_ee_image_to_cog(input_layer_id, export_folder="ARW-NRT-Exports"):
         # Load InputLayer
         input_layer = InputLayer.objects.get(uuid=input_layer_id)
 
-        ee_image, region = get_nrt_image(input_layer)
+        ee_image, region = get_nrt_image(input_layer, landscape_id)
         file_name = (
             f"{input_layer.name.replace(' ', '_')}_{input_layer_id}.tif"
         )
