@@ -48,8 +48,6 @@ def get_nrt_image(input_layer, landscape_id):
     # Get AOI from Landscape model
     landscape = Landscape.objects.get(id=landscape_id)
     aoi = ee.Geometry.Polygon(list(landscape.bbox.coords[0]))
-    print(f"Landscape: {landscape}")
-    print(f"AOI bounds: {aoi.bounds().getInfo()}")
 
     DEFAULT_MONTHS = 2
     NRT_START_DATE = '2022-06-01'
