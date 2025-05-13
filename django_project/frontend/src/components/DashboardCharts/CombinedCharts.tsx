@@ -1,18 +1,30 @@
 import React from 'react';
-import { Box, Center, Spinner, Table, Text } from "@chakra-ui/react";
-import { Analysis } from '../../store/analysisSlice';
+import { Box, Table, Text } from "@chakra-ui/react";
 import { Bar, Line } from "react-chartjs-2";
 import { CategoryScale } from "chart.js";
 import Chart from "chart.js/auto";
-import ChartDataLabels from "chartjs-plugin-datalabels";
-import { FeatureCollection } from "geojson";
 import 'chartjs-adapter-date-fns';
+import { getTrendLineData, formatMonthYear } from '../../utils/chartUtils';
 
 Chart.register(CategoryScale);
 
 interface Props {
   analysisResults: any[];
 }
+
+
+const COLORS = [
+  "#FF0000", // Red
+  "#0000FF", // Blue
+  "#008000", // Green
+  "#FFA500", // Orange
+  "#800080", // Purple
+  "#00FFFF", // Cyan
+  "#FF00FF", // Magenta
+  "#FFFF00", // Yellow
+  "#00FF00", // Lime
+  "#008080"  // Teal
+];
 
 // helper function for extracting analysis data for charts
 const getAnalysisJsonData = (analysis: any, index: number) => {
@@ -31,29 +43,62 @@ export function BarChart({ analysisResults }: Props) {
     return;
   }
 
-  let labels: number[] = [];
-  let datasets: any[] = [];
+  let labels: string[] = [];
+  let datasets: { [key: string]: any } = {};
+  let itemIdx = 0;
+  const analysisData = analysisResults[0].analysis_results.data;
 
   analysisResults.forEach((analysis, index) => {
-    const analysisData = analysis.analysis_results ?? analysis ?? [];
-
     const jsonData = getAnalysisJsonData(analysis, 0);
 
     if (!jsonData || !jsonData.features || jsonData.features.length === 0) return;
 
-    const name = jsonData.features[0]?.properties?.Name;
-    const data = jsonData.features.map((feature: any) => feature?.properties?.[analysisData?.data?.variable] || 0);
+    if (labels.length === 0) {
+      if (analysisData.temporalResolution === 'Annual') {
+        labels = jsonData.features.map((feature:any) => feature.properties.year)
+      } else {
+        labels = jsonData.features.map((feature:any) => formatMonthYear(feature.properties.month, feature.properties.year));
+      }
+      labels = labels.filter((item, index) => labels.indexOf(item) === index)
+    }
 
-    labels = jsonData.features.map((feature: any) => feature?.properties?.year);
+    for (let i = 0; i < jsonData.features.length; i++) {
+        const key: string = `${jsonData.features[i].properties.Name} (Result ${index + 1})`;
+        if (datasets[key as string]) {
+          continue;
+        }
+        const rawData = jsonData.features
+        .filter((feature:any) => feature.properties.Name === jsonData.features[i].properties.Name);
+        let data: number[] = new Array(labels.length).fill(null);
+        for (let j = 0; j < rawData.length; j++) {
+          let label = ''
+          if (analysisData.temporalResolution === 'Annual') {
+            label = rawData[j].properties.year
+          } else {
+            label = formatMonthYear(rawData[j].properties.month, rawData[j].properties.year)
+          }
     
-    datasets.push({
-      label: `${name} (Result ${index + 1})`,
-      data,
-      backgroundColor: index % 2 === 0 ? "blue" : "red"
-    });
+          let labelIdx = labels.indexOf(label)
+          if (labelIdx > -1) {
+            data[labelIdx] = rawData[j].properties[analysisData.variable]
+          }
+        }
+        
+        datasets[key] = {
+          label: key,
+          data: data,
+          backgroundColor: COLORS[itemIdx % COLORS.length],
+          borderColor: "#0000FF",
+          errorBars: {
+            color: 'black',
+            width: 1
+          }
+        };
+        itemIdx++;
+      }
   });
 
-  const chartData = { labels, datasets };
+  const chartData = { labels, datasets: Object.values(datasets) };
 
   const options: any = {
     responsive: true,
@@ -81,31 +126,58 @@ export function LineChart({ analysisResults }: Props) {
     return;
   }
 
+  let datasets: { [key: string]: any } = {};
   let labels: number[] = [];
-  let datasets: any[] = [];
+  let itemIdx = 0;
 
-
+  const analysisData = analysisResults[0].analysis_results.data;
   analysisResults.forEach((analysis, index) => {
-    const analysisData = analysis.analysis_results ?? analysis ?? [];
-
     const jsonData = getAnalysisJsonData(analysis, 1);
+    if (!jsonData || jsonData.features.length == 0) {
+      return;
+    }
 
-    if (!jsonData || !jsonData.features || jsonData.features.length === 0) return;
-
-    const name = jsonData.features[0]?.properties?.Name;
-    const data = jsonData.features.map((feature: any) => feature?.properties?.[analysisData?.data.variable] || 0);
-
-    // Add labels only once, preserving unique dates
-    labels = Array.from(new Set([...labels, ...jsonData.features.map((feature: any) => feature?.properties?.date)]));
-
+    if (labels.length === 0) {
+      labels = Array.from(new Set(jsonData.features
+        .map((feature:any) => feature.properties.date)));
+      labels = labels.filter((item, index) => labels.indexOf(item) === index)
+    }
     
-    datasets.push({
-      label: `${name} (Result ${index + 1})`,
-      data,
-      borderColor: index % 2 === 0 ? "blue" : "red",
-      fill: false,
-    });
-  });
+    for (let i = 0; i < jsonData.features.length; i++) {
+      const key: string = `${jsonData.features[i].properties.Name} (Result ${index + 1})`;
+      if (datasets[key as string]) {
+        continue;
+      }
+      const rawData = jsonData.features
+      .filter((feature:any) => feature.properties.Name === jsonData.features[i].properties.Name);
+      let data: number[] = new Array(labels.length).fill(null);
+      for (let j = 0; j < rawData.length; j++) {
+        let label = rawData[j].properties.date
+        let labelIdx = labels.indexOf(label)
+        if (labelIdx > -1) {
+          data[labelIdx] = rawData[j].properties[analysisData.variable]
+        }
+      }
+      
+      datasets[key] = {
+        label: key,
+        data: data,
+        borderColor: COLORS[itemIdx % COLORS.length],
+        fill: false,
+      };
+
+      datasets[`trends_${itemIdx}`] = {
+        label: '',
+        data: getTrendLineData(data),
+        borderColor: COLORS[itemIdx % COLORS.length],
+        fill: false,
+        pointRadius: 0,
+        pointHoverRadius: 0,
+        tension: 0,
+      }
+      itemIdx++;
+    }
+  })
 
   const options: any = {
     responsive: true,
@@ -133,11 +205,17 @@ export function LineChart({ analysisResults }: Props) {
     plugins: {
       legend: {
         position: 'top',
+        labels: {
+          filter: function (item: any, chartData: any) {
+            return item.text !== '';
+          }
+        }
       },
     },
   };
 
-  const chartData = { labels, datasets };
+  const chartData = { labels, datasets: Object.values(datasets) };
+
   return <Line options={options} data={chartData} />;
 }
 

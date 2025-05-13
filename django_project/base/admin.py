@@ -16,7 +16,6 @@ from django.shortcuts import get_object_or_404
 from django.contrib import messages
 
 
-
 def update_invite(modeladmin, request, invitation):
     try:
         invitation_detail = OrganisationInvitationDetail.objects.get(
@@ -90,7 +89,6 @@ def send_join_acceptance_email(inviter, organisation):
         email.send()
     except Exception as e:
         raise Exception(f"Failed to send email: {str(e)}")
-
 
 
 @admin.action(description="Approve selected join/add requests")
@@ -230,8 +228,6 @@ def approve_join_request(modeladmin, request, queryset):
             )
 
 
-
-
 @admin.register(OrganisationInvitationDetail)
 class OrganisationInvitationDetailAdmin(admin.ModelAdmin):
     list_display = (
@@ -274,8 +270,6 @@ class UserProfileInline(admin.StackedInline):
     organisations_list.short_description = "Organisations & Roles"
 
 
-
-
 class UserAdmin(BaseUserAdmin):
     inlines = (UserProfileInline,)
 
@@ -297,7 +291,6 @@ class UserAdmin(BaseUserAdmin):
         return super(UserAdmin, self).get_inline_instances(request, obj)
 
 
-
 class UserOrganisationsAdmin(admin.ModelAdmin):
     list_display = ('user_profile', 'organisation', 'user_type')
     search_fields = ('user_profile__user__username', 'organisation__name')
@@ -307,8 +300,6 @@ class UserOrganisationsAdmin(admin.ModelAdmin):
 
     def get_queryset(self, request):
         return super().get_queryset(request)
-
-
 
 
 @admin.register(Organisation)
@@ -324,3 +315,33 @@ admin.site.register(UserOrganisations, UserOrganisationsAdmin)
 admin.site.unregister(User)
 admin.site.register(User, UserAdmin)
 admin.site.unregister(OrganisationInvitation)
+
+
+@admin.register(OrganisationInvitation)
+class OrganisationInvitationAdmin(admin.ModelAdmin):
+    list_display = ("email", "organisation", "inviter", "key", "created")
+    readonly_fields = ("key",)
+
+    def save_model(self, request, obj, form, change):
+        # Save as usual
+        super().save_model(request, obj, form, change)
+
+        # Only send on creation (not update)
+        if not change:
+            try:
+                obj.send_invitation(
+                    request=request,
+                    custom_message=(
+                        "You've been invited to join an organisation.",
+                    )
+                )
+                self.message_user(
+                    request,
+                    "Invitation email sent successfully.",
+                    level=messages.SUCCESS,
+                )
+            except Exception as e:
+                self.message_user(
+                    request, f"Failed to send email: {str(e)}",
+                    level=messages.ERROR
+                )

@@ -158,12 +158,21 @@ def generate_temporal_analysis_raster_output(raster_output_id):
     )
     # get aoi
     input_layers = InputLayer()
+    selected_geos = input_layers.get_selected_geos()
     communities = input_layers.get_communities()
-    aoi = communities.filter(
-        ee.Filter.inList(
-            'Name', [raster_output.analysis.get('communityName')]
+
+    locations = raster_output.analysis.get('locations')
+    features_geo = []
+    for location in locations:
+        geo = ee.Geometry.Point(
+            [location.get('lon'), location.get('lat')]
         )
+        features_geo.append(ee.Feature(geo))
+    selected_geos = selected_geos.merge(
+        ee.FeatureCollection(features_geo)
     )
+
+    aoi = communities.filterBounds(selected_geos)
 
     # find input layer for get the vis param config
     input_layer_fixture = InputLayerFixture.objects.get(

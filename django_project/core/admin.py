@@ -37,6 +37,7 @@ class PreferencesAdmin(admin.ModelAdmin):
                 'result_cache_ttl',
                 'spatial_reference_layer_max_area',
                 'max_wait_analysis_run_time',
+                'number_of_decimal_places'
             )
         }),
     )

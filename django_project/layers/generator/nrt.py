@@ -5,6 +5,7 @@ Africa Rangeland Watch (ARW).
 .. note:: Layer Generator for Near-Real Time Layers.
 """
 import logging
+import datetime
 import ee
 
 from analysis.models import Landscape, GEEAsset
@@ -20,6 +21,7 @@ class NearRealTimeGenerator(BaseLayerGenerator):
     """Layer Generator for Near-Real Time Layers."""
 
     DEFAULT_MONTHS = 2
+    NRT_START_DATE = '2022-06-01'
 
     def _to_ee_polygon(self, landscape: Landscape):
         """Convert landscape polygon to EE Polygon."""
@@ -87,7 +89,7 @@ class NearRealTimeGenerator(BaseLayerGenerator):
             bg = classify_bgt(nrt_img, classifier).select('bare')
 
             bg_layer = InputLayer.objects.get(
-                name='Bare ground cover',
+                name='Bare ground',
                 data_provider=self.get_provider(),
                 group__name='near-real-time'
             )
@@ -110,11 +112,16 @@ class NearRealTimeGenerator(BaseLayerGenerator):
         """Generate layers for Near-Real Time."""
         results = []
 
+        current_dt = datetime.datetime.now(datetime.UTC)
+        nrt_end_dt = current_dt.date().isoformat()
+
         for landscape in Landscape.objects.all().iterator(chunk_size=1):
             aoi = self._to_ee_polygon(landscape)
             nrt_img = get_nrt_sentinel(
                 aoi,
-                self.DEFAULT_MONTHS
+                self.DEFAULT_MONTHS,
+                self.NRT_START_DATE,
+                nrt_end_dt
             )
             evi = self._generate_evi_layer(nrt_img, landscape)
             if evi:
