@@ -3,13 +3,13 @@
 ARW: Task to export Earth Engine image to Google Drive as COG and download it.
 """
 
-import ee
 import time
 import os
 from django.conf import settings
 from celery import shared_task
 from cloud_native_gis.models.layer import Layer
 from layers.models import InputLayer
+from analysis.analysis import export_image_to_drive
 from analysis.utils import get_gdrive_file, delete_gdrive_file
 from layers.utils import get_nrt_image
 
@@ -39,12 +39,12 @@ def export_ee_image_to_cog(
             "fileNamePrefix": file_name.replace(".tif", ""),
             "scale": 30,
             "region": region,
-            "fileFormat": "GeoTIFF",
-            "formatOptions": {"cloudOptimized": True},
+            "vis_params": input_layer.get_vis_params() if hasattr(
+                input_layer, 'get_vis_params') else None
         }
 
         # Start EE export task
-        task = ee.batch.Export.image.toDrive(**task_config)
+        task = export_image_to_drive(**task_config)
         task.start()
         print(f"[INFO] Started EE export task: {file_name}")
 
