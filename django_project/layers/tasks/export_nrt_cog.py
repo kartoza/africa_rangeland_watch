@@ -5,6 +5,7 @@ ARW: Task to export Earth Engine image to Google Drive as COG and download it.
 
 import time
 import os
+import logging
 from django.conf import settings
 from celery import shared_task
 from cloud_native_gis.models.layer import Layer
@@ -12,6 +13,9 @@ from layers.models import InputLayer
 from analysis.analysis import export_image_to_drive
 from analysis.utils import get_gdrive_file, delete_gdrive_file
 from layers.utils import get_nrt_image
+
+
+logger = logging.getLogger(__name__)
 
 
 @shared_task(name="export_ee_image_to_cog")
@@ -46,7 +50,7 @@ def export_ee_image_to_cog(
         # Start EE export task
         task = export_image_to_drive(**task_config)
         task.start()
-        print(f"[INFO] Started EE export task: {file_name}")
+        logger.info(f"Started EE export task: {file_name}")
 
         # Wait for task to complete (polling every 30 sec, timeout in ~30 min)
         start = time.time()
@@ -54,12 +58,14 @@ def export_ee_image_to_cog(
             if time.time() - start > 1800:
                 raise TimeoutError("Export timed out after 30 minutes.")
             time.sleep(30)
-            print(f"[INFO] Exporting {file_name}: {task.status()['state']}...")
+            logger.info(
+                f"Exporting {file_name}: {task.status()['state']}..."
+            )
 
         if task.status()["state"] != "COMPLETED":
             raise RuntimeError(f"Export failed: {task.status()}")
 
-        print(f"[INFO] Export complete. Looking for {file_name} on Drive...")
+        logger.info(f"Export complete. Looking for {file_name} on Drive...")
 
         # Poll GDrive for exported file
         for _ in range(20):
@@ -90,10 +96,10 @@ def export_ee_image_to_cog(
 
         # Clean up GDrive
         delete_gdrive_file(file_name)
-        print(f"[INFO] Cleaned up file {file_name} from GDrive.")
+        logger.info(f"Cleaned up file {file_name} from GDrive.")
 
     except Exception as ex:
-        print(f"[ERROR] Failed to export/download COG: {ex}")
+        logger.error(f"Failed to export/download COG: {ex}")
         if input_layer:
             input_layer.metadata["cog_error"] = str(ex)
             input_layer.save()
