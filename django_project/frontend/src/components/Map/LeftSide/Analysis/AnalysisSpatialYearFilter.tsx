@@ -13,10 +13,11 @@ import {
 interface AnalysisSpatialYearFilterProps {
     initialStartYear?: number;
     initialEndYear?: number;
+    disabled?: boolean;
     onYearChange: (startYear: number | null, endYear: number | null) => void;
 }
 
-const AnalysisSpatialYearFilter: React.FC<AnalysisSpatialYearFilterProps> = ({ initialStartYear, initialEndYear, onYearChange }) => {
+const AnalysisSpatialYearFilter: React.FC<AnalysisSpatialYearFilterProps> = ({ initialStartYear, initialEndYear, disabled = false, onYearChange }) => {
     const startYear = initialStartYear;
     const endYear = initialEndYear;
 

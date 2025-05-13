@@ -402,6 +402,25 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
                 size="xs"
                 borderRadius={4}
                 paddingX={4}
+                borderColor="dark_green.800"
+                color="dark_green.800"
+                _hover={{ bg: "dark_green.800", color: "white" }}
+                variant="outline"
+                disabled={loading}
+                // onClick={() => {
+                //   setData({ analysisType: Types.BASELINE });
+                //   setMapInteraction(MapAnalysisInteraction.NO_INTERACTION);
+                //   geometrySelectorRef?.current?.removeLayer();
+                //   dispatch(resetAnalysisResult());
+                //   saveSession('/map', { activity: "Visited Analysis Page"}, { analysisType: Types.BASELINE });
+                // }}
+              >
+                Reset
+              </Button>
+              <Button
+                size="xs"
+                borderRadius={4}
+                paddingX={4}
                 bg='dark_green.800'
                 color="white"
                 _hover={{ opacity: 0.8 }}
