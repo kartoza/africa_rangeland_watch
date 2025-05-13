@@ -1,5 +1,9 @@
 from rest_framework import serializers
-from .models import Indicator, AlertSetting, IndicatorAlertHistory
+from .models import (
+    Indicator, AlertSetting, IndicatorAlertHistory,
+    NotificationReadStatus
+)
+from analysis.models import LandscapeCommunity
 
 
 class AlertSettingSerializer(serializers.ModelSerializer):
@@ -8,6 +12,12 @@ class AlertSettingSerializer(serializers.ModelSerializer):
     indicator = serializers.PrimaryKeyRelatedField(
         queryset=Indicator.objects.all()
     )
+    user = serializers.PrimaryKeyRelatedField(read_only=True)
+
+    location = serializers.PrimaryKeyRelatedField(
+        queryset=LandscapeCommunity.objects.all(),
+        required=False,
+    )
 
     class Meta:
         model = AlertSetting
@@ -15,7 +25,7 @@ class AlertSettingSerializer(serializers.ModelSerializer):
             'id', 'name', 'indicator', 'enable_alert',
             'last_alert', 'threshold_comparison', 'threshold_value',
             'anomaly_detection_alert', 'email_alert', 'in_app_alert',
-            'created_at', 'updated_at', 'user'
+            'created_at', 'updated_at', 'user', 'location'
         ]
         read_only_fields = ['created_at', 'updated_at']
 
@@ -46,6 +56,7 @@ class IndicatorAlertHistorySerializer(serializers.ModelSerializer):
         source='alert_setting',
         write_only=True
     )
+    is_read = serializers.SerializerMethodField()
 
     class Meta:
         model = IndicatorAlertHistory
@@ -54,6 +65,22 @@ class IndicatorAlertHistorySerializer(serializers.ModelSerializer):
             'text',
             'alert_setting',
             'alert_setting_id',
-            'created_at'
+            'created_at',
+            'is_read'
         ]
         read_only_fields = ['created_at']
+
+    def get_is_read(self, obj):
+        """Check if the alert history is read."""
+        user = self.context["request"].user
+        return NotificationReadStatus.objects.filter(
+            user=user, notification=obj
+        ).exists()
+
+
+class NotificationReadStatusSerializer(serializers.ModelSerializer):
+    """Serializer for the NotificationReadStatus model."""
+    class Meta:
+        model = NotificationReadStatus
+        fields = ["user", "notification", "read_at"]
+        read_only_fields = ["read_at"]

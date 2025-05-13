@@ -116,6 +116,9 @@ const dashboardSlice = createSlice({
     resetDashboardUpdated: (state) => {
       state.dashboardUpdated = false;
     },
+    clearDashboardCreated: (state) => {
+      state.dashboardCreated = false;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -199,6 +202,6 @@ const dashboardSlice = createSlice({
   },
 });
 
-export const { resetDashboardUpdated } = dashboardSlice.actions;
+export const { resetDashboardUpdated, clearDashboardCreated } = dashboardSlice.actions;
 
 export default dashboardSlice.reducer;

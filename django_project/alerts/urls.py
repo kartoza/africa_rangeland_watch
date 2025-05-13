@@ -4,7 +4,10 @@ from .views import (
     AlertSettingViewSet,
     IndicatorAlertHistoryViewSet,
     CategorizedAlertsView,
+    InAppNotificationViewSet,
+    MarkNotificationsReadView,
 )
+from frontend.api_views.landscape import LandscapeCommunityViewSet
 
 router = DefaultRouter()
 router.register(
@@ -27,5 +30,21 @@ router.register(
     CategorizedAlertsView,
     basename='categorized-alert'
 )
+router.register(
+    r'landscape-communities',
+    LandscapeCommunityViewSet,
+    basename='landscape-communities'
+)
+router.register(
+    r'in-app-notifications',
+    InAppNotificationViewSet,
+    basename='in-app-notifications'
+)
+router.register(
+    r'in-app-notifications-read',
+    MarkNotificationsReadView,
+    basename='notifications-read'
+)
+
 
 urlpatterns = router.urls

@@ -8,6 +8,7 @@ interface MapConfig {
     initial_bound: [number, number, number, number];
     spatial_reference_layer_max_area: number;
     max_wait_analysis_run_time: number;
+    number_of_decimal_places: number;
 }
 
 interface MapConfigState extends DataState {

@@ -1,10 +1,13 @@
 from django.contrib import admin
-from .models import AlertSetting, IndicatorAlertHistory, Indicator
+from .models import (
+    AlertSetting, IndicatorAlertHistory, Indicator,
+    NotificationReadStatus
+)
 
 
 @admin.register(AlertSetting)
 class AlertSettingAdmin(admin.ModelAdmin):
-    list_display = ('name', 'indicator', 'enable_alert',
+    list_display = ('name', 'indicator', 'location', 'enable_alert',
                     'email_alert', 'in_app_alert', 'last_alert')
     list_filter = ('enable_alert', 'email_alert',
                    'in_app_alert', 'anomaly_detection_alert')
@@ -14,6 +17,9 @@ class AlertSettingAdmin(admin.ModelAdmin):
     fieldsets = (
         (None, {
             'fields': ('name', 'indicator', 'enable_alert', 'last_alert')
+        }),
+        ('Location', {
+            'fields': ('location',)
         }),
         ('Threshold Settings', {
             'fields': ('threshold_comparison',
@@ -44,3 +50,8 @@ class IndicatorAlertHistoryAdmin(admin.ModelAdmin):
 class IndicatorAdmin(admin.ModelAdmin):
     list_display = ('name',)
     search_fields = ('name',)
+
+
+@admin.register(NotificationReadStatus)
+class NotificationReadStatusAdmin(admin.ModelAdmin):
+    list_display = ('user', 'notification', 'read_at')
