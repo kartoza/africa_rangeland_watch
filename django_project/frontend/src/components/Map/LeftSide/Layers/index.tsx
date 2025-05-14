@@ -108,8 +108,7 @@ export default function Layers(
                   {selectedNrt?.id === layer.id && (
                     <CogDownloadButton
                       layerId={layer.id}
-                      isSelected={true}
-                      layerUrl={layer.url}
+                      isSelected={selectedNrt?.id === layer.id}
                     />
                   )}
                 </Box>

@@ -4,21 +4,20 @@ ARW: Task to export Earth Engine image to Google Drive as COG and download it.
 """
 
 import time
-import os
 import logging
-from django.conf import settings
 from celery import shared_task
+from core.celery import app
 from cloud_native_gis.models.layer import Layer
-from layers.models import InputLayer
+from layers.models import InputLayer, ExportedCog
+from analysis.models import Landscape
 from analysis.analysis import export_image_to_drive
-from analysis.utils import get_gdrive_file, delete_gdrive_file
+from analysis.utils import get_gdrive_file
 from layers.utils import get_nrt_image
 
 
 logger = logging.getLogger(__name__)
 
 
-@shared_task(name="export_ee_image_to_cog")
 def export_ee_image_to_cog(
     input_layer_id,
     landscape_id,
@@ -34,6 +33,12 @@ def export_ee_image_to_cog(
         ee_image, region = get_nrt_image(input_layer, landscape_id)
         file_name = (
             f"{input_layer.name.replace(' ', '_')}_{input_layer_id}.tif"
+        )
+        # ExportedCog is a model to track exported COGs
+        exported_cog, _ = ExportedCog.objects.get_or_create(
+            input_layer=input_layer,
+            landscape_id=landscape_id,
+            defaults={"file_name": file_name}
         )
 
         task_config = {
@@ -76,30 +81,52 @@ def export_ee_image_to_cog(
         else:
             raise FileNotFoundError(f"File {file_name} not found on Drive.")
 
-        # Save to local /media/cloud_native_gis_files/
-        media_dir = os.path.join(settings.MEDIA_ROOT, "cloud_native_gis_files")
-        os.makedirs(media_dir, exist_ok=True)
-
-        destination_path = os.path.join(media_dir, file_name)
-        gfile.GetContentFile(destination_path)
-
-        # Update InputLayer with media URL
-        input_layer.url = f"/media/cloud_native_gis_files/{file_name}"
+        # save to InputLayer metadata
         input_layer.metadata["cog_downloaded"] = True
+        input_layer.metadata["gdrive_file_id"] = gfile["id"]
         input_layer.save()
 
-        # Save to cloud_native_gis Layer object
+        # Save to ExportedCog model
+        exported_cog.downloaded = True
+        exported_cog.file_name = file_name
+        exported_cog.save()
+
         layer = Layer.objects.filter(unique_id=input_layer_id).first()
         if layer:
             layer.refresh_from_db()
-            layer.update_status(progress=100, note="COG download complete")
-
-        # Clean up GDrive
-        delete_gdrive_file(file_name)
-        logger.info(f"Cleaned up file {file_name} from GDrive.")
+            layer.update_status(
+                progress=100,
+                note="COG export stored on GDrive"
+            )
 
     except Exception as ex:
-        logger.error(f"Failed to export/download COG: {ex}")
+        logger.error(f"Failed to export COG: {ex}")
         if input_layer:
             input_layer.metadata["cog_error"] = str(ex)
             input_layer.save()
+        exported_cog.downloaded = False
+        exported_cog.save()
+
+
+@shared_task(name="export_ee_image_to_cog")
+def export_ee_image_to_cog_task(
+    input_layer_id,
+    landscape_id,
+    export_folder="ARW-NRT-Exports"
+):
+    """
+    Celery task to export EE image to COG.
+    """
+    export_ee_image_to_cog(input_layer_id, landscape_id, export_folder)
+
+
+@app.task(name="export_all_nrt_cogs")
+def export_all_nrt_cogs():
+    """
+    Trigger export for all NRT InputLayers across all landscapes.
+    """
+    nrt_layers = InputLayer.objects.filter(group__name="near-real-time")
+
+    for landscape in Landscape.objects.all():
+        for layer in nrt_layers:
+            export_ee_image_to_cog_task.delay(str(layer.uuid), landscape.id)
