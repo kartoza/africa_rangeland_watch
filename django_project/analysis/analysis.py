@@ -1786,7 +1786,11 @@ def calculate_baseline(aoi, start_date, end_date, is_custom_geom=False):
         'fire_cci', start_date, end_date
     )
     if valid:
-        fire_freq = calculate_firefreq(selected_area, start_dt, end_dt).divide(18)
+        fire_freq = calculate_firefreq(
+            selected_area,
+            start_dt,
+            end_dt
+        ).divide(18)
         fire_freq = fire_freq.unmask(0)
         image_list.append({
             'asset': fire_freq,
