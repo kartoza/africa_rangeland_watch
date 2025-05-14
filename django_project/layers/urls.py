@@ -2,7 +2,8 @@ from django.urls import path
 from .views import (
     delete_layer,
     download_layer,
-    user_input_layers
+    user_input_layers,
+    download_from_gdrive
 )
 
 urlpatterns = [
@@ -20,5 +21,10 @@ urlpatterns = [
         'download-layer/<uuid:uuid>/',
         download_layer,
         name='download_layer'
+    ),
+    path(
+        'nrt-layer/<uuid:uuid>/download/',
+        download_from_gdrive,
+        name='nrt-layer-download'
     ),
 ]

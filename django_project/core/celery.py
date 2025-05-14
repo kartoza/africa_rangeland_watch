@@ -56,6 +56,17 @@ app.conf.beat_schedule = {
         # Run daily at 00:00 UTC
         'schedule': crontab(minute='00', hour='00'),
     },
+    'export-all-nrt-cogs': {
+        'task': 'export_all_nrt_cogs',
+        # Run every day at 00:10 UTC
+        # Runs after the baseline layers are generated
+        'schedule': crontab(minute=10, hour=0),
+    },
+    'cleanup-exported-cogs-from-drive': {
+        'task': 'cleanup_exported_cogs_from_drive',
+        # Run every week on Monday at 00:00 UTC
+        'schedule': crontab(minute='00', hour='00', day_of_week='1'),
+    },
 }
 
 

@@ -1,14 +1,18 @@
 import os
+import io
 import mimetypes
 from collections import defaultdict
+from rest_framework.decorators import api_view
 from django.shortcuts import render  # noqa: F401
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
+
 from django.shortcuts import get_object_or_404
-from django.http import FileResponse
+from django.http import FileResponse, Http404
 
 from cloud_native_gis.models import Layer
-from .models import InputLayer
+from analysis.utils import _initialize_gdrive_instance
+from .models import InputLayer, ExportedCog
 
 
 @login_required
@@ -36,6 +40,7 @@ def user_input_layers(request):
             "created_at": layer.created_at,
             "updated_at": layer.updated_at,
             "layer_id": gis_layer.id if gis_layer else None,
+            "url": layer.url,
         })
 
     # Return grouped layers as a JsonResponse
@@ -77,3 +82,39 @@ def download_layer(request, uuid):
     response['Content-Disposition'] = f'attachment; filename="{file_name}"'
 
     return response
+
+
+@login_required
+@api_view(['GET'])
+def download_from_gdrive(request, uuid):
+    """
+    Streams a downloaded COG file directly from Google Drive
+    using the stored gdrive_file_id from ExportedCog.
+    """
+    try:
+        input_layer = InputLayer.objects.get(uuid=uuid)
+        exported = ExportedCog.objects.filter(
+            input_layer=input_layer,
+            downloaded=True
+        ).first()
+
+        if not exported or not exported.gdrive_file_id:
+            raise Http404("No exported file found.")
+
+        gdrive = _initialize_gdrive_instance()
+        gfile = gdrive.CreateFile({'id': exported.gdrive_file_id})
+
+        file_stream = io.BytesIO()
+        gfile.GetContentFile(file_stream)
+        file_stream.seek(0)
+
+        return FileResponse(
+            file_stream,
+            as_attachment=True,
+            filename=exported.file_name,
+            content_type='application/octet-stream'
+        )
+    except InputLayer.DoesNotExist:
+        raise Http404("Layer not found.")
+    except Exception as ex:
+        raise Http404(f"Download failed: {ex}")

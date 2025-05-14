@@ -4,7 +4,8 @@ from .models import (
     InputLayer,
     DataFeedSetting,
     LayerGroupType,
-    ExportLayerRequest
+    ExportLayerRequest,
+    ExportedCog
 )
 
 
@@ -91,3 +92,14 @@ class ExportLayerRequestAdmin(admin.ModelAdmin):
     """Admin for ExportLayerRequest model."""
 
     list_display = ('created_at', 'requested_by', 'format', 'status')
+
+
+@admin.register(ExportedCog)
+class ExportedCogAdmin(admin.ModelAdmin):
+    """Admin for ExportedCog model."""
+
+    list_display = (
+        "input_layer", "landscape_id", "file_name", "downloaded", "created_at"
+    )
+    list_filter = ("downloaded", "created_at")
+    search_fields = ("file_name", "input_layer__name")

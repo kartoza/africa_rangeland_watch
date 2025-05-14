@@ -294,3 +294,33 @@ class ExportLayerRequest(models.Model):
         blank=True,
         null=True
     )
+
+
+class ExportedCog(models.Model):
+    """Model to represent exported COG files."""
+    input_layer = models.ForeignKey(
+        "layers.InputLayer",
+        on_delete=models.CASCADE
+    )
+    landscape_id = models.CharField(
+        max_length=100
+    )
+    gdrive_file_id = models.CharField(
+        max_length=200,
+        null=True,
+        blank=True,
+    )
+    file_name = models.CharField(
+        max_length=200,
+        null=True,
+        blank=True,
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+    downloaded = models.BooleanField(
+        default=False
+    )
+
+    def __str__(self):
+        return f"{self.file_name} ({self.input_layer.name})"
