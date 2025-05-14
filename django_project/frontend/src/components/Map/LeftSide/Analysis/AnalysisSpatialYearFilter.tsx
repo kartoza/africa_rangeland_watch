@@ -46,6 +46,7 @@ const AnalysisSpatialYearFilter: React.FC<AnalysisSpatialYearFilterProps> = ({ i
                     placeholder="Select start year"
                     value={startYear ?? ''}
                     onChange={handleStartYearChange}
+                    disabled={disabled}
                 >
                     {/* Add options for years */}
                     {Array.from({ length: new Date().getFullYear() - 1999 }, (_, i) => new Date().getFullYear() - i).map(year => (
@@ -59,6 +60,7 @@ const AnalysisSpatialYearFilter: React.FC<AnalysisSpatialYearFilterProps> = ({ i
                     value={endYear ?? ''}
                     onChange={handleEndYearChange}
                     mt={4}
+                    disabled={disabled}
                 >
                     {/* Add options for years */}
                     {Array.from({ length: new Date().getFullYear() - 1999 }, (_, i) => new Date().getFullYear() - i).map(year => (

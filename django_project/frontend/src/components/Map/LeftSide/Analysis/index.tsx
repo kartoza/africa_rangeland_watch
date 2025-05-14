@@ -371,6 +371,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
           <AnalysisSpatialYearFilter
             initialStartYear={data.spatialStartYear}
             initialEndYear={data.spatialEndYear}
+            disabled={![null, undefined].includes(analysis.referenceLayerDiff)}
             onYearChange={(startYear, endYear) => {
               // set spatial year filter and reset results
               setData({
@@ -407,13 +408,20 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
                 _hover={{ bg: "dark_green.800", color: "white" }}
                 variant="outline"
                 disabled={loading}
-                // onClick={() => {
-                //   setData({ analysisType: Types.BASELINE });
-                //   setMapInteraction(MapAnalysisInteraction.NO_INTERACTION);
-                //   geometrySelectorRef?.current?.removeLayer();
-                //   dispatch(resetAnalysisResult());
-                //   saveSession('/map', { activity: "Visited Analysis Page"}, { analysisType: Types.BASELINE });
-                // }}
+                onClick={() => {
+                  setData({
+                    ...data,
+                    reference_layer: null,
+                    reference_layer_id: null,
+                    locations: null,
+                    custom_geom: null,
+                    userDefinedFeatureId: null,
+                    userDefinedFeatureName: null
+                  })
+                  setMapInteraction(MapAnalysisInteraction.NO_INTERACTION);
+                  geometrySelectorRef?.current?.removeLayer();
+                  dispatch(resetAnalysisResult());
+                }}
               >
                 Reset
               </Button>
