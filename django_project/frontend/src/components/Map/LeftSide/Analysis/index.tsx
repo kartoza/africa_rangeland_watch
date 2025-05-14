@@ -371,6 +371,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
           <AnalysisSpatialYearFilter
             initialStartYear={data.spatialStartYear}
             initialEndYear={data.spatialEndYear}
+            disabled={![null, undefined].includes(analysis.referenceLayerDiff)}
             onYearChange={(startYear, endYear) => {
               // set spatial year filter and reset results
               setData({
@@ -398,6 +399,32 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
           data.analysisType === Types.SPATIAL && data.variable && mapInteraction !== MapAnalysisInteraction.CUSTOM_GEOMETRY_DRAWING && (
             <HStack
               wrap="wrap" gap={8} alignItems='center' justifyContent='center'>
+              <Button
+                size="xs"
+                borderRadius={4}
+                paddingX={4}
+                borderColor="dark_green.800"
+                color="dark_green.800"
+                _hover={{ bg: "dark_green.800", color: "white" }}
+                variant="outline"
+                disabled={loading}
+                onClick={() => {
+                  setData({
+                    ...data,
+                    reference_layer: null,
+                    reference_layer_id: null,
+                    locations: null,
+                    custom_geom: null,
+                    userDefinedFeatureId: null,
+                    userDefinedFeatureName: null
+                  })
+                  setMapInteraction(MapAnalysisInteraction.NO_INTERACTION);
+                  geometrySelectorRef?.current?.removeLayer();
+                  dispatch(resetAnalysisResult());
+                }}
+              >
+                Reset
+              </Button>
               <Button
                 size="xs"
                 borderRadius={4}
