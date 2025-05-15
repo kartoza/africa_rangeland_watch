@@ -10,7 +10,7 @@ from core.celery import app
 from cloud_native_gis.models.layer import Layer
 from layers.models import InputLayer, ExportedCog
 from analysis.models import Landscape
-from analysis.analysis import export_image_to_drive
+from analysis.analysis import export_image_to_drive, initialize_engine_analysis
 from analysis.utils import get_gdrive_file
 from layers.utils import get_nrt_image
 
@@ -26,6 +26,8 @@ def export_ee_image_to_cog(
     """
     Export EE image associated with InputLayer
     to GDrive as COG and download it."""
+    exported_cog = None
+    initialize_engine_analysis()
     try:
         # Load InputLayer
         input_layer = InputLayer.objects.get(uuid=input_layer_id)
@@ -45,7 +47,7 @@ def export_ee_image_to_cog(
             "image": ee_image,
             "description": file_name,
             "folder": export_folder,
-            "fileNamePrefix": file_name.replace(".tif", ""),
+            "file_name_prefix": file_name.replace(".tif", ""),
             "scale": 30,
             "region": region,
             "vis_params": input_layer.get_vis_params() if hasattr(
@@ -83,12 +85,12 @@ def export_ee_image_to_cog(
 
         # save to InputLayer metadata
         input_layer.metadata["cog_downloaded"] = True
-        input_layer.metadata["gdrive_file_id"] = gfile["id"]
         input_layer.save()
 
         # Save to ExportedCog model
         exported_cog.downloaded = True
         exported_cog.file_name = file_name
+        exported_cog.gdrive_file_id = gfile["id"]
         exported_cog.save()
 
         layer = Layer.objects.filter(unique_id=input_layer_id).first()
@@ -104,11 +106,12 @@ def export_ee_image_to_cog(
         if input_layer:
             input_layer.metadata["cog_error"] = str(ex)
             input_layer.save()
-        exported_cog.downloaded = False
-        exported_cog.save()
+        if exported_cog:
+            exported_cog.downloaded = False
+            exported_cog.save()
 
 
-@shared_task(name="export_ee_image_to_cog")
+@shared_task(name="export_ee_image_to_cog_task")
 def export_ee_image_to_cog_task(
     input_layer_id,
     landscape_id,
@@ -128,5 +131,5 @@ def export_all_nrt_cogs():
     nrt_layers = InputLayer.objects.filter(group__name="near-real-time")
 
     for landscape in Landscape.objects.all():
-        for layer in nrt_layers:
+        for layer in nrt_layers[:2]:
             export_ee_image_to_cog_task.delay(str(layer.uuid), landscape.id)

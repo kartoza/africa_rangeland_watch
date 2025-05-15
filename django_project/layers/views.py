@@ -84,7 +84,6 @@ def download_layer(request, uuid):
     return response
 
 
-@login_required
 @api_view(['GET'])
 def download_from_gdrive(request, uuid):
     """
