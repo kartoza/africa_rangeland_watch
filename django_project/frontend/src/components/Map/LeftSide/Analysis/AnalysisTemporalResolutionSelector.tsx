@@ -1,4 +1,3 @@
-import React, { useEffect } from 'react';
 import {
   AccordionButton,
   AccordionIcon,
@@ -9,8 +8,9 @@ import {
   Radio,
   RadioGroup
 } from "@chakra-ui/react";
-import { TemporalResolution } from "../../fixtures/analysis";
+import React, { useEffect } from 'react';
 import { AnalysisData } from "../../DataTypes";
+import { TemporalResolution } from "../../fixtures/analysis";
 
 
 interface Props {
@@ -18,8 +18,8 @@ interface Props {
   onSelected: (landscape: string) => void;
 }
 
-/** Temporal resolution . */
-export default function AnalysisTemporalResolutionSelector(
+/** Temporal/Spatial resolution . */
+export default function AnalysisResolutionSelector(
   { data, onSelected }: Props
 ) {
 
@@ -35,7 +35,7 @@ export default function AnalysisTemporalResolutionSelector(
       <h2>
         <AccordionButton>
           <Box flex="1" textAlign="left" fontWeight='bold' fontSize='13px'>
-            3) Select temporal resolution
+            3) Select resolution
           </Box>
           <AccordionIcon/>
         </AccordionButton>

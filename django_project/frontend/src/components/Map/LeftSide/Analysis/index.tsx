@@ -1,34 +1,33 @@
-import React, { useEffect, useState, useRef } from 'react';
 import { Accordion, Box, Button, HStack, Spinner, Text, useToast } from "@chakra-ui/react";
+import React, { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from "react-redux";
-import { Layer } from '../../../../store/layerSlice';
-import { Community, Landscape } from '../../../../store/landscapeSlice';
-import { AnalysisData } from "../../DataTypes";
-import LeftSideLoading from "../Loading";
-import AnalysisLandscapeSelector from "./AnalysisLandscapeSelector";
-import AnalysisTypeSelector from "./AnalysisTypeSelector";
-import { TemporalResolution, Types } from "../../fixtures/analysis";
-import AnalysisTemporalResolutionSelector
-  from "./AnalysisTemporalResolutionSelector";
-import AnalysisVariableSelector from "./AnalysisVariableSelector";
-import AnalysisReferencePeriod from "./AnalysisReferencePeriod";
-import AnalysisVariableBySpatialSelector
-  from "./AnalysisVariableBySpatialSelector";
-import AnalysisLandscapeGeometrySelector
-  from "./AnalysisLandscapeGeometrySelector";
+import { useSession } from '../../../../sessionProvider';
 import { AppDispatch, RootState } from "../../../../store";
 import {
-  doAnalysis, REFERENCE_LAYER_DIFF_ID, resetAnalysisResult,
+  doAnalysis,
+  fetchAnalysisStatus,
+  REFERENCE_LAYER_DIFF_ID, resetAnalysisResult,
   setAnalysis, setAnalysisCustomGeom,
-  fetchAnalysisStatus, setMaxWaitAnalysisReached, toggleAnalysisLandscapeCommunity
+  setMaxWaitAnalysisReached, toggleAnalysisLandscapeCommunity
 } from "../../../../store/analysisSlice";
-import { AnalysisCustomGeometrySelector } from "./AnalysisCustomGeometrySelector";
-import AnalysisUserDefinedLayerSelector from "./AnalysisUserDefinedLayerSelector";
-import AnalysisSpatialYearFilter from "./AnalysisSpatialYearFilter";
-import BaselineDateRangeSelector from './BaselineDateRangeSelector';
+import { Landscape } from '../../../../store/landscapeSlice';
+import { Layer } from '../../../../store/layerSlice';
+import { clearSavedAnalysisFlag, saveAnalysis } from '../../../../store/userAnalysisSlice';
+import { AnalysisData } from "../../DataTypes";
+import { TemporalResolution, Types } from "../../fixtures/analysis";
 import { LayerCheckboxProps } from '../Layers';
-import { useSession } from '../../../../sessionProvider';
-import { saveAnalysis, clearSavedAnalysisFlag } from '../../../../store/userAnalysisSlice';
+import LeftSideLoading from "../Loading";
+import { AnalysisCustomGeometrySelector } from "./AnalysisCustomGeometrySelector";
+import AnalysisLandscapeGeometrySelector from "./AnalysisLandscapeGeometrySelector";
+import AnalysisLandscapeSelector from "./AnalysisLandscapeSelector";
+import AnalysisReferencePeriod from "./AnalysisReferencePeriod";
+import AnalysisSpatialYearFilter from "../../../Map/LeftSide/Analysis/AnalysisSpatialYearFilter";
+import AnalysisResolutionSelector from "./AnalysisTemporalResolutionSelector";
+import AnalysisTypeSelector from "./AnalysisTypeSelector";
+import AnalysisUserDefinedLayerSelector from "./AnalysisUserDefinedLayerSelector";
+import AnalysisVariableBySpatialSelector from "./AnalysisVariableBySpatialSelector";
+import AnalysisVariableSelector from "./AnalysisVariableSelector";
+import BaselineDateRangeSelector from './BaselineDateRangeSelector';
 
 
 interface Props extends LayerCheckboxProps {
@@ -343,12 +342,24 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
             </Box>
           )
         }
-        {/* 3) Select temporal resolution */}
-        {
-          data.analysisType === Types.TEMPORAL &&
-          <AnalysisTemporalResolutionSelector
+        {/* 3) Select resolution */}
+        {/* {
+          [Types.TEMPORAL, Types.SPATIAL].includes(data.analysisType) &&
+          <AnalysisResolutionSelector
             data={data}
             onSelected={(value) => setData({
+              ...data,
+              ...(data.analysisType === Types.TEMPORAL 
+                ? { temporalResolution: value }
+                : { spatialResolution: value })
+            })}
+          />
+        } */}
+        {
+          [Types.TEMPORAL, Types.SPATIAL].includes(data.analysisType) &&
+          <AnalysisResolutionSelector
+            data={data}
+            onSelected={(value: string) => setData({
               ...data,
               temporalResolution: value
             })}
@@ -365,8 +376,8 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
             })}
           />
         }
-        {/* 4) Select year range filter for spatial*/}
-        {
+        {/* 4) Select year range filter for spatial */}
+        {/* {
           data.analysisType === Types.SPATIAL && data.variable &&
           <AnalysisSpatialYearFilter
             initialStartYear={data.spatialStartYear}
@@ -386,87 +397,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
               setMapInteraction(MapAnalysisInteraction.NO_INTERACTION)
             }}
           />
-        }
-        {/* Draw buttons for spatial */}
-        {
-          data.analysisType === Types.SPATIAL && data.variable &&
-          <Box mb={4} color={'green'}>
-            Draw a reference area
-          </Box>
-        }
-        {
-          data.analysisType === Types.SPATIAL && data.variable && mapInteraction !== MapAnalysisInteraction.CUSTOM_GEOMETRY_DRAWING && (
-            <HStack
-              wrap="wrap" gap={8} alignItems='center' justifyContent='center'>
-              <Button
-                size="xs"
-                borderRadius={4}
-                paddingX={4}
-                bg='dark_green.800'
-                color="white"
-                _hover={{ opacity: 0.8 }}
-                onClick={() => {
-                  setData({
-                    ...data,
-                    reference_layer: null,
-                    reference_layer_id: null,
-                    locations: null,
-                    custom_geom: null,
-                    userDefinedFeatureId: null,
-                    userDefinedFeatureName: null
-                  })
-                  setMapInteraction(MapAnalysisInteraction.CUSTOM_GEOMETRY_DRAWING)
-                  dispatch(resetAnalysisResult())
-                }}
-                disabled={loading}
-                minWidth={120}
-              >
-                Draw
-              </Button>
-            </HStack>       
-          )
-        }
-        {
-          data.analysisType === Types.SPATIAL && data.variable && mapInteraction === MapAnalysisInteraction.CUSTOM_GEOMETRY_DRAWING && (
-            <HStack
-              wrap="wrap" gap={8} alignItems='center' justifyContent='center'>
-              <Button
-                size="xs"
-                borderRadius={4}
-                paddingX={4}
-                borderColor='dark_green.800'
-                color="dark_green.800"
-                _hover={{ bg: "dark_green.800", color: "white" }}
-                variant="outline"
-                onClick={() => {
-                  setMapInteraction(MapAnalysisInteraction.NO_INTERACTION)
-                }}
-                minWidth={120}
-              >
-                Cancel
-              </Button>
-              <Button
-                size="xs"
-                borderRadius={4}
-                paddingX={4}
-                bg='dark_green.800'
-                color="white"
-                _hover={{ opacity: 0.8 }}
-                onClick={() => {
-                  setMapInteraction(MapAnalysisInteraction.NO_INTERACTION)
-                }}
-                minWidth={120}
-              >
-                Finish Drawing
-              </Button>
-              { isGeomError && 
-                <Box mb={4} color={'red'}>
-                  Area too big - smaller please
-                </Box>
-              }
-            </HStack>
-          )
-        }
+        } */}
         {
           data.analysisType === Types.SPATIAL && data.variable && data.reference_layer && loading && (data.locations === null || data.locations.length === 0) &&
           <HStack mt={4} color={'red'}
@@ -489,7 +420,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
         }
         {/* 5) Select temporal resolution */}
         {
-          data.variable && data.analysisType === Types.TEMPORAL &&
+          data.variable && [Types.TEMPORAL, Types.SPATIAL].includes(data.analysisType) &&
           <AnalysisReferencePeriod
             title='5) Select reference period'
             value={data.period}
@@ -523,13 +454,13 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
         }
         {/* 6) Select comparison period */}
         {
-          data.period?.year && data.analysisType === Types.TEMPORAL &&
+          data.variable && [Types.TEMPORAL, Types.SPATIAL].includes(data.analysisType) &&
           <AnalysisReferencePeriod
             title='6) Select comparison period'
             value={data.comparisonPeriod}
             isQuarter={data.temporalResolution === TemporalResolution.QUARTERLY}
             isMonthly={data.temporalResolution === TemporalResolution.MONTHLY}
-            multiple={true}
+            multiple={data.analysisType === Types.TEMPORAL}
             onSelectedYear={(value: number) => setData({
               ...data,
               comparisonPeriod: {
@@ -557,6 +488,88 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
           />
         }
       </Accordion>
+
+      {/* Draw buttons for spatial */}
+      {
+        data.analysisType === Types.SPATIAL && data.variable &&
+        <Box mb={4} color={'green'}>
+          Draw a reference area
+        </Box>
+      }
+      {
+        data.analysisType === Types.SPATIAL && data.variable && mapInteraction !== MapAnalysisInteraction.CUSTOM_GEOMETRY_DRAWING && (
+          <HStack
+            wrap="wrap" gap={8} alignItems='center' justifyContent='center'>
+            <Button
+              size="xs"
+              borderRadius={4}
+              paddingX={4}
+              bg='dark_green.800'
+              color="white"
+              _hover={{ opacity: 0.8 }}
+              onClick={() => {
+                setData({
+                  ...data,
+                  reference_layer: null,
+                  reference_layer_id: null,
+                  locations: null,
+                  custom_geom: null,
+                  userDefinedFeatureId: null,
+                  userDefinedFeatureName: null
+                })
+                setMapInteraction(MapAnalysisInteraction.CUSTOM_GEOMETRY_DRAWING)
+                dispatch(resetAnalysisResult())
+              }}
+              disabled={loading}
+              minWidth={120}
+            >
+              Draw
+            </Button>
+          </HStack>       
+        )
+      }
+      {
+        data.analysisType === Types.SPATIAL && data.variable && mapInteraction === MapAnalysisInteraction.CUSTOM_GEOMETRY_DRAWING && (
+          <HStack
+            wrap="wrap" gap={8} alignItems='center' justifyContent='center'>
+            <Button
+              size="xs"
+              borderRadius={4}
+              paddingX={4}
+              borderColor='dark_green.800'
+              color="dark_green.800"
+              _hover={{ bg: "dark_green.800", color: "white" }}
+              variant="outline"
+              onClick={() => {
+                setMapInteraction(MapAnalysisInteraction.NO_INTERACTION)
+              }}
+              minWidth={120}
+            >
+              Cancel
+            </Button>
+            <Button
+              size="xs"
+              borderRadius={4}
+              paddingX={4}
+              bg='dark_green.800'
+              color="white"
+              _hover={{ opacity: 0.8 }}
+              onClick={() => {
+                setMapInteraction(MapAnalysisInteraction.NO_INTERACTION)
+              }}
+              minWidth={120}
+            >
+              Finish Drawing
+            </Button>
+            { isGeomError && 
+              <Box mb={4} color={'red'}>
+                Area too big - smaller please
+              </Box>
+            }
+          </HStack>
+        )
+      }
+
       <Box mt={4} mb={4} marginTop={10}>
         {
           !dataError ?
