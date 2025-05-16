@@ -84,7 +84,7 @@
         "type": "image_collection",
         "metadata": {
             "start_date": "2015-01-01",
-            "end_date": "2020-01-01"
+            "end_date": "2019-12-31"
         }
     }
 },
@@ -203,11 +203,11 @@
     "pk": 20,
     "fields": {
         "key": "modis_ndwi",
-        "source": "MODIS/MCD43A4_NDWI",
+        "source": "MODIS/MCD43A4_006_NDWI",
         "type": "image_collection",
         "metadata": {
             "start_date": "2000-02-18",
-            "end_date": "2017-03-18"
+            "end_date": "2023-02-10"
         }
     }
 },
@@ -216,11 +216,11 @@
     "pk": 21,
     "fields": {
         "key": "modis_surface_reflect",
-        "source": "MODIS/006/MOD09A1",
+        "source": "MODIS/061/MOD09A1",
         "type": "image_collection",
         "metadata": {
             "start_date": "2000-02-18",
-            "end_date": "2023-02-18"
+            "end_date": "now"
         }
     }
 },
@@ -246,7 +246,7 @@
         "type": "image_collection",
         "metadata": {
             "start_date": "2000-02-18",
-            "end_date": "2025-02-18"
+            "end_date": "now"
         }
     }
 },

@@ -11,6 +11,9 @@ from analysis.models import AnalysisResultsCache, GEEAsset
 
 SERVICE_ACCOUNT_KEY = os.environ.get('SERVICE_ACCOUNT_KEY', '')
 SERVICE_ACCOUNT = os.environ.get('SERVICE_ACCOUNT', '')
+SERVICE_ACCOUNT='arw-gee@ee-dng.iam.gserviceaccount.com'
+SERVICE_ACCOUNT_KEY="ewogICAgInR5cGUiOiAic2VydmljZV9hY2NvdW50IiwKICAgICJwcm9qZWN0X2lkIjogImVlLWRuZyIsCiAgICAicHJpdmF0ZV9rZXlfaWQiOiAiOGViZWI4OWFjNTg3NDRlZGRmMWJlOGU5MDJiYTg3MzkyZGI1MGUwMyIsCiAgICAicHJpdmF0ZV9rZXkiOiAiLS0tLS1CRUdJTiBQUklWQVRFIEtFWS0tLS0tXG5NSUlFdlFJQkFEQU5CZ2txaGtpRzl3MEJBUUVGQUFTQ0JLY3dnZ1NqQWdFQUFvSUJBUUM3M2xSZGRHNUFWS0wwXG4vUFhvTTBVaXBrWW1GbVg1TFdqaEUydE1UTkpxVUhzNDhKM0sxQ09Dc05IcC9lUkRTSUtOcFUyTitPVW9wSGJTXG5JUnlhVzhYL24vdVF6cXVGbVVPSjdmMWRCVitFWjQyZ1FQVHYwNUo2TFA0NVgxTXhYTHg1d2J3QkxwSmwxM2NyXG5DTkZZOWd3ODhpMWlxNEk5N3FoTUs2QUN1aGVWSDdMZU9GM3RxRDhKSjhndHdWUlRMbDlDQzl3d3lKaWZONzcrXG5ETWFtU25ad3EzTEN3WUZNcVUxYWdIemlsVFhTU3BCVStDdENJclJoZU9TRWJ1Y1dCMGlTVEFqTFFzZGtwMDFtXG4vbUtoZW9RWGZLK1ZvY3BtZjh2TkQ1K29BK3JhOWs5cXdVRjNndTBtZTdDc1BCWVNHaHdpVS81Qm4xVEtmYndBXG53czlHenk0bkFnTUJBQUVDZ2dFQUJXNVIxT3dEU3BTU2NyM3lOWGlNTGxGMy9RSWF3TWhQbkRFeTl6UjZxRWNGXG54eDdWbGtJR0pGUzNJaHYrRUx4UTRkdWF0T2I1YUEwSitQbFZvT1orOGdrcTd1ZUJzTCtUbTdJbnJ2KzZicG4vXG5UNURHZk10OE1LV0tWRkVtWGpHNGNZN2FUaW1OZjIrR2xaemxpR2J4MVovZW9uUmNYcnNUei90elVHUnNJc1RkXG5pOFpQRjdzd1BWNDNrZW1lTmR4ek5jVmxZck54dWpkSHFkVkVvN25EWHFja2J2bHZBU1hyRUQ2dm9wRENtMmwrXG42dnJNNG5zVHlLOWcvVk5weGQ1blV2UlBzTFNvVUFsV29DSjlCV3lBYmp4ajBDWjlsV2YwSXpGdzRpTUF4NnkyXG5XTThUTmJ5OGlCK2EvV3dPWnBvMkdLdlZqK09iK0dtNWhHd29HNlA0cVFLQmdRRC8wU1JkNUVwUys2ZGlHbXdjXG5MR1FPRUJTSWc2WFJsZ2hOOUs3WjJEVUdHMHBMNUVDR2ZNWjZGeDZla3NqZEFWUllmMHhwcTZYTjVYdjhyRzVXXG40aGEraW1SU29pZ3VpOXNJMHcyakhCMWE4NDI5QnQyVGxmdCt2bmY0cHY5MWU2dUFERldLNU5iTWlaTW5QOUZ4XG5JdnFBaksxQkUrd2tvM2UxRDRVYkk2bG44d0tCZ1FDOEFMM0xQaUhpeWdOUDhWVFA5MWo3eUN3VVFvK2RWQmFNXG55L3diUGxVWmNBVVRYWkdEUk04TnRIQ2M5Ny9CMEh1Q3kxV2dIVG9KeUtnRVFueE8vVzVFd1FPbnV1TENJWTZMXG4vcHpyamFBN1gxMy9jUXNPR0ptMldBV08xQ3Z0QzZ5TC9kcnE3N1I3MXpBMldUa0VnMDFHZk1DNThXR205Kys5XG50eHRQZTNhQi9RS0JnUURpZjZCOWFXWE5OM2VxU3M2eDJ6UHpwNVVta2JrOWFtT0w4anJtTXFJdjkvVytZQ2dwXG5hMHlvU05RWmZzbE50S0dqZ1lKOGhUZldwM3N4NnRIL0owc1FCYVJ4N1pVNk1TWU1HQ0lZNndtcXY3NGRRWGpwXG45WCtwWnFiK2g0M2p6VTI1b0RJVk9peGRDT283ZEN2U3lpK1ZwZmk0aUJVckUza24zTWZ6a1kycXRRS0JnR0FIXG44T3FVUGpMZUJYc2NScnBFR2t2aUg4SHBqZnBMTFltVjJKMEI1ZTRzYml0S0xEM2xNKzVJTVEyODcxSk04QW9MXG5XeDJDVUZjWEM5dkJLa1llNWVod3Z6RTZJUUlRcWdPUWR3OUxOSUdmWVNCTjJkdkZiUjdiTDF1WnZTWkVSRXJ0XG56SmtkQUJBU0J5cDd3TWd4V1pPYnZjWTlLaWhqbFM1UERjQTN6SHp4QW9HQUttRmtLUUpzUHVFcjEycE9PajJrXG5EeStxQVhDYjJ3Zk1ReTREcHdwREFTbjVDK1FmMHh0VTVvUHJpWUMvc3V2cnZrWGpweFE2MWlnbnQwVkZWRlhhXG5KZnYyTjJRYUE5eWRxVHB5bHlNNDhrUTVtRDYwMUdtUEFXM1FlUjFRZk1EMzJvNWkwZWY3cjUveGEvUlRDWVl0XG5PblVaZklxUFAwNC8rWXFTcE5tN1RmMD1cbi0tLS0tRU5EIFBSSVZBVEUgS0VZLS0tLS1cbiIsCiAgICAiY2xpZW50X2VtYWlsIjogImFydy1nZWVAZWUtZG5nLmlhbS5nc2VydmljZWFjY291bnQuY29tIiwKICAgICJjbGllbnRfaWQiOiAiMTA2MjM0NTU0MTUxMzM5NzkyMzA0IiwKICAgICJhdXRoX3VyaSI6ICJodHRwczovL2FjY291bnRzLmdvb2dsZS5jb20vby9vYXV0aDIvYXV0aCIsCiAgICAidG9rZW5fdXJpIjogImh0dHBzOi8vb2F1dGgyLmdvb2dsZWFwaXMuY29tL3Rva2VuIiwKICAgICJhdXRoX3Byb3ZpZGVyX3g1MDlfY2VydF91cmwiOiAiaHR0cHM6Ly93d3cuZ29vZ2xlYXBpcy5jb20vb2F1dGgyL3YxL2NlcnRzIiwKICAgICJjbGllbnRfeDUwOV9jZXJ0X3VybCI6ICJodHRwczovL3d3dy5nb29nbGVhcGlzLmNvbS9yb2JvdC92MS9tZXRhZGF0YS94NTA5L2Fydy1nZWUlNDBlZS1kbmcuaWFtLmdzZXJ2aWNlYWNjb3VudC5jb20iLAogICAgInVuaXZlcnNlX2RvbWFpbiI6ICJnb29nbGVhcGlzLmNvbSIKICB9"
+
 
 # Sentinel-2 bands and names
 S2_BANDS = ['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B11', 'B12']
@@ -260,9 +263,7 @@ class InputLayer:
         if clip_to_countries:
             soc_lt_mean = soc_lt_mean.clipToCollection(self.countries)
         elif aoi:
-            soc_lt_mean = soc_lt_mean.clipToCollection(
-                ee.FeatureCollection([ee.Feature(aoi, {})])
-            )
+            soc_lt_mean = soc_lt_mean.clipToCollection(aoi)
         return soc_lt_mean
 
     def get_grazing_capacity(self):
@@ -345,7 +346,7 @@ class InputLayer:
             soc_lt_trend = soc_lt_trend.clipToCollection(self.countries)
         elif aoi:
             soc_lt_trend = soc_lt_trend.clipToCollection(
-                ee.FeatureCollection([ee.Feature(aoi, {})])
+                aoi
             )
         return soc_lt_trend
 
@@ -1475,8 +1476,8 @@ def spatial_get_date_filter(analysis_dict):
             filter_start_date = datetime.date(int(start_year), 1, 1)
         
         if end_year:
-            # For annual, end date is January 1st the year following end year since it is exclusive
-            filter_end_date = datetime.date(int(end_year) + 1, 1, 1)
+            # For annual, end date is December 31 on the same year
+            filter_end_date = datetime.date(int(end_year), 12, 31)
             
     elif t_resolution == 'Quarterly':
         start_quarter = analysis_dict['Spatial'].get('Quarterly', {}).get('ref')
@@ -1493,7 +1494,7 @@ def spatial_get_date_filter(analysis_dict):
             
             # Handle December specially
             if end_month == 12:
-                filter_end_date = datetime.date(int(end_year) + 1, 1, 1)
+                filter_end_date = datetime.date(int(end_year), 12, 31)
             else:
                 # Last day of the month = first day of next month - 1 day
                 next_month_year = int(end_year)
@@ -1502,7 +1503,7 @@ def spatial_get_date_filter(analysis_dict):
                     next_month = 1
                     next_month_year += 1
                 
-                filter_end_date = datetime.date(next_month_year, next_month, 1)
+                filter_end_date = datetime.date(next_month_year, next_month, 1) - datetime.timedelta(day=1)
             
     elif t_resolution == 'Monthly':
         start_month = analysis_dict['Spatial'].get('Monthly', {}).get('ref')
@@ -1518,9 +1519,9 @@ def spatial_get_date_filter(analysis_dict):
             
             # Last day of the month = first day of next month - 1 day
             if end_month_int == 12:
-                filter_end_date = datetime.date(end_year_int + 1, 1, 1)
+                filter_end_date = datetime.date(end_year_int, 12, 31)
             else:
-                filter_end_date = datetime.date(end_year_int, end_month_int + 1, 1)
+                filter_end_date = datetime.date(end_year_int, end_month_int + 1, 1) - datetime.timedelta(days=1)
     
     # Fallback to the original implementation if specific resolution handling failed
     if filter_start_date is None and analysis_dict['Spatial'].get('start_year', None):
@@ -1530,7 +1531,7 @@ def spatial_get_date_filter(analysis_dict):
     
     if filter_end_date is None and analysis_dict['Spatial'].get('end_year', None) and end_year:
         filter_end_date = datetime.date(
-            int(end_year) + 1, 1, 1
+            int(end_year), 12, 31
         )
         
     return filter_start_date, filter_end_date
@@ -1798,7 +1799,7 @@ def calculate_baseline(aoi, start_date, end_date, is_custom_geom=False):
                         GEEAsset.fetch_asset_source('modis_vegetation_061')
                     )
                     .filterDate(start_dt, end_dt)
-                    .filterBounds(aoi)
+                    .filterBounds(selected_area)
                     .select(['NDVI', 'EVI'])
                     .map(lambda i: i.divide(10000)))
         evi_baseline = modis_veg.select('EVI').median()
@@ -1823,7 +1824,7 @@ def calculate_baseline(aoi, start_date, end_date, is_custom_geom=False):
                     GEEAsset.fetch_asset_source('cgls_ground_cover')
                 )
                 .filterDate(start_dt, end_dt)
-                .filterBounds(aoi)
+                .filterBounds(selected_area)
                 .select(
                     [
                         'bare-coverfraction', 'crops-coverfraction',
@@ -1864,7 +1865,11 @@ def calculate_baseline(aoi, start_date, end_date, is_custom_geom=False):
         'fire_cci', start_date, end_date
     )
     if valid:
-        fire_freq = calculate_firefreq(aoi, start_dt, end_dt).divide(18)
+        fire_freq = calculate_firefreq(
+            selected_area,
+            start_dt,
+            end_dt
+        ).divide(18)
         fire_freq = fire_freq.unmask(0)
         image_list.append({
             'asset': fire_freq,
@@ -1881,7 +1886,7 @@ def calculate_baseline(aoi, start_date, end_date, is_custom_geom=False):
             datetime.date.fromisoformat(start_dt),
             datetime.date.fromisoformat(end_dt),
             False,
-            aoi
+            selected_area
         )
         soc_lt_mean = soc_lt_mean.rename('SOCltMean')
         image_list.append({
@@ -1891,11 +1896,18 @@ def calculate_baseline(aoi, start_date, end_date, is_custom_geom=False):
         })
 
         # SOCltTrend
+        soil_start_dt = datetime.date.fromisoformat(start_dt)
+        if soil_start_dt.year == datetime.date.fromisoformat(end_dt).year:
+            # soild_carbon_change needs 2 years of data
+            soil_start_dt = datetime.date(
+                soil_start_dt.year - 1, soil_start_dt.month, soil_start_dt.day
+            )
+            start_dt = soil_start_dt.isoformat()
         soc_lt_trend = input_layer.get_soil_carbon_change(
             datetime.date.fromisoformat(start_dt),
             datetime.date.fromisoformat(end_dt),
             False,
-            aoi
+            selected_area
         )
         soc_lt_trend = soc_lt_trend.rename('SOCltTrend')
         image_list.append({
@@ -1919,6 +1931,10 @@ def calculate_baseline(aoi, start_date, end_date, is_custom_geom=False):
     # Reducing regions to extract mean values per polygon
     reduced = combined.reduceRegions(selected_area, ee.Reducer.mean(), 100)
     reduced = reduced.distinct(['Name', 'Area ha'])
+
+    reduced = reduced.map(
+        lambda feature: feature.setGeometry(None)
+    )
 
     return reduced
 
