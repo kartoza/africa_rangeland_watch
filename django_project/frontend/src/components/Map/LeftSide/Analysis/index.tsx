@@ -580,6 +580,32 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
               size="xs"
               borderRadius={4}
               paddingX={4}
+              borderColor="dark_green.800"
+              color="dark_green.800"
+              _hover={{ bg: "dark_green.800", color: "white" }}
+              variant="outline"
+              disabled={loading}
+              onClick={() => {
+                setData({
+                  ...data,
+                  reference_layer: null,
+                  reference_layer_id: null,
+                  locations: null,
+                  custom_geom: null,
+                  userDefinedFeatureId: null,
+                  userDefinedFeatureName: null
+                })
+                setMapInteraction(MapAnalysisInteraction.NO_INTERACTION);
+                geometrySelectorRef?.current?.removeLayer();
+                dispatch(resetAnalysisResult());
+              }}
+            >
+              Reset
+            </Button>
+            <Button
+              size="xs"
+              borderRadius={4}
+              paddingX={4}
               bg='dark_green.800'
               color="white"
               _hover={{ opacity: 0.8 }}
