@@ -260,9 +260,7 @@ class InputLayer:
         if clip_to_countries:
             soc_lt_mean = soc_lt_mean.clipToCollection(self.countries)
         elif aoi:
-            soc_lt_mean = soc_lt_mean.clipToCollection(
-                ee.FeatureCollection([ee.Feature(aoi, {})])
-            )
+            soc_lt_mean = soc_lt_mean.clipToCollection(aoi)
         return soc_lt_mean
 
     def get_grazing_capacity(self):
@@ -345,7 +343,7 @@ class InputLayer:
             soc_lt_trend = soc_lt_trend.clipToCollection(self.countries)
         elif aoi:
             soc_lt_trend = soc_lt_trend.clipToCollection(
-                ee.FeatureCollection([ee.Feature(aoi, {})])
+                aoi
             )
         return soc_lt_trend
 
@@ -1446,17 +1444,93 @@ def export_table_to_drive(feature_collection, description, folder):
 
 
 def spatial_get_date_filter(analysis_dict):
-    """Get spatial date filter from analysis_dict."""
+    """Get spatial date filter from analysis_dict.
+    
+    Parameters
+    ----------
+    analysis_dict : dict
+        Dictionary containing analysis parameters including temporal resolution
+        and date specifications.
+        
+    Returns
+    -------
+    tuple
+        A tuple containing (filter_start_date, filter_end_date) as datetime.date objects.
+    """
     filter_start_date = None
-    if analysis_dict['Spatial'].get('start_year', None):
-        filter_start_date = datetime.date(
-            int(analysis_dict['Spatial'].get('start_year')), 1, 1
-        )
     filter_end_date = None
-    if analysis_dict['Spatial'].get('end_year', None):
-        filter_end_date = datetime.date(
-            int(analysis_dict['Spatial'].get('end_year')), 1, 1
+    
+    # Get temporal resolution
+    t_resolution = analysis_dict.get('t_resolution', 'Annual')
+    
+    # Get reference values based on temporal resolution
+    start_year = analysis_dict['Spatial'].get('Annual', {}).get('ref')
+    end_year = analysis_dict['Spatial'].get('Annual', {}).get('test')
+    
+    if t_resolution == 'Annual':
+        
+        if start_year:
+            filter_start_date = datetime.date(int(start_year), 1, 1)
+        
+        if end_year:
+            # For annual, end date is December 31 on the same year
+            filter_end_date = datetime.date(int(end_year), 12, 31)
+            
+    elif t_resolution == 'Quarterly':
+        start_quarter = analysis_dict['Spatial'].get('Quarterly', {}).get('ref')
+        end_quarter = analysis_dict['Spatial'].get('Quarterly', {}).get('test')
+        
+        if start_quarter and start_year:
+            # Convert quarter to month (Q1=1, Q2=4, Q3=7, Q4=10)
+            start_month = (int(start_quarter) - 1) * 3 + 1
+            filter_start_date = datetime.date(int(start_year), start_month, 1)
+        
+        if end_quarter and end_year:
+            # Calculate end date as the last day of the last month in the quarter
+            end_month = int(end_quarter) * 3  # Last month of the quarter
+            
+            # Handle December specially
+            if end_month == 12:
+                filter_end_date = datetime.date(int(end_year), 12, 31)
+            else:
+                # Last day of the month = first day of next month - 1 day
+                next_month_year = int(end_year)
+                next_month = end_month + 1
+                if next_month > 12:
+                    next_month = 1
+                    next_month_year += 1
+                
+                filter_end_date = datetime.date(next_month_year, next_month, 1) - datetime.timedelta(day=1)
+            
+    elif t_resolution == 'Monthly':
+        start_month = analysis_dict['Spatial'].get('Monthly', {}).get('ref')
+        end_month = analysis_dict['Spatial'].get('Monthly', {}).get('test')
+        
+        if start_month and start_year:
+            filter_start_date = datetime.date(int(start_year), int(start_month), 1)
+        
+        if end_month and end_year:
+            # Calculate the last day of the end month
+            end_month_int = int(end_month)
+            end_year_int = int(end_year)
+            
+            # Last day of the month = first day of next month - 1 day
+            if end_month_int == 12:
+                filter_end_date = datetime.date(end_year_int, 12, 31)
+            else:
+                filter_end_date = datetime.date(end_year_int, end_month_int + 1, 1) - datetime.timedelta(days=1)
+    
+    # Fallback to the original implementation if specific resolution handling failed
+    if filter_start_date is None and analysis_dict['Spatial'].get('start_year', None):
+        filter_start_date = datetime.date(
+            int(start_year), 1, 1
         )
+    
+    if filter_end_date is None and analysis_dict['Spatial'].get('end_year', None) and end_year:
+        filter_end_date = datetime.date(
+            int(end_year), 12, 31
+        )
+        
     return filter_start_date, filter_end_date
 
 
@@ -1722,7 +1796,7 @@ def calculate_baseline(aoi, start_date, end_date, is_custom_geom=False):
                         GEEAsset.fetch_asset_source('modis_vegetation_061')
                     )
                     .filterDate(start_dt, end_dt)
-                    .filterBounds(aoi)
+                    .filterBounds(selected_area)
                     .select(['NDVI', 'EVI'])
                     .map(lambda i: i.divide(10000)))
         evi_baseline = modis_veg.select('EVI').median()
@@ -1747,7 +1821,7 @@ def calculate_baseline(aoi, start_date, end_date, is_custom_geom=False):
                     GEEAsset.fetch_asset_source('cgls_ground_cover')
                 )
                 .filterDate(start_dt, end_dt)
-                .filterBounds(aoi)
+                .filterBounds(selected_area)
                 .select(
                     [
                         'bare-coverfraction', 'crops-coverfraction',
@@ -1788,7 +1862,11 @@ def calculate_baseline(aoi, start_date, end_date, is_custom_geom=False):
         'fire_cci', start_date, end_date
     )
     if valid:
-        fire_freq = calculate_firefreq(aoi, start_dt, end_dt).divide(18)
+        fire_freq = calculate_firefreq(
+            selected_area,
+            start_dt,
+            end_dt
+        ).divide(18)
         fire_freq = fire_freq.unmask(0)
         image_list.append({
             'asset': fire_freq,
@@ -1805,7 +1883,7 @@ def calculate_baseline(aoi, start_date, end_date, is_custom_geom=False):
             datetime.date.fromisoformat(start_dt),
             datetime.date.fromisoformat(end_dt),
             False,
-            aoi
+            selected_area
         )
         soc_lt_mean = soc_lt_mean.rename('SOCltMean')
         image_list.append({
@@ -1815,11 +1893,18 @@ def calculate_baseline(aoi, start_date, end_date, is_custom_geom=False):
         })
 
         # SOCltTrend
+        soil_start_dt = datetime.date.fromisoformat(start_dt)
+        if soil_start_dt.year == datetime.date.fromisoformat(end_dt).year:
+            # soild_carbon_change needs 2 years of data
+            soil_start_dt = datetime.date(
+                soil_start_dt.year - 1, soil_start_dt.month, soil_start_dt.day
+            )
+            start_dt = soil_start_dt.isoformat()
         soc_lt_trend = input_layer.get_soil_carbon_change(
             datetime.date.fromisoformat(start_dt),
             datetime.date.fromisoformat(end_dt),
             False,
-            aoi
+            selected_area
         )
         soc_lt_trend = soc_lt_trend.rename('SOCltTrend')
         image_list.append({
@@ -1843,6 +1928,10 @@ def calculate_baseline(aoi, start_date, end_date, is_custom_geom=False):
     # Reducing regions to extract mean values per polygon
     reduced = combined.reduceRegions(selected_area, ee.Reducer.mean(), 100)
     reduced = reduced.distinct(['Name', 'Area ha'])
+
+    reduced = reduced.map(
+        lambda feature: feature.setGeometry(None)
+    )
 
     return reduced
 

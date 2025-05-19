@@ -486,6 +486,19 @@ class GEEAsset(models.Model):
     def __str__(self):
         return self.key
 
+    @property
+    def start_date(self):
+        """Get start date from metadata."""
+        return self.metadata.get('start_date', None)
+
+    @property
+    def end_date(self):
+        """Get end date from metadata."""
+        end_date_str = self.metadata.get('end_date', None)
+        if end_date_str == 'now':
+            return timezone.now().strftime('%Y-%m-%d')
+        return end_date_str
+
     @classmethod
     def fetch_asset_source(cls, asset_key: str) -> str:
         """Fetch asset source by its key."""
@@ -509,9 +522,8 @@ class GEEAsset(models.Model):
         if asset is None:
             raise KeyError(f'Asset with key {asset_key} not found!')
 
-        metadata = asset.metadata
-        start_date = metadata.get('start_date')
-        end_date = metadata.get('end_date')
+        start_date = asset.start_date
+        end_date = asset.end_date
 
         if not start_date or not end_date:
             raise ValueError(
@@ -534,10 +546,10 @@ class GEEAsset(models.Model):
             return (False, None, None,)
         elif valid_start_date and not valid_end_date:
             asset = cls.objects.filter(key=asset_key).first()
-            return (True, start_date, asset.metadata.get('end_date'))
+            return (True, start_date, asset.end_date)
         elif not valid_start_date and valid_end_date:
             asset = cls.objects.filter(key=asset_key).first()
-            return (True, asset.metadata.get('start_date'), end_date)
+            return (True, asset.start_date, end_date)
 
         return (True, start_date, end_date,)
 
