@@ -64,6 +64,8 @@ nav:
                           - User Profile: user/guide/user-profile.md
                           - Update Profile: user/guide/update-profile.md
                           - Uploaded Resources Page: user/guide/Uploaded-resources.md
+                          - Earthranger Events: user/guide/Earthranger-events.md
+                          - Alert Settings: user/guide/Alertsettings.md
                   - Manual :
                           - user/manual/index.md
                           - Sign Up: user/manual/sign-up.md
@@ -81,6 +83,8 @@ nav:
                           - User Profile: user/manual/user-profile.md
                           - Update Profile: user/manual/update-profile.md
                           - Uploaded Resources Page: user/manual/Uploaded-resources.md
+                          - Earthranger Events: user/manual/Earthranger-events.md
+                          - Alert Settings: user/manual/Alertsettings.md
                   - Onboarding: user/onboard.md
         - Administrators:
                 - administrator/index.md

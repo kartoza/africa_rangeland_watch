@@ -1,11 +1,15 @@
 import base64
 import json
 import os
+import logging
 from pydrive2.auth import GoogleAuth
 from pydrive2.drive import GoogleDrive
 from oauth2client.service_account import ServiceAccountCredentials
 
 from analysis.analysis import SERVICE_ACCOUNT_KEY
+
+
+logger = logging.getLogger(__name__)
 
 
 def _initialize_gdrive_instance():
@@ -46,13 +50,50 @@ def gdrive_file_list(folder_name):
         # folder not found
         return None
     else:
-        # Assuming the first match is the desired folder
-        folder_id = folder_list[0]['id']
-        print(f"Folder ID: {folder_id}")
+        files = []
+        for folder in folder_list:
+            folder_id = folder['id']
 
-        # Step 2: List files in the found folder
-        file_query = f"'{folder_id}' in parents and trashed = false"
-        return gdrive.ListFile({'q': file_query}).GetList()
+            # Step 2: List files in the found folder
+            file_query = f"'{folder_id}' in parents and trashed = false"
+            _files = gdrive.ListFile({'q': file_query}).GetList()
+            files.extend(_files)
+        return files
+
+
+def gdrive_delete_folder(folder_name):
+    """Delete a folder from gdrive."""
+    gdrive = _initialize_gdrive_instance()
+    folder_list = gdrive.ListFile(
+        {
+            'q': (
+                f"title = '{folder_name}' and "
+                "mimeType = 'application/vnd.google-apps.folder' and "
+                "trashed = false"
+            )
+        }
+    ).GetList()
+
+    if not folder_list:
+        return False
+
+    for folder in folder_list:
+        folder.Delete()
+
+    return True
+
+
+def gdrive_create_folder(folder_name):
+    """Create a folder in gdrive."""
+    gdrive = _initialize_gdrive_instance()
+    # Create a folder
+    folder_metadata = {
+        'title': folder_name,
+        'mimeType': 'application/vnd.google-apps.folder'
+    }
+
+    folder = gdrive.CreateFile(folder_metadata)
+    folder.Upload()
 
 
 def get_gdrive_file(filename: str):
@@ -77,8 +118,10 @@ def delete_gdrive_file(filename: str):
 
         return True
     except Exception as ex:
-        print(ex)
-        print(f'Failed to delete file {filename} from gdrive!')
+        logger.error(
+            f'Failed to delete file {filename} from gdrive! {ex}',
+            exc_info=True
+        )
     return False
 
 

@@ -1,0 +1,93 @@
+[
+{
+  "model": "analysis.project",
+  "pk": 1,
+  "fields": {
+    "name": "K2C"
+  }
+},
+{
+  "model": "analysis.project",
+  "pk": 2,
+  "fields": {
+    "name": "UCPP"
+  }
+},
+{
+  "model": "analysis.project",
+  "pk": 3,
+  "fields": {
+    "name": "Namakwa"
+  }
+},
+{
+  "model": "analysis.project",
+  "pk": 4,
+  "fields": {
+    "name": "Ngamiland"
+  }
+},
+{
+  "model": "analysis.project",
+  "pk": 5,
+  "fields": {
+    "name": "Soutpansberg"
+  }
+},
+{
+  "model": "analysis.project",
+  "pk": 6,
+  "fields": {
+    "name": "Limpopo NP Project"
+  }
+},
+{
+  "model": "analysis.project",
+  "pk": 7,
+  "fields": {
+    "name": "Bahine National Park"
+  }
+},
+{
+  "model": "analysis.project",
+  "pk": 8,
+  "fields": {
+    "name": "Greater Mapungubwe TFCA"
+  }
+},
+{
+  "model": "analysis.project",
+  "pk": 9,
+  "fields": {
+    "name": "Drakensberg Sub-Escarpment"
+  }
+},
+{
+  "model": "analysis.project",
+  "pk": 10,
+  "fields": {
+    "name": "Umzimvubu Catchment Partnership Programme"
+  }
+},
+{
+  "model": "analysis.project",
+  "pk": 11,
+  "fields": {
+    "name": "ReGen Agric"
+  }
+},
+{
+  "model": "analysis.project",
+  "pk": 12,
+  "fields": {
+    "name": "NGED"
+  }
+},
+{
+  "model": "analysis.project",
+  "pk": 13,
+  "fields": {
+    "name": "IKI"
+  }
+}
+]

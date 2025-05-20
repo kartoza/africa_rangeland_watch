@@ -9,7 +9,7 @@ from analysis.analysis import (
 class TestSpatialDateFilter(TestCase):
 
     fixtures = [
-        '2.gee_asset.json'
+        '3.gee_asset.json'
     ]
 
     def test_spatial_get_date_filter_with_valid_dates(self):

@@ -24,7 +24,7 @@
     "pk": 3,
     "fields": {
         "key": "communities",
-        "source": "projects/ee-yekelaso1818/assets/CSA/CSA_master_20241007",
+        "source": "projects/ee-yekelaso1818/assets/CSA/CSA_master_20241202",
         "type": "table",
         "metadata": {}
     }
@@ -84,7 +84,7 @@
         "type": "image_collection",
         "metadata": {
             "start_date": "2015-01-01",
-            "end_date": "2020-01-01"
+            "end_date": "2019-12-31"
         }
     }
 },
@@ -93,7 +93,7 @@
     "pk": 9,
     "fields": {
         "key": "sentinel2_harmonized",
-        "source": "COPERNICUS/S2_SR_HARMONIZED",
+        "source": "COPERNICUS/S2_HARMONIZED",
         "type": "image_collection",
         "metadata": {}
     }
@@ -203,11 +203,11 @@
     "pk": 20,
     "fields": {
         "key": "modis_ndwi",
-        "source": "MODIS/MCD43A4_NDWI",
+        "source": "MODIS/MCD43A4_006_NDWI",
         "type": "image_collection",
         "metadata": {
             "start_date": "2000-02-18",
-            "end_date": "2017-03-18"
+            "end_date": "2023-02-10"
         }
     }
 },
@@ -216,11 +216,11 @@
     "pk": 21,
     "fields": {
         "key": "modis_surface_reflect",
-        "source": "MODIS/006/MOD09A1",
+        "source": "MODIS/061/MOD09A1",
         "type": "image_collection",
         "metadata": {
             "start_date": "2000-02-18",
-            "end_date": "2023-02-18"
+            "end_date": "now"
         }
     }
 },
@@ -246,8 +246,118 @@
         "type": "image_collection",
         "metadata": {
             "start_date": "2000-02-18",
-            "end_date": "2025-02-18"
+            "end_date": "now"
         }
+    }
+},
+{
+    "model": "analysis.geeasset",
+    "pk": 24,
+    "fields": {
+        "key": "sentinel2_sr_harmonized",
+        "source": "COPERNICUS/S2_SR_HARMONIZED",
+        "type": "image_collection",
+        "metadata": {}
+    }
+},
+{
+    "model": "analysis.geeasset",
+    "pk": 25,
+    "fields": {
+        "key": "monthly_temporal_2015",
+        "source": "projects/ee-dng/assets/arw/temporal_monthly_2015",
+        "type": "table",
+        "metadata": {}
+    }
+},
+{
+    "model": "analysis.geeasset",
+    "pk": 26,
+    "fields": {
+        "key": "monthly_temporal_2016",
+        "source": "projects/ee-dng/assets/arw/temporal_monthly_2016",
+        "type": "table",
+        "metadata": {}
+    }
+},
+{
+    "model": "analysis.geeasset",
+    "pk": 27,
+    "fields": {
+        "key": "monthly_temporal_2017",
+        "source": "projects/ee-dng/assets/arw/temporal_monthly_2017",
+        "type": "table",
+        "metadata": {}
+    }
+},
+{
+    "model": "analysis.geeasset",
+    "pk": 28,
+    "fields": {
+        "key": "monthly_temporal_2018",
+        "source": "projects/ee-dng/assets/arw/temporal_monthly_2018",
+        "type": "table",
+        "metadata": {}
+    }
+},
+{
+    "model": "analysis.geeasset",
+    "pk": 29,
+    "fields": {
+        "key": "monthly_temporal_2019",
+        "source": "projects/ee-dng/assets/arw/temporal_monthly_2019",
+        "type": "table",
+        "metadata": {}
+    }
+},
+{
+    "model": "analysis.geeasset",
+    "pk": 30,
+    "fields": {
+        "key": "monthly_temporal_2020",
+        "source": "projects/ee-dng/assets/arw/temporal_monthly_2020",
+        "type": "table",
+        "metadata": {}
+    }
+},
+{
+    "model": "analysis.geeasset",
+    "pk": 31,
+    "fields": {
+        "key": "monthly_temporal_2021",
+        "source": "projects/ee-dng/assets/arw/temporal_monthly_2021",
+        "type": "table",
+        "metadata": {}
+    }
+},
+{
+    "model": "analysis.geeasset",
+    "pk": 32,
+    "fields": {
+        "key": "monthly_temporal_2022",
+        "source": "projects/ee-dng/assets/arw/temporal_monthly_2022",
+        "type": "table",
+        "metadata": {}
+    }
+},
+{
+    "model": "analysis.geeasset",
+    "pk": 33,
+    "fields": {
+        "key": "monthly_temporal_2023",
+        "source": "projects/ee-dng/assets/arw/temporal_monthly_2023",
+        "type": "table",
+        "metadata": {}
+    }
+},
+{
+    "model": "analysis.geeasset",
+    "pk": 34,
+    "fields": {
+        "key": "monthly_temporal_2024",
+        "source": "projects/ee-dng/assets/arw/temporal_monthly_2024",
+        "type": "table",
+        "metadata": {}
     }
 }
 ]

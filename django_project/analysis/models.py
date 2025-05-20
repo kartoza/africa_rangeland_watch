@@ -166,6 +166,19 @@ class Analysis(models.Model):
         return f"Analysis {self.uuid}"
 
 
+class Project(models.Model):
+    """Model to represent a project."""
+
+    name = models.CharField(
+        max_length=512,
+        unique=True,
+        help_text="The name of the project."
+    )
+
+    def __str__(self):
+        return self.name
+
+
 class Landscape(models.Model):
     """Model that represents the landscape."""
 
@@ -192,8 +205,20 @@ class Landscape(models.Model):
         help_text="Zoom level of the landscape."
     )
 
+    projects = models.ManyToManyField(
+        Project,
+        related_name='landscapes',
+        blank=True,
+        help_text="The projects associated with this landscape."
+    )
+
     def __str__(self):
         return self.name
+
+    @property
+    def project_names(self):
+        """Get the names of the projects associated with this landscape."""
+        return ', '.join([project.name for project in self.projects.all()])
 
     class Meta:  # noqa: D106
         ordering = ('name',)
@@ -209,8 +234,9 @@ class Landscape(models.Model):
         communities = ee.FeatureCollection(
             'projects/ee-yekelaso1818/assets/CSA/CSA_master_20241202'
         )
+        projects = [project.name for project in self.projects.all()]
         communities = communities.filter(
-            ee.Filter.eq('Project', self.project_name)
+            ee.Filter.inList('Project', projects)
         )
         communities = communities.getInfo()['features']
         for community in communities:
@@ -256,7 +282,7 @@ class LandscapeCommunity(models.Model):
 
     def __str__(self):
         """Return string representation of LandscapeArea."""
-        return self.community_name
+        return self.community_name or "Unknown"
 
 
 class AnalysisRasterOutput(models.Model):
@@ -286,7 +312,7 @@ class AnalysisRasterOutput(models.Model):
     )
     # should have: analysisType, variable, landscape,
     # temporalResolution, year, month, quarter,
-    # communityName
+    # locations
     analysis = models.JSONField(default=dict)
 
     def __str__(self):
@@ -311,7 +337,14 @@ class AnalysisRasterOutput(models.Model):
                 f"{analysis.get('year')}"
             )
         variable = analysis.get('variable').lower().replace(' ', '_')
-        community = analysis.get('communityName').replace(' ', '_')
+        locations = analysis.get('locations')
+        if len(locations) > 1:
+            community = analysis.get('landscape', '').replace(' ', '_')
+        else:
+            community = locations[0].get(
+                'communityName',
+                ''
+            ).replace(' ', '_')
         return (
             f'{community}_{variable}_{analysis_type}_'
             f'{temporal_res}_{date_str}.tif'
@@ -328,7 +361,7 @@ class AnalysisRasterOutput(models.Model):
                 'year': data['period']['year'],
                 'month': data['period'].get('month'),
                 'quarter': data['period'].get('quarter'),
-                'communityName': data['communityName']
+                'locations': data['locations']
             }
         ]
         comp_years = data['comparisonPeriod']['year']
@@ -347,7 +380,7 @@ class AnalysisRasterOutput(models.Model):
                 'year': comp_year,
                 'month': comp_months[idx],
                 'quarter': comp_quarters[idx],
-                'communityName': data['communityName']
+                'locations': data['locations']
             }
             results.append(analysis)
         return results
@@ -453,6 +486,19 @@ class GEEAsset(models.Model):
     def __str__(self):
         return self.key
 
+    @property
+    def start_date(self):
+        """Get start date from metadata."""
+        return self.metadata.get('start_date', None)
+
+    @property
+    def end_date(self):
+        """Get end date from metadata."""
+        end_date_str = self.metadata.get('end_date', None)
+        if end_date_str == 'now':
+            return timezone.now().strftime('%Y-%m-%d')
+        return end_date_str
+
     @classmethod
     def fetch_asset_source(cls, asset_key: str) -> str:
         """Fetch asset source by its key."""
@@ -476,9 +522,8 @@ class GEEAsset(models.Model):
         if asset is None:
             raise KeyError(f'Asset with key {asset_key} not found!')
 
-        metadata = asset.metadata
-        start_date = metadata.get('start_date')
-        end_date = metadata.get('end_date')
+        start_date = asset.start_date
+        end_date = asset.end_date
 
         if not start_date or not end_date:
             raise ValueError(
@@ -501,10 +546,10 @@ class GEEAsset(models.Model):
             return (False, None, None,)
         elif valid_start_date and not valid_end_date:
             asset = cls.objects.filter(key=asset_key).first()
-            return (True, start_date, asset.metadata.get('end_date'))
+            return (True, start_date, asset.end_date)
         elif not valid_start_date and valid_end_date:
             asset = cls.objects.filter(key=asset_key).first()
-            return (True, asset.metadata.get('start_date'), end_date)
+            return (True, asset.start_date, end_date)
 
         return (True, start_date, end_date,)
 
