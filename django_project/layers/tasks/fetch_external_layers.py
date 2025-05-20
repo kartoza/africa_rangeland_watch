@@ -13,6 +13,11 @@ def fetch_source_data(source):
     if source.slug == "wri":
         from layers.utils import fetch_global_pasture_watch_data
         return fetch_global_pasture_watch_data(source)
+    elif source.slug == "open-earth-monitor":
+        from layers.utils import fetch_all_global_cropland_zenodo
+        # suggest using a specific resolution
+        # resolution = source.metadata.get("resolution", "250m")
+        return fetch_all_global_cropland_zenodo(source, resolution="250m")
 
 
 @app.task(name="fetch_external_layers_task")

@@ -9,6 +9,7 @@ import requests
 import os
 import time
 import tempfile
+from tempfile import NamedTemporaryFile
 import ee
 import rasterio
 from datetime import datetime
@@ -187,3 +188,52 @@ def fetch_global_pasture_watch_data(source: ExternalLayerSource):
             is_auto_published=True
         )
         layer.file.save(filename, ContentFile(f.read()))
+
+
+def fetch_all_global_cropland_zenodo(
+        source: ExternalLayerSource,
+        resolution: str = "250m"
+):
+    """
+    Fetches global cropland extent files (2000–2022) at 250m or 1km from Zenodo
+    and stores each year as an ExternalLayer.
+    """
+    assert resolution in ["250m", "1km"], "Resolution must be '250m' or '1km'"
+
+    for year in range(2000, 2023):
+        filename = (
+            f"cropland_glad.potapov.et.al_p_{resolution}_s_"
+            f"{year}0101_{year}1231_go_epsg.4326_v20240624.tif"
+        )
+        url = f"https://zenodo.org/record/12527546/files/{filename}"
+
+        print(f"[INFO] Downloading {filename} from Zenodo...")
+
+        try:
+            with requests.get(url, stream=True) as r:
+                r.raise_for_status()
+                with NamedTemporaryFile(
+                    delete=False, suffix=".tif"
+                ) as tmp_file:
+                    for chunk in r.iter_content(chunk_size=8192):
+                        tmp_file.write(chunk)
+                    tmp_path = tmp_file.name
+
+            metadata = extract_raster_metadata(tmp_path)
+
+            with open(tmp_path, "rb") as f:
+                layer = ExternalLayer.objects.create(
+                    name=filename,
+                    layer_type="raster",
+                    metadata=metadata,
+                    source=source,
+                    is_public=True,
+                    is_auto_published=True,
+                )
+                layer.file.save(filename, ContentFile(f.read()))
+
+            os.remove(tmp_path)
+            print(f"[SUCCESS] Stored {filename} as ExternalLayer.")
+
+        except Exception as e:
+            print(f"[ERROR] Failed to fetch {filename}: {e}")
