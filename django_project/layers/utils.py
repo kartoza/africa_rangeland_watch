@@ -8,6 +8,7 @@ Africa Rangeland Watch (ARW).
 import requests
 import os
 import time
+from urllib.parse import urljoin
 import tempfile
 from tempfile import NamedTemporaryFile
 import ee
@@ -237,3 +238,58 @@ def fetch_all_global_cropland_zenodo(
 
         except Exception as e:
             print(f"[ERROR] Failed to fetch {filename}: {e}")
+
+
+def fetch_grassland_stac_layers(
+        source: ExternalLayerSource, years=range(2000, 2023)
+):
+    """
+    Fetches grassland layers (30m) from the STAC collection
+    and stores as ExternalLayers.
+    """
+    stac_base_url = (
+        "https://s3.eu-central-1.wasabisys.com/stac/openlandmap/gpw_ggc-30m/"
+    )
+    item_template = "gpw_ggc-30m_{year}0101_{year}1231/item.json"
+
+    for year in years:
+        item_url = urljoin(stac_base_url, item_template.format(year=year))
+        print(f"[INFO] Fetching STAC item for {year}: {item_url}")
+
+        try:
+            resp = requests.get(item_url)
+            resp.raise_for_status()
+            item = resp.json()
+            asset = item["assets"]["COG"]
+            cog_url = asset["href"]
+            filename = cog_url.split("/")[-1]
+
+            print(f"[INFO] Downloading COG from {cog_url}...")
+
+            with requests.get(cog_url, stream=True) as r:
+                r.raise_for_status()
+                with NamedTemporaryFile(
+                    delete=False, suffix=".tif"
+                ) as tmp_file:
+                    for chunk in r.iter_content(chunk_size=8192):
+                        tmp_file.write(chunk)
+                    tmp_path = tmp_file.name
+
+            metadata = extract_raster_metadata(tmp_path)
+
+            with open(tmp_path, "rb") as f:
+                layer = ExternalLayer.objects.create(
+                    name=filename,
+                    layer_type="raster",
+                    metadata=metadata,
+                    source=source,
+                    is_public=True,
+                    is_auto_published=True,
+                )
+                layer.file.save(filename, ContentFile(f.read()))
+
+            os.remove(tmp_path)
+            print(f"[SUCCESS] Year {year} stored as ExternalLayer.")
+
+        except Exception as e:
+            print(f"[ERROR] Failed to process year {year}: {e}")

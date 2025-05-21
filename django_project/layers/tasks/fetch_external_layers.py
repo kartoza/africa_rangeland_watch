@@ -18,6 +18,9 @@ def fetch_source_data(source):
         # suggest using a specific resolution
         # resolution = source.metadata.get("resolution", "250m")
         return fetch_all_global_cropland_zenodo(source, resolution="250m")
+    elif source.slug == "openlandmap-grassland":
+        from layers.utils import fetch_grassland_stac_layers
+        return fetch_grassland_stac_layers(source)
 
 
 @app.task(name="fetch_external_layers_task")
