@@ -21,6 +21,9 @@ def fetch_source_data(source):
     elif source.slug == "openlandmap-grassland":
         from layers.utils import fetch_grassland_stac_layers
         return fetch_grassland_stac_layers(source)
+    elif source.slug == "ecodatacube-veg-height":
+        from layers.utils import fetch_short_vegetation_height_layers
+        return fetch_short_vegetation_height_layers(source)
 
 
 @app.task(name="fetch_external_layers_task")
