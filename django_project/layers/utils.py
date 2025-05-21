@@ -338,3 +338,55 @@ def fetch_short_vegetation_height_layers(
 
         except Exception as e:
             print(f"[ERROR] Year {year} failed: {e}")
+
+
+def fetch_soil_bare_fraction_layers(
+        source: ExternalLayerSource,
+        years=range(2000, 2023)
+):
+    """
+    Fetches annual bare fraction (Europe) layers from EcoDataCube STAC
+    and stores them as ExternalLayers.
+    """
+    stac_base = "https://stac.ecodatacube.eu/lcv_ndvi_landsat.glad.ard/"
+    item_template = "lcv_ndvi_landsat.glad.ard_{year}0101_{year}1231/item.json"
+
+    for year in years:
+        item_url = f"{stac_base}{item_template.format(year=year)}"
+        try:
+            r = requests.get(item_url)
+            r.raise_for_status()
+            item = r.json()
+            asset = item["assets"]["COG"]
+            cog_url = asset["href"]
+            filename = cog_url.split("/")[-1]
+
+            print(f"[INFO] Downloading bare fraction layer {filename}")
+
+            with requests.get(cog_url, stream=True) as cog:
+                cog.raise_for_status()
+                with NamedTemporaryFile(
+                    delete=False, suffix=".tif"
+                ) as tmp_file:
+                    for chunk in cog.iter_content(chunk_size=8192):
+                        tmp_file.write(chunk)
+                    tmp_path = tmp_file.name
+
+            metadata = extract_raster_metadata(tmp_path)
+
+            with open(tmp_path, "rb") as f:
+                layer = ExternalLayer.objects.create(
+                    name=filename,
+                    layer_type="raster",
+                    metadata=metadata,
+                    source=source,
+                    is_public=True,
+                    is_auto_published=True,
+                )
+                layer.file.save(filename, ContentFile(f.read()))
+
+            os.remove(tmp_path)
+            print(f"[SUCCESS] Year {year} ingested.")
+
+        except Exception as e:
+            print(f"[ERROR] Failed to process year {year}: {e}")

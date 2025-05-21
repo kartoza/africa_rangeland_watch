@@ -24,6 +24,9 @@ def fetch_source_data(source):
     elif source.slug == "ecodatacube-veg-height":
         from layers.utils import fetch_short_vegetation_height_layers
         return fetch_short_vegetation_height_layers(source)
+    elif source.slug == "ecodatacube-bare-fraction":
+        from layers.utils import fetch_soil_bare_fraction_layers
+        return fetch_soil_bare_fraction_layers(source)
 
 
 @app.task(name="fetch_external_layers_task")
