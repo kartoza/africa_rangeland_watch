@@ -417,7 +417,7 @@ export default function ProfileInformationPage() {
                   <Select
                     options={countryOptions}
                     value={selectedCountry}
-                    onChange={(selectedOption) => {
+                    onChange={(selectedOption: { value: string; label: string } | null) => {
                       setSelectedCountry(selectedOption); 
                       setCountry(selectedOption?.label);
                       handleInputChange();

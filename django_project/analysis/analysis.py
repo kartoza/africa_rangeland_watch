@@ -260,9 +260,7 @@ class InputLayer:
         if clip_to_countries:
             soc_lt_mean = soc_lt_mean.clipToCollection(self.countries)
         elif aoi:
-            soc_lt_mean = soc_lt_mean.clipToCollection(
-                ee.FeatureCollection([ee.Feature(aoi, {})])
-            )
+            soc_lt_mean = soc_lt_mean.clipToCollection(aoi)
         return soc_lt_mean
 
     def get_grazing_capacity(self):
@@ -345,7 +343,7 @@ class InputLayer:
             soc_lt_trend = soc_lt_trend.clipToCollection(self.countries)
         elif aoi:
             soc_lt_trend = soc_lt_trend.clipToCollection(
-                ee.FeatureCollection([ee.Feature(aoi, {})])
+                aoi
             )
         return soc_lt_trend
 
@@ -1845,7 +1843,7 @@ def calculate_baseline(aoi, start_date, end_date, is_custom_geom=False):
                         GEEAsset.fetch_asset_source('modis_vegetation_061')
                     )
                     .filterDate(start_dt, end_dt)
-                    .filterBounds(aoi)
+                    .filterBounds(selected_area)
                     .select(['NDVI', 'EVI'])
                     .map(lambda i: i.divide(10000)))
         evi_baseline = modis_veg.select('EVI').median()
@@ -1870,7 +1868,7 @@ def calculate_baseline(aoi, start_date, end_date, is_custom_geom=False):
                     GEEAsset.fetch_asset_source('cgls_ground_cover')
                 )
                 .filterDate(start_dt, end_dt)
-                .filterBounds(aoi)
+                .filterBounds(selected_area)
                 .select(
                     [
                         'bare-coverfraction', 'crops-coverfraction',
@@ -1911,7 +1909,11 @@ def calculate_baseline(aoi, start_date, end_date, is_custom_geom=False):
         'fire_cci', start_date, end_date
     )
     if valid:
-        fire_freq = calculate_firefreq(aoi, start_dt, end_dt).divide(18)
+        fire_freq = calculate_firefreq(
+            selected_area,
+            start_dt,
+            end_dt
+        ).divide(18)
         fire_freq = fire_freq.unmask(0)
         image_list.append({
             'asset': fire_freq,
@@ -1928,7 +1930,7 @@ def calculate_baseline(aoi, start_date, end_date, is_custom_geom=False):
             datetime.date.fromisoformat(start_dt),
             datetime.date.fromisoformat(end_dt),
             False,
-            aoi
+            selected_area
         )
         soc_lt_mean = soc_lt_mean.rename('SOCltMean')
         image_list.append({
@@ -1938,11 +1940,18 @@ def calculate_baseline(aoi, start_date, end_date, is_custom_geom=False):
         })
 
         # SOCltTrend
+        soil_start_dt = datetime.date.fromisoformat(start_dt)
+        if soil_start_dt.year == datetime.date.fromisoformat(end_dt).year:
+            # soild_carbon_change needs 2 years of data
+            soil_start_dt = datetime.date(
+                soil_start_dt.year - 1, soil_start_dt.month, soil_start_dt.day
+            )
+            start_dt = soil_start_dt.isoformat()
         soc_lt_trend = input_layer.get_soil_carbon_change(
             datetime.date.fromisoformat(start_dt),
             datetime.date.fromisoformat(end_dt),
             False,
-            aoi
+            selected_area
         )
         soc_lt_trend = soc_lt_trend.rename('SOCltTrend')
         image_list.append({
@@ -1966,6 +1975,10 @@ def calculate_baseline(aoi, start_date, end_date, is_custom_geom=False):
     # Reducing regions to extract mean values per polygon
     reduced = combined.reduceRegions(selected_area, ee.Reducer.mean(), 100)
     reduced = reduced.distinct(['Name', 'Area ha'])
+
+    reduced = reduced.map(
+        lambda feature: feature.setGeometry(None)
+    )
 
     return reduced
 

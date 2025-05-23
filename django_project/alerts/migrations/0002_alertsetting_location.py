@@ -8,7 +8,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('analysis', '0012_project_landscape_projects'),
-        ('alerts', '0002_notificationreadstatus'),
+        ('alerts', '0001_initial'),
     ]
 
     operations = [
