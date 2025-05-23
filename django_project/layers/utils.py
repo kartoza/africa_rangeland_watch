@@ -295,29 +295,35 @@ def fetch_grassland_stac_layers(
             print(f"[ERROR] Failed to process year {year}: {e}")
 
 
-def fetch_short_vegetation_height_layers(
-        source: ExternalLayerSource,
-        years=range(2000, 2023)
-):
+def fetch_short_vegetation_height_layers(source: ExternalLayerSource, years=range(2000, 2023)):
     stac_base = "https://s3.ecodatacube.eu/arco/stac/short.veg.height_lgb/"
-    item_template = "short.veg.height_lgb_{year}0101_{year}1231/item.json"
+    item_template = (
+        "short.veg.height_lgb_{year}0101_{year}1231/short.veg.height_lgb_{year}0101_{year}1231.json"
+    )
 
     for year in years:
-        item_url = stac_base + item_template.format(year=year)
+        item_url = urljoin(stac_base, item_template.format(year=year))
+        print(f"[INFO] Fetching vegetation height item for {year}: {item_url}")
+
         try:
             r = requests.get(item_url)
             r.raise_for_status()
             item = r.json()
-            cog_url = item["assets"]["COG"]["href"]
+            cog_key = "short.veg.height_lgb_m_30m_s"
+
+            if cog_key not in item["assets"]:
+                raise ValueError(
+                    f"Expected asset '{cog_key}' not found in STAC item."
+                )
+
+            cog_url = item["assets"][cog_key]["href"]
             filename = cog_url.split("/")[-1]
 
-            print(f"[INFO] Fetching vegetation height COG {filename}")
+            print(f"[INFO] Downloading COG: {filename}")
 
             with requests.get(cog_url, stream=True) as cog:
                 cog.raise_for_status()
-                with NamedTemporaryFile(
-                    delete=False, suffix=".tif"
-                ) as tmp_file:
+                with NamedTemporaryFile(delete=False, suffix=".tif") as tmp_file:
                     for chunk in cog.iter_content(chunk_size=8192):
                         tmp_file.write(chunk)
                     tmp_path = tmp_file.name
@@ -331,10 +337,12 @@ def fetch_short_vegetation_height_layers(
                     metadata=metadata,
                     source=source,
                     is_public=True,
-                    is_auto_published=True,
+                    is_auto_published=True
                 )
                 layer.file.save(filename, ContentFile(f.read()))
+
             os.remove(tmp_path)
+            print(f"[SUCCESS] Year {year} stored as ExternalLayer.")
 
         except Exception as e:
             print(f"[ERROR] Year {year} failed: {e}")
