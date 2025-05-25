@@ -1,5 +1,6 @@
 import os
 import tempfile
+import logging
 import mimetypes
 from collections import defaultdict
 from rest_framework.decorators import api_view
@@ -15,6 +16,9 @@ from cloud_native_gis.models import Layer
 from analysis.utils import _initialize_gdrive_instance
 from .models import InputLayer, ExportedCog
 from .tasks.export_nrt_cog import export_ee_image_to_cog_task
+
+
+logger = logging.getLogger(__name__)
 
 
 @login_required
@@ -98,7 +102,8 @@ def trigger_cog_export(request, uuid):
         export_ee_image_to_cog_task.delay(str(layer.uuid), landscape_id)
         return Response({"message": "Export task triggered."})
     except Exception as ex:
-        return Response({"error": f"Export failed: {ex}"}, status=500)
+        logger.error(f"Export failed {ex}", exc_info=True)
+        return Response({"error": "An internal error occurred."}, status=500)
 
 
 @api_view(['GET'])
@@ -134,4 +139,5 @@ def download_from_gdrive(request, uuid):
     except InputLayer.DoesNotExist:
         raise Http404("Layer not found.")
     except Exception as ex:
-        raise Http404(f"Download failed: {ex}")
+        logger.error(f"Download failed: {ex}", exc_info=True)
+        raise Http404("Download failed.")
