@@ -106,10 +106,36 @@ export default function Layers(
                     onToggle={(checked) => checked ? handleNrtLayerChecked(layer) : onLayerUnchecked(layer)}
                   />
                   {selectedNrt?.id === layer.id && (
-                    <CogDownloadButton
-                      layerId={layer.id}
-                      isSelected={selectedNrt?.id === layer.id}
-                    />
+                    <Box display="flex" gap={2}>
+                      <Button
+                        size="xs"
+                        colorScheme="blue"
+                        onClick={async () => {
+                          const res = await fetch(`/nrt-layer/${layer.id}/export/`, {
+                            method: "POST",
+                            headers: {
+                              "Content-Type": "application/json",
+                              "X-CSRFToken": document.cookie.match(/csrftoken=([\w-]+)/)?.[1] || "",
+                            },
+                            body: JSON.stringify({
+                              landscape_id: selectedLandscape?.id,
+                            }),
+                          });
+                          if (res.ok) {
+                            alert("COG export task started.");
+                          } else {
+                            alert("Failed to trigger export.");
+                          }
+                        }}
+                      >
+                        Generate
+                      </Button>
+                
+                      <CogDownloadButton
+                        layerId={layer.id}
+                        isSelected={true}
+                      />
+                    </Box>
                   )}
                 </Box>
               ))

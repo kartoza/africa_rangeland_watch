@@ -3,6 +3,7 @@ from .views import (
     delete_layer,
     download_layer,
     user_input_layers,
+    trigger_cog_export,
     download_from_gdrive
 )
 
@@ -21,6 +22,11 @@ urlpatterns = [
         'download-layer/<uuid:uuid>/',
         download_layer,
         name='download_layer'
+    ),
+    path(
+        'nrt-layer/<uuid:uuid>/export/',
+        trigger_cog_export,
+        name='trigger_cog_export'
     ),
     path(
         'nrt-layer/<uuid:uuid>/download/',

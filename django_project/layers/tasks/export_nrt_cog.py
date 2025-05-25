@@ -3,7 +3,6 @@
 ARW: Task to export Earth Engine image to Google Drive as COG and download it.
 """
 
-import time
 import logging
 from celery import shared_task
 from core.celery import app
@@ -55,43 +54,36 @@ def export_ee_image_to_cog(
         }
 
         # Start EE export task
-        task = export_image_to_drive(**task_config)
-        task.start()
-        logger.info(f"Started EE export task: {file_name}")
+        status = export_image_to_drive(**task_config)
+        logger.info(
+            f"Export task submitted for {file_name}: {status['state']}"
+        )
 
-        # Wait for task to complete (polling every 30 sec, timeout in ~30 min)
-        start = time.time()
-        while task.status()["state"] in ["READY", "RUNNING"]:
-            if time.time() - start > 1800:
-                raise TimeoutError("Export timed out after 30 minutes.")
-            time.sleep(30)
-            logger.info(
-                f"Exporting {file_name}: {task.status()['state']}..."
-            )
-
-        if task.status()["state"] != "COMPLETED":
-            raise RuntimeError(f"Export failed: {task.status()}")
+        if status["state"] != "COMPLETED":
+            raise RuntimeError(f"Export failed or incomplete: {status}")
 
         logger.info(f"Export complete. Looking for {file_name} on Drive...")
 
         # Poll GDrive for exported file
-        for _ in range(20):
-            gfile = get_gdrive_file(file_name)
-            if gfile:
-                break
-            time.sleep(10)
-        else:
-            raise FileNotFoundError(f"File {file_name} not found on Drive.")
+        gfile = get_gdrive_file(file_name)
 
         # save to InputLayer metadata
         input_layer.metadata["cog_downloaded"] = True
         input_layer.save()
+        logger.info(
+            f"File {file_name} found on GDrive: {gfile.get('id')}"
+        )
 
         # Save to ExportedCog model
         exported_cog.downloaded = True
         exported_cog.file_name = file_name
-        exported_cog.gdrive_file_id = gfile["id"]
+        exported_cog.gdrive_file_id = gfile.get('id')
         exported_cog.save()
+
+        logger.info(
+            f"ExportedCog updated: {exported_cog.file_name}, "
+            f"ID: {exported_cog.gdrive_file_id}"
+        )
 
         layer = Layer.objects.filter(unique_id=input_layer_id).first()
         if layer:
@@ -100,6 +92,9 @@ def export_ee_image_to_cog(
                 progress=100,
                 note="COG export stored on GDrive"
             )
+        logger.info(
+            f"Exported COG for {input_layer.name} successfully stored."
+        )
 
     except Exception as ex:
         logger.error(f"Failed to export COG: {ex}")

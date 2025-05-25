@@ -1,8 +1,9 @@
 import os
-import io
+import tempfile
 import mimetypes
 from collections import defaultdict
 from rest_framework.decorators import api_view
+from rest_framework.response import Response
 from django.shortcuts import render  # noqa: F401
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
@@ -13,6 +14,7 @@ from django.http import FileResponse, Http404
 from cloud_native_gis.models import Layer
 from analysis.utils import _initialize_gdrive_instance
 from .models import InputLayer, ExportedCog
+from .tasks.export_nrt_cog import export_ee_image_to_cog_task
 
 
 @login_required
@@ -84,6 +86,21 @@ def download_layer(request, uuid):
     return response
 
 
+@api_view(['POST'])
+@login_required
+def trigger_cog_export(request, uuid):
+    landscape_id = request.data.get("landscape_id")
+    if not landscape_id:
+        return Response({"error": "landscape_id is required"}, status=400)
+
+    try:
+        layer = get_object_or_404(InputLayer, uuid=uuid)
+        export_ee_image_to_cog_task.delay(str(layer.uuid), landscape_id)
+        return Response({"message": "Export task triggered."})
+    except Exception as ex:
+        return Response({"error": f"Export failed: {ex}"}, status=500)
+
+
 @api_view(['GET'])
 def download_from_gdrive(request, uuid):
     """
@@ -103,12 +120,13 @@ def download_from_gdrive(request, uuid):
         gdrive = _initialize_gdrive_instance()
         gfile = gdrive.CreateFile({'id': exported.gdrive_file_id})
 
-        file_stream = io.BytesIO()
-        gfile.GetContentFile(file_stream)
-        file_stream.seek(0)
+        # Create a temporary file and download the GDrive content into it
+        temp_file = tempfile.NamedTemporaryFile(delete=False)
+        gfile.GetContentFile(temp_file.name)
 
+        # Return the temp file as a streamed response
         return FileResponse(
-            file_stream,
+            open(temp_file.name, 'rb'),
             as_attachment=True,
             filename=exported.file_name,
             content_type='application/octet-stream'
