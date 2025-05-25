@@ -4,9 +4,9 @@ ARW: Task to export Earth Engine image to Google Drive as COG and download it.
 """
 
 import logging
+from itertools import islice
 from celery import shared_task
 from core.celery import app
-from cloud_native_gis.models.layer import Layer
 from layers.models import InputLayer, ExportedCog
 from analysis.models import Landscape
 from analysis.analysis import export_image_to_drive, initialize_engine_analysis
@@ -15,6 +15,7 @@ from layers.utils import get_nrt_image
 
 
 logger = logging.getLogger(__name__)
+CHUNK_SIZE = 5
 
 
 def export_ee_image_to_cog(
@@ -66,10 +67,6 @@ def export_ee_image_to_cog(
 
         # Poll GDrive for exported file
         gfile = get_gdrive_file(file_name)
-
-        # save to InputLayer metadata
-        input_layer.metadata["cog_downloaded"] = True
-        input_layer.save()
         logger.info(
             f"File {file_name} found on GDrive: {gfile.get('id')}"
         )
@@ -84,14 +81,6 @@ def export_ee_image_to_cog(
             f"ExportedCog updated: {exported_cog.file_name}, "
             f"ID: {exported_cog.gdrive_file_id}"
         )
-
-        layer = Layer.objects.filter(unique_id=input_layer_id).first()
-        if layer:
-            layer.refresh_from_db()
-            layer.update_status(
-                progress=100,
-                note="COG export stored on GDrive"
-            )
         logger.info(
             f"Exported COG for {input_layer.name} successfully stored."
         )
@@ -125,6 +114,18 @@ def export_all_nrt_cogs():
     """
     nrt_layers = InputLayer.objects.filter(group__name="near-real-time")
 
+    def chunked(iterable, size):
+        """Yield successive chunks of specified size."""
+        it = iter(iterable)
+        return iter(lambda: list(islice(it, size)), [])
+
     for landscape in Landscape.objects.all():
-        for layer in nrt_layers[:2]:
-            export_ee_image_to_cog_task.delay(str(layer.uuid), landscape.id)
+        for layer_chunk in chunked(nrt_layers, CHUNK_SIZE):
+            for layer in layer_chunk:
+                export_ee_image_to_cog_task.delay(
+                    str(layer.uuid), landscape.id
+                )
+            logger.info(
+                f"Queued chunk of {len(layer_chunk)} layers for landscape "
+                f"{landscape.name}"
+            )
