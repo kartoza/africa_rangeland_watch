@@ -614,6 +614,7 @@ def run_monthly_analysis(
         datetime.date(2015, 1, 1),
         end_date
     )
+    print(date_ranges)
 
     # Map function to create a 'date' property
     def add_date(ft):
@@ -786,7 +787,7 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
     if analysis_dict['analysisType'] == "Temporal":
         res = analysis_dict['t_resolution']
         baseline_yr = int(analysis_dict['Temporal']['Annual']['ref'])
-        test_yr = int(analysis_dict['Temporal']['Annual']['test'])
+        test_years = [int(year) for year in analysis_dict['Temporal']['Annual']['test']]
         temporal_table, temporal_table_yr = input_layers.get_temporal_table()
 
         if res == "Quarterly":
@@ -819,26 +820,37 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
                 ))
                 temporal_table = temporal_table.merge(new_stats)
 
-            baseline_quart = quarter_dict[
-                analysis_dict['Temporal']['Quarterly']['ref']
-            ]
-            test_quart = quarter_dict[
-                analysis_dict['Temporal']['Quarterly']['test']
-            ]
+            baseline_quart = quarter_dict[analysis_dict['Temporal']['Quarterly']['ref']]
+            test_quarts = [quarter_dict[quart] for quart in analysis_dict['Temporal']['Quarterly']['test']]
+
+            # Get annual years
+            ref_year = int(analysis_dict['Temporal']['Annual']['ref'])
+            test_years = [int(year) for year in analysis_dict['Temporal']['Annual']['test']]
+
+            # Create filters for reference year and all test years
+            year_filters = []
+
+            # Add reference year filter
+            year_filters.append(
+                ee.Filter.And(
+                    ee.Filter.eq('year', ref_year),
+                    ee.Filter.eq('month', baseline_quart)
+                )
+            )
+
+            # Add filters for each combination of test year and test quarter
+            for idx, test_year in enumerate(test_years):
+                    year_filters.append(
+                        ee.Filter.And(
+                            ee.Filter.eq('year', test_year),
+                            ee.Filter.eq('month', test_quarts[idx])
+                        )
+                    )
 
             to_plot = temporal_table.filter(
                 ee.Filter.inList('Name', select_names)
             ).filter(
-                ee.Filter.Or(
-                    ee.Filter.And(
-                        ee.Filter.eq('year', baseline_yr),
-                        ee.Filter.eq('month', baseline_quart)
-                    ),
-                    ee.Filter.And(
-                        ee.Filter.eq('year', test_yr),
-                        ee.Filter.eq('month', test_quart)
-                    )
-                )
+                ee.Filter.Or(*year_filters)
             )
         elif res == 'Monthly':
             select_geo = communities.filter(
@@ -851,12 +863,13 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
                     ee.Geometry.MultiPolygon(custom_geom['coordinates'])
                 )
             baseline_month = int(analysis_dict['Temporal']['Monthly']['ref'])
-            test_month = int(analysis_dict['Temporal']['Monthly']['test'])
+            print(analysis_dict['Temporal']['Monthly']['test'])
+            test_months = [int(month) for month in analysis_dict['Temporal']['Monthly']['test']]
             baseline_dt = datetime.date(
                 baseline_yr, baseline_month, 1
             )
             test_dt = datetime.date(
-                test_yr, test_month, 1
+                test_years[0], test_months[0], 1
             )
             return run_monthly_analysis(
                 baseline_dt, test_dt, select_geo, custom_geom is not None,
@@ -866,7 +879,7 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
             to_plot = temporal_table_yr.filter(
                 ee.Filter.inList('Name', select_names)
             ).filter(
-                ee.Filter.inList('year', [baseline_yr, test_yr])
+                ee.Filter.inList('year', [baseline_yr] + test_years)
             )
 
         to_plot = to_plot.sort('Name').sort('date')
