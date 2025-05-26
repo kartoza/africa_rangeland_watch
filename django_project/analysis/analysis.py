@@ -1500,7 +1500,7 @@ def spatial_get_date_filter(analysis_dict):
                     next_month = 1
                     next_month_year += 1
                 
-                filter_end_date = datetime.date(next_month_year, next_month, 1) - datetime.timedelta(day=1)
+                filter_end_date = datetime.date(next_month_year, next_month, 1) - datetime.timedelta(days=1)
             
     elif t_resolution == 'Monthly':
         start_month = analysis_dict['Spatial'].get('Monthly', {}).get('ref')

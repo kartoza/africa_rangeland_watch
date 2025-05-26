@@ -1,36 +1,34 @@
+import React, { useEffect, useState, useRef } from 'react';
 import { Accordion, Box, Button, HStack, Spinner, Text, useToast } from "@chakra-ui/react";
-import React, { useEffect, useRef, useState } from 'react';
 import { useDispatch, useSelector } from "react-redux";
-import { useSession } from '../../../../sessionProvider';
+import { Layer } from '../../../../store/layerSlice';
+import { Community, Landscape } from '../../../../store/landscapeSlice';
+import { AnalysisData } from "../../DataTypes";
+import LeftSideLoading from "../Loading";
+import AnalysisLandscapeSelector from "./AnalysisLandscapeSelector";
+import AnalysisTypeSelector from "./AnalysisTypeSelector";
+import { TemporalResolution, Types } from "../../fixtures/analysis";
+import AnalysisTemporalResolutionSelector
+  from "./AnalysisTemporalResolutionSelector";
+import AnalysisVariableSelector from "./AnalysisVariableSelector";
+import AnalysisReferencePeriod from "./AnalysisReferencePeriod";
+import AnalysisVariableBySpatialSelector
+  from "./AnalysisVariableBySpatialSelector";
+import AnalysisLandscapeGeometrySelector
+  from "./AnalysisLandscapeGeometrySelector";
 import { AppDispatch, RootState } from "../../../../store";
 import {
-  doAnalysis,
-  fetchAnalysisStatus,
-  REFERENCE_LAYER_DIFF_ID,
-  resetAnalysisResult,
-  setAnalysis,
-  setAnalysisCustomGeom,
-  setMaxWaitAnalysisReached,
-  toggleAnalysisLandscapeCommunity
+  doAnalysis, REFERENCE_LAYER_DIFF_ID, resetAnalysisResult,
+  setAnalysis, setAnalysisCustomGeom,
+  fetchAnalysisStatus, setMaxWaitAnalysisReached, toggleAnalysisLandscapeCommunity
 } from "../../../../store/analysisSlice";
-import { Community, Landscape } from '../../../../store/landscapeSlice';
-import { Layer } from '../../../../store/layerSlice';
-import { clearSavedAnalysisFlag, saveAnalysis } from '../../../../store/userAnalysisSlice';
-import { AnalysisData } from "../../DataTypes";
-import { TemporalResolution, Types } from "../../fixtures/analysis";
-import { LayerCheckboxProps } from '../Layers';
-import LeftSideLoading from "../Loading";
 import { AnalysisCustomGeometrySelector } from "./AnalysisCustomGeometrySelector";
-import AnalysisLandscapeGeometrySelector from "./AnalysisLandscapeGeometrySelector";
-import AnalysisLandscapeSelector from "./AnalysisLandscapeSelector";
-import AnalysisReferencePeriod from "./AnalysisReferencePeriod";
-import AnalysisSpatialYearFilter from "./AnalysisSpatialYearFilter";
-import AnalysisResolutionSelector from "./AnalysisResolutionSelector";
-import AnalysisTypeSelector from "./AnalysisTypeSelector";
 import AnalysisUserDefinedLayerSelector from "./AnalysisUserDefinedLayerSelector";
-import AnalysisVariableBySpatialSelector from "./AnalysisVariableBySpatialSelector";
-import AnalysisVariableSelector from "./AnalysisVariableSelector";
+import AnalysisSpatialYearFilter from "./AnalysisSpatialYearFilter";
 import BaselineDateRangeSelector from './BaselineDateRangeSelector';
+import { LayerCheckboxProps } from '../Layers';
+import { useSession } from '../../../../sessionProvider';
+import { saveAnalysis, clearSavedAnalysisFlag } from '../../../../store/userAnalysisSlice';
 
 
 interface Props extends LayerCheckboxProps {
@@ -346,21 +344,9 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
           )
         }
         {/* 3) Select resolution */}
-        {/* {
-          [Types.TEMPORAL, Types.SPATIAL].includes(data.analysisType) &&
-          <AnalysisResolutionSelector
-            data={data}
-            onSelected={(value) => setData({
-              ...data,
-              ...(data.analysisType === Types.TEMPORAL 
-                ? { temporalResolution: value }
-                : { spatialResolution: value })
-            })}
-          />
-        } */}
         {
           [Types.TEMPORAL, Types.SPATIAL].includes(data.analysisType) &&
-          <AnalysisResolutionSelector
+          <AnalysisTemporalResolutionSelector
             data={data}
             onSelected={(value: string) => setData({
               ...data,
@@ -379,29 +365,6 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
             })}
           />
         }
-        {/* 4) Select year range filter for spatial */}
-        {/* {
-          data.analysisType === Types.SPATIAL && data.variable &&
-          <AnalysisSpatialYearFilter
-            initialStartYear={data.spatialStartYear}
-            initialEndYear={data.spatialEndYear}
-            disabled={![null, undefined].includes(analysis.referenceLayerDiff)}
-            onYearChange={(startYear, endYear) => {
-              // set spatial year filter and reset results
-              setData({
-                ...data,
-                locations: null,
-                custom_geom: null,
-                userDefinedFeatureId: null,
-                userDefinedFeatureName: null,
-                spatialStartYear: startYear,
-                spatialEndYear: endYear
-              })
-              dispatch(resetAnalysisResult())
-              setMapInteraction(MapAnalysisInteraction.NO_INTERACTION)
-            }}
-          />
-        } */}
         {/* 4) Select variable for temporal */}
         {
           data.temporalResolution && data.analysisType === Types.TEMPORAL &&
@@ -556,8 +519,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
           />
         }
       </Accordion>
-
-      {/* Draw buttons for spatial */}
+            {/* Draw buttons for spatial */}
       {
         data.analysisType === Types.SPATIAL && data.variable &&
         <Box mb={4} color={'green'}>
@@ -671,7 +633,6 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
           </HStack>
         )
       }
-
       <Box mt={4} mb={4} marginTop={10}>
         {
           !dataError ?
