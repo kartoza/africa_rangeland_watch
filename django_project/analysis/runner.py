@@ -141,12 +141,16 @@ class AnalysisRunner:
                     'test': data.get('comparisonPeriod', {}).get('year', '')
                 },
                 'Quarterly': {
-                    'ref': data['period']['quarter'] if data['temporalResolution'] == 'Quarterly' else '',
-                    'test': data.get('comparisonPeriod', {}).get('quarter', '') if data['temporalResolution'] == 'Quarterly' else ''
+                    'ref': data['period']['quarter']
+                    if data['temporalResolution'] == 'Quarterly' else '',
+                    'test': data.get('comparisonPeriod', {}).get('quarter', '')
+                    if data['temporalResolution'] == 'Quarterly' else ''
                 },
                 'Monthly': {
-                    'ref': data['period']['month'] if data['temporalResolution'] == 'Monthly' else '',
-                    'test': data.get('comparisonPeriod', {}).get('month', '') if data['temporalResolution'] == 'Monthly' else ''
+                    'ref': data['period']['month']
+                    if data['temporalResolution'] == 'Monthly' else '',
+                    'test': data.get('comparisonPeriod', {}).get('month', '')
+                    if data['temporalResolution'] == 'Monthly' else ''
                 }
             }
         }
