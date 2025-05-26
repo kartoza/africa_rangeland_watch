@@ -343,7 +343,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
             </Box>
           )
         }
-        {/* 3) Select resolution */}
+        {/* 3) Select temporal resolution */}
         {
           [Types.TEMPORAL, Types.SPATIAL].includes(data.analysisType) &&
           <AnalysisTemporalResolutionSelector
