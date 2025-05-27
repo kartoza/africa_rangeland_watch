@@ -17,6 +17,14 @@ logger = logging.getLogger(__name__)
 
 
 
+def get_temporal_resolution(setting: AlertSetting):
+    if setting.reference_period.get('month'):
+        return 'Monthly'
+    elif setting.reference_period.get('quarter'):
+        return 'Quarterly'
+    return 'Annual'
+
+
 def process_alert(setting: AlertSetting, runner: AnalysisRunner):
     now = timezone.now()
     locations = []
@@ -87,7 +95,7 @@ def process_alert(setting: AlertSetting, runner: AnalysisRunner):
                 ] if setting.reference_period['quarter'] else []
             },
             "baselineStartDate": None,
-            "temporalResolution": setting.get,
+            "temporalResolution": get_temporal_resolution(setting),
             "userDefinedFeatureId": None,
             "userDefinedFeatureName": None
         }
@@ -99,7 +107,8 @@ def process_alert(setting: AlertSetting, runner: AnalysisRunner):
         # submit task
         run_analysis_task(analysis_task.id)
         analysis_task.refresh_from_db()
-        analysis_result = analysis_task.result
+        analysis_result = analysis_task.result[0]
+        breakpoint()
 
     features = (
         analysis_result[0].get("features", [])
