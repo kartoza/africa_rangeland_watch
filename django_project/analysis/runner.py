@@ -325,6 +325,7 @@ class AnalysisRunner:
     def run_temporal_analysis(self, data):
         """Run the temporal analysis."""
         analysis_dict_list, comp_years = self.get_analysis_dict_temporal(data)
+        breakpoint()
         initialize_engine_analysis()
 
         results = []

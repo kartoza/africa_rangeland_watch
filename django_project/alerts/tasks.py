@@ -8,6 +8,7 @@ from alerts.utils import (
 from analysis.analysis import (
     run_analysis, initialize_engine_analysis
 )
+from analysis.tasks import run_analysis_task
 from analysis.runner import AnalysisRunner
 from analysis.models import AnalysisTask, TaskStatus
 import logging
@@ -40,7 +41,21 @@ def process_alert(setting: AlertSetting, runner: AnalysisRunner):
         }
         # Use AnalysisRunner to build analysis_dict
         analysis_dict = runner.get_analysis_dict_baseline(data)
+        analysis_result = run_analysis(
+            data["locations"],
+            analysis_dict,
+            custom_geom=data.get("custom_geom"),
+        )
     elif setting.analysis_type == AnalysisTypes.TEMPORAL:
+        try:
+            lat = setting.location.geometry.centroid.y if setting.location.geometry else 0
+        except AttributeError:
+            lat = 0
+
+        try:
+            lon = setting.location.geometry.centroid.x if setting.location.geometry else 0
+        except AttributeError:
+            lon = 0
         data = {
             "period": {
                 "year": setting.reference_period['year'],
@@ -51,8 +66,8 @@ def process_alert(setting: AlertSetting, runner: AnalysisRunner):
             "landscape": setting.location.landscape.name,
             "locations": [
                 {
-                    "lat": setting.location.y if setting.location else 0,
-                    "lon": setting.location.x if setting.location else 0,
+                    "lat": lat,
+                    "lon": lon,
                     "community": setting.location.community_id,
                     "communityName": setting.location.community_name,
                     "communityFeatureId": 1
@@ -66,22 +81,25 @@ def process_alert(setting: AlertSetting, runner: AnalysisRunner):
                 ],
                 "month": [
                     now.month
-                ],
-                "quarter": []
+                ] if setting.reference_period['month'] else [],
+                "quarter": [
+                    (now.month - 1) // 3 + 1
+                ] if setting.reference_period['quarter'] else []
             },
             "baselineStartDate": None,
-            "temporalResolution": "Monthly",
+            "temporalResolution": setting.get,
             "userDefinedFeatureId": None,
             "userDefinedFeatureName": None
         }
-        # Use AnalysisRunner to build analysis_dict
-        analysis_dict = runner.get_analysis_dict_temporal(data)
-
-    analysis_result = run_analysis(
-        data["locations"],
-        analysis_dict,
-        custom_geom=data.get("custom_geom"),
-    )
+        # Create task object
+        analysis_task = AnalysisTask.objects.create(
+            analysis_inputs=data,
+            submitted_by=setting.user
+        )
+        # submit task
+        run_analysis_task(analysis_task.id)
+        analysis_task.refresh_from_db()
+        analysis_result = analysis_task.result
 
     features = (
         analysis_result[0].get("features", [])
@@ -142,6 +160,7 @@ def process_alerts():
             # Run annual analysis on January 1st
             elif setting.reference_period.get('year') and now.date == 1 and now.month == 1:
                 run_task = True
+            run_task = True
             if run_task:
                 process_alert(setting=setting, runner=runner)
             
