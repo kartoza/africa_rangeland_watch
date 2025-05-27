@@ -56,12 +56,14 @@ def process_alert(setting: AlertSetting, runner: AnalysisRunner):
         )
     elif setting.analysis_type == AnalysisTypes.TEMPORAL:
         try:
-            lat = setting.location.geometry.centroid.y if setting.location.geometry else 0
+            lat = setting.location.geometry.centroid.y if\
+                setting.location.geometry else 0
         except AttributeError:
             lat = 0
 
         try:
-            lon = setting.location.geometry.centroid.x if setting.location.geometry else 0
+            lon = setting.location.geometry.centroid.x if\
+                setting.location.geometry else 0
         except AttributeError:
             lon = 0
         data = {
@@ -107,8 +109,10 @@ def process_alert(setting: AlertSetting, runner: AnalysisRunner):
         # submit task
         run_analysis_task(analysis_task.id)
         analysis_task.refresh_from_db()
-        analysis_result = analysis_task.result[0]
-        breakpoint()
+        try:
+            analysis_result = analysis_task.result[0]
+        except IndexError:
+            analysis_result = {'features': []}
 
     features = (
         analysis_result[0].get("features", [])
@@ -153,7 +157,7 @@ def process_alerts():
         )
         for setting in baseline_settings:
             process_alert(setting=setting, runner=runner)
-        
+
         # process temporal
         temporal_settings = AlertSetting.objects.filter(
             analysis_type=AnalysisTypes.TEMPORAL
@@ -161,18 +165,21 @@ def process_alerts():
         for setting in temporal_settings:
             # Run monthly analysis on 1st date every month
             run_task = False
-            if setting.reference_period.get('month') and now.date == 1:
+            if setting.reference_period.get('month') and now.day == 1:
                 run_task = True
             # Run quarterly analysis on 1st date on quarter month
-            elif setting.reference_period.get('quarter') and now.date == 1 and now.month in [1, 4, 7, 10]:
+            elif setting.reference_period.get('quarter') and\
+                now.day == 1 and\
+                    now.month in [1, 4, 7, 10]:
                 run_task = True
             # Run annual analysis on January 1st
-            elif setting.reference_period.get('year') and now.date == 1 and now.month == 1:
+            elif setting.reference_period.get('year') and\
+                now.day == 1 and\
+                    now.month == 1:
                 run_task = True
-            run_task = True
             if run_task:
                 process_alert(setting=setting, runner=runner)
-            
+
     except Exception as e:
         logger.error("Alert processing task failed", exc_info=True)
         task.status = TaskStatus.FAILED

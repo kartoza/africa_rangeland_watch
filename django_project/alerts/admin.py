@@ -7,8 +7,8 @@ from .models import (
 
 @admin.register(AlertSetting)
 class AlertSettingAdmin(admin.ModelAdmin):
-    list_display = ('name', 'indicator', 'analysis_type', 'location', 
-                    'enable_alert', 'email_alert', 'in_app_alert', 
+    list_display = ('name', 'indicator', 'analysis_type', 'location',
+                    'enable_alert', 'email_alert', 'in_app_alert',
                     'last_alert')
     list_filter = ('enable_alert', 'email_alert',
                    'in_app_alert', 'anomaly_detection_alert')
