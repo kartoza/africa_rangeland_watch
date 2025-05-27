@@ -110,6 +110,7 @@ def process_alerts():
     """
     initialize_engine_analysis()
     runner = AnalysisRunner()
+    now = timezone.now()
 
 
     task = AnalysisTask.objects.create(
@@ -131,7 +132,18 @@ def process_alerts():
             analysis_type=AnalysisTypes.TEMPORAL
         )
         for setting in temporal_settings:
-            process_alert(setting=setting, runner=runner)
+            # Run monthly analysis on 1st date every month
+            run_task = False
+            if setting.reference_period.get('month') and now.date == 1:
+                run_task = True
+            # Run quarterly analysis on 1st date on quarter month
+            elif setting.reference_period.get('quarter') and now.date == 1 and now.month in [1, 4, 7, 10]:
+                run_task = True
+            # Run annual analysis on January 1st
+            elif setting.reference_period.get('year') and now.date == 1 and now.month == 1:
+                run_task = True
+            if run_task:
+                process_alert(setting=setting, runner=runner)
             
     except Exception as e:
         logger.error("Alert processing task failed", exc_info=True)
