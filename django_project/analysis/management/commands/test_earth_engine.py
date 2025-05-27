@@ -210,7 +210,6 @@ class Command(BaseCommand):
         print('\n')
         print('Temporal Output Plot: \n', temporal_output_plot)
 
-
     def run_monthly_temporal_analysis(self):
         """
         Run monthly temporal analysis

@@ -17,6 +17,9 @@ interface AlertSetting {
   created_at: string;
   updated_at: string;
   user: number;
+  analysis_type: string,
+  temporal_resolution: string,
+  reference_period: object,
 }
 
 // Define the type for an Indicator
