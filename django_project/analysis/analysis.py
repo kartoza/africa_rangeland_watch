@@ -604,11 +604,19 @@ def get_rel_diff(
 
 
 def run_monthly_analysis(
-        start_date, end_date, select_geo, is_custom_geom,
+        start_date, test_years, test_months, select_geo, is_custom_geom,
         select_names, analysis_cache
 ):
     """Run monthly analysis."""
     current_date = datetime.datetime.now().date()
+    dates = [
+        datetime.date(
+            ty, test_months[idx], 1
+        ) for idx, ty in enumerate(test_years)
+    ]
+    # use max in case dates are not ordered
+    end_date = max(dates)
+
     # use start date of 2015-01-01
     date_ranges = _split_dates_by_year(
         datetime.date(2015, 1, 1),
@@ -666,9 +674,8 @@ def run_monthly_analysis(
     # For plotting, just use the reference periods
     date_list_ee = ee.List(
         [
-            start_date.isoformat(),
-            end_date.isoformat()
-        ]
+            start_date.isoformat()
+        ] + [dt.isoformat() for dt in dates]
     ).map(lambda d: ee.Date(d).millis())
     to_plot = to_plot_ts.filter(
         ee.Filter.inList('date', date_list_ee)
@@ -787,7 +794,9 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
     if analysis_dict['analysisType'] == "Temporal":
         res = analysis_dict['t_resolution']
         baseline_yr = int(analysis_dict['Temporal']['Annual']['ref'])
-        test_years = [int(year) for year in analysis_dict['Temporal']['Annual']['test']]
+        test_years = [
+            int(year) for year in analysis_dict['Temporal']['Annual']['test']
+        ]
         temporal_table, temporal_table_yr = input_layers.get_temporal_table()
 
         if res == "Quarterly":
@@ -820,12 +829,20 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
                 ))
                 temporal_table = temporal_table.merge(new_stats)
 
-            baseline_quart = quarter_dict[analysis_dict['Temporal']['Quarterly']['ref']]
-            test_quarts = [quarter_dict[quart] for quart in analysis_dict['Temporal']['Quarterly']['test']]
+            baseline_quart = quarter_dict[
+                analysis_dict['Temporal']['Quarterly']['ref']
+            ]
+            test_quarts = [
+                quarter_dict[quart] for quart in
+                analysis_dict['Temporal']['Quarterly']['test']
+            ]
 
             # Get annual years
             ref_year = int(analysis_dict['Temporal']['Annual']['ref'])
-            test_years = [int(year) for year in analysis_dict['Temporal']['Annual']['test']]
+            test_years = [
+                int(year) for year in
+                analysis_dict['Temporal']['Annual']['test']
+            ]
 
             # Create filters for reference year and all test years
             year_filters = []
@@ -840,12 +857,12 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
 
             # Add filters for each combination of test year and test quarter
             for idx, test_year in enumerate(test_years):
-                    year_filters.append(
-                        ee.Filter.And(
-                            ee.Filter.eq('year', test_year),
-                            ee.Filter.eq('month', test_quarts[idx])
-                        )
+                year_filters.append(
+                    ee.Filter.And(
+                        ee.Filter.eq('year', test_year),
+                        ee.Filter.eq('month', test_quarts[idx])
                     )
+                )
 
             to_plot = temporal_table.filter(
                 ee.Filter.inList('Name', select_names)
@@ -863,16 +880,16 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
                     ee.Geometry.MultiPolygon(custom_geom['coordinates'])
                 )
             baseline_month = int(analysis_dict['Temporal']['Monthly']['ref'])
-            print(analysis_dict['Temporal']['Monthly']['test'])
-            test_months = [int(month) for month in analysis_dict['Temporal']['Monthly']['test']]
+            test_months = [
+                int(month) for month in
+                analysis_dict['Temporal']['Monthly']['test']
+            ]
             baseline_dt = datetime.date(
                 baseline_yr, baseline_month, 1
             )
-            test_dt = datetime.date(
-                test_years[0], test_months[0], 1
-            )
             return run_monthly_analysis(
-                baseline_dt, test_dt, select_geo, custom_geom is not None,
+                baseline_dt, test_years, test_months,
+                select_geo, custom_geom is not None,
                 select_names, analysis_cache
             )
         else:

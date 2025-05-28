@@ -8,7 +8,6 @@ import uuid
 from collections import OrderedDict
 from datetime import date
 from copy import deepcopy
-from concurrent.futures import ThreadPoolExecutor
 
 from core.models import Preferences
 from analysis.analysis import (
@@ -311,7 +310,7 @@ class AnalysisRunner:
         )
 
         return output_results
-    
+
     def add_statistics(self, years, features):
         new_features = [
             a['properties'] for a in filter(
@@ -403,21 +402,6 @@ class AnalysisRunner:
         """Run the temporal analysis."""
         analysis_dict = self.get_analysis_dict_temporal(data)
         initialize_engine_analysis()
-
-        # results = []
-        # # Run analyses in parallel using ThreadPoolExecutor
-        # with ThreadPoolExecutor() as executor:
-        #     # Submit tasks to the executor
-        #     futures = [
-        #         executor.submit(
-        #             _temporal_analysis,
-        #             data.get('locations', []),
-        #             analysis_dict,
-        #             data.get('custom_geom', None)
-        #         ) for analysis_dict in analysis_dict_list
-        #     ]
-        #     # Collect results as they complete
-        #     results = [future.result() for future in futures]
 
         results = run_analysis(
             locations=data.get('locations', []),
