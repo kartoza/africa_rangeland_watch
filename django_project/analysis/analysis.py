@@ -1443,6 +1443,87 @@ def export_table_to_drive(feature_collection, description, folder):
     return _start_export_task(task, description)
 
 
+def export_classifier_to_asset(classifier, description, asset_id):
+    """
+    Exports a Classifier to asset.
+
+    Parameters
+    ----------
+    classifier : ee.Classifier.smileRandomForest
+        Classifier to be exported.
+    description : str
+        Description of the classifier.
+    asset_id : str
+        Asset Identifier.
+
+    Returns
+    -------
+    None
+    """
+    task = ee.batch.Export.classifier.toAsset(
+        classifier=classifier,
+        description=description,
+        assetId=asset_id,
+    )
+
+    return _start_export_task(task, description)
+
+
+def export_table_to_asset(feature_collection, description, asset_id):
+    """
+    Exports a Collection to asset.
+
+    Parameters
+    ----------
+    feature_collection : ee.FeatureCollection
+        Collection to be exported.
+    description : str
+        Description of the Collection.
+    asset_id : str
+        Asset Identifier.
+
+    Returns
+    -------
+    None
+    """
+    task = ee.batch.Export.table.toAsset(
+        collection=feature_collection,
+        description=description,
+        assetId=asset_id,
+    )
+
+    return _start_export_task(task, description)
+
+
+def export_image_to_asset(image, description, asset_id, region):
+    """
+    Exports a Collection to asset.
+
+    Parameters
+    ----------
+    image : ee.Image
+        Collection to be exported.
+    description : str
+        Description of the Collection.
+    asset_id : str
+        Asset Identifier.
+
+    Returns
+    -------
+    None
+    """
+    task = ee.batch.Export.image.toAsset(
+        image=image,
+        description=description,
+        assetId=asset_id,
+        region=region,
+        scale=10,
+        maxPixels=1e13,
+    )
+
+    return _start_export_task(task, description)
+
+
 def spatial_get_date_filter(analysis_dict):
     """Get spatial date filter from analysis_dict."""
     filter_start_date = None
@@ -1491,29 +1572,24 @@ def validate_spatial_date_range_filter(
     return True, None, None
 
 
-# Note: this function exceeds computational limit
-# TODO: investigate whether we can reduce to aoi in the training data
-# TODO: investigate and RnD to store the classifier model and load later
-def calculate_grazing_capacity(aoi, start_date, end_date):
-    """Calculate grazing by start_date, end_date, and area of interest."""
+def get_grazing_capacity_training_bands(start_date, end_date, feature):
     input_layer = InputLayer()
 
-    sampling_area = input_layer.get_countries(
-        country_names=[
-            'SOUTH AFRICA', 'LESOTHO', 'SWAZILAND',
-            'NAMIBIA', 'ZIMBABWE', 'BOTSWANA',
-            'MOZAMBIQUE'
-        ]
-    )
-
-    gp = ee.FeatureCollection(
-        GEEAsset.fetch_asset_source('grazing_capacity_ref')
-    )
+    # sampling_area = input_layer.get_countries(
+    #     country_names=[
+    #         'SOUTH AFRICA',
+    #         # 'LESOTHO', 'SWAZILAND',
+    #         # 'NAMIBIA', 'ZIMBABWE', 'BOTSWANA',
+    #         # 'MOZAMBIQUE'
+    #     ]
+    # )
+    sampling_area = feature.geometry()
 
     # Create a mask of non-natural lands
     glc_coll = ee.ImageCollection(
         GEEAsset.fetch_asset_source('globe_land30')
     )
+    glc_coll = glc_coll.map(lambda img: img.clip(sampling_area))
     glc_img = ee.Image(glc_coll.mosaic())
     masked = (glc_img.neq(10)
               .And(glc_img.neq(20))
@@ -1529,16 +1605,16 @@ def calculate_grazing_capacity(aoi, start_date, end_date):
             )
             .filterBounds(sampling_area)
             .filterDate(start_date, end_date)
-            .median())
+            .median().clip(sampling_area))
 
-    evi = (ee.ImageCollection(GEEAsset.fetch_asset_source('modis_vegetation'))
+    evi = (ee.ImageCollection(GEEAsset.fetch_asset_source('modis_vegetation_061'))
            .filterBounds(sampling_area)
            .filterDate(start_date, end_date)
            .select('EVI'))
-    evi_med = evi.median()
+    evi_med = evi.median().clip(sampling_area)
 
     # Calculate variance in EVI over time
-    evi_var = evi.reduce(ee.Reducer.variance())
+    evi_var = evi.reduce(ee.Reducer.variance()).clip(sampling_area)
 
     # Get surface reflectance data as well
     srf = (ee.ImageCollection(GEEAsset.fetch_asset_source(
@@ -1552,7 +1628,7 @@ def calculate_grazing_capacity(aoi, start_date, end_date):
                    'sur_refl_b07'
                ]
             ))
-    srfMed = srf.median()
+    srfMed = srf.median().clip(sampling_area)
 
     # Combine
     combined = ndwi.addBands(
@@ -1563,15 +1639,25 @@ def calculate_grazing_capacity(aoi, start_date, end_date):
     # Apply land cover mask to isolate rangeland
     combined = combined.updateMask(masked)
 
-    bands = combined.bandNames()
+    return combined
 
+
+# Note: this function exceeds computational limit
+# TODO: investigate whether we can reduce to aoi in the training data
+# TODO: investigate and RnD to store the classifier model and load later
+def calculate_grazing_capacity(training_ref):
+    """Calculate grazing by start_date, end_date, and area of interest."""
+    # Get the training data
     def map_training_data(ft):
-        return ft.setGeometry(None).set(combined.reduceRegion(
+        training_bands = get_grazing_capacity_training_bands(
+            '2015-01-01', '2017-01-01', ft
+        )
+        return ft.setGeometry(None).set(training_bands.reduceRegion(
             reducer=ee.Reducer.mean(),
             geometry=ft.geometry(),
             scale=500,
         ))
-    train_test = gp.map(map_training_data)
+    train_test = training_ref.map(map_training_data)
 
     def map_convert_lsu(ft):
         return ft.set(
@@ -1582,21 +1668,24 @@ def calculate_grazing_capacity(aoi, start_date, end_date):
     # Convert to LSU per hectare
     train_test = train_test.map(map_convert_lsu)
 
+    return train_test
+
     # Train RF classifier
     # parameters: numberOfTrees, variablesPerSplit,
     # minLeafPopulation, bagFraction
-    classifierReg = (ee.Classifier.smileRandomForest(100)
-                     .setOutputMode('REGRESSION')
-                     .train(
-                         features=train_test,
-                         classProperty='LSU_ha',
-                         inputProperties=bands
-                     ))
+    # classifierReg = (ee.Classifier.smileRandomForest(100)
+    #                  .setOutputMode('REGRESSION')
+    #                  .train(
+    #                      features=train_test,
+    #                      classProperty='LSU_ha',
+    #                      inputProperties=bands
+    #                  ))
 
-    # Classify with RandomForest
-    classified = combined.select(bands).classify(classifierReg)
+    # # # Classify with RandomForest
+    # # classified = combined.select(bands).classify(classifierReg)
 
-    return classified.clipToCollection(aoi)
+    # # return classified.clipToCollection(aoi)
+    # return classifierReg
 
 
 def calculate_firefreq(aoi, start_date, end_date):
@@ -1841,13 +1930,18 @@ def calculate_baseline(aoi, start_date, end_date, is_custom_geom=False):
         raise ValueError('No baseline in the input date ranges.')
 
     # Combining all layers for analysis and renaming for clarity
+     # filter_list = [
+    #     'SOCltMean'
+    # ]
+    filter_list = [img['attribute'] for img in image_list]
     combined = ee.Image.cat(
-        *[img['asset'] for img in image_list]
+        *[img['asset'] for img in image_list if img['attribute'] in filter_list]
     )
     combined = combined.select(
-        [img['attribute'] for img in image_list],
-        [img['label'] for img in image_list]
+        [img['attribute'] for img in image_list if img['attribute'] in filter_list],
+        [img['label'] for img in image_list if img['attribute'] in filter_list]
     )
+    print([img['attribute'] for img in image_list])
 
     # Reducing regions to extract mean values per polygon
     reduced = combined.reduceRegions(selected_area, ee.Reducer.mean(), 100)
