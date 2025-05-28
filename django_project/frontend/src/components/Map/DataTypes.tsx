@@ -42,3 +42,4 @@ export const GroupName = {
 }
 export const COMMUNITY_ID = 'Communities'
 export const CUSTOM_GEOM_ID = 'CustomGeom'
+export const EARTH_EANGER_EVENT = 'EarthRangerEvent'

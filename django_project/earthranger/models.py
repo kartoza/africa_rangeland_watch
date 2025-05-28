@@ -1,4 +1,5 @@
-from django.db import models
+from django.contrib.gis.db import models
+from django.utils import timezone
 
 
 class APISchedule(models.Model):
@@ -86,6 +87,8 @@ class EarthRangerMapping(models.Model):
 
 
 class EarthRangerEvents(models.Model):
-    name = models.CharField(max_length=255, unique=True, default="Events")
+    earth_ranger_uuid = models.UUIDField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
     data = models.JSONField(default=dict)
-    last_updated = models.DateTimeField(auto_now=True)
+    geometry = models.GeometryField(null=True, blank=True)
