@@ -20,19 +20,25 @@ class FetchExternalLayersTaskTests(TestCase):
         )
 
         self.automatic_source = ExternalLayerSource.objects.create(
-            name="RAMONA Source",
+            name="WRI Source",
             fetch_type="api",
-            slug="ramona",
+            slug="wri",
             frequency="weekly",
             provider=self.provider,
         )
 
+    def _patch_fetch_source_data(self, **kwargs):
+        """
+        Convenience wrapper.
+        """
+        return patch(
+            "layers.tasks.fetch_external_layers.fetch_source_data",
+            **kwargs,
+        )
+
     def test_fetch_task_creates_history_for_non_manual_sources(self):
-        """
-        Test that fetch_external_layers_task
-        creates FetchHistory only for non-manual sources.
-        """
-        fetch_external_layers_task()
+        with self._patch_fetch_source_data(return_value=None):
+            fetch_external_layers_task()
 
         histories = FetchHistory.objects.all()
         self.assertEqual(histories.count(), 1)
@@ -40,19 +46,19 @@ class FetchExternalLayersTaskTests(TestCase):
         self.assertEqual(history.source, self.automatic_source)
         self.assertEqual(history.status, "success")
 
+
     def test_manual_sources_are_skipped(self):
-        """Test that manual sources are not fetched."""
-        fetch_external_layers_task()
+        with self._patch_fetch_source_data(return_value=None):
+            fetch_external_layers_task()
 
         histories = FetchHistory.objects.all()
-        source_names = [h.source.name for h in histories]
-        self.assertNotIn("Manual Source", source_names)
+        self.assertTrue(
+            all(h.source != self.manual_source for h in histories)
+        )
+
 
     def test_failure_is_recorded_if_fetch_fails(self):
-        with patch(
-            "layers.tasks.fetch_external_layers.fetch_source_data",
-            side_effect=Exception("Simulated failure")
-        ):
+        with self._patch_fetch_source_data(side_effect=Exception("Simulated failure")):
             fetch_external_layers_task()
 
         histories = FetchHistory.objects.all()
