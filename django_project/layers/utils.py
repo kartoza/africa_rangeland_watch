@@ -8,6 +8,7 @@ Africa Rangeland Watch (ARW).
 import requests
 import os
 import time
+import logging
 from urllib.parse import urljoin
 import tempfile
 from tempfile import NamedTemporaryFile
@@ -15,9 +16,15 @@ import ee
 import rasterio
 from datetime import datetime
 from django.core.files.base import ContentFile
-from analysis.analysis import initialize_engine_analysis
+from analysis.analysis import (
+    initialize_engine_analysis,
+    export_image_to_drive
+)
 from analysis.utils import get_gdrive_file
 from layers.models import ExternalLayer, ExternalLayerSource
+
+
+logger = logging.getLogger(__name__)
 
 
 def upload_file(url, file_path, field_name="file", auth_header=None):
@@ -55,14 +62,21 @@ def extract_raster_metadata(file_path):
         crs = src.crs.to_string()
         resolution = src.res
         band_count = src.count
-        array = src.read(1)
+
+        try:
+            stats = src.statistics(1, approx=True)
+            min_val, max_val = stats.min, stats.max
+        except Exception:
+            sample = src.read(1, window=((0, 512), (0, 512)))
+            min_val, max_val = float(sample.min()), float(sample.max())
+
         return {
             "bounds": [bounds.left, bounds.bottom, bounds.right, bounds.top],
             "crs": crs,
             "resolution": resolution,
             "band_count": band_count,
-            "min": float(array.min()),
-            "max": float(array.max()),
+            "min": float(min_val),
+            "max": float(max_val),
         }
 
 
@@ -105,123 +119,158 @@ def ingest_external_layer(source, uploaded_file, created_by=None):
     return layer
 
 
-def export_image(asset_id, region=None, scale=1000, folder=None):
+def export_image(
+    asset_id: str,
+    region: ee.Geometry = None,
+    scale: float = 1000,
+    folder: str | None = None,
+    vis_params: dict | None = None,
+):
     """
-    Export a GEE image to Drive and download it locally.
+    Export a (mosaicked) EE ImageCollection to Google Drive, wait for
+    completion, download the resulting GeoTIFF to /tmp and return
+    (local_path, filename).
 
-    :param asset_id: GEE image asset ID (ImageCollection)
-    :param region: Optional ee.Geometry (defaults to a southern Africa)
-    :param scale: Pixel scale in meters
-    :param folder: (Optional) Name of folder in Drive to store export
-    :return: (local_path, filename)
+    Returns
+    -------
+    tuple[str, str]
+        (local_path, filename)
     """
     initialize_engine_analysis()
 
-    filename = f"{asset_id.split('/')[-1]}_{int(time.time())}.tif"
+    timestamp = int(time.time())
+    filename = f"{asset_id.split('/')[-1]}_{timestamp}.tif"
+    description = filename.removesuffix(".tif")
 
     if region is None:
+        # default AOI
         region = ee.Geometry.Rectangle([16.45, -34.85, 32.90, -22.13])
 
     image = ee.ImageCollection(asset_id).mosaic()
 
-    export_params = {
-        'image': image,
-        'description': filename.replace('.tif', ''),
-        'fileNamePrefix': filename.replace('.tif', ''),
-        'region': region,
-        'scale': scale,
-        'fileFormat': 'GeoTIFF'
-    }
+    # Launch export via helper (blocks until DONE)
+    status = export_image_to_drive(
+        image=image,
+        description=description,
+        folder=folder or "GEE_EXPORTS",
+        file_name_prefix=description,
+        scale=scale,
+        region=region,
+        vis_params=vis_params,
+    )
 
-    if folder:
-        export_params['folder'] = folder
+    if status.get("state") != "COMPLETED":
+        raise RuntimeError(f"[GEE] Export failed → {status}")
 
-    task = ee.batch.Export.image.toDrive(**export_params)
-    task.start()
+    logger.info("[GEE] Export completed: %s", filename)
 
-    print(f"[GEE] Export task started: {filename}")
-    while task.active():
-        print("[GEE] Waiting for export to finish...")
-        time.sleep(10)
-
-    status = task.status()
-    if status['state'] != 'COMPLETED':
-        raise RuntimeError(f"[GEE] Export failed: {status}")
-
-    print(f"[GEE] Export completed: {filename}")
-
-    # Download file from Drive
+    # Download from Drive
     gfile = get_gdrive_file(filename)
-    if not gfile:
-        raise FileNotFoundError(
-            f"[GDrive] File not found in Drive: {filename}"
-        )
+    if gfile is None:
+        raise FileNotFoundError(f"[GDrive] File not found: {filename}")
 
-    temp_dir = tempfile.gettempdir()
-    local_path = os.path.join(temp_dir, filename)
+    tmp_dir = tempfile.gettempdir()
+    local_path = os.path.join(tmp_dir, filename)
     gfile.GetContentFile(local_path)
 
-    print(f"[Local] File downloaded to: {local_path}")
+    logger.info("[LOCAL] File downloaded to: %s", local_path)
     return local_path, filename
 
 
 def fetch_global_pasture_watch_data(source: ExternalLayerSource):
     """
-    Fetches pasture data from GEE and stores as ExternalLayer.
+    Export the Global Pasture Watch grassland-class (30 m) image from GEE,
+    download it as a GeoTIFF, and store it as an ExternalLayer.
+
+    Skips the download if the file has already been ingested.
     """
     ASSET_ID = "projects/global-pasture-watch/assets/ggc-30m/v1/grassland_c"
 
-    # Export to GeoTIFF (local or cloud bucket)
-    temp_path, filename = export_image(asset_id=ASSET_ID)
+    tmp_path = None
+    try:
+        # Export image from GEE to a local temp file
+        tmp_path, filename = export_image(asset_id=ASSET_ID)
 
-    # Extract metadata from GeoTIFF
-    metadata = extract_raster_metadata(temp_path)
+        # Duplicate-ingest check
+        if ExternalLayer.objects.filter(name=filename, source=source).exists():
+            logger.info("[SKIP] %s already ingested.", filename)
+            return
 
-    # Save to DB
-    with open(temp_path, "rb") as f:
-        layer = ExternalLayer.objects.create(
-            name=filename,
-            layer_type="raster",
-            metadata=metadata,
-            created_by=None,
-            source=source,
-            is_public=True,
-            is_auto_published=True
-        )
-        layer.file.save(filename, ContentFile(f.read()))
+        # metadata extraction
+        metadata = extract_raster_metadata(tmp_path)
+
+        # Save the layer to DB and attach the file
+        with open(tmp_path, "rb") as fh:
+            layer = ExternalLayer.objects.create(
+                name=filename,
+                layer_type="raster",
+                metadata=metadata,
+                source=source,
+                is_public=True,
+                is_auto_published=True,
+            )
+            layer.file.save(filename, ContentFile(fh.read()))
+
+        logger.info("[SUCCESS] %s ingested (Pasture Watch).", filename)
+
+    except Exception as exc:
+        logger.error("Pasture Watch ingest failed → %s", exc, exc_info=True)
+
+    finally:
+        # ensure temp file is removed even on error/skip
+        if tmp_path and os.path.exists(tmp_path):
+            os.remove(tmp_path)
 
 
 def fetch_all_global_cropland_zenodo(
         source: ExternalLayerSource,
-        resolution: str = "250m"
+        resolution: str = "250m",
+        years=range(2000, 2023),
 ):
     """
     Fetches global cropland extent files (2000–2022) at 250m or 1km from Zenodo
     and stores each year as an ExternalLayer.
+    Parameters
+    ----------
+    source : ExternalLayerSource
+        The configured Zenodo source record.
+    resolution : str
+        Either "250m" or "1km".
+    years : iterable[int]
+        Years to ingest; by default 2000-2022.
     """
-    assert resolution in ["250m", "1km"], "Resolution must be '250m' or '1km'"
+    assert resolution in {"250m", "1km"}, "resolution must be '250m' or '1km'"
 
-    for year in range(2000, 2023):
+    base_url = "https://zenodo.org/record/12527546/files/"
+
+    for year in years:
         filename = (
             f"cropland_glad.potapov.et.al_p_{resolution}_s_"
             f"{year}0101_{year}1231_go_epsg.4326_v20240624.tif"
         )
-        url = f"https://zenodo.org/record/12527546/files/{filename}"
 
-        print(f"[INFO] Downloading {filename} from Zenodo...")
+        # Duplicate-check
+        if ExternalLayer.objects.filter(name=filename, source=source).exists():
+            logger.info("[SKIP] %s already ingested.", filename)
+            continue
 
+        url = urljoin(base_url, filename)
+        logger.info("[FETCH] %s", url)
+
+        tmp_path = None
         try:
-            with requests.get(url, stream=True) as r:
+            # Stream download to temporary file
+            with requests.get(url, stream=True, timeout=30) as r:
                 r.raise_for_status()
-                with NamedTemporaryFile(
-                    delete=False, suffix=".tif"
-                ) as tmp_file:
+                with NamedTemporaryFile(delete=False, suffix=".tif") as tmp:
                     for chunk in r.iter_content(chunk_size=8192):
-                        tmp_file.write(chunk)
-                    tmp_path = tmp_file.name
+                        tmp.write(chunk)
+                    tmp_path = tmp.name
 
+            # metadata extraction
             metadata = extract_raster_metadata(tmp_path)
 
+            # Save layer to DB
             with open(tmp_path, "rb") as f:
                 layer = ExternalLayer.objects.create(
                     name=filename,
@@ -233,156 +282,70 @@ def fetch_all_global_cropland_zenodo(
                 )
                 layer.file.save(filename, ContentFile(f.read()))
 
-            os.remove(tmp_path)
-            print(f"[SUCCESS] Stored {filename} as ExternalLayer.")
+            logger.info("[SUCCESS] %s ingested.", filename)
 
-        except Exception as e:
-            print(f"[ERROR] Failed to fetch {filename}: {e}")
+        except Exception as exc:
+            logger.error("%s → %s", filename, exc, exc_info=True)
+
+        finally:
+            if tmp_path and os.path.exists(tmp_path):
+                os.remove(tmp_path)
 
 
 def fetch_grassland_stac_layers(
-        source: ExternalLayerSource, years=range(2000, 2023)
-):
-    """
-    Fetches grassland layers (30m) from the STAC collection
-    and stores as ExternalLayers.
-    """
-    stac_base_url = (
-        "https://s3.eu-central-1.wasabisys.com/stac/openlandmap/gpw_ggc-30m/"
-    )
-    item_template = "gpw_ggc-30m_{year}0101_{year}1231/item.json"
-
-    for year in years:
-        item_url = urljoin(stac_base_url, item_template.format(year=year))
-        print(f"[INFO] Fetching STAC item for {year}: {item_url}")
-
-        try:
-            resp = requests.get(item_url)
-            resp.raise_for_status()
-            item = resp.json()
-            asset = item["assets"]["COG"]
-            cog_url = asset["href"]
-            filename = cog_url.split("/")[-1]
-
-            print(f"[INFO] Downloading COG from {cog_url}...")
-
-            with requests.get(cog_url, stream=True) as r:
-                r.raise_for_status()
-                with NamedTemporaryFile(
-                    delete=False, suffix=".tif"
-                ) as tmp_file:
-                    for chunk in r.iter_content(chunk_size=8192):
-                        tmp_file.write(chunk)
-                    tmp_path = tmp_file.name
-
-            metadata = extract_raster_metadata(tmp_path)
-
-            with open(tmp_path, "rb") as f:
-                layer = ExternalLayer.objects.create(
-                    name=filename,
-                    layer_type="raster",
-                    metadata=metadata,
-                    source=source,
-                    is_public=True,
-                    is_auto_published=True,
-                )
-                layer.file.save(filename, ContentFile(f.read()))
-
-            os.remove(tmp_path)
-            print(f"[SUCCESS] Year {year} stored as ExternalLayer.")
-
-        except Exception as e:
-            print(f"[ERROR] Failed to process year {year}: {e}")
-
-
-def fetch_short_vegetation_height_layers(source: ExternalLayerSource, years=range(2000, 2023)):
-    stac_base = "https://s3.ecodatacube.eu/arco/stac/short.veg.height_lgb/"
-    item_template = (
-        "short.veg.height_lgb_{year}0101_{year}1231/short.veg.height_lgb_{year}0101_{year}1231.json"
-    )
-
-    for year in years:
-        item_url = urljoin(stac_base, item_template.format(year=year))
-        print(f"[INFO] Fetching vegetation height item for {year}: {item_url}")
-
-        try:
-            r = requests.get(item_url)
-            r.raise_for_status()
-            item = r.json()
-            cog_key = "short.veg.height_lgb_m_30m_s"
-
-            if cog_key not in item["assets"]:
-                raise ValueError(
-                    f"Expected asset '{cog_key}' not found in STAC item."
-                )
-
-            cog_url = item["assets"][cog_key]["href"]
-            filename = cog_url.split("/")[-1]
-
-            print(f"[INFO] Downloading COG: {filename}")
-
-            with requests.get(cog_url, stream=True) as cog:
-                cog.raise_for_status()
-                with NamedTemporaryFile(delete=False, suffix=".tif") as tmp_file:
-                    for chunk in cog.iter_content(chunk_size=8192):
-                        tmp_file.write(chunk)
-                    tmp_path = tmp_file.name
-
-            metadata = extract_raster_metadata(tmp_path)
-
-            with open(tmp_path, "rb") as f:
-                layer = ExternalLayer.objects.create(
-                    name=filename,
-                    layer_type="raster",
-                    metadata=metadata,
-                    source=source,
-                    is_public=True,
-                    is_auto_published=True
-                )
-                layer.file.save(filename, ContentFile(f.read()))
-
-            os.remove(tmp_path)
-            print(f"[SUCCESS] Year {year} stored as ExternalLayer.")
-
-        except Exception as e:
-            print(f"[ERROR] Year {year} failed: {e}")
-
-
-def fetch_soil_bare_fraction_layers(
         source: ExternalLayerSource,
         years=range(2000, 2023)
 ):
     """
-    Fetches annual bare fraction (Europe) layers from EcoDataCube STAC
-    and stores them as ExternalLayers.
+    Fetches grassland layers (30m) from the STAC collection
+    and stores as ExternalLayers.
+
+    Parameters
+    ----------
+    source : ExternalLayerSource
+        Configured source with slug "openlandmap-grassland".
+    years : iterable[int]
+        The years to ingest (default 2000-2022).
     """
-    stac_base = "https://stac.ecodatacube.eu/lcv_ndvi_landsat.glad.ard/"
-    item_template = "lcv_ndvi_landsat.glad.ard_{year}0101_{year}1231/item.json"
+    stac_base = (
+        "https://s3.eu-central-1.wasabisys.com/stac/openlandmap/gpw_ggc-30m/"
+    )
+    item_tpl = "gpw_ggc-30m_{year}0101_{year}1231/item.json"
 
     for year in years:
-        item_url = f"{stac_base}{item_template.format(year=year)}"
+        item_url = urljoin(stac_base, item_tpl.format(year=year))
+        logger.info("[STAC] Fetching item for %s → %s", year, item_url)
+
+        tmp_path = None
         try:
-            r = requests.get(item_url)
-            r.raise_for_status()
-            item = r.json()
-            asset = item["assets"]["COG"]
-            cog_url = asset["href"]
-            filename = cog_url.split("/")[-1]
+            resp = requests.get(item_url, timeout=10)
+            resp.raise_for_status()
+            item = resp.json()
 
-            print(f"[INFO] Downloading bare fraction layer {filename}")
+            cog_url = item["assets"]["COG"]["href"]
+            filename = os.path.basename(cog_url)
 
-            with requests.get(cog_url, stream=True) as cog:
-                cog.raise_for_status()
-                with NamedTemporaryFile(
-                    delete=False, suffix=".tif"
-                ) as tmp_file:
-                    for chunk in cog.iter_content(chunk_size=8192):
-                        tmp_file.write(chunk)
-                    tmp_path = tmp_file.name
+            # Skip if already stored
+            if ExternalLayer.objects.filter(
+                name=filename, source=source
+            ).exists():
+                logger.info("[SKIP] %s already ingested.", filename)
+                continue
 
+            # Download COG
+            logger.info("[DL] %s", cog_url)
+            with requests.get(cog_url, stream=True, timeout=30) as cog_resp:
+                cog_resp.raise_for_status()
+                with NamedTemporaryFile(delete=False, suffix=".tif") as tmp:
+                    for chunk in cog_resp.iter_content(chunk_size=8192):
+                        tmp.write(chunk)
+                    tmp_path = tmp.name
+
+            # lightweight metadata
             metadata = extract_raster_metadata(tmp_path)
 
-            with open(tmp_path, "rb") as f:
+            # Save to DB
+            with open(tmp_path, "rb") as fh:
                 layer = ExternalLayer.objects.create(
                     name=filename,
                     layer_type="raster",
@@ -391,10 +354,178 @@ def fetch_soil_bare_fraction_layers(
                     is_public=True,
                     is_auto_published=True,
                 )
-                layer.file.save(filename, ContentFile(f.read()))
+                layer.file.save(filename, ContentFile(fh.read()))
 
-            os.remove(tmp_path)
-            print(f"[SUCCESS] Year {year} ingested.")
+            logger.info("[SUCCESS] %s (%s) ingested.", filename, year)
 
-        except Exception as e:
-            print(f"[ERROR] Failed to process year {year}: {e}")
+        except Exception as exc:
+            logger.error("Year %s → %s", year, exc, exc_info=True)
+
+        finally:
+            if tmp_path and os.path.exists(tmp_path):
+                os.remove(tmp_path)
+
+
+def fetch_short_vegetation_height_layers(
+    source: ExternalLayerSource,
+    years=range(2000, 2023),
+):
+    """
+    Ingest annual 30 m short-vegetation-height layers from EcoDataCube STAC.
+
+    Parameters
+    ----------
+    source : ExternalLayerSource
+        The source with slug 'ecodatacube-veg-height'.
+    years : iterable[int]
+        Years to process (default 2000-2022).
+    """
+    stac_base = "https://s3.ecodatacube.eu/arco/stac/short.veg.height_lgb/"
+    item_tpl = (
+        "short.veg.height_lgb_{year}0101_{year}1231/"
+        "short.veg.height_lgb_{year}0101_{year}1231.json"
+    )
+    cog_key = "short.veg.height_lgb_m_30m_s"   # asset key that holds the COG
+
+    for year in years:
+        item_url = urljoin(stac_base, item_tpl.format(year=year))
+        logger.info("[STAC] Fetching veg-height item %s → %s", year, item_url)
+
+        tmp_path = None
+        try:
+            # Fetch item metadata ────────────────────────────────
+            r = requests.get(item_url, timeout=10)
+            r.raise_for_status()
+            item = r.json()
+
+            if cog_key not in item["assets"]:
+                raise KeyError(f"asset '{cog_key}' not found")
+
+            cog_url = item["assets"][cog_key]["href"]
+            filename = os.path.basename(cog_url)
+
+            # Skip duplicates ───────────────────────────────────
+            if ExternalLayer.objects.filter(
+                name=filename, source=source
+            ).exists():
+                logger.info("[SKIP] %s already ingested.", filename)
+                continue
+
+            # Stream-download COG to temp file ──────────────────
+            logger.info("[DL] %s", cog_url)
+            with requests.get(cog_url, stream=True, timeout=30) as cog_resp:
+                cog_resp.raise_for_status()
+                with NamedTemporaryFile(delete=False, suffix=".tif") as tmp:
+                    for chunk in cog_resp.iter_content(chunk_size=8192):
+                        tmp.write(chunk)
+                    tmp_path = tmp.name
+
+            # Extract lightweight raster metadata ───────────────
+            metadata = extract_raster_metadata(tmp_path)
+
+            # Save layer to DB ──────────────────────────────────
+            with open(tmp_path, "rb") as fh:
+                layer = ExternalLayer.objects.create(
+                    name=filename,
+                    layer_type="raster",
+                    metadata=metadata,
+                    source=source,
+                    is_public=True,
+                    is_auto_published=True,
+                )
+                layer.file.save(filename, ContentFile(fh.read()))
+
+            logger.info("[SUCCESS] %s (%s) ingested.", filename, year)
+
+        except Exception as exc:
+            logger.error("%s → %s", year, exc, exc_info=True)
+
+        finally:
+            if tmp_path and os.path.exists(tmp_path):
+                os.remove(tmp_path)
+
+
+def fetch_soil_bare_fraction_layers(
+    source: ExternalLayerSource,
+    years=range(2000, 2023),
+):
+    """
+    Ingest annual bare-fraction (Europe) rasters from EcoDataCube STAC.
+
+    Parameters
+    ----------
+    source : ExternalLayerSource
+        Source with slug 'ecodatacube-bare-fraction'.
+    years : iterable[int]
+        Years to ingest (default 2000-2022).
+    """
+    stac_base = "https://stac.ecodatacube.eu/lcv_ndvi_landsat.glad.ard/"
+    item_tpl = "lcv_ndvi_landsat.glad.ard_{year}0101_{year}1231/item.json"
+
+    # Most items expose the main COG under this key
+    cog_key = "lcv_ndvi_landsat.glad.ard_m_30m_s"
+
+    for year in years:
+        item_url = f"{stac_base}{item_tpl.format(year=year)}"
+        logger.info("[STAC] Bare fraction %s → %s", year, item_url)
+
+        tmp_path = None
+        try:
+            # Fetch STAC item
+            r = requests.get(item_url, timeout=10)
+            r.raise_for_status()
+            item = r.json()
+
+            # Resolve the COG asset key
+            if cog_key not in item["assets"]:
+                # Fallback: find first .tif asset
+                for a in item["assets"].values():
+                    if a["href"].lower().endswith((".tif", ".tiff")):
+                        cog_url = a["href"]
+                        break
+                else:
+                    raise KeyError("No GeoTIFF asset found.")
+            else:
+                cog_url = item["assets"][cog_key]["href"]
+
+            filename = os.path.basename(cog_url)
+
+            # Duplicate check
+            if ExternalLayer.objects.filter(
+                name=filename, source=source
+            ).exists():
+                logger.info("[SKIP] %s already ingested.", filename)
+                continue
+
+            # Download COG
+            logger.info("[DL] %s", cog_url)
+            with requests.get(cog_url, stream=True, timeout=30) as cog_resp:
+                cog_resp.raise_for_status()
+                with NamedTemporaryFile(delete=False, suffix=".tif") as tmp:
+                    for chunk in cog_resp.iter_content(chunk_size=8192):
+                        tmp.write(chunk)
+                    tmp_path = tmp.name
+
+            # Extract lightweight metadata
+            metadata = extract_raster_metadata(tmp_path)
+
+            # Save to ExternalLayer
+            with open(tmp_path, "rb") as fh:
+                layer = ExternalLayer.objects.create(
+                    name=filename,
+                    layer_type="raster",
+                    metadata=metadata,
+                    source=source,
+                    is_public=True,
+                    is_auto_published=True,
+                )
+                layer.file.save(filename, ContentFile(fh.read()))
+
+            logger.info("[SUCCESS] Bare-fraction %s ingested.", year)
+
+        except Exception as exc:
+            logger.error("Bare-fraction %s → %s", year, exc, exc_info=True)
+
+        finally:
+            if tmp_path and os.path.exists(tmp_path):
+                os.remove(tmp_path)

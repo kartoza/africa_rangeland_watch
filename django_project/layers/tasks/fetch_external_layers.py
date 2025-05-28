@@ -1,54 +1,75 @@
 # layers/tasks.py
+import logging
 
 from core.celery import app
 from layers.models import ExternalLayerSource, FetchHistory
+from layers.utils import (
+    fetch_global_pasture_watch_data,
+    fetch_all_global_cropland_zenodo,
+    fetch_grassland_stac_layers,
+    fetch_short_vegetation_height_layers,
+    fetch_soil_bare_fraction_layers,
+)
 
 
-def fetch_source_data(source):
+logger = logging.getLogger(__name__)
+
+
+FETCH_DISPATCH: dict[str, callable] = {
+    "wri": fetch_global_pasture_watch_data,
+    "open-earth-monitor": lambda src: fetch_all_global_cropland_zenodo(
+        src, resolution="250m"
+    ),
+    "openlandmap-grassland": fetch_grassland_stac_layers,
+    "ecodatacube-veg-height": fetch_short_vegetation_height_layers,
+    "ecodatacube-bare-fraction": fetch_soil_bare_fraction_layers,
+}
+
+
+# Helper function to fetch data based on the source slug
+def fetch_source_data(source: ExternalLayerSource):
     """
-    Placeholder for external data fetching logic.
-
-    :param source: ExternalLayerSource instance
+    Call the appropriate fetcher based on source.slug.
+    Raises ValueError if no fetcher is registered.
     """
-    if source.slug == "wri":
-        from layers.utils import fetch_global_pasture_watch_data
-        return fetch_global_pasture_watch_data(source)
-    elif source.slug == "open-earth-monitor":
-        from layers.utils import fetch_all_global_cropland_zenodo
-        # suggest using a specific resolution
-        # resolution = source.metadata.get("resolution", "250m")
-        return fetch_all_global_cropland_zenodo(source, resolution="250m")
-    elif source.slug == "openlandmap-grassland":
-        from layers.utils import fetch_grassland_stac_layers
-        return fetch_grassland_stac_layers(source)
-    elif source.slug == "ecodatacube-veg-height":
-        from layers.utils import fetch_short_vegetation_height_layers
-        return fetch_short_vegetation_height_layers(source)
-    elif source.slug == "ecodatacube-bare-fraction":
-        from layers.utils import fetch_soil_bare_fraction_layers
-        return fetch_soil_bare_fraction_layers(source)
+    fetcher = FETCH_DISPATCH.get(source.slug)
+    if fetcher is None:
+        raise ValueError(f"No fetcher registered for slug '{source.slug}'")
+    return fetcher(source)
 
 
 @app.task(name="fetch_external_layers_task")
 def fetch_external_layers_task():
     """
-    Celery task to fetch external datasets from collaborators.
-    This polls all registered ExternalLayerSources that are not manual.
+    Iterate over every active, non-manual ExternalLayerSource and run
+    its corresponding fetcher.  Log each outcome to FetchHistory.
     """
-    sources = ExternalLayerSource.objects.all()
+    sources = ExternalLayerSource.objects.filter(
+        active=True        # don’t hit disabled sources
+    ).exclude(
+        fetch_type="manual"
+    )
 
-    for source in sources:
-        if source.fetch_type != "manual":
-            try:
-                fetch_source_data(source)
-                FetchHistory.objects.create(
-                    source=source,
-                    status="success",
-                    message="Fetched successfully"
-                )
-            except Exception as e:
-                FetchHistory.objects.create(
-                    source=source,
-                    status="failure",
-                    message=str(e)
-                )
+    for src in sources:
+        logger.info("[RUN] Starting ingest for %s (%s)", src.name, src.slug)
+        try:
+            result = fetch_source_data(src)  # may return None or summary dict
+            FetchHistory.objects.create(
+                source=src,
+                status="success",
+                message=(
+                    "Fetched successfully"
+                    if result is None else str(result)[:250]
+                ),
+            )
+            logger.info("[SUCCESS] Ingest completed for %s", src.slug)
+
+        except Exception as exc:
+            FetchHistory.objects.create(
+                source=src,
+                status="failure",
+                message=str(exc)[:500],
+            )
+            logger.error(
+                "Ingest failed for %s → %s", src.slug, exc, exc_info=True
+            )
