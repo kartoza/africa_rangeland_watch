@@ -622,7 +622,6 @@ def run_monthly_analysis(
         datetime.date(2015, 1, 1),
         end_date
     )
-    print(date_ranges)
 
     # Map function to create a 'date' property
     def add_date(ft):
