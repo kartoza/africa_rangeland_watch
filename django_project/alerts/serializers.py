@@ -25,7 +25,8 @@ class AlertSettingSerializer(serializers.ModelSerializer):
             'id', 'name', 'indicator', 'enable_alert',
             'last_alert', 'threshold_comparison', 'threshold_value',
             'anomaly_detection_alert', 'email_alert', 'in_app_alert',
-            'created_at', 'updated_at', 'user', 'location'
+            'created_at', 'updated_at', 'user', 'location',
+            'analysis_type', 'reference_period'
         ]
         read_only_fields = ['created_at', 'updated_at']
 

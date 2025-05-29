@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import {
   Table, Thead, Tbody, Tr, Th, Td, Switch, Input, Checkbox, Button, Spinner, Box, Text, useToast,
   Modal, ModalOverlay, ModalContent, ModalHeader, ModalCloseButton, ModalBody, ModalFooter,
-  useDisclosure
+  useDisclosure, Accordion
 } from "@chakra-ui/react";
 import { Select  as DropSelect } from "@chakra-ui/react";
 import AsyncSelect from "react-select/async";
@@ -16,6 +16,8 @@ import {
   updateAlertSettingAPI,
   createAlertSettingAPI,
 } from "../../store/indicatorSlice";
+import AnalysisReferencePeriod from "../../components/Map/LeftSide/Analysis/AnalysisReferencePeriod";
+import { TemporalResolution, Types } from "../../components/Map/fixtures/analysis";
 import { debounce } from "lodash";
 
 type LocationOption = {
@@ -35,11 +37,30 @@ export default function SystemTab() {
     name: "",
     threshold_value: 0,
     threshold_comparison: 1,
+    analysis_type: Types.BASELINE,
+    temporal_resolution: TemporalResolution.ANNUAL,
+    reference_period: {
+      year: null,
+      quarter: null,
+      month: null
+    },
     email_alert: false,
     in_app_alert: false,
     anomaly_detection_alert: false,
     enable_alert: true,
   });
+  const getQuarter = (value: number) => {
+    if (newAlertData.temporal_resolution === TemporalResolution.QUARTERLY) {
+      return value;
+    }
+    return null;
+  };
+  const getMonth = (value: number) => {
+    if (newAlertData.temporal_resolution === TemporalResolution.MONTHLY) {
+      return value;
+    }
+    return null;
+  };
   const [locations, setLocations] = useState<
     { id: number; community_name: string; landscape_name: string }[]
   >([]);
@@ -172,6 +193,28 @@ export default function SystemTab() {
               />
             </Box>
             <DropSelect
+              placeholder="Select Analysis Type"
+              mb={3}
+              value={newAlertData.analysis_type}
+              onChange={(e) => setNewAlertData({ ...newAlertData, analysis_type: e.target.value })}
+            >
+              <option value={Types.BASELINE}>{Types.BASELINE}</option>
+              <option value={Types.TEMPORAL}>{Types.TEMPORAL}</option>
+            </DropSelect>
+            {
+              newAlertData.analysis_type === 'Temporal' && 
+              <DropSelect
+                placeholder="Select Temporal Resolution"
+                mb={3}
+                value={newAlertData.temporal_resolution}
+                onChange={(e) => setNewAlertData({ ...newAlertData, temporal_resolution: e.target.value })}
+              >
+                <option value={TemporalResolution.ANNUAL}>{TemporalResolution.ANNUAL}</option>
+                <option value={TemporalResolution.QUARTERLY}>{TemporalResolution.QUARTERLY}</option>
+                <option value={TemporalResolution.MONTHLY}>{TemporalResolution.MONTHLY}</option>
+              </DropSelect>
+            }
+            <DropSelect
               placeholder="Select Indicator"
               mb={3}
               value={selectedIndicator ?? ""}
@@ -183,6 +226,43 @@ export default function SystemTab() {
                 </option>
               ))}
             </DropSelect>
+            <Box mb={3}>
+              <Accordion>
+                {
+                  newAlertData.analysis_type === Types.TEMPORAL &&
+                  <AnalysisReferencePeriod
+                    title='Select reference period'
+                    value={newAlertData.reference_period}
+                    isQuarter={newAlertData.temporal_resolution === TemporalResolution.QUARTERLY}
+                    isMonthly={newAlertData.temporal_resolution === TemporalResolution.MONTHLY}
+                    onSelectedYear={(value: number) => setNewAlertData({
+                      ...newAlertData,
+                      reference_period: {
+                        year: value,
+                        quarter: getQuarter(newAlertData.reference_period?.quarter),
+                        month: getMonth(newAlertData.reference_period?.month)
+                      }
+                    })}
+                    onSelectedQuarter={(value: number) => setNewAlertData({
+                      ...newAlertData,
+                      reference_period: {
+                        year: newAlertData.reference_period?.year,
+                        quarter: value,
+                        month: null
+                      }
+                    })}
+                    onSelectedMonth={(value: number) => setNewAlertData({
+                      ...newAlertData,
+                      reference_period: {
+                        year: newAlertData.reference_period?.year,
+                        quarter: null,
+                        month: value
+                      }
+                    })}
+                  />
+                }
+              </Accordion>
+            </Box>
             <DropSelect
               mb={3}
               value={newAlertData.threshold_comparison}
@@ -244,6 +324,11 @@ export default function SystemTab() {
                       ...newAlertData,
                       indicator: selectedIndicator,
                       location: selectedLocation,
+                      reference_period: {
+                        ...newAlertData.reference_period,
+                        month: getMonth(newAlertData.reference_period?.month),
+                        quarter: getQuarter(newAlertData.reference_period?.quarter),
+                      }
                     },
                   }));
                   dispatch(fetchIndicators()); // Refresh data
@@ -257,6 +342,13 @@ export default function SystemTab() {
                   setNewAlertData({
                     name: "",
                     threshold_value: 0,
+                    analysis_type: Types.BASELINE,
+                    temporal_resolution: TemporalResolution.ANNUAL,
+                    reference_period: {
+                      year: null,
+                      quarter: null,
+                      month: null
+                    },
                     threshold_comparison: 1,
                     email_alert: false,
                     in_app_alert: false,
