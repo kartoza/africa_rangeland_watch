@@ -36,7 +36,7 @@ from analysis.analysis import (
 from analysis.runner import AnalysisRunner
 from analysis.utils import get_gdrive_file, delete_gdrive_file, get_cog_bounds
 from layers.models import InputLayer as InputLayerFixture
-from layers.utils import  upload_file
+from layers.utils import upload_file
 
 logger = logging.getLogger(__name__)
 User = get_user_model()
