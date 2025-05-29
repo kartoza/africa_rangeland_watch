@@ -146,7 +146,7 @@ class Command(BaseCommand):
             'Temporal': {
                 'Annual': {
                     'ref': '2017',
-                    'test': '2023'
+                    'test': ['2021', '2022', '2023']
                 },
                 'Quarterly': {
                     'ref': '',
@@ -210,7 +210,6 @@ class Command(BaseCommand):
         print('\n')
         print('Temporal Output Plot: \n', temporal_output_plot)
 
-
     def run_monthly_temporal_analysis(self):
         """
         Run monthly temporal analysis
@@ -262,6 +261,6 @@ class Command(BaseCommand):
         # self.export_image()
         # self.run_baseline_analysis()
         # self.run_spatial_analysis()
-        # self.run_annual_temporal_analysis()
+        self.run_annual_temporal_analysis()
         # self.run_quarterly_temporal_analysis()
-        self.run_monthly_temporal_analysis()
+        # self.run_monthly_temporal_analysis()
