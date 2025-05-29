@@ -13,7 +13,7 @@ from django.contrib.auth.models import User
 from analysis.models import UserAnalysisResults, AnalysisRasterOutput
 
 
-def do_nothing(uuid, name, gdrive_file):
+def do_nothing(uuid, name, gdrive_file, metadata):
     pass
 
 
