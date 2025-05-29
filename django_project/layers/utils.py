@@ -16,6 +16,14 @@ import ee
 import rasterio
 from datetime import datetime
 from django.core.files.base import ContentFile
+import datetime as dt
+from analysis.models import Landscape, GEEAsset
+from analysis.analysis import (
+    get_nrt_sentinel, train_bgt, classify_bgt,
+    calculate_firefreq, get_soil_carbon,
+    get_soil_carbon_change, get_grazing_capacity_layer
+)
+
 from analysis.analysis import (
     initialize_engine_analysis,
     export_image_to_drive
@@ -50,6 +58,67 @@ def upload_file(url, file_path, field_name="file", auth_header=None):
         response = requests.post(url, files=files, headers=headers)
 
     return response.status_code == 200
+
+
+def get_nrt_image(input_layer, landscape_id):
+    """
+    Reconstruct the NRT image for export using a 30-day median composite.
+    """
+    # Get AOI from Landscape model
+    landscape = Landscape.objects.get(id=landscape_id)
+    aoi = ee.Geometry.Polygon(list(landscape.bbox.coords[0]))
+
+    DEFAULT_MONTHS = 2
+    NRT_START_DATE = '2022-06-01'
+    today = dt.date.today()
+    end_date = today.isoformat()
+
+    # Get the raw image
+    img = get_nrt_sentinel(
+        aoi, months=DEFAULT_MONTHS,
+        start_date=NRT_START_DATE,
+        end_date=end_date
+    )
+
+    # Select the appropriate band based on the input layer name
+    name = input_layer.name.lower()
+    if name == "evi":
+        ee_image = img.select("evi")
+    elif name == "ndvi":
+        ee_image = img.select("ndvi")
+    elif name in ["bare ground", "grass cover", "tree plant cover"]:
+        classifier = train_bgt(
+            aoi, GEEAsset.fetch_asset_source("random_forest_training")
+        )
+        prob_img = classify_bgt(img, classifier)
+        if name == "bare ground":
+            ee_image = prob_img.select("bare")
+        elif name == "grass cover":
+            ee_image = prob_img.select("grass")
+        else:
+            ee_image = prob_img.select("tree")
+    elif name == "fire frequency":
+        ee_image = calculate_firefreq(aoi, NRT_START_DATE, end_date)
+    elif name == "soil carbon":
+        ee_image = get_soil_carbon(
+            start_date=datetime.date.fromisoformat(NRT_START_DATE),
+            end_date=today,
+            clip_to_countries=False,
+            aoi=aoi
+        )
+    elif name == "soil carbon change":
+        ee_image = get_soil_carbon_change(
+            start_date=datetime.date.fromisoformat(NRT_START_DATE),
+            end_date=today,
+            clip_to_countries=False,
+            aoi=aoi
+        )
+    elif name == "grazing capacity":
+        ee_image = get_grazing_capacity_layer.clip(aoi)
+    else:
+        raise ValueError(f"Unsupported layer type: {input_layer.name}")
+
+    return ee_image.clip(aoi), aoi.bounds()
 
 
 def extract_raster_metadata(file_path):

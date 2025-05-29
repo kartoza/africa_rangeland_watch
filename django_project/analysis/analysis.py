@@ -1100,6 +1100,129 @@ def get_nrt_sentinel(aoi, months, start_date, end_date):
     return nrt_img
 
 
+def get_fire_frequency(self, aoi):
+    """
+    Get fire frequency layer clipped to area of interest.
+    """
+    fire_freq = calculate_firefreq(
+        aoi,
+        start_date='2000-01-01',
+        end_date='2022-01-01'
+    )
+    return fire_freq
+
+
+def get_woody_cover(self, start_date=None, end_date=None, aoi=None):
+    """
+    Get woody cover (tree + shrub) clipped to AOI or countries.
+    """
+    cgls = ee.ImageCollection(
+        GEEAsset.fetch_asset_source('cgls_ground_cover')
+    )
+    if start_date and end_date:
+        cgls = cgls.filterDate(start_date.isoformat(), end_date.isoformat())
+    cgls = cgls.select(['tree-coverfraction', 'shrub-coverfraction'])
+    woody_cover = cgls.median().reduce(ee.Reducer.sum()).rename('Woody cover')
+    if aoi:
+        return woody_cover.clip(aoi)
+    return woody_cover.clipToCollection(self.countries)
+
+
+def get_grazing_capacity_layer(self, aoi=None):
+    """
+    Get pre-calculated grazing capacity, optionally clipped to AOI.
+    """
+    img = ee.Image(GEEAsset.fetch_asset_source('grazing_capacity'))
+    if aoi:
+        return img.rename('grazing_capacity').clip(aoi)
+    return img.rename('grazing_capacity').clipToCollection(self.countries)
+
+
+def get_soc_col(self, start_date=None, end_date=None):
+    """
+    Returns the soil organic carbon (SOC) image collection,
+    optionally filtered by year range.
+    """
+    soc_col = ee.ImageCollection(GEEAsset.fetch_asset_source('soil_carbon'))
+
+    def process_image(img):
+        img = img.divide(ee.Image(1000)).copyProperties(img)
+        year = ee.Number(img.get('year'))
+        return ee.Image(year).int().addBands(img).set('year', year)
+
+    soc_col = soc_col.map(process_image)
+
+    # Filter by year if provided
+    if start_date and end_date:
+        soc_col = soc_col.filter(
+            ee.Filter.rangeContains('year', start_date.year, end_date.year)
+        )
+
+    return soc_col
+
+
+def get_soil_carbon(
+        self, start_date=None, end_date=None, clip_to_countries=True, aoi=None
+):
+    """
+    Returns mean Soil Organic Carbon (SOC) image clipped by countries or AOI.
+    """
+    soc_col = self.get_soc_col(start_date, end_date)
+
+    # Take median of selected SOC band (assumed to be band 1)
+    soc_mean = soc_col.select(1).median().rename("SOCltMean")
+
+    if clip_to_countries:
+        return soc_mean.clipToCollection(self.countries)
+    elif aoi:
+        return soc_mean.clip(aoi)
+    return soc_mean
+
+
+def get_soil_carbon_layer(self, aoi=None):
+    """
+    Get SOC long-term mean image, optionally clipped.
+    """
+    return self.get_soil_carbon(
+        start_date=datetime.date(2000, 1, 1),
+        end_date=datetime.date(2022, 1, 1),
+        aoi=aoi,
+        clip_to_countries=not aoi
+    ).rename('soil_carbon')
+
+
+def get_soil_carbon_change(
+        self, start_date=None, end_date=None, clip_to_countries=True, aoi=None
+):
+    """
+    Returns SOC change (trend) image using
+    Sen's slope clipped by countries or AOI.
+    """
+    soc_col = self.get_soc_col(start_date, end_date)
+
+    # Calculate trend using Sen's slope
+    trend_img = soc_col.reduce(ee.Reducer.sensSlope())
+    soc_trend = trend_img.select('scale').multiply(35).rename("SOCltTrend")
+
+    if clip_to_countries:
+        return soc_trend.clipToCollection(self.countries)
+    elif aoi:
+        return soc_trend.clip(aoi)
+    return soc_trend
+
+
+def get_soil_carbon_change_layer(self, aoi=None):
+    """
+    Get SOC trend (change) image, optionally clipped.
+    """
+    return self.get_soil_carbon_change(
+        start_date=datetime.date(2000, 1, 1),
+        end_date=datetime.date(2022, 1, 1),
+        aoi=aoi,
+        clip_to_countries=not aoi
+    ).rename('soil_carbon_change')
+
+
 def quarterly_medians(
     collection, date_start, unit, step, reducer, date_end = None
 ):

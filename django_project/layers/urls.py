@@ -4,6 +4,8 @@ from .views import (
     delete_layer,
     download_layer,
     user_input_layers,
+    trigger_cog_export,
+    download_from_gdrive,
 )
 from .views_api import (
     ExternalLayerViewSet,
@@ -40,5 +42,15 @@ urlpatterns = [
         "api/",
         include(router.urls),
         name="api"
+    ),
+    path(
+        'nrt-layer/<uuid:uuid>/export/',
+        trigger_cog_export,
+        name='trigger_cog_export'
+    ),
+    path(
+        'nrt-layer/<uuid:uuid>/download/',
+        download_from_gdrive,
+        name='nrt-layer-download'
     ),
 ]
