@@ -28,7 +28,8 @@ export const useMapSetup = (
     legendRef: React.MutableRefObject<any> | null,
     initialBound: [number, number, number, number] | null = null,
     interactive: boolean = true,
-    initialZoom: number = 1
+    initialZoom: number = 1,
+    initialBoundsPadding: number = null
 ) => {
     const dispatch = useDispatch<AppDispatch>();
     const { baseMaps } = useSelector((state: RootState) => state.baseMap);
@@ -44,7 +45,6 @@ export const useMapSetup = (
     /** Create map **/
     useEffect(() => {
         const map = mapRef.current;
-        console.log("MapLibre useEffect initiated ", map);
         if (map) {
             return;
         }
@@ -63,7 +63,6 @@ export const useMapSetup = (
         });
 
         _map.once("load", () => {
-            console.log("Map loaded");
             mapRef.current = _map;
             setIsMapLoaded(true);
         })
@@ -82,7 +81,6 @@ export const useMapSetup = (
         return () => {
             // avoid removing map synchronously
             setTimeout(() => {
-                console.log("Cleaning up map instance");
                 _map.remove();
                 mapRef.current = null;
                 setIsMapLoaded(false);
@@ -101,31 +99,33 @@ export const useMapSetup = (
 
         // render default base map
         baseMapRef?.current?.setBaseMapLayer(baseMaps[0])
-        console.log("Base maps changed", baseMaps)
     }, [isMapLoaded, baseMaps])
 
     /** Handle map config changes **/
     useEffect(() => {
-        console.log("mapConfig changed");
         if (!isMapLoaded || !mapRef.current) {
             return;
         }
 
         const map = mapRef.current;
-        if (initialBound !== null) {
-            map.fitBounds(initialBound,
-                {
-                    pitch: 0,
-                    bearing: 0
-                }
-            )
+        if (initialBound != null) {
+            let config = {
+              pitch: 0,
+              bearing: 0,
+              padding: 0
+            }
+            if (initialBoundsPadding) {
+                config.padding = initialBoundsPadding;
+            }
+
+            map.fitBounds(initialBound, config)
             return;
         }
 
         if (!mapConfig) {
             return;
         }
-        console.log("inital bound ", mapConfig.initial_bound)
+
         map.fitBounds(mapConfig.initial_bound,
             {
                 pitch: 0,
@@ -150,7 +150,6 @@ export const useMapSetup = (
     useEffect(() => {
         try {
           const map = mapRef.current;
-          console.log('adding community layer', map, isMapLoaded)
           if (!isMapLoaded || !map) {
             return
           }

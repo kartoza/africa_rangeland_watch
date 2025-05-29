@@ -46,7 +46,6 @@ const ChartCard: React.FC<ChartCardProps> = ({ config, className }) => {
   const dispatch = useDispatch<AppDispatch>();
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
 
-
   useEffect(() => {
     if (config?.config) {
       setIsChart(config.config.preference === "chart");
@@ -213,7 +212,7 @@ const ChartCard: React.FC<ChartCardProps> = ({ config, className }) => {
                 Analysis results saved on the dashboard cannot be rendered on the map. It should have polygon coordinates.
               </Text>
             ) : !isChart ? (
-              <MiniMap uuid={config.uuid} />
+              <MiniMap uuid={config.uuid} analysisResults={dashboardSettings?.analysis_results} />
             ) : (
               getChartComponent()
             )}

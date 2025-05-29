@@ -9,7 +9,7 @@ import { Box } from "@chakra-ui/react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../store";
 import { removeSource, doRenderLayer, doRemoveLayer } from "./utils";
-import { setSelectedNrtLayer } from '../../store/layerSlice';
+import { Layer, setSelectedNrtLayer } from '../../store/layerSlice';
 import { selectIsLoggedIn } from "../../store/authSlice";
 import { COMMUNITY_ID } from "./DataTypes";
 import { useMap } from '../../MapContext';
@@ -25,8 +25,10 @@ interface Props {
 interface ReusableMapProps {
   mapContainerId: string;
   initialBound: [number, number, number, number];
+  layer?: Layer | null;
 }
 
+const RASTER_LAYER_PADDING = 100;
 
 /**
  * MapLibre component.
@@ -114,8 +116,23 @@ export const ReusableMapLibre = forwardRef(
       baseMapRef,
       null,
       props.initialBound,
-      false
+      false,
+      1,
+      RASTER_LAYER_PADDING
     );
+
+    // render layer when map is loaded
+    useEffect(() => {
+      if (!isMapLoaded || !mapRef.current) {
+        return;
+      }
+      if (!props.layer) {
+        return;
+      }
+      doRenderLayer(mapRef, props.layer, COMMUNITY_ID, null)
+
+    }, [isMapLoaded, props.layer])
+
 
     return (
       <Box id={props.mapContainerId} flexGrow={1}/>
