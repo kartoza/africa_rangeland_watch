@@ -107,6 +107,7 @@ def trigger_cog_export(request, uuid):
 
 
 @api_view(['GET'])
+@login_required
 def download_from_gdrive(request, uuid):
     """
     Streams a downloaded COG file directly from Google Drive
@@ -126,12 +127,13 @@ def download_from_gdrive(request, uuid):
         gfile = gdrive.CreateFile({'id': exported.gdrive_file_id})
 
         # Create a temporary file and download the GDrive content into it
-        temp_file = tempfile.NamedTemporaryFile(delete=False)
-        gfile.GetContentFile(temp_file.name)
+        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+            gfile.GetContentFile(temp_file.name)
+            temp_file_path = temp_file.name
 
         # Return the temp file as a streamed response
         return FileResponse(
-            open(temp_file.name, 'rb'),
+            open(temp_file_path, 'rb'),
             as_attachment=True,
             filename=exported.file_name,
             content_type='application/octet-stream'
