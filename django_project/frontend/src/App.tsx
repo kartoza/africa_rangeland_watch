@@ -7,6 +7,7 @@ import { ChakraProvider } from "@chakra-ui/react";
 import { Provider } from 'react-redux';
 import maplibregl from "maplibre-gl";
 import { Protocol } from "pmtiles";
+import {cogProtocol} from '@geomatico/maplibre-cog-protocol';
 import theme from "./theme";
 import store from "./store";
 import ProjectRoutes from "./Routes";
@@ -34,8 +35,10 @@ function App() {
   useEffect(() => {
     let protocol = new Protocol();
     maplibregl.addProtocol("pmtiles", protocol.tile);
+    maplibregl.addProtocol('cog', cogProtocol);
     return () => {
       maplibregl.removeProtocol("pmtiles");
+      maplibregl.removeProtocol("cog");
     };
   }, []);
 

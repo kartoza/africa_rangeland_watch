@@ -83,12 +83,21 @@ export const doRenderLayer = (mapRef: React.MutableRefObject<maplibregl.Map | nu
       map.addLayer(layerStyle, layerIdBefore)
     } else if (layer.type === "raster") {
       if (!hasSource(map, ID)) {
-        map.addSource(ID, {
-            type: "raster",
-            tiles: [layer.url],
-            tileSize: 256
-          }
-        )
+        if (layer.url.startsWith('cog://')) {
+          map.addSource(ID, {
+              type: "raster",
+              url: `${layer.url}`,
+              tileSize: 256
+            }
+          )
+        } else {
+          map.addSource(ID, {
+              type: "raster",
+              tiles: [layer.url],
+              tileSize: 256
+            }
+          )
+        }
       }
       map.addLayer(
         {

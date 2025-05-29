@@ -4,12 +4,15 @@ Africa Rangeland Watch (ARW).
 
 .. note:: Background task for analysis
 """
+import os
 from core.celery import app
 import uuid
 import ee
 import logging
 import tempfile
 import shutil
+import time
+import subprocess
 from datetime import date
 from dateutil.relativedelta import relativedelta
 from django.utils import timezone
@@ -114,9 +117,30 @@ def store_spatial_analysis_raster_output(analysis_result_id: int):
         }
     )
 
-    print(f'filename: {filename}.tif')
     analysis_result.raster_output_path = f'{filename}.tif'
     analysis_result.save()
+
+
+def fix_no_data_value(working_dir, file_name):
+    """Fix no data value in the raster file."""
+    tmp_path = os.path.join(
+        working_dir,
+        f'{time.time()}_{file_name}'
+    )
+    file_path = os.path.join(working_dir, file_name)
+    # rename the file to tmp_path
+    shutil.move(file_path, tmp_path)
+    # use gdal to fix no data value
+    cmd = [
+        'gdal_translate',
+        '-of',
+        'COG',
+        '-a_nodata',
+        '-9999',
+        tmp_path,
+        file_path
+    ]
+    subprocess.run(cmd, check=True)
 
 
 def store_cog_as_layer(uuid, name, gdrive_file):
@@ -134,9 +158,11 @@ def store_cog_as_layer(uuid, name, gdrive_file):
         created_by=layer.created_by
     )
     with tempfile.TemporaryDirectory() as working_dir:
-        print(f'Downloading file {gdrive_file["title"]} to {working_dir}')
         file_path = f'{working_dir}/{gdrive_file["title"]}'
         gdrive_file.GetContentFile(file_path)
+
+        # fix no data value
+        fix_no_data_value(working_dir, gdrive_file["title"])
 
         is_success = False
         if settings.DEBUG:
@@ -223,7 +249,7 @@ def generate_temporal_analysis_raster_output(raster_output_id):
         month_filter = quarter_dict[raster_output.analysis.get('quarter')]
         resolution = 'month'
 
-    print(
+    logger.info(
         f'Generating img {resolution} ({resolution_step}) '
         f'from {start_date} to {end_date}'
     )
