@@ -40,7 +40,6 @@ const ChartCard: React.FC<ChartCardProps> = ({ config, className }) => {
   const [isChart, setIsChart] = useState(false);
   const [dashboardName, setDashboardName] = useState("");
   const [isSettingsOpen, setSettingsOpen] = useState(false);
-  const [polygonCoordinates, setPolygonCoordinates] = useState<[number, number][]>([]);
   const [isRenderFailed, setIsRenderFailed] = useState(false);
 
   const [dashboardSettings, setDashboardSettings] = useState(null);
@@ -52,17 +51,6 @@ const ChartCard: React.FC<ChartCardProps> = ({ config, className }) => {
     if (config?.config) {
       setIsChart(config.config.preference === "chart");
       setDashboardName(config.config.dashboardName);
-
-      if(config.config.preference !== "chart"){
-        
-        if (config?.analysisResults?.[0]?.analysis_results?.results?.features) {
-          setPolygonCoordinates(
-            extractPolygonCoordinates(config.analysisResults[0].analysis_results.results.features)
-          );
-          setIsRenderFailed(false);
-        }
-        else setIsRenderFailed(true);
-      }
 
       setDashboardSettings({
         uuid: config.uuid,
@@ -160,9 +148,6 @@ const ChartCard: React.FC<ChartCardProps> = ({ config, className }) => {
     setIsConfirmDeleteOpen(false);
   };
 
-  
-
-
   return (
     <div ref={containerRef} className={className} style={{ width: "100%", height: "100%", overflow: "hidden" }}>
       <Card 
@@ -228,7 +213,7 @@ const ChartCard: React.FC<ChartCardProps> = ({ config, className }) => {
                 Analysis results saved on the dashboard cannot be rendered on the map. It should have polygon coordinates.
               </Text>
             ) : !isChart ? (
-              <MiniMap polygonCoordinates={polygonCoordinates} />
+              <MiniMap uuid={config.uuid} />
             ) : (
               getChartComponent()
             )}
