@@ -143,19 +143,23 @@ def fix_no_data_value(working_dir, file_name):
     subprocess.run(cmd, check=True)
 
 
-def store_cog_as_layer(uuid, name, gdrive_file):
+def store_cog_as_layer(uuid, name, gdrive_file, metadata={}):
     """Store cog file as a layer."""
-    layer = Layer.objects.create(
-        name=name,
+    layer, _ = Layer.objects.get_or_create(
         unique_id=uuid,
         layer_type=LayerType.RASTER_TILE,
-        created_by=User.objects.filter(
-            is_superuser=True
-        ).first()
+        defaults={
+            'name': name,
+            'created_by': User.objects.filter(
+                is_superuser=True
+            ).first()
+        }
     )
-    layer_upload = LayerUpload.objects.create(
+    layer_upload, _ = LayerUpload.objects.get_or_create(
         layer=layer,
-        created_by=layer.created_by
+        defaults={
+            'created_by': layer.created_by
+        }
     )
     bounds = None
     with tempfile.TemporaryDirectory() as working_dir:
@@ -205,9 +209,8 @@ def store_cog_as_layer(uuid, name, gdrive_file):
         # update layer is ready
         layer.refresh_from_db()
         layer.is_ready = True
-        layer.metadata = {
-            'bounds': bounds
-        }
+        metadata['bounds'] = bounds
+        layer.metadata = metadata
         layer.save()
 
         # delete gdrive file after download
@@ -307,7 +310,7 @@ def generate_temporal_analysis_raster_output(raster_output_id):
         folder='GEE_EXPORTS',
         file_name_prefix=str(raster_output.uuid),
         scale=120,  # same with temporal calc result
-        region=aoi.geometry().bounds(),
+        region=aoi.geometry(),
         vis_params=input_layer_fixture.get_vis_params()
     )
 
@@ -327,7 +330,8 @@ def generate_temporal_analysis_raster_output(raster_output_id):
             store_cog_as_layer(
                 raster_output.uuid,
                 raster_output.name,
-                gdrive_file
+                gdrive_file,
+                metadata=input_layer_fixture.get_vis_params()
             )
 
     raster_output.status = final_status
