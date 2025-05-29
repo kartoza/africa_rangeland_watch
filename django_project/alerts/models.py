@@ -2,6 +2,14 @@ from django.db import models
 from django.contrib.auth.models import User
 
 
+
+class AnalysisTypes(models.TextChoices):
+    """Enum for specifying Analysis Types."""
+
+    BASELINE = 'Baseline', 'Baseline'
+    TEMPORAL = 'Temporal', 'Temporal'
+
+
 class Indicator(models.Model):
     """Model to represent an indicator used in analyses and alerts."""
 
@@ -95,6 +103,17 @@ class AlertSetting(models.Model):
         on_delete=models.CASCADE,
         related_name="alert_settings",
         help_text="The user associated with this alert setting."
+    )
+    analysis_type = models.CharField(
+        choices=AnalysisTypes.choices,
+        null=False,
+        blank=True,
+        default=AnalysisTypes.BASELINE
+    )
+    reference_period = models.JSONField(
+        default=dict,
+        blank=True,
+        null=False
     )
 
     class Meta:

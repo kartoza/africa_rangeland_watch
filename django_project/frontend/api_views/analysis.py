@@ -47,33 +47,15 @@ class AnalysisAPI(APIView):
         args = []
         kwargs = {}
         if data['analysisType'] == 'Temporal':
-            analysis_dict_list, comp_years = (
-                AnalysisRunner.get_analysis_dict_temporal(data)
-            )
-            kwargs = {
-                'custom_geom': data.get('custom_geom', None)
-            }
-            results = []
-            # check if all items are cached
-            for analysis_dict in analysis_dict_list:
-                analysis_cache = AnalysisResultsCacheUtils({
-                    'locations': locations,
-                    'analysis_dict': analysis_dict,
-                    'args': args,
-                    'kwargs': kwargs
-                })
-                output = analysis_cache.get_analysis_cache()
-                if output is not None:
-                    results.append(output)
+            analysis_dict = AnalysisRunner.get_analysis_dict_temporal(data)
+            analysis_cache = AnalysisResultsCacheUtils({
+                'locations': locations,
+                'analysis_dict': analysis_dict,
+                'args': args,
+                'kwargs': kwargs
+            })
+            return analysis_cache.get_analysis_cache()
 
-            # check if length is same
-            if len(results) == len(analysis_dict_list):
-                return AnalysisRunner.combine_temporal_analysis_results(
-                    comp_years,
-                    results
-                )
-
-            return None
         elif data['analysisType'] == 'Spatial':
             analysis_dict = AnalysisRunner.get_analysis_dict_spatial(data)
             reference_layer_geom = (

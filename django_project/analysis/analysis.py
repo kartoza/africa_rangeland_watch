@@ -604,11 +604,19 @@ def get_rel_diff(
 
 
 def run_monthly_analysis(
-        start_date, end_date, select_geo, is_custom_geom,
+        start_date, test_years, test_months, select_geo, is_custom_geom,
         select_names, analysis_cache
 ):
     """Run monthly analysis."""
     current_date = datetime.datetime.now().date()
+    dates = [
+        datetime.date(
+            ty, test_months[idx], 1
+        ) for idx, ty in enumerate(test_years)
+    ]
+    # use max in case dates are not ordered
+    end_date = max(dates)
+
     # use start date of 2015-01-01
     date_ranges = _split_dates_by_year(
         datetime.date(2015, 1, 1),
@@ -665,9 +673,8 @@ def run_monthly_analysis(
     # For plotting, just use the reference periods
     date_list_ee = ee.List(
         [
-            start_date.isoformat(),
-            end_date.isoformat()
-        ]
+            start_date.isoformat()
+        ] + [dt.isoformat() for dt in dates]
     ).map(lambda d: ee.Date(d).millis())
     to_plot = to_plot_ts.filter(
         ee.Filter.inList('date', date_list_ee)
@@ -786,7 +793,9 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
     if analysis_dict['analysisType'] == "Temporal":
         res = analysis_dict['t_resolution']
         baseline_yr = int(analysis_dict['Temporal']['Annual']['ref'])
-        test_yr = int(analysis_dict['Temporal']['Annual']['test'])
+        test_years = [
+            int(year) for year in analysis_dict['Temporal']['Annual']['test']
+        ]
         temporal_table, temporal_table_yr = input_layers.get_temporal_table()
 
         if res == "Quarterly":
@@ -822,23 +831,42 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
             baseline_quart = quarter_dict[
                 analysis_dict['Temporal']['Quarterly']['ref']
             ]
-            test_quart = quarter_dict[
+            test_quarts = [
+                quarter_dict[quart] for quart in
                 analysis_dict['Temporal']['Quarterly']['test']
             ]
+
+            # Get annual years
+            ref_year = int(analysis_dict['Temporal']['Annual']['ref'])
+            test_years = [
+                int(year) for year in
+                analysis_dict['Temporal']['Annual']['test']
+            ]
+
+            # Create filters for reference year and all test years
+            year_filters = []
+
+            # Add reference year filter
+            year_filters.append(
+                ee.Filter.And(
+                    ee.Filter.eq('year', ref_year),
+                    ee.Filter.eq('month', baseline_quart)
+                )
+            )
+
+            # Add filters for each combination of test year and test quarter
+            for idx, test_year in enumerate(test_years):
+                year_filters.append(
+                    ee.Filter.And(
+                        ee.Filter.eq('year', test_year),
+                        ee.Filter.eq('month', test_quarts[idx])
+                    )
+                )
 
             to_plot = temporal_table.filter(
                 ee.Filter.inList('Name', select_names)
             ).filter(
-                ee.Filter.Or(
-                    ee.Filter.And(
-                        ee.Filter.eq('year', baseline_yr),
-                        ee.Filter.eq('month', baseline_quart)
-                    ),
-                    ee.Filter.And(
-                        ee.Filter.eq('year', test_yr),
-                        ee.Filter.eq('month', test_quart)
-                    )
-                )
+                ee.Filter.Or(*year_filters)
             )
         elif res == 'Monthly':
             select_geo = communities.filter(
@@ -851,22 +879,23 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
                     ee.Geometry.MultiPolygon(custom_geom['coordinates'])
                 )
             baseline_month = int(analysis_dict['Temporal']['Monthly']['ref'])
-            test_month = int(analysis_dict['Temporal']['Monthly']['test'])
+            test_months = [
+                int(month) for month in
+                analysis_dict['Temporal']['Monthly']['test']
+            ]
             baseline_dt = datetime.date(
                 baseline_yr, baseline_month, 1
             )
-            test_dt = datetime.date(
-                test_yr, test_month, 1
-            )
             return run_monthly_analysis(
-                baseline_dt, test_dt, select_geo, custom_geom is not None,
+                baseline_dt, test_years, test_months,
+                select_geo, custom_geom is not None,
                 select_names, analysis_cache
             )
         else:
             to_plot = temporal_table_yr.filter(
                 ee.Filter.inList('Name', select_names)
             ).filter(
-                ee.Filter.inList('year', [baseline_yr, test_yr])
+                ee.Filter.inList('year', [baseline_yr] + test_years)
             )
 
         to_plot = to_plot.sort('Name').sort('date')
@@ -1454,17 +1483,124 @@ def export_table_to_drive(feature_collection, description, folder):
 
 
 def spatial_get_date_filter(analysis_dict):
-    """Get spatial date filter from analysis_dict."""
+    """Get spatial date filter from analysis_dict.
+
+    Parameters
+    ----------
+    analysis_dict : dict
+        Dictionary containing analysis parameters including temporal resolution
+        and date specifications.
+
+    Returns
+    -------
+    tuple
+        A tuple containing (filter_start_date, filter_end_date)
+        as datetime.date objects.
+    """
     filter_start_date = None
-    if analysis_dict['Spatial'].get('start_year', None):
-        filter_start_date = datetime.date(
-            int(analysis_dict['Spatial'].get('start_year')), 1, 1
-        )
     filter_end_date = None
-    if analysis_dict['Spatial'].get('end_year', None):
-        filter_end_date = datetime.date(
-            int(analysis_dict['Spatial'].get('end_year')), 1, 1
+
+    # Get temporal resolution
+    t_resolution = analysis_dict.get('t_resolution', 'Annual')
+
+    # Get reference values based on temporal resolution
+    start_year = analysis_dict['Spatial'].get('Annual', {}).get('ref')
+    end_year = analysis_dict['Spatial'].get('Annual', {}).get('test')
+
+    if t_resolution == 'Annual':
+
+        if start_year:
+            filter_start_date = datetime.date(int(start_year), 1, 1)
+
+        if end_year:
+            # For annual year 2023, end date is December 31 on the same year
+            if end_year == 2023:
+                filter_end_date = datetime.date(int(end_year), 12, 31)
+            else:
+                # Otherwise, end date is January 1 next year
+                filter_end_date = datetime.date(int(end_year) + 1, 1, 1)
+
+    elif t_resolution == 'Quarterly':
+        start_quarter = analysis_dict['Spatial'].get(
+            'Quarterly', {}
+        ).get('ref')
+        end_quarter = analysis_dict['Spatial'].get('Quarterly', {}).get('test')
+
+        if start_quarter and start_year:
+            # Convert quarter to month (Q1=1, Q2=4, Q3=7, Q4=10)
+            start_month = (int(start_quarter) - 1) * 3 + 1
+            filter_start_date = datetime.date(int(start_year), start_month, 1)
+
+        if end_quarter and end_year:
+            # Calculate end date as the last day of
+            # the last month in the quarter
+            end_month = int(end_quarter) * 3  # Last month of the quarter
+
+            # Handle December specially
+            if end_month == 12:
+                if end_year == 2023:
+                    filter_end_date = datetime.date(int(end_year), 12, 31)
+                else:
+                    filter_end_date = datetime.date(int(end_year) + 1, 1, 1)
+            else:
+                # Last day of the month = first day of next month - 1 day
+                # But since it's exclusive, we don't decrease by 1 day
+                next_month_year = int(end_year)
+                next_month = end_month + 1
+                if next_month > 12:
+                    next_month = 1
+                    next_month_year += 1
+
+                filter_end_date = datetime.date(
+                    next_month_year,
+                    next_month,
+                    1
+                )
+
+    elif t_resolution == 'Monthly':
+        start_month = analysis_dict['Spatial'].get('Monthly', {}).get('ref')
+        end_month = analysis_dict['Spatial'].get('Monthly', {}).get('test')
+
+        if start_month and start_year:
+            filter_start_date = datetime.date(
+                int(start_year),
+                int(start_month),
+                1
+            )
+
+        if end_month and end_year:
+            # Calculate the last day of the end month
+            end_month_int = int(end_month)
+            end_year_int = int(end_year)
+
+            # Last day of the month = first day of next month - 1 day
+            # But since it's exclusive, we don't decrease by 1 day
+            if end_month_int == 12:
+                if end_month_int == 2023:
+                    filter_end_date = datetime.date(end_year_int, 12, 31)
+                else:
+                    filter_end_date = datetime.date(end_year_int + 1, 1, 1)
+            else:
+                filter_end_date = datetime.date(
+                    end_year_int,
+                    end_month_int + 1,
+                    1
+                )
+
+    # Fallback to the original implementation if
+    # specific resolution handling failed
+    if filter_start_date is None and\
+        analysis_dict['Spatial'].get('start_year', None):
+        filter_start_date = datetime.date(
+            int(start_year), 1, 1
         )
+
+    if filter_end_date is None and\
+        analysis_dict['Spatial'].get('end_year', None) and end_year:
+        filter_end_date = datetime.date(
+            int(end_year), 12, 31
+        )
+
     return filter_start_date, filter_end_date
 
 
