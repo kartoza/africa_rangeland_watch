@@ -34,7 +34,7 @@ from analysis.analysis import (
     get_rel_diff, calculate_temporal_to_img
 )
 from analysis.runner import AnalysisRunner
-from analysis.utils import get_gdrive_file, delete_gdrive_file
+from analysis.utils import get_gdrive_file, delete_gdrive_file, get_cog_bounds
 from layers.models import InputLayer as InputLayerFixture
 from layers.utils import  upload_file
 
@@ -157,12 +157,15 @@ def store_cog_as_layer(uuid, name, gdrive_file):
         layer=layer,
         created_by=layer.created_by
     )
+    bounds = None
     with tempfile.TemporaryDirectory() as working_dir:
         file_path = f'{working_dir}/{gdrive_file["title"]}'
         gdrive_file.GetContentFile(file_path)
 
         # fix no data value
         fix_no_data_value(working_dir, gdrive_file["title"])
+        # get bounds
+        bounds = get_cog_bounds(file_path)
 
         is_success = False
         if settings.DEBUG:
@@ -202,6 +205,9 @@ def store_cog_as_layer(uuid, name, gdrive_file):
         # update layer is ready
         layer.refresh_from_db()
         layer.is_ready = True
+        layer.metadata = {
+            'bounds': bounds
+        }
         layer.save()
 
         # delete gdrive file after download
