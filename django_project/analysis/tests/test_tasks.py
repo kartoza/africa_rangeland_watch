@@ -13,6 +13,10 @@ from django.contrib.auth.models import User
 from analysis.models import UserAnalysisResults, AnalysisRasterOutput
 
 
+def do_nothing(uuid, name, gdrive_file):
+    pass
+
+
 class TestStoreAnalysisRasterOutput(TestCase):
 
     fixtures = [
@@ -78,6 +82,7 @@ class TestStoreAnalysisRasterOutput(TestCase):
             mock_analysis_result.raster_output_path.endswith('.tif')
         )
 
+    @patch('analysis.tasks.store_cog_as_layer')
     @patch('analysis.tasks.ee')
     @patch('analysis.tasks.InputLayer')
     @patch('analysis.tasks.export_image_to_drive')
@@ -89,7 +94,8 @@ class TestStoreAnalysisRasterOutput(TestCase):
         self, mock_initialize_engine_analysis,
         mock_get_gdrive_file, mock_delete_gdrive_file,
         mock_calculate_temporal_to_img,
-        mock_export_image_to_drive, mock_input_layer, mock_ee
+        mock_export_image_to_drive, mock_input_layer, mock_ee,
+        mock_store_cog_as_layer
     ):
         # Mock data
         mock_raster_output = AnalysisRasterOutput.objects.create(
@@ -128,6 +134,7 @@ class TestStoreAnalysisRasterOutput(TestCase):
         gdrive_file = MagicMock()
         gdrive_file.get.return_value = 100
         mock_get_gdrive_file.return_value = gdrive_file
+        mock_store_cog_as_layer.side_effect = do_nothing
 
         generate_temporal_analysis_raster_output(mock_raster_output.uuid)
 
@@ -150,6 +157,7 @@ class TestStoreAnalysisRasterOutput(TestCase):
         self.assertEqual(mock_raster_output.status, 'COMPLETED')
         self.assertEqual(mock_raster_output.size, 100)
 
+    @patch('analysis.tasks.store_cog_as_layer')
     @patch('analysis.tasks.ee')
     @patch('analysis.tasks.InputLayer')
     @patch('analysis.tasks.export_image_to_drive')
@@ -161,7 +169,8 @@ class TestStoreAnalysisRasterOutput(TestCase):
         self, mock_initialize_engine_analysis,
         mock_get_gdrive_file, mock_delete_gdrive_file,
         mock_calculate_temporal_to_img,
-        mock_export_image_to_drive, mock_input_layer, mock_ee
+        mock_export_image_to_drive, mock_input_layer, mock_ee,
+        mock_store_cog_as_layer
     ):
         # Mock data
         mock_raster_output = AnalysisRasterOutput.objects.create(
@@ -199,6 +208,7 @@ class TestStoreAnalysisRasterOutput(TestCase):
         mock_calculate_temporal_to_img.return_value = MagicMock()
         mock_export_image_to_drive.return_value = {'state': 'COMPLETED'}
         mock_get_gdrive_file.return_value = None
+        mock_store_cog_as_layer.side_effect = do_nothing
 
         generate_temporal_analysis_raster_output(mock_raster_output.uuid)
 
