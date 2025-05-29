@@ -19,6 +19,7 @@ const MiniMap: React.FC<MiniMapProps> = ({ uuid, analysisResults }) => {
   const rasterLayer = analysisResult?.raster_output_list?.length ? analysisResult.raster_output_list[analysisResult.raster_output_list.length - 1] : undefined;
 
   let layer: Layer = null;
+  let featuresIds: string[] = [];
   if (rasterLayer) {
     layer = {
       id: rasterLayer.id,
@@ -28,6 +29,10 @@ const MiniMap: React.FC<MiniMapProps> = ({ uuid, analysisResults }) => {
       group: "analysis_output",
       url: rasterLayer.url
     };
+
+    rasterLayer.analysis.locations.forEach((location: any) => {
+      featuresIds.push(location.communityFeatureId);
+    });
   }
 
   return (
@@ -40,7 +45,7 @@ const MiniMap: React.FC<MiniMapProps> = ({ uuid, analysisResults }) => {
       position={'relative'}
       flexGrow={1}
     >
-      <ReusableMapLibre ref={mapLibreRef} mapContainerId={`map-${uuid}`} initialBound={rasterLayer?.bounds} layer={layer}/>
+      <ReusableMapLibre ref={mapLibreRef} mapContainerId={`map-${uuid}`} initialBound={rasterLayer?.bounds} layer={layer} selectedCommmunityIds={featuresIds}/>
     </Box>
   );
 };

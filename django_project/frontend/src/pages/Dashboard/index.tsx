@@ -313,7 +313,7 @@ const DashboardPage: React.FC = () => {
                         const isDummy = config === null;
                         return (
                           <React.Fragment key={index}>
-                            <Draggable draggableId={config ? config.card.id.toString() : `dummy-${index}`} index={index}>
+                            <Draggable key={`panel-${index}`} draggableId={config ? config.card.id.toString() : `dummy-${index}`} index={index}>
                               {(provided) => (
                                 <Box
                                   ref={provided.innerRef}
@@ -426,7 +426,7 @@ const DashboardPage: React.FC = () => {
                         {...provided.droppableProps}
                         style={{ display: "flex", flexDirection: "column", width: "50%", marginLeft: "10px" }}
                       >
-                        <Draggable draggableId={mainPanels[0]?.uuid.toString()} index={0}>
+                        <Draggable key={mainPanels[0]?.uuid.toString()} draggableId={mainPanels[0]?.uuid.toString()} index={0}>
                           {(provided) => (
                             <Panel
                               defaultSize={50}

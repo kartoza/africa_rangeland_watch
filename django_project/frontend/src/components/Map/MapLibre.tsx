@@ -26,9 +26,10 @@ interface ReusableMapProps {
   mapContainerId: string;
   initialBound: [number, number, number, number];
   layer?: Layer | null;
+  selectedCommmunityIds?: string[];
 }
 
-const RASTER_LAYER_PADDING = 100;
+const RASTER_LAYER_PADDING = 70;
 
 /**
  * MapLibre component.
@@ -132,6 +133,23 @@ export const ReusableMapLibre = forwardRef(
       doRenderLayer(mapRef, props.layer, COMMUNITY_ID, null)
 
     }, [isMapLoaded, props.layer])
+
+    // render selected community layers
+    useEffect(() => {
+      if (!isMapLoaded || !mapRef.current) {
+        return;
+      }
+      const map = mapRef.current;
+      if (!props.selectedCommmunityIds || props.selectedCommmunityIds.length === 0) {
+        map.setFilter(
+          (COMMUNITY_ID + '-community'), ["==", "id", '']
+        )
+      } else {
+        map.setFilter(
+          (COMMUNITY_ID + '-community'), ["in", "id", ...props.selectedCommmunityIds]
+        )
+      }
+    }, [isMapLoaded, props.selectedCommmunityIds])
 
 
     return (
