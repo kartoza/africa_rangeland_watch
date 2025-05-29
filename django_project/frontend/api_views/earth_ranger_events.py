@@ -42,7 +42,7 @@ class EarthRangerEventsViewSet(
         tiles = querying_vector_tile(
             EarthRangerEvents._meta.db_table,
             field_names=[
-                'id', 'earth_ranger_uuid'
+                'id', 'earth_ranger_uuid', 'data'
             ],
             z=z, x=x, y=y
         )
