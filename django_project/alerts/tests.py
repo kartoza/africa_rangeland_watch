@@ -1,10 +1,18 @@
+from django.utils import timezone
 from unittest.mock import patch
 from django.contrib.auth.models import User
+from django.contrib.gis.geos import Polygon
 from django.test import TestCase
 from rest_framework.test import APITestCase
 from rest_framework import status
-from alerts.models import Indicator, AlertSetting, IndicatorAlertHistory
+from alerts.models import (
+    Indicator,
+    AlertSetting,
+    IndicatorAlertHistory,
+    AnalysisTypes
+)
 from base.models import Organisation, UserOrganisations
+from analysis.models import Landscape, LandscapeCommunity
 from alerts.utils import trigger_alert
 from alerts.tasks import process_alerts
 
@@ -224,6 +232,11 @@ class CategorizedAlertsViewTests(APITestCase):
 
 
 class ProcessAlertsTest(TestCase):
+    fixtures = [
+        '1.project.json',
+        '2.landscape.json'
+    ]
+
     def setUp(self):
         self.user = User.objects.create_user(
             username="tester",
@@ -240,6 +253,36 @@ class ProcessAlertsTest(TestCase):
             enable_alert=True,
             email_alert=False,
         )
+        landscape_1 = Landscape.objects.get(name='Bahine NP')
+        community_1 = LandscapeCommunity.objects.create(
+            landscape=landscape_1,
+            community_id='000001',
+            community_name='Community 1',
+            geometry=Polygon((
+                (0.0, 0.0),
+                (1.0, 1.0),
+                (1.0, 0.0),
+                (0.0, 0.0)
+            ))
+        )
+        self.alert_setting_2 = AlertSetting.objects.create(
+            name="Test Alert 2",
+            indicator=self.indicator,
+            user=self.user,
+            threshold_value=0.5,
+            threshold_comparison=2,  # Greater than
+            enable_alert=True,
+            email_alert=False,
+            analysis_type=AnalysisTypes.TEMPORAL,
+            reference_period={
+                "year": 2022,
+                "month": None,
+                "quarter": None
+            },
+            location=community_1
+        )
+        self.now = timezone.now()
+        self.now = self.now.replace(day=1, month=1)
 
     @patch("alerts.tasks.initialize_engine_analysis")
     @patch("alerts.tasks.trigger_alert")
@@ -248,13 +291,18 @@ class ProcessAlertsTest(TestCase):
         side_effect=lambda setting, value: value > 0.5
     )
     @patch("alerts.tasks.run_analysis")
+    @patch("alerts.tasks.run_analysis_task")
+    @patch("django.utils.timezone.now")
     def test_alerts_triggered_with_mocked_analysis(
         self,
+        mock_now,
+        mock_run_analysis_task,
         mock_run_analysis,
         mock_check_threshold,
         mock_trigger_alert,
         mock_init
     ):
+        mock_now.return_value = self.now
         # Mock the run_analysis to return features with NDVI values
         mock_run_analysis.return_value = (
             {
@@ -268,7 +316,6 @@ class ProcessAlertsTest(TestCase):
             },
             None,
         )
-
         process_alerts()
 
         # Assert that trigger_alert is called only for values > 0.5
@@ -278,3 +325,9 @@ class ProcessAlertsTest(TestCase):
         ]
         self.assertIn("Zone A", called_names)
         self.assertIn("Zone C", called_names)
+
+        # Check mock_run_analysis_task is called once
+        self.assertEqual(
+            mock_run_analysis_task.call_count,
+            1
+        )

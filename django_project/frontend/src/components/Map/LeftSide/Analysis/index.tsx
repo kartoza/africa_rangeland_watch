@@ -82,8 +82,10 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
   const analysisTaskStartTime = useSelector((state: RootState) => state.analysis.analysisTaskStartTime);
 
   const handleSaveAnalysis = () => {
-    if (data && analysis) {
-      dispatch(saveAnalysis(analysis.analysis))
+    if (data?.analysisType) {
+      dispatch(saveAnalysis({ data }));
+    } else {
+      console.warn("Missing analysis data — not saving");
     }
   };
 
@@ -345,10 +347,10 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
         }
         {/* 3) Select temporal resolution */}
         {
-          data.analysisType === Types.TEMPORAL &&
+          [Types.TEMPORAL, Types.SPATIAL].includes(data.analysisType) &&
           <AnalysisTemporalResolutionSelector
             data={data}
-            onSelected={(value) => setData({
+            onSelected={(value: string) => setData({
               ...data,
               temporalResolution: value
             })}
@@ -365,143 +367,6 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
             })}
           />
         }
-        {/* 4) Select year range filter for spatial*/}
-        {
-          data.analysisType === Types.SPATIAL && data.variable &&
-          <AnalysisSpatialYearFilter
-            initialStartYear={data.spatialStartYear}
-            initialEndYear={data.spatialEndYear}
-            disabled={![null, undefined].includes(analysis.referenceLayerDiff)}
-            onYearChange={(startYear, endYear) => {
-              // set spatial year filter and reset results
-              setData({
-                ...data,
-                locations: null,
-                custom_geom: null,
-                userDefinedFeatureId: null,
-                userDefinedFeatureName: null,
-                spatialStartYear: startYear,
-                spatialEndYear: endYear
-              })
-              dispatch(resetAnalysisResult())
-              setMapInteraction(MapAnalysisInteraction.NO_INTERACTION)
-            }}
-          />
-        }
-        {/* Draw buttons for spatial */}
-        {
-          data.analysisType === Types.SPATIAL && data.variable &&
-          <Box mb={4} color={'green'}>
-            Draw a reference area
-          </Box>
-        }
-        {
-          data.analysisType === Types.SPATIAL && data.variable && mapInteraction !== MapAnalysisInteraction.CUSTOM_GEOMETRY_DRAWING && (
-            <HStack
-              wrap="wrap" gap={8} alignItems='center' justifyContent='center'>
-              <Button
-                size="xs"
-                borderRadius={4}
-                paddingX={4}
-                borderColor="dark_green.800"
-                color="dark_green.800"
-                _hover={{ bg: "dark_green.800", color: "white" }}
-                variant="outline"
-                disabled={loading}
-                onClick={() => {
-                  setData({
-                    ...data,
-                    reference_layer: null,
-                    reference_layer_id: null,
-                    locations: null,
-                    custom_geom: null,
-                    userDefinedFeatureId: null,
-                    userDefinedFeatureName: null
-                  })
-                  setMapInteraction(MapAnalysisInteraction.NO_INTERACTION);
-                  geometrySelectorRef?.current?.removeLayer();
-                  dispatch(resetAnalysisResult());
-                }}
-              >
-                Reset
-              </Button>
-              <Button
-                size="xs"
-                borderRadius={4}
-                paddingX={4}
-                bg='dark_green.800'
-                color="white"
-                _hover={{ opacity: 0.8 }}
-                onClick={() => {
-                  setData({
-                    ...data,
-                    reference_layer: null,
-                    reference_layer_id: null,
-                    locations: null,
-                    custom_geom: null,
-                    userDefinedFeatureId: null,
-                    userDefinedFeatureName: null
-                  })
-                  setMapInteraction(MapAnalysisInteraction.CUSTOM_GEOMETRY_DRAWING)
-                  dispatch(resetAnalysisResult())
-                }}
-                disabled={loading}
-                minWidth={120}
-              >
-                Draw
-              </Button>
-            </HStack>       
-          )
-        }
-        {
-          data.analysisType === Types.SPATIAL && data.variable && mapInteraction === MapAnalysisInteraction.CUSTOM_GEOMETRY_DRAWING && (
-            <HStack
-              wrap="wrap" gap={8} alignItems='center' justifyContent='center'>
-              <Button
-                size="xs"
-                borderRadius={4}
-                paddingX={4}
-                borderColor='dark_green.800'
-                color="dark_green.800"
-                _hover={{ bg: "dark_green.800", color: "white" }}
-                variant="outline"
-                onClick={() => {
-                  setMapInteraction(MapAnalysisInteraction.NO_INTERACTION)
-                }}
-                minWidth={120}
-              >
-                Cancel
-              </Button>
-              <Button
-                size="xs"
-                borderRadius={4}
-                paddingX={4}
-                bg='dark_green.800'
-                color="white"
-                _hover={{ opacity: 0.8 }}
-                onClick={() => {
-                  setMapInteraction(MapAnalysisInteraction.NO_INTERACTION)
-                }}
-                minWidth={120}
-              >
-                Finish Drawing
-              </Button>
-              { isGeomError && 
-                <Box mb={4} color={'red'}>
-                  Area too big - smaller please
-                </Box>
-              }
-            </HStack>
-          )
-        }
-        {
-          data.analysisType === Types.SPATIAL && data.variable && data.reference_layer && loading && (data.locations === null || data.locations.length === 0) &&
-          <HStack mt={4} color={'red'}
-            wrap="wrap" gap={2} alignItems='center' justifyContent='center'>
-            <Spinner size="xs"/>
-            <Text color={'green'}>Generating % difference in {data.variable}</Text>
-          </HStack>
-        }
         {/* 4) Select variable for temporal */}
         {
           data.temporalResolution && data.analysisType === Types.TEMPORAL &&
@@ -516,74 +381,260 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
         }
         {/* 5) Select temporal resolution */}
         {
-          data.variable && data.analysisType === Types.TEMPORAL &&
+          data.variable && [Types.TEMPORAL, Types.SPATIAL].includes(data.analysisType) &&
           <AnalysisReferencePeriod
             title='5) Select reference period'
             value={data.period}
             isQuarter={data.temporalResolution === TemporalResolution.QUARTERLY}
             isMonthly={data.temporalResolution === TemporalResolution.MONTHLY}
-            onSelectedYear={(value: number) => setData({
-              ...data,
-              period: {
-                year: value,
-                quarter: data.period?.quarter,
-                month: data.period?.month
+            onSelectedYear={(value: number) => {
+              setData({
+                ...data,
+                period: {
+                  year: value,
+                  quarter: data.period?.quarter,
+                  month: data.period?.month
+                },
+                ...(data.analysisType === Types.SPATIAL ? {
+                  locations: null,
+                  custom_geom: null,
+                  userDefinedFeatureId: null,
+                  userDefinedFeatureName: null
+                } : {})
+              });
+              if (data.analysisType === Types.SPATIAL) {
+                dispatch(resetAnalysisResult());
+                setMapInteraction(MapAnalysisInteraction.NO_INTERACTION);
               }
-            })}
-            onSelectedQuarter={(value: number) => setData({
-              ...data,
-              period: {
-                year: data.period?.year,
-                quarter: value,
-                month: null
+            }}
+            onSelectedQuarter={(value: number) => {
+              setData({
+                ...data,
+                period: {
+                  year: data.period?.year,
+                  quarter: value,
+                  month: null
+                },
+                ...(data.analysisType === Types.SPATIAL ? {
+                  locations: null,
+                  custom_geom: null,
+                  userDefinedFeatureId: null,
+                  userDefinedFeatureName: null
+                } : {})
+              });
+              if (data.analysisType === Types.SPATIAL) {
+                dispatch(resetAnalysisResult());
+                setMapInteraction(MapAnalysisInteraction.NO_INTERACTION);
               }
-            })}
-            onSelectedMonth={(value: number) => setData({
-              ...data,
-              period: {
-                year: data.period?.year,
-                quarter: null,
-                month: value
+            }}
+            onSelectedMonth={(value: number) => {
+              setData({
+                ...data,
+                period: {
+                  year: data.period?.year,
+                  quarter: null,
+                  month: value
+                },
+                ...(data.analysisType === Types.SPATIAL ? {
+                  locations: null,
+                  custom_geom: null,
+                  userDefinedFeatureId: null,
+                  userDefinedFeatureName: null
+                } : {})
+              });
+              if (data.analysisType === Types.SPATIAL) {
+                dispatch(resetAnalysisResult());
+                setMapInteraction(MapAnalysisInteraction.NO_INTERACTION);
               }
-            })}
+            }}
           />
         }
         {/* 6) Select comparison period */}
         {
-          data.period?.year && data.analysisType === Types.TEMPORAL &&
+          data.variable && [Types.TEMPORAL, Types.SPATIAL].includes(data.analysisType) &&
           <AnalysisReferencePeriod
             title='6) Select comparison period'
             value={data.comparisonPeriod}
             isQuarter={data.temporalResolution === TemporalResolution.QUARTERLY}
             isMonthly={data.temporalResolution === TemporalResolution.MONTHLY}
-            multiple={true}
-            onSelectedYear={(value: number) => setData({
-              ...data,
-              comparisonPeriod: {
-                year: value,
-                quarter: data.comparisonPeriod?.quarter,
-                month: data.comparisonPeriod?.month
+            multiple={data.analysisType === Types.TEMPORAL}
+            onSelectedYear={(value: number) => {
+              setData({
+                ...data,
+                comparisonPeriod: {
+                  year: value,
+                  quarter: data.comparisonPeriod?.quarter,
+                  month: data.comparisonPeriod?.month
+                },
+                ...(data.analysisType === Types.SPATIAL ? {
+                  locations: null,
+                  custom_geom: null,
+                  userDefinedFeatureId: null,
+                  userDefinedFeatureName: null
+                } : {})
+              });
+              if (data.analysisType === Types.SPATIAL) {
+                dispatch(resetAnalysisResult());
+                setMapInteraction(MapAnalysisInteraction.NO_INTERACTION);
               }
-            })}
-            onSelectedQuarter={(value: number) => setData({
-              ...data,
-              comparisonPeriod: {
-                year: data.comparisonPeriod?.year,
-                quarter: value,
-                month: null
+            }}
+            onSelectedQuarter={(value: number) => {
+              setData({
+                ...data,
+                comparisonPeriod: {
+                  year: data.comparisonPeriod?.year,
+                  quarter: value,
+                  month: null
+                },
+                ...(data.analysisType === Types.SPATIAL ? {
+                  locations: null,
+                  custom_geom: null,
+                  userDefinedFeatureId: null,
+                  userDefinedFeatureName: null
+                } : {})
+              });
+              if (data.analysisType === Types.SPATIAL) {
+                dispatch(resetAnalysisResult());
+                setMapInteraction(MapAnalysisInteraction.NO_INTERACTION);
               }
-            })}
-            onSelectedMonth={(value: number) => setData({
-              ...data,
-              comparisonPeriod: {
-                year: data.comparisonPeriod?.year,
-                quarter: null,
-                month: value
+            }}
+            onSelectedMonth={(value: number) => {
+              setData({
+                ...data,
+                comparisonPeriod: {
+                  year: data.comparisonPeriod?.year,
+                  quarter: null,
+                  month: value
+                },
+                ...(data.analysisType === Types.SPATIAL ? {
+                  locations: null,
+                  custom_geom: null,
+                  userDefinedFeatureId: null,
+                  userDefinedFeatureName: null
+                } : {})
+              });
+              if (data.analysisType === Types.SPATIAL) {
+                dispatch(resetAnalysisResult());
+                setMapInteraction(MapAnalysisInteraction.NO_INTERACTION);
               }
-            })}
+            }}
           />
         }
       </Accordion>
+            {/* Draw buttons for spatial */}
+      {
+        data.analysisType === Types.SPATIAL && data.variable &&
+        <Box mb={4} color={'green'}>
+          Draw a reference area
+        </Box>
+      }
+      {
+        data.analysisType === Types.SPATIAL && data.variable && data.reference_layer && loading && (data.locations === null || data.locations.length === 0) &&
+        <HStack mt={4} color={'red'}
+          wrap="wrap" gap={2} alignItems='center' justifyContent='center'>
+          <Spinner size="xs"/>
+          <Text color={'green'}>Generating % difference in {data.variable}</Text>
+        </HStack>
+      }
+      {
+        data.analysisType === Types.SPATIAL && data.variable && mapInteraction !== MapAnalysisInteraction.CUSTOM_GEOMETRY_DRAWING && (
+          <HStack
+            wrap="wrap" gap={8} alignItems='center' justifyContent='center'>
+            <Button
+              size="xs"
+              borderRadius={4}
+              paddingX={4}
+              borderColor="dark_green.800"
+              color="dark_green.800"
+              _hover={{ bg: "dark_green.800", color: "white" }}
+              variant="outline"
+              disabled={loading}
+              onClick={() => {
+                setData({
+                  ...data,
+                  reference_layer: null,
+                  reference_layer_id: null,
+                  locations: null,
+                  custom_geom: null,
+                  userDefinedFeatureId: null,
+                  userDefinedFeatureName: null
+                })
+                setMapInteraction(MapAnalysisInteraction.NO_INTERACTION);
+                geometrySelectorRef?.current?.removeLayer();
+                dispatch(resetAnalysisResult());
+              }}
+            >
+              Reset
+            </Button>
+            <Button
+              size="xs"
+              borderRadius={4}
+              paddingX={4}
+              bg='dark_green.800'
+              color="white"
+              _hover={{ opacity: 0.8 }}
+              onClick={() => {
+                setData({
+                  ...data,
+                  reference_layer: null,
+                  reference_layer_id: null,
+                  locations: null,
+                  custom_geom: null,
+                  userDefinedFeatureId: null,
+                  userDefinedFeatureName: null
+                })
+                setMapInteraction(MapAnalysisInteraction.CUSTOM_GEOMETRY_DRAWING)
+                dispatch(resetAnalysisResult())
+              }}
+              disabled={loading}
+              minWidth={120}
+            >
+              Draw
+            </Button>
+          </HStack>       
+        )
+      }
+      {
+        data.analysisType === Types.SPATIAL && data.variable && mapInteraction === MapAnalysisInteraction.CUSTOM_GEOMETRY_DRAWING && (
+          <HStack
+            wrap="wrap" gap={8} alignItems='center' justifyContent='center'>
+            <Button
+              size="xs"
+              borderRadius={4}
+              paddingX={4}
+              borderColor='dark_green.800'
+              color="dark_green.800"
+              _hover={{ bg: "dark_green.800", color: "white" }}
+              variant="outline"
+              onClick={() => {
+                setMapInteraction(MapAnalysisInteraction.NO_INTERACTION)
+              }}
+              minWidth={120}
+            >
+              Cancel
+            </Button>
+            <Button
+              size="xs"
+              borderRadius={4}
+              paddingX={4}
+              bg='dark_green.800'
+              color="white"
+              _hover={{ opacity: 0.8 }}
+              onClick={() => {
+                setMapInteraction(MapAnalysisInteraction.NO_INTERACTION)
+              }}
+              minWidth={120}
+            >
+              Finish Drawing
+            </Button>
+            { isGeomError && 
+              <Box mb={4} color={'red'}>
+                Area too big - smaller please
+              </Box>
+            }
+          </HStack>
+        )
+      }
       <Box mt={4} mb={4} marginTop={10}>
         {
           !dataError ?

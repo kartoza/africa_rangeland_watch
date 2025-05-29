@@ -22,78 +22,72 @@ class AnalysisAPITest(BaseAPIViewTest):
 
     fixtures = [
         '1.project.json',
-        '2.landscape.json'
+        '2.landscape.json',
     ]
 
-    @patch('analysis.runner._temporal_analysis')
+    @patch('analysis.runner.run_analysis')
     @patch('analysis.runner.initialize_engine_analysis')
     def test_temporal_analysis(self, mock_init_gee, mock_analysis):
         """Test temporal analysis list."""
         def side_effect_func(*args, **kwargs):
             """Side effect function."""
-            if args:
-                year = args[1]['Temporal']['Annual']['test']
-                timestamp = timezone.now().replace(year=year).timestamp()
-                return [
+        mock_analysis.return_value = [
+            {
+                "type": "FeatureCollection",
+                "columns": {
+                    "Bare ground": "Float",
+                    "EVI": "Float",
+                    "NDVI": "Float",
+                    "Name": "String",
+                    "date": "Long",
+                    "system:index": "String",
+                    "year": "Integer"
+                },
+                "features": [
                     {
-                        "type": "FeatureCollection",
-                        "columns": {
-                            "Bare ground": "Float",
-                            "EVI": "Float",
-                            "NDVI": "Float",
-                            "Name": "String",
-                            "date": "Long",
-                            "system:index": "String",
-                            "year": "Integer"
-                        },
-                        "features": [
-                            {
-                                "type": "Feature",
-                                "geometry": None,
-                                "id": "4669",
-                                "properties": {
-                                    "Bare ground": 66.98364803153024,
-                                    "EVI": 0.25931378422899043,
-                                    "NDVI": 0.18172535940724382,
-                                    "Name": "BNP western polygon",
-                                    "date": timestamp,
-                                    "year": year
-                                }
-                            }
-                        ]
-                    },
-                    {
-                        "type": "FeatureCollection",
-                        "columns": {
-                            "Bare ground": "Float",
-                            "EVI": "Float",
-                            "NDVI": "Float",
-                            "Name": "String",
-                            "date": "Long",
-                            "system:index": "String",
-                            "year": "Integer"
-                        },
-                        "features": [
-                            {
-                                "type": "Feature",
-                                "geometry": None,
-                                "id": "4669",
-                                "properties": {
-                                    "Bare ground": 66.98364803153024,
-                                    "EVI": 0.25931378422899043,
-                                    "NDVI": 0.18172535940724382,
-                                    "Name": "BNP western polygon",
-                                    "date": timestamp,
-                                    "year": year
-                                }
-                            }
-                        ]
-                    }
+                        "type": "Feature",
+                        "geometry": None,
+                        "id": year,
+                        "properties": {
+                            "Bare ground": 66.98364803153024,
+                            "EVI": 0.25931378422899043,
+                            "NDVI": 0.18172535940724382,
+                            "Name": "BNP western polygon",
+                            "date": timezone.now().replace(year=year).timestamp(),
+                            "year": year
+                        }
+                    } for year in [2017, 2019, 2020]
                 ]
-        mock_analysis.side_effect = side_effect_func
+            },
+            {
+                "type": "FeatureCollection",
+                "columns": {
+                    "Bare ground": "Float",
+                    "EVI": "Float",
+                    "NDVI": "Float",
+                    "Name": "String",
+                    "date": "Long",
+                    "system:index": "String",
+                    "year": "Integer"
+                },
+                "features": [
+                    {
+                        "type": "Feature",
+                        "geometry": None,
+                        "id": year,
+                        "properties": {
+                            "Bare ground": 66.98364803153024,
+                            "EVI": 0.25931378422899043,
+                            "NDVI": 0.18172535940724382,
+                            "Name": "BNP western polygon",
+                            "date": timezone.now().replace(year=year).timestamp(),
+                            "year": year
+                        }
+                    } for year in [2017, 2019, 2020]
+                ]
+            }
+        ]
         mock_init_gee.return_value = None
-
-        # view = AnalysisAPI.as_view()
 
         payload = {
             'locations': [{
@@ -122,7 +116,7 @@ class AnalysisAPITest(BaseAPIViewTest):
         )
         self.assertEqual(
             len(results[0]['features']),
-            5
+            3
         )
         self.assertEqual(
             len(results[0]['statistics']),

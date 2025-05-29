@@ -8,7 +8,6 @@ import uuid
 from collections import OrderedDict
 from datetime import date
 from copy import deepcopy
-from concurrent.futures import ThreadPoolExecutor
 
 from core.models import Preferences
 from analysis.analysis import (
@@ -66,56 +65,46 @@ class AnalysisRunner:
         comp_years = data['comparisonPeriod']['year']
         comp_quarters = data['comparisonPeriod'].get('quarter', [])
         if comp_quarters is None or len(comp_quarters) == 0:
-            comp_quarters = [None] * len(comp_years)
+            comp_quarters = [''] * len(comp_years)
         comp_months = data['comparisonPeriod'].get('month', [])
         if comp_months is None or len(comp_months) == 0:
-            comp_months = [None] * len(comp_years)
+            comp_months = [''] * len(comp_years)
 
-        analysis_dict_list = []
-        for idx, comp_year in enumerate(comp_years):
-            analysis_dict = {
-                'landscape': data['landscape'],
-                'analysisType': 'Temporal',
-                'variable': data['variable'],
-                't_resolution': data['temporalResolution'],
-                'Temporal': {
-                    'Annual': {
-                        'ref': data['period']['year'],
-                        'test': comp_year
-                    },
-                    'Quarterly': {
-                        'ref': '',
-                        'test': ''
-                    },
-                    'Monthly': {
-                        'ref': '',
-                        'test': ''
-                    }
+        analysis_dict = {
+            'landscape': data['landscape'],
+            'analysisType': 'Temporal',
+            'variable': data['variable'],
+            't_resolution': data['temporalResolution'],
+            'Temporal': {
+                'Annual': {
+                    'ref': data['period']['year'],
+                    'test': comp_years
                 },
-                'Spatial': {
-                    'Annual': '',
-                    'Quarterly': ''
+                'Quarterly': {
+                    'ref': '',
+                    'test': ''
+                },
+                'Monthly': {
+                    'ref': '',
+                    'test': ''
                 }
+            },
+            'Spatial': {
+                'Annual': '',
+                'Quarterly': ''
             }
-            if data['temporalResolution'] == 'Quarterly':
-                analysis_dict['Temporal']['Quarterly'] = {
-                    'ref': data['period'].get('quarter', ''),
-                    'test': (
-                        comp_quarters[idx] if
-                        len(comp_quarters) > 0 else ''
-                    ),
-                }
-            elif data['temporalResolution'] == 'Monthly':
-                analysis_dict['Temporal']['Monthly'] = {
-                    'ref': data['period'].get('month', ''),
-                    'test': (
-                        comp_months[idx] if
-                        len(comp_months) > 0 else ''
-                    ),
-                }
-
-            analysis_dict_list.append(analysis_dict)
-        return analysis_dict_list, comp_years
+        }
+        if data['temporalResolution'] == 'Quarterly':
+            analysis_dict['Temporal']['Quarterly'] = {
+                'ref': data['period'].get('quarter', ''),
+                'test': comp_quarters,
+            }
+        elif data['temporalResolution'] == 'Monthly':
+            analysis_dict['Temporal']['Monthly'] = {
+                'ref': data['period'].get('month', ''),
+                'test': comp_months,
+            }
+        return analysis_dict
 
     @staticmethod
     def get_analysis_dict_spatial(data):
@@ -124,7 +113,7 @@ class AnalysisRunner:
             'landscape': '',
             'analysisType': 'Spatial',
             'variable': data['variable'],
-            't_resolution': '',
+            't_resolution': data['temporalResolution'],
             'Temporal': {
                 'Annual': {
                     'ref': '',
@@ -136,10 +125,22 @@ class AnalysisRunner:
                 }
             },
             'Spatial': {
-                'Annual': '',
-                'Quarterly': '',
-                'start_year': data.get('spatialStartYear', None),
-                'end_year': data.get('spatialEndYear', None)
+                'Annual': {
+                    'ref': data['period']['year'],
+                    'test': data.get('comparisonPeriod', {}).get('year', '')
+                },
+                'Quarterly': {
+                    'ref': data['period']['quarter']
+                    if data['temporalResolution'] == 'Quarterly' else '',
+                    'test': data.get('comparisonPeriod', {}).get('quarter', '')
+                    if data['temporalResolution'] == 'Quarterly' else ''
+                },
+                'Monthly': {
+                    'ref': data['period']['month']
+                    if data['temporalResolution'] == 'Monthly' else '',
+                    'test': data.get('comparisonPeriod', {}).get('month', '')
+                    if data['temporalResolution'] == 'Monthly' else ''
+                }
             }
         }
 
@@ -322,27 +323,107 @@ class AnalysisRunner:
 
         return output_results
 
+    def add_statistics(self, years, features):
+        new_features = [
+            a['properties'] for a in filter(
+                lambda x: x['properties']['year'] in years,
+                features
+            )
+        ]
+
+        # Process data
+        aggregated = {}
+
+        for row in new_features:
+            name, year = row["Name"], int(row["year"])
+
+            # Convert numeric values
+            bare_ground = row["Bare ground"]
+            evi = row["EVI"]
+            ndvi = row["NDVI"]
+
+            key = (name, year)
+            if key not in aggregated:
+                aggregated[key] = {
+                    "Bare ground": [],
+                    "EVI": [],
+                    "NDVI": []
+                }
+
+            aggregated[key]["Bare ground"].append(bare_ground)
+            aggregated[key]["EVI"].append(evi)
+            aggregated[key]["NDVI"].append(ndvi)
+
+        # Compute min, max, and mean
+        results = {}
+        unprocessed_years = [y for y in years]
+        names = set()
+
+        for location_year, values in aggregated.items():
+            location, year = location_year
+            if year in unprocessed_years:
+                unprocessed_years.remove(year)
+            names.add(location)
+            if year not in results:
+                results[year] = {}
+            if location not in results[year]:
+                results[year][location] = {}
+
+            for category, numbers in values.items():
+                min_val = min(numbers)
+                max_val = max(numbers)
+                mean_val = sum(numbers) / len(numbers)
+                results[year][location][category] = {
+                    'min': min_val,
+                    'max': max_val,
+                    'mean': mean_val
+                }
+
+        empty_data = {
+            'Bare ground': {
+                'min': None, 'max': None, 'mean': None
+            },
+            'EVI': {
+                'min': None, 'max': None, 'mean': None
+            },
+            'NDVI': {
+                'min': None, 'max': None, 'mean': None
+            },
+        }
+        for year in unprocessed_years:
+            for name in names:
+                if results.get(year, None):
+                    results[year].update({
+                        name: empty_data
+                    })
+                else:
+                    results[year] = {
+                        name: empty_data
+                    }
+
+        results = {
+            year: {
+                name: OrderedDict(
+                    sorted(value.items())
+                ) for name, value in sorted(group.items())
+            } for year, group in sorted(results.items())
+        }
+        return results
+
     def run_temporal_analysis(self, data):
         """Run the temporal analysis."""
-        analysis_dict_list, comp_years = self.get_analysis_dict_temporal(data)
+        analysis_dict = self.get_analysis_dict_temporal(data)
         initialize_engine_analysis()
 
-        results = []
-        # Run analyses in parallel using ThreadPoolExecutor
-        with ThreadPoolExecutor() as executor:
-            # Submit tasks to the executor
-            futures = [
-                executor.submit(
-                    _temporal_analysis,
-                    data.get('locations', []),
-                    analysis_dict,
-                    data.get('custom_geom', None)
-                ) for analysis_dict in analysis_dict_list
-            ]
-            # Collect results as they complete
-            results = [future.result() for future in futures]
-
-        results = self.combine_temporal_analysis_results(comp_years, results)
+        results = run_analysis(
+            locations=data.get('locations', []),
+            analysis_dict=analysis_dict,
+            custom_geom=data.get('custom_geom', None)
+        )
+        results[0]['statistics'] = self.add_statistics(
+            data['comparisonPeriod']['year'],
+            results[1]['features']
+        )
         return results
 
     def run_spatial_analysis(self, data):
@@ -377,6 +458,7 @@ class AnalysisRunner:
                 data['variable'], filter_start_date, filter_end_date
             )
         )
+        print(valid_filters, start_meta, end_meta)
         if not valid_filters:
             # validate the filter is within asset date ranges
             raise ValueError(
