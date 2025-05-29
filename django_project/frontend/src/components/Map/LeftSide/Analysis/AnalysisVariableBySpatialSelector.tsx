@@ -25,7 +25,7 @@ export default function AnalysisVariableBySpatialSelector(
       <h2>
         <AccordionButton>
           <Box flex="1" textAlign="left" fontWeight='bold' fontSize='13px'>
-            3) Select variable
+            4) Select variable
           </Box>
           <AccordionIcon/>
         </AccordionButton>

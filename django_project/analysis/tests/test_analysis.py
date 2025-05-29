@@ -12,13 +12,38 @@ class TestSpatialDateFilter(TestCase):
         '3.gee_asset.json'
     ]
 
-    def test_spatial_get_date_filter_with_valid_dates(self):
+    def test_spatial_get_date_filter_annual(self):
         analysis_dict = {
+            'landscape': '',
+            'analysisType': 'Spatial',
+            'variable': 'NDVI',
+            't_resolution': 'Annual',
+            'Temporal': {
+                'Annual': {
+                    'ref': '',
+                    'test': ''
+                },
+                'Quarterly': {
+                    'ref': '',
+                    'test': ''
+                }
+            },
             'Spatial': {
-                'start_year': 2020,
-                'end_year': 2021
+                'Annual': {
+                    'ref': 2020,
+                    'test': 2021
+                },
+                'Quarterly': {
+                    'ref': '',
+                    'test': ''
+                },
+                'Monthly': {
+                    'ref': '',
+                    'test': ''
+                }
             }
         }
+
         filter_start_date, filter_end_date = spatial_get_date_filter(
             analysis_dict
         )
@@ -28,11 +53,113 @@ class TestSpatialDateFilter(TestCase):
         )
         self.assertEqual(
             filter_end_date,
-            datetime.date.fromisoformat('2021-01-01')
+            datetime.date.fromisoformat('2022-01-01')
+        )
+
+    def test_spatial_get_date_filter_quarterly(self):
+        analysis_dict = {
+            'landscape': '',
+            'analysisType': 'Spatial',
+            'variable': 'NDVI',
+            't_resolution': 'Quarterly',
+            'Temporal': {
+                'Annual': {
+                    'ref': '',
+                    'test': ''
+                },
+                'Quarterly': {
+                    'ref': '',
+                    'test': ''
+                }
+            },
+            'Spatial': {
+                'Annual': {
+                    'ref': 2020,
+                    'test': 2021
+                },
+                'Quarterly': {
+                    'ref': '2',
+                    'test': '3'
+                },
+                'Monthly': {
+                    'ref': '',
+                    'test': ''
+                }
+            }
+        }
+
+        filter_start_date, filter_end_date = spatial_get_date_filter(
+            analysis_dict
+        )
+        self.assertEqual(
+            filter_start_date,
+            datetime.date.fromisoformat('2020-04-01')
+        )
+        self.assertEqual(
+            filter_end_date,
+            datetime.date.fromisoformat('2021-10-01')
+        )
+
+    def test_spatial_get_date_filter_monthly(self):
+        analysis_dict = {
+            'landscape': '',
+            'analysisType': 'Spatial',
+            'variable': 'NDVI',
+            't_resolution': 'Monthly',
+            'Temporal': {
+                'Annual': {
+                    'ref': '',
+                    'test': ''
+                },
+                'Quarterly': {
+                    'ref': '',
+                    'test': ''
+                }
+            },
+            'Spatial': {
+                'Annual': {
+                    'ref': 2020,
+                    'test': 2021
+                },
+                'Quarterly': {
+                    'ref': '',
+                    'test': ''
+                },
+                'Monthly': {
+                    'ref': '4',
+                    'test': '6'
+                }
+            }
+        }
+
+        filter_start_date, filter_end_date = spatial_get_date_filter(
+            analysis_dict
+        )
+        self.assertEqual(
+            filter_start_date,
+            datetime.date.fromisoformat('2020-04-01')
+        )
+        self.assertEqual(
+            filter_end_date,
+            datetime.date.fromisoformat('2021-07-01')
         )
 
     def test_spatial_get_date_filter_with_no_dates(self):
         analysis_dict = {
+            'landscape': '',
+            'analysisType': 'Spatial',
+            'variable': 'NDVI',
+            't_resolution': 'Monthly',
+            'Temporal': {
+                'Annual': {
+                    'ref': '',
+                    'test': ''
+                },
+                'Quarterly': {
+                    'ref': '',
+                    'test': ''
+                }
+            },
             'Spatial': {}
         }
         filter_start_date, filter_end_date = spatial_get_date_filter(
@@ -43,8 +170,33 @@ class TestSpatialDateFilter(TestCase):
 
     def test_spatial_get_date_filter_with_only_start_date(self):
         analysis_dict = {
+            'landscape': '',
+            'analysisType': 'Spatial',
+            'variable': 'NDVI',
+            't_resolution': 'Monthly',
+            'Temporal': {
+                'Annual': {
+                    'ref': '',
+                    'test': ''
+                },
+                'Quarterly': {
+                    'ref': '',
+                    'test': ''
+                }
+            },
             'Spatial': {
-                'start_year': 2020
+                'Annual': {
+                    'ref': 2020,
+                    'test': ''
+                },
+                'Quarterly': {
+                    'ref': '',
+                    'test': ''
+                },
+                'Monthly': {
+                    'ref': '1',
+                    'test': ''
+                }
             }
         }
         filter_start_date, filter_end_date = spatial_get_date_filter(
@@ -58,8 +210,33 @@ class TestSpatialDateFilter(TestCase):
 
     def test_spatial_get_date_filter_with_only_end_date(self):
         analysis_dict = {
+            'landscape': '',
+            'analysisType': 'Spatial',
+            'variable': 'NDVI',
+            't_resolution': 'Monthly',
+            'Temporal': {
+                'Annual': {
+                    'ref': '',
+                    'test': ''
+                },
+                'Quarterly': {
+                    'ref': '',
+                    'test': ''
+                }
+            },
             'Spatial': {
-                'end_year': 2021
+                'Annual': {
+                    'ref': '',
+                    'test': '2021'
+                },
+                'Quarterly': {
+                    'ref': '',
+                    'test': ''
+                },
+                'Monthly': {
+                    'ref': '',
+                    'test': '4'
+                }
             }
         }
         filter_start_date, filter_end_date = spatial_get_date_filter(
@@ -67,7 +244,7 @@ class TestSpatialDateFilter(TestCase):
         )
         self.assertIsNone(filter_start_date)
         self.assertEqual(
-            filter_end_date, datetime.date.fromisoformat('2021-01-01')
+            filter_end_date, datetime.date.fromisoformat('2021-05-01')
         )
 
     def test_validate_spatial_date_range_filter_with_valid_range(self):

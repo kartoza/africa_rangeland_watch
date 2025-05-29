@@ -113,7 +113,7 @@ class AnalysisRunner:
             'landscape': '',
             'analysisType': 'Spatial',
             'variable': data['variable'],
-            't_resolution': '',
+            't_resolution': data['temporalResolution'],
             'Temporal': {
                 'Annual': {
                     'ref': '',
@@ -125,10 +125,22 @@ class AnalysisRunner:
                 }
             },
             'Spatial': {
-                'Annual': '',
-                'Quarterly': '',
-                'start_year': data.get('spatialStartYear', None),
-                'end_year': data.get('spatialEndYear', None)
+                'Annual': {
+                    'ref': data['period']['year'],
+                    'test': data.get('comparisonPeriod', {}).get('year', '')
+                },
+                'Quarterly': {
+                    'ref': data['period']['quarter']
+                    if data['temporalResolution'] == 'Quarterly' else '',
+                    'test': data.get('comparisonPeriod', {}).get('quarter', '')
+                    if data['temporalResolution'] == 'Quarterly' else ''
+                },
+                'Monthly': {
+                    'ref': data['period']['month']
+                    if data['temporalResolution'] == 'Monthly' else '',
+                    'test': data.get('comparisonPeriod', {}).get('month', '')
+                    if data['temporalResolution'] == 'Monthly' else ''
+                }
             }
         }
 
@@ -446,6 +458,7 @@ class AnalysisRunner:
                 data['variable'], filter_start_date, filter_end_date
             )
         )
+        print(valid_filters, start_meta, end_meta)
         if not valid_filters:
             # validate the filter is within asset date ranges
             raise ValueError(

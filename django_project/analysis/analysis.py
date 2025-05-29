@@ -1473,17 +1473,124 @@ def export_table_to_drive(feature_collection, description, folder):
 
 
 def spatial_get_date_filter(analysis_dict):
-    """Get spatial date filter from analysis_dict."""
+    """Get spatial date filter from analysis_dict.
+
+    Parameters
+    ----------
+    analysis_dict : dict
+        Dictionary containing analysis parameters including temporal resolution
+        and date specifications.
+
+    Returns
+    -------
+    tuple
+        A tuple containing (filter_start_date, filter_end_date)
+        as datetime.date objects.
+    """
     filter_start_date = None
-    if analysis_dict['Spatial'].get('start_year', None):
-        filter_start_date = datetime.date(
-            int(analysis_dict['Spatial'].get('start_year')), 1, 1
-        )
     filter_end_date = None
-    if analysis_dict['Spatial'].get('end_year', None):
-        filter_end_date = datetime.date(
-            int(analysis_dict['Spatial'].get('end_year')), 1, 1
+
+    # Get temporal resolution
+    t_resolution = analysis_dict.get('t_resolution', 'Annual')
+
+    # Get reference values based on temporal resolution
+    start_year = analysis_dict['Spatial'].get('Annual', {}).get('ref')
+    end_year = analysis_dict['Spatial'].get('Annual', {}).get('test')
+
+    if t_resolution == 'Annual':
+
+        if start_year:
+            filter_start_date = datetime.date(int(start_year), 1, 1)
+
+        if end_year:
+            # For annual year 2023, end date is December 31 on the same year
+            if end_year == 2023:
+                filter_end_date = datetime.date(int(end_year), 12, 31)
+            else:
+                # Otherwise, end date is January 1 next year
+                filter_end_date = datetime.date(int(end_year) + 1, 1, 1)
+
+    elif t_resolution == 'Quarterly':
+        start_quarter = analysis_dict['Spatial'].get(
+            'Quarterly', {}
+        ).get('ref')
+        end_quarter = analysis_dict['Spatial'].get('Quarterly', {}).get('test')
+
+        if start_quarter and start_year:
+            # Convert quarter to month (Q1=1, Q2=4, Q3=7, Q4=10)
+            start_month = (int(start_quarter) - 1) * 3 + 1
+            filter_start_date = datetime.date(int(start_year), start_month, 1)
+
+        if end_quarter and end_year:
+            # Calculate end date as the last day of
+            # the last month in the quarter
+            end_month = int(end_quarter) * 3  # Last month of the quarter
+
+            # Handle December specially
+            if end_month == 12:
+                if end_year == 2023:
+                    filter_end_date = datetime.date(int(end_year), 12, 31)
+                else:
+                    filter_end_date = datetime.date(int(end_year) + 1, 1, 1)
+            else:
+                # Last day of the month = first day of next month - 1 day
+                # But since it's exclusive, we don't decrease by 1 day
+                next_month_year = int(end_year)
+                next_month = end_month + 1
+                if next_month > 12:
+                    next_month = 1
+                    next_month_year += 1
+
+                filter_end_date = datetime.date(
+                    next_month_year,
+                    next_month,
+                    1
+                )
+
+    elif t_resolution == 'Monthly':
+        start_month = analysis_dict['Spatial'].get('Monthly', {}).get('ref')
+        end_month = analysis_dict['Spatial'].get('Monthly', {}).get('test')
+
+        if start_month and start_year:
+            filter_start_date = datetime.date(
+                int(start_year),
+                int(start_month),
+                1
+            )
+
+        if end_month and end_year:
+            # Calculate the last day of the end month
+            end_month_int = int(end_month)
+            end_year_int = int(end_year)
+
+            # Last day of the month = first day of next month - 1 day
+            # But since it's exclusive, we don't decrease by 1 day
+            if end_month_int == 12:
+                if end_month_int == 2023:
+                    filter_end_date = datetime.date(end_year_int, 12, 31)
+                else:
+                    filter_end_date = datetime.date(end_year_int + 1, 1, 1)
+            else:
+                filter_end_date = datetime.date(
+                    end_year_int,
+                    end_month_int + 1,
+                    1
+                )
+
+    # Fallback to the original implementation if
+    # specific resolution handling failed
+    if filter_start_date is None and\
+        analysis_dict['Spatial'].get('start_year', None):
+        filter_start_date = datetime.date(
+            int(start_year), 1, 1
         )
+
+    if filter_end_date is None and\
+        analysis_dict['Spatial'].get('end_year', None) and end_year:
+        filter_end_date = datetime.date(
+            int(end_year), 12, 31
+        )
+
     return filter_start_date, filter_end_date
 
 
