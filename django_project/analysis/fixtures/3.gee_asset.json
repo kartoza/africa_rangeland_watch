@@ -67,7 +67,7 @@
     "pk": 7,
     "fields": {
         "key": "modis_vegetation",
-        "source": "MODIS/006/MOD13Q1",
+        "source": "MODIS/061/MOD13Q1",
         "type": "image_collection",
         "metadata": {
             "start_date": "2000-02-18",
