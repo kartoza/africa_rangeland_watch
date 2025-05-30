@@ -229,7 +229,7 @@ const DashboardPage: React.FC = () => {
             updatedChartsConfig.push({
               config: dashboard.config,
               analysisResults: dashboard.analysis_results,
-              title: dashboard.title + ' - ' + landscape + ' ' + variable,
+              title: dashboard.title + ' - ' + landscape + (variable ? ` ${variable}` : ''),
               uuid: dashboard.uuid,
               owner: dashboard.owner,
               privacy_type: dashboard.privacy_type,
