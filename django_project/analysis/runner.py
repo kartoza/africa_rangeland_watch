@@ -126,17 +126,17 @@ class AnalysisRunner:
             },
             'Spatial': {
                 'Annual': {
-                    'ref': data['period']['year'],
+                    'ref': data.get('period', {}).get('year', ''),
                     'test': data.get('comparisonPeriod', {}).get('year', '')
                 },
                 'Quarterly': {
-                    'ref': data['period']['quarter']
+                    'ref': data.get('period', {}).get('quarter', '')
                     if data['temporalResolution'] == 'Quarterly' else '',
                     'test': data.get('comparisonPeriod', {}).get('quarter', '')
                     if data['temporalResolution'] == 'Quarterly' else ''
                 },
                 'Monthly': {
-                    'ref': data['period']['month']
+                    'ref': data.get('period', {}).get('month', '')
                     if data['temporalResolution'] == 'Monthly' else '',
                     'test': data.get('comparisonPeriod', {}).get('month', '')
                     if data['temporalResolution'] == 'Monthly' else ''
