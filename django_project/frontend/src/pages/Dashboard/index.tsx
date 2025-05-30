@@ -172,11 +172,24 @@ const DashboardPage: React.FC = () => {
 
       const updatedChartsConfig = dashboardData.map((dashboard, index) => {
 
-        const matchingCard = cards.find((card) => card.id === index + 1) || {
-          id: index + 1,
-          position: { row: Math.floor(index / 3), col: index % 3 },
-          size: { width: 450, height: 400 }
-        };
+          if (preference === "map" && ["Temporal", "Spatial"].includes(analysisType)) {
+            for (let rasterIdx = 0; rasterIdx < analysis.raster_output_list.length; rasterIdx++) {
+              const rasterOutput = analysis.raster_output_list[rasterIdx];
+              const temporalResolution = rasterOutput.analysis.temporalResolution;
+              const matchingCard = cards.find((card) => card.id === cardIdx + 1) || {
+                id: cardIdx + 1,
+                position: { row: Math.floor(cardIdx / 3), col: cardIdx % 3 },
+                size: { width: 450, height: 400 }
+              };
+              cardIdx++;
+              let title = dashboard.title + ' - ' + rasterOutput.analysis.landscape + ' ' + rasterOutput.analysis.variable;
+              if (analysisType === 'Temporal' && temporalResolution === "Monthly") {
+                title += ` ${formatMonthYear(rasterOutput.analysis.month, rasterOutput.analysis.year)}`;
+              } else if (analysisType === 'Temporal' && temporalResolution === "Annual") {
+                title += ` ${rasterOutput.analysis.year}`;
+              } else if (analysisType === 'Temporal' && temporalResolution === "Quarterly") {
+                title += ` Q${rasterOutput.analysis.quarter} ${rasterOutput.analysis.year}`;
+              }
 
         return {
           config: dashboard.config,

@@ -5,14 +5,12 @@ import React, {
   useRef,
   useState
 } from 'react';
-import maplibregl, { FillLayerSpecification } from 'maplibre-gl';
+import maplibregl, { FilterSpecification } from 'maplibre-gl';
+import {FeatureCollection} from "geojson";
 import { Box } from "@chakra-ui/react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../store";
-import { BasemapControl, LegendControl } from "./control";
-import { hasSource, removeLayer, removeSource } from "./utils";
-import { fetchBaseMaps } from '../../store/baseMapSlice';
-import { fetchMapConfig } from '../../store/mapConfigSlice';
+import { removeSource, doRenderLayer, doRemoveLayer, hasSource } from "./utils";
 import { Layer, setSelectedNrtLayer } from '../../store/layerSlice';
 import { selectIsLoggedIn } from "../../store/authSlice";
 import { COMMUNITY_ID } from "./DataTypes";
@@ -24,6 +22,18 @@ import './style.css';
 interface Props {
 
 }
+
+interface ReusableMapProps {
+  mapContainerId: string;
+  initialBound: [number, number, number, number];
+  layer?: Layer | null;
+  selectedCommmunityIds?: string[];
+  referenceLayer?: FeatureCollection | null;
+  referenceLayerId?: string;
+}
+
+const RASTER_LAYER_PADDING = 70;
+const REFERENCE_LAYER_ID = 'reference-layer';
 
 /**
  * MapLibre component.
@@ -238,6 +248,104 @@ export const MapLibre = forwardRef(
 
     return (
       <Box id="map" flexGrow={1}/>
+    )
+  }
+)
+
+
+/**
+ * Reusable Maplibre component
+  */
+export const ReusableMapLibre = forwardRef(
+  (props: ReusableMapProps, ref) => {
+    const baseMapRef = useRef(null);
+    const mapRef = useRef<maplibregl.Map | null>(null);
+    const [isMapLoaded, setIsMapLoaded] = useState(false);
+
+    useMapSetup(
+      ref,
+      props.mapContainerId,
+      mapRef,
+      isMapLoaded,
+      setIsMapLoaded,
+      baseMapRef,
+      null,
+      props.initialBound,
+      false,
+      1,
+      RASTER_LAYER_PADDING
+    );
+
+    // render layer when map is loaded
+    useEffect(() => {
+      if (!isMapLoaded || !mapRef.current) {
+        return;
+      }
+      if (!props.layer) {
+        return;
+      }
+      doRenderLayer(mapRef, props.layer, COMMUNITY_ID, null)
+
+    }, [isMapLoaded, props.layer])
+
+    // render selected community layers
+    useEffect(() => {
+      if (!isMapLoaded || !mapRef.current) {
+        return;
+      }
+      const map = mapRef.current;
+      if (!props.selectedCommmunityIds || props.selectedCommmunityIds.length === 0) {
+        map.setFilter(
+          (COMMUNITY_ID + '-community'), ["==", "id", '']
+        )
+      } else {
+        map.setFilter(
+          (COMMUNITY_ID + '-community'), ["in", "id", ...props.selectedCommmunityIds]
+        )
+      }
+    }, [isMapLoaded, props.selectedCommmunityIds])
+
+    // render reference layer when map is loaded
+    useEffect(() => {
+      if (!isMapLoaded || !mapRef.current) {
+        return;
+      }
+      if (!props.referenceLayer) {
+        return;
+      }
+      const map = mapRef.current;
+      if (hasSource(map, REFERENCE_LAYER_ID)) {
+        removeSource(map, REFERENCE_LAYER_ID);
+      }
+      map.addSource(REFERENCE_LAYER_ID, {
+        type: 'geojson',
+        data: props.referenceLayer
+      });
+
+      let filter: FilterSpecification = ['all'];
+      if (props.referenceLayerId) {
+        filter = ['all',
+          ['==', '$type', 'Polygon'],
+          ['==', 'id', props.referenceLayerId]
+        ];
+      } else {
+        filter = ['==', '$type', 'Polygon'];
+      }
+      map.addLayer({
+        id: REFERENCE_LAYER_ID,
+        type: 'line',
+        source: REFERENCE_LAYER_ID,
+        filter: filter,
+        paint: {
+          'line-color': '#FF0000',
+          'line-width': 2
+        }
+      });
+
+    }, [isMapLoaded, props.referenceLayer, props.referenceLayerId])
+
+    return (
+      <Box id={props.mapContainerId} flexGrow={1}/>
     )
   }
 )
