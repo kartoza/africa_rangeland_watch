@@ -144,7 +144,6 @@ const dashboardSlice = createSlice({
       })
       .addCase(createDashboard.fulfilled, (state, action) => {
         state.loading = false;
-        state.dashboards.push(action.payload);
         state.dashboardCreated = true;
       })
       .addCase(createDashboard.rejected, (state, action) => {
