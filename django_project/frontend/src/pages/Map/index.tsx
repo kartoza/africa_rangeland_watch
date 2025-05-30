@@ -6,6 +6,7 @@ import { LeftSide } from "../../components/Map/LeftSide";
 import { MapLibre } from "../../components/Map/MapLibre";
 import TopSide from "../../components/Map/TopSide";
 import RightSide from "../../components/Map/RightSide";
+import EarthRanger from "../../components/Map/EarthRanger"
 
 /** Map page **/
 export default function MapPage() {
@@ -48,6 +49,7 @@ export default function MapPage() {
                 leftSideRef?.current.toggle()
               }}
             />
+            <EarthRanger/>
             <MapLibre ref={mapLibreRef}/>
           </Box>
           <RightSide/>

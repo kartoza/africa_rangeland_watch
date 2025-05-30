@@ -10,7 +10,7 @@ let clickFunction: (ev: maplibregl.MapMouseEvent & {
 } & Object) => void = null
 
 /** Landscape geometry selector. */
-export default function AnalysisLandscapeGeometrySelector() {
+export default function EarthRanger() {
   const { map } = useMap();
   const [popup, setPopup] = useState<maplibregl.Popup | null>(null);
   const [popupData, setPopupData] = useState<any>(null);
