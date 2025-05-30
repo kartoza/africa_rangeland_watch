@@ -9,14 +9,16 @@ import { Layer } from "../../store/layerSlice";
 interface MiniMapProps {
   uuid: string; // Unique identifier for the map instance
   analysisResults?: any[]; // Optional analysis results for the map
+  rasterOutputIdx?: number; // Optional index for raster output
 }
 
-const MiniMap: React.FC<MiniMapProps> = ({ uuid, analysisResults }) => {
+const MiniMap: React.FC<MiniMapProps> = ({ uuid, analysisResults, rasterOutputIdx }) => {
   const mapLibreRef = useRef(null);
 
   const analysisResult = analysisResults?.[0];
   // use the last raster output if available
-  const rasterLayer = analysisResult?.raster_output_list?.length ? analysisResult.raster_output_list[analysisResult.raster_output_list.length - 1] : undefined;
+  const rasterOutputIndex = rasterOutputIdx !== undefined ? rasterOutputIdx : (analysisResult?.raster_output_list?.length ? analysisResult.raster_output_list.length - 1 : undefined);
+  const rasterLayer = analysisResult?.raster_output_list?.length ? analysisResult.raster_output_list[rasterOutputIndex] : undefined;
 
   let layer: Layer = null;
   let featuresIds: string[] = [];
