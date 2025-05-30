@@ -1,4 +1,4 @@
-from django.contrib import admin
+from django.contrib import admin, messages
 from django.contrib.gis.admin import OSMGeoAdmin
 from django.http import StreamingHttpResponse, Http404
 from django.urls import re_path, reverse
@@ -17,7 +17,10 @@ from .models import (
     Project
 )
 from analysis.utils import get_gdrive_file
-from analysis.tasks import generate_temporal_analysis_raster_output
+from analysis.tasks import (
+    generate_temporal_analysis_raster_output,
+    store_spatial_analysis_raster_output
+)
 
 
 @admin.register(Project)
@@ -153,9 +156,19 @@ def generate_raster_output(modeladmin, request, queryset):
     for raster in queryset:
         if raster.status == 'RUNNING':
             continue
-        generate_temporal_analysis_raster_output.delay(
-            raster.uuid
-        )
+        if raster.analysis['analysisType'] == 'Temporal':
+            generate_temporal_analysis_raster_output.delay(
+                raster.uuid
+            )
+        elif raster.analysis['analysisType'] == 'Spatial':
+            store_spatial_analysis_raster_output.delay(
+                raster.uuid
+            )
+    modeladmin.message_user(
+        request,
+        f"Raster generation tasks have been triggered!",
+        level=messages.SUCCESS
+    )
 
 
 @admin.register(AnalysisRasterOutput)
