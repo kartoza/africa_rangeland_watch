@@ -294,3 +294,156 @@ class ExportLayerRequest(models.Model):
         blank=True,
         null=True
     )
+
+
+class ExportedCog(models.Model):
+    """Model to represent exported COG files."""
+    input_layer = models.ForeignKey(
+        "layers.InputLayer",
+        on_delete=models.CASCADE
+    )
+    landscape_id = models.CharField(
+        max_length=100
+    )
+    gdrive_file_id = models.CharField(
+        max_length=200,
+        null=True,
+        blank=True,
+    )
+    file_name = models.CharField(
+        max_length=200,
+        null=True,
+        blank=True,
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+    downloaded = models.BooleanField(
+        default=False
+    )
+
+    def __str__(self):
+        return f"{self.file_name} ({self.input_layer.name})"
+
+
+class ExternalLayerSource(models.Model):
+    FETCH_TYPE_CHOICES = [
+        ("api", "API"),
+        ("file", "File URL"),
+        ("gee", "Google Earth Engine"),
+        ("manual", "Manual Upload"),
+    ]
+
+    FREQUENCY_CHOICES = [
+        ("daily", "Daily"),
+        ("weekly", "Weekly"),
+        ("monthly", "Monthly"),
+        ("manual", "Manual"),
+    ]
+
+    name = models.CharField(max_length=255)
+    slug = models.SlugField(
+        max_length=100,
+        unique=True,
+        help_text="Short unique identifier for this data source (e.g., 'wri')"
+    )
+    provider = models.ForeignKey(
+        DataProvider, on_delete=models.CASCADE, related_name="sources"
+    )
+    url = models.URLField(
+        blank=True, null=True, help_text="API or file endpoint URL"
+    )
+    description = models.TextField(blank=True, null=True)
+    fetch_type = models.CharField(
+        max_length=20, choices=FETCH_TYPE_CHOICES, default="manual"
+    )
+    frequency = models.CharField(
+        max_length=20, choices=FREQUENCY_CHOICES, default="manual"
+    )
+    active = models.BooleanField(default=True)
+    metadata = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text="Optional custom fetch options like band, CRS, token...",
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "External Layer Source"
+        verbose_name_plural = "External Layer Sources"
+        ordering = ["provider", "name"]
+
+    def __str__(self):
+        return f"{self.provider.name} - {self.name}"
+
+
+class ExternalLayer(models.Model):
+    LAYER_TYPE_CHOICES = [
+        ("raster", "Raster"),
+        ("vector", "Vector"),
+        ("json", "JSON"),
+    ]
+
+    uuid = models.UUIDField(
+        primary_key=True,
+        default=uuid.uuid4,
+        editable=False
+    )
+    name = models.CharField(max_length=255)
+    layer_type = models.CharField(max_length=20, choices=LAYER_TYPE_CHOICES)
+    source = models.ForeignKey(
+        ExternalLayerSource,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="external_layers",
+        help_text="The dataset source this layer came from."
+    )
+    metadata = models.JSONField(default=dict, blank=True, null=True)
+
+    file = models.FileField(
+        upload_to="external_layers/files/",
+        null=True,
+        blank=True,
+        help_text="GeoTIFF, CSV, or JSON file for this layer.",
+    )
+
+    is_public = models.BooleanField(default=True)
+    is_auto_published = models.BooleanField(default=False)
+
+    created_by = models.ForeignKey(
+        User,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="created_external_layers",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "External Layer"
+        verbose_name_plural = "External Layers"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.name} ({self.source.name})"
+
+
+class FetchHistory(models.Model):
+    """Model to store the history of fetch operations for external layers."""
+    source = models.ForeignKey(ExternalLayerSource, on_delete=models.CASCADE)
+    status = models.CharField(
+        max_length=20, choices=[("success", "Success"), ("failure", "Failure")]
+    )
+    message = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        created = self.created_at.strftime('%Y-%m-%d %H:%M:%S')
+        return f"{self.source.name} - {self.status} - {created}"
