@@ -21,14 +21,17 @@ const MiniMap: React.FC<MiniMapProps> = ({ uuid, analysisResults }) => {
   let layer: Layer = null;
   let featuresIds: string[] = [];
   if (rasterLayer) {
-    layer = {
-      id: rasterLayer.id,
-      uuid: rasterLayer.id,
-      name: rasterLayer.name,
-      type: "raster",
-      group: "analysis_output",
-      url: rasterLayer.url
-    };
+    if (rasterLayer.status === 'COMPLETED') {
+      // If the raster layer is completed, we can use it to create the layer object
+      layer = {
+        id: rasterLayer.id,
+        uuid: rasterLayer.id,
+        name: rasterLayer.name,
+        type: "raster",
+        group: "analysis_output",
+        url: rasterLayer.url
+      };
+    }    
 
     rasterLayer.analysis.locations.forEach((location: any) => {
       featuresIds.push(location.communityFeatureId);

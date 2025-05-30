@@ -46,13 +46,15 @@ class UserAnalysisResultsSerializer(serializers.ModelSerializer):
                 "name": item.name,
                 "size": item.size,
                 "status": item.status,
-                "analysis": item.analysis
+                "analysis": item.analysis,
+                "url": None,
+                "bounds": None
             }
             layer = Layer.objects.filter(
                 unique_id=item.uuid,
                 layer_type=LayerType.RASTER_TILE
             ).first()
-            if layer:
+            if layer and item.status == 'COMPLETED':
                 result['url'] = self._make_cog_url(layer.unique_id)
                 metadata = layer.metadata or {}
                 result['bounds'] = metadata.get('bounds', None)
