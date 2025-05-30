@@ -69,7 +69,7 @@ export default function AnalysisLandscapeGeometrySelector() {
         // Parse the data JSON
         let eventData;
         try {
-          eventData = JSON.parse(properties.data);
+          eventData = properties;
         } catch (error) {
           console.error('Error parsing event data:', error);
           return;

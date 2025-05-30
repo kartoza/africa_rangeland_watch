@@ -120,13 +120,13 @@ export default function EarthRangerEventPopup({ data, earthRangerUuid, onClose }
         align="center"
       >
         <HStack spacing={3} flex={1}>
-          <Image
+          {/* <Image
             src={data.icon.iconUrl}
             alt="Event Icon"
             boxSize="24px"
             borderRadius="md"
             fallbackSrc="https://via.placeholder.com/24"
-          />
+          /> */}
           <Heading size="sm" color="gray.800">
             {data.title || `${data.event_type.toUpperCase()} Event`}
           </Heading>
