@@ -50,7 +50,11 @@ const MiniMap: React.FC<MiniMapProps> = ({ uuid, analysisResults, rasterOutputId
       position={'relative'}
       flexGrow={1}
     >
-      <ReusableMapLibre ref={mapLibreRef} mapContainerId={`map-${uuid}`} initialBound={rasterLayer?.bounds} layer={layer} selectedCommmunityIds={featuresIds}/>
+      <ReusableMapLibre ref={mapLibreRef} mapContainerId={`map-${uuid}`}
+        initialBound={rasterLayer?.bounds} layer={layer} selectedCommmunityIds={featuresIds}
+        referenceLayer={rasterLayer?.analysis.reference_layer}
+        referenceLayerId={rasterLayer?.analysis.reference_layer_id}
+      />
     </Box>
   );
 };

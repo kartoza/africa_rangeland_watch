@@ -5,7 +5,8 @@ import {
   AccordionIcon,
   AccordionItem,
   AccordionPanel,
-  Box
+  Box,
+  Button,
 } from "@chakra-ui/react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../../../store";
@@ -15,6 +16,7 @@ import { GroupName } from "../../DataTypes";
 import LayerCheckbox from "./LayerCheckbox";
 import LandscapeSelector from "./LandscapeSelector";
 import LeftSideLoading from "../Loading";
+import CogDownloadButton from './LayerDownloadButton';
 
 
 export interface LayerCheckboxProps {
@@ -33,6 +35,7 @@ export default function Layers(
 ) {
   const dispatch = useDispatch<AppDispatch>();
   const { selected: selectedLandscape } = useSelector((state: RootState) => state.landscape);
+  const selectedNrt = useSelector((state: RootState) => state.layer.selectedNrt);
 
   const handleNrtLayerChecked = (layer: Layer) => {
     let _copyLayer = {...layer}
@@ -93,20 +96,52 @@ export default function Layers(
           <Box mb={4}>
             <LandscapeSelector landscapes={landscapes}/>
           </Box>
-          {
-            layers && selectedLandscape ?
-              layers?.filter(
-                layer => layer.group === GroupName.NearRealtimeGroup
-              ).map(
-                layer => <LayerCheckbox
-                  key={layer.id}
-                  layer={layer}
-                  onToggle={(checked) => checked ? handleNrtLayerChecked(layer) : onLayerUnchecked(layer)}
-                />
-              ) : (
-                layers ? null : <LeftSideLoading/>
-              )
-          }
+          {layers && selectedLandscape ? (
+            layers
+              .filter(layer => layer.group === GroupName.NearRealtimeGroup)
+              .map(layer => (
+                <Box key={layer.id} display="flex" alignItems="center" justifyContent="space-between" pl={2}>
+                  <LayerCheckbox
+                    layer={layer}
+                    onToggle={(checked) => checked ? handleNrtLayerChecked(layer) : onLayerUnchecked(layer)}
+                  />
+                  {selectedNrt?.id === layer.id && (
+                    <Box display="flex" gap={2}>
+                      <Button
+                        size="xs"
+                        colorScheme="blue"
+                        onClick={async () => {
+                          const res = await fetch(`/nrt-layer/${layer.id}/export/`, {
+                            method: "POST",
+                            headers: {
+                              "Content-Type": "application/json",
+                              "X-CSRFToken": document.cookie.match(/csrftoken=([\w-]+)/)?.[1] || "",
+                            },
+                            body: JSON.stringify({
+                              landscape_id: selectedLandscape?.id,
+                            }),
+                          });
+                          if (res.ok) {
+                            alert("COG export task started.");
+                          } else {
+                            alert("Failed to trigger export.");
+                          }
+                        }}
+                      >
+                        Generate
+                      </Button>
+                
+                      <CogDownloadButton
+                        layerId={layer.id}
+                        isSelected={true}
+                      />
+                    </Box>
+                  )}
+                </Box>
+              ))
+          ) : (
+            layers ? null : <LeftSideLoading />
+          )}
         </AccordionPanel>
       </AccordionItem>
 
@@ -145,4 +180,3 @@ export default function Layers(
     </Accordion>
   )
 }
-
