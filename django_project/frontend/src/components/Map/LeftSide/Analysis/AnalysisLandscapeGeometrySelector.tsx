@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import maplibregl from "maplibre-gl";
-import { COMMUNITY_ID } from "../../DataTypes";
+import { COMMUNITY_ID, EARTH_EANGER_EVENT } from "../../DataTypes";
 import { Community, Landscape } from "../../../../store/landscapeSlice";
 import { useMap } from '../../../../MapContext';
 
@@ -31,6 +31,31 @@ export default function AnalysisLandscapeGeometrySelector(
       if (!map) {
         return
       }
+      // render Earth Ranger Events
+      map.addSource(
+        EARTH_EANGER_EVENT, {
+          type: 'vector',
+          tiles: [
+            document.location.origin + '/frontend-api/earth-ranger/events/vector_tile/{z}/{x}/{y}/'
+          ]
+        }
+      );
+      map.addLayer({
+        'id': EARTH_EANGER_EVENT,
+        'type': 'circle',
+        'source': EARTH_EANGER_EVENT,
+        'source-layer': 'default',
+        'paint': {
+          'circle-radius': 15,
+          'circle-color': '#FF0000',
+          'circle-opacity': 0.8,
+          'circle-stroke-width': 2,
+          'circle-stroke-color': '#FFFFFF',
+          'circle-stroke-opacity': 1
+        }
+      });
+
+
       // render community layer
       map.addSource(
         COMMUNITY_ID, {
