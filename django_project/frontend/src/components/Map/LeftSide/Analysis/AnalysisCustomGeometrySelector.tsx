@@ -106,10 +106,11 @@ const styles = [
 export const AnalysisCustomGeometrySelector = forwardRef((
   { isDrawing, onSelected }: Props, ref
 ) => {
-    const { map } = useMap();
+    const { mapRef, isMapLoaded } = useMap();
     const drawingRef = useRef(null);
 
     const drawGeom = (geom: FeatureCollection, selectedId?: string|number) => {
+      const map = mapRef.current;
       // add geom to map
       map.addSource(
         CUSTOM_GEOM_ID, {
@@ -156,6 +157,7 @@ export const AnalysisCustomGeometrySelector = forwardRef((
     }
 
     const getSelectedId = () => {
+      const map = mapRef.current;
       const filter = map.getFilter(CUSTOM_GEOM_FILL_ID + "-highlight");
       let featureId: string|number = '';
       if (filter && Array.isArray(filter) && filter.length === 3) {
@@ -165,7 +167,8 @@ export const AnalysisCustomGeometrySelector = forwardRef((
       return featureId;
     }
 
-    const getFeatureCollection = () => {  
+    const getFeatureCollection = () => { 
+      const map = mapRef.current;
       const source = map.getSource(CUSTOM_GEOM_ID) as GeoJSONSource;
       let data = null;
       if (source) {
@@ -178,11 +181,13 @@ export const AnalysisCustomGeometrySelector = forwardRef((
     useImperativeHandle(ref, () => ({
         /** Remove layer */
         removeLayer() {
+          const map = mapRef.current;
           if (map) {
             removeSource(map, CUSTOM_GEOM_ID);
           }
         },
         drawLayer(geom: FeatureCollection, selectedId?: string) {
+          const map = mapRef.current;
           if (map) {
             drawGeom(geom, selectedId);
           }
@@ -199,7 +204,8 @@ export const AnalysisCustomGeometrySelector = forwardRef((
     }
 
     useEffect(() => {
-        if (!map) {
+        const map = mapRef.current;
+        if (!isMapLoaded || !map) {
             return;
         }
 
@@ -284,7 +290,7 @@ export const AnalysisCustomGeometrySelector = forwardRef((
               onSelected(allDrawing, area, selectedId);
             }
         }
-    }, [map, isDrawing])
+    }, [isMapLoaded, isDrawing])
 
     return <></>
 })

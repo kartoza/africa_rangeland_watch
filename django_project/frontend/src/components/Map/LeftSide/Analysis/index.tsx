@@ -82,8 +82,8 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
   const analysisTaskStartTime = useSelector((state: RootState) => state.analysis.analysisTaskStartTime);
 
   const handleSaveAnalysis = () => {
-    if (data?.analysisType) {
-      dispatch(saveAnalysis({ data }));
+    if (analysis?.analysis?.data?.analysisType) {
+      dispatch(saveAnalysis(analysis.analysis));
     } else {
       console.warn("Missing analysis data — not saving");
     }
