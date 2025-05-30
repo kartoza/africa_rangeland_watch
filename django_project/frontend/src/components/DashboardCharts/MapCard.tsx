@@ -15,11 +15,23 @@ const MiniMap: React.FC<MiniMapProps> = ({ polygonCoordinates }) => {
   useEffect(() => {
     if (!mapContainerRef.current || polygonCoordinates.length === 0) return;
 
-    const map = new maplibregl.Map({
-      container: mapContainerRef.current,
-      style: "https://demotiles.maplibre.org/style.json",
-      center: polygonCoordinates[0], // Center the map on the first coordinate
-      zoom: 10,
+  let layer: Layer = null;
+  let featuresIds: string[] = [];
+  if (rasterLayer) {
+    if (rasterLayer.status === 'COMPLETED') {
+      // If the raster layer is completed, we can use it to create the layer object
+      layer = {
+        id: rasterLayer.id,
+        uuid: rasterLayer.id,
+        name: rasterLayer.name,
+        type: "raster",
+        group: "analysis_output",
+        url: rasterLayer.url
+      };
+    }
+
+    rasterLayer.analysis.locations.forEach((location: any) => {
+      featuresIds.push(location.communityFeatureId);
     });
 
     mapInstanceRef.current = map;
@@ -70,7 +82,16 @@ const MiniMap: React.FC<MiniMapProps> = ({ polygonCoordinates }) => {
       borderRadius="10px"
       overflow="hidden"
       background="gray.200"
-    />
+      display={'flex'}
+      position={'relative'}
+      flexGrow={1}
+    >
+      <ReusableMapLibre ref={mapLibreRef} mapContainerId={`map-${uuid}`}
+        initialBound={rasterLayer?.bounds} layer={layer} selectedCommmunityIds={featuresIds}
+        referenceLayer={rasterLayer?.analysis.reference_layer}
+        referenceLayerId={rasterLayer?.analysis.reference_layer_id}
+      />
+    </Box>
   );
 };
 
