@@ -162,6 +162,7 @@ export function BarChart({ analysis }: Props) {
 
   const options:any = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: {
         position: "top",
@@ -177,7 +178,7 @@ export function BarChart({ analysis }: Props) {
     }
   };
 
-  return <Box maxWidth={400} overflowX={"auto"}>
+  return <Box height={"100%"}>
     <Bar options={options} data={chartData} />
   </Box>
 }
@@ -267,12 +268,12 @@ export function LineChart({ analysis }: Props) {
     },
   };
 
-  return <Box maxWidth={400} overflowX={"auto"}>
+  return <Box height={"100%"}>
     <Line options={options} data={chartData}/>
   </Box>
 }
 
-function SpatialBarChart({ analysis }: Props) {
+export function SpatialBarChart({ analysis }: Props) {
   const featureCollection: FeatureCollection = analysis.results;
 
   const labels: string[] = featureCollection.features.map((feature) => feature.properties['Name'])
@@ -321,13 +322,12 @@ function SpatialBarChart({ analysis }: Props) {
     }
   };
 
-  return <Box maxWidth={400} overflowX={"auto"}>
+  return <Box>
     <Bar options={options} data={chartData} />
   </Box>
 }
 
-
-export function RenderBaseline({ analysis, decimalPlaces }: Props) {
+export function BaselineTable({ analysis, decimalPlaces }: Props) {
   const _decimalPlaces = decimalPlaces || DEFAULT_DECIMAL_PLACES;
   const excludeColumns: string[] = [
     'system:index',
@@ -345,8 +345,8 @@ export function RenderBaseline({ analysis, decimalPlaces }: Props) {
     }
     keys.push(key);
   }
-  return <Box id="BaselineTableContainer" maxWidth={400} overflowX={"auto"}>
-    <Table className='BaselineAnalysisResultTable' cellPadding={8}>
+
+  return <Table className='BaselineAnalysisResultTable' cellPadding={8}>
       <thead>
       <tr>
         {
@@ -373,6 +373,11 @@ export function RenderBaseline({ analysis, decimalPlaces }: Props) {
       }
       </tbody>
     </Table>
+}
+
+export function RenderBaseline({ analysis, decimalPlaces }: Props) {
+  return <Box id="BaselineTableContainer" maxWidth={400} overflowX={"auto"}>
+    <BaselineTable analysis={analysis} decimalPlaces={decimalPlaces}/>
   </Box>
 }
 
