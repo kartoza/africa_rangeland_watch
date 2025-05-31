@@ -16,6 +16,7 @@ const SupportPage = React.lazy(() => import("./pages/Support"));
 import AboutPage from "./pages/About";
 import ResourcesPage from "./pages/Resources";
 const DashboardPage = React.lazy(() => import("./pages/Dashboard"));
+const DynamicDashboardPage = React.lazy(() => import("./pages/Dashboard/DynamicDashboard"));
 const MapPage  = React.lazy(() => import("./pages/Map"));
 const LearnMorePage  = React.lazy(() => import("./pages/About/LearnMore"));
 const EarthRangerEventsPage = React.lazy(() => import("./pages/EarthrangerEvents"));
@@ -27,7 +28,7 @@ const ProjectRoutes = () => {
     { path: "*", element: <NotFound /> },
     { path: "/about", element: <AboutPage /> },
     { path: "/resources", element: <ResourcesPage /> },
-    { path: "/dashboard", element: <DashboardPage /> },
+    { path: "/dashboard", element: <DynamicDashboardPage /> },
     { path: "/learn-more", element: <LearnMorePage /> },
     // Use PrivateRoute for protected routes
     {
