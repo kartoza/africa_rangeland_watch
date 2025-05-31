@@ -2,9 +2,11 @@ import base64
 import json
 import os
 import logging
+import rasterio
 from pydrive2.auth import GoogleAuth
 from pydrive2.drive import GoogleDrive
 from oauth2client.service_account import ServiceAccountCredentials
+from rasterio.warp import transform_bounds
 
 from analysis.analysis import SERVICE_ACCOUNT_KEY
 
@@ -132,3 +134,14 @@ def sort_nested_structure(d):
     elif isinstance(d, list):
         return [sort_nested_structure(item) for item in d]
     return d
+
+
+def get_cog_bounds(cog_path):
+    """Get bounds of a COG file."""
+    try:
+        with rasterio.open(cog_path) as src:
+            bbox = transform_bounds(src.crs, "EPSG:4326", *src.bounds)
+        return [bbox[0], bbox[1], bbox[2], bbox[3]]
+    except Exception as e:
+        logger.error(f"Error getting bounds for {cog_path}: {e}")
+        return None

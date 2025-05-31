@@ -102,11 +102,12 @@ const getIdValue = (value: string) => {
 export default function AnalysisUserDefinedLayerSelector(
   { layers, enableSelection, onSelected, featureId }: Props
 ) {
-  const { map } = useMap();
+  const { mapRef, isMapLoaded } = useMap();
   const [attributeId, setAttributeId] = useState<LayerAttributeIdDict>({})
   useEffect(() => {
+    const map = mapRef.current;
     try {
-      if (!map) {
+      if (!isMapLoaded || !map) {
         return
       }
       const userDefinedLayers = layers.filter(layer => layer.group === 'user-defined')
@@ -130,10 +131,11 @@ export default function AnalysisUserDefinedLayerSelector(
         removeLayer(map, layer);
       });
     }
-  }, [map, layers])
+  }, [isMapLoaded, layers])
 
   useEffect(() => {
-    if (!map) {
+    const map = mapRef.current;
+    if (!isMapLoaded || !map) {
       return
     }
     const userDefinedLayers = map.getStyle().layers
@@ -211,7 +213,7 @@ export default function AnalysisUserDefinedLayerSelector(
       removeEventListener(map, layerDict)
       layerDict = []
     }
-  }, [map, attributeId, featureId, enableSelection])
+  }, [isMapLoaded, attributeId, featureId, enableSelection])
 
   return <></>
 }
