@@ -119,10 +119,30 @@ class LandscapeCommunityAdmin(OSMGeoAdmin):
     map_template = 'gis/admin/osm.html'
 
 
+def fix_analysis_name_desc(modeladmin, request, queryset):
+    """Fix the name and description of analysis results."""
+    for result in queryset:
+        data = (
+            result.analysis_results.get('data', {}) if
+            result.analysis_results else {}
+        )
+        if not result.name:
+            result.name = result._get_name(data)
+        if not result.description:
+            result.description = result._get_description(data)
+        result.save()
+    modeladmin.message_user(
+        request,
+        f"Updated {queryset.count()} analysis results.",
+        level=messages.SUCCESS
+    )
+
+
 class UserAnalysisResultsAdmin(admin.ModelAdmin):
-    list_display = ('created_by', 'source', 'created_at')
+    list_display = ('created_by', 'name', 'source', 'created_at')
     search_fields = ('created_by__username', 'source',)
     list_filter = ('source',)
+    actions = [fix_analysis_name_desc]
 
     def view_analysis_results(self, obj):
         return str(obj.analysis_results)[:100]

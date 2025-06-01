@@ -79,7 +79,7 @@ class Dashboard(models.Model):
         UserAnalysisResults,
         related_name="dashboards",
         blank=True,
-        help_text="Analysis results associated with this dashboard."
+        help_text="Analysis results associated with this dashboard (Deprecated)."
     )
 
     created_at = models.DateTimeField(
@@ -92,6 +92,12 @@ class Dashboard(models.Model):
         help_text="The date and time when this dashboard was last updated."
     )
 
+    metadata = models.JSONField(
+        blank=True,
+        null=True,
+        help_text="Additional metadata for the dashboard stored in JSON format."
+    )
+
     class Meta:
         verbose_name = "Dashboard"
         verbose_name_plural = "Dashboards"
@@ -99,3 +105,53 @@ class Dashboard(models.Model):
 
     def __str__(self):
         return f"Dashboard {self.uuid} ({self.privacy_type})"
+
+
+class DashboardWidget(models.Model):
+    """Class to represent a widget on a dashboard."""
+
+    dashboard = models.ForeignKey(
+        Dashboard,
+        on_delete=models.CASCADE,
+        related_name="widgets",
+        help_text="The dashboard this widget belongs to."
+    )
+    widget_type = models.CharField(
+        max_length=50,
+        help_text="Type of the widget (e.g., chart, table, etc.)."
+    )
+    config = models.JSONField(
+        default=dict,
+        blank=True,
+        null=True,
+        help_text="Configuration settings for the widget stored in JSON format."
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+        help_text="The date and time when this widget was created."
+    )
+    analysis_result = models.ForeignKey(
+        UserAnalysisResults,
+        on_delete=models.CASCADE,
+        blank=True,
+        null=True,
+        help_text="Analysis result associated with this widget."
+    )
+    order = models.PositiveIntegerField(
+        default=0,
+        help_text="Order of the widget in the dashboard."
+    )
+    title = models.CharField(
+        max_length=255,
+        help_text="Title of the widget."
+    )
+    description = models.TextField(
+        blank=True,
+        null=True,
+        help_text="Description of the widget."
+    )
+    text_content = models.TextField(
+        blank=True,
+        null=True,
+        help_text="Text content for the widget, if applicable."
+    )

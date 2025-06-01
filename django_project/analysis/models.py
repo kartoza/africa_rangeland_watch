@@ -3,6 +3,7 @@ import uuid
 
 import ee
 import calendar
+import datetime
 from typing import Tuple
 from django.utils import timezone
 from django.contrib.auth.models import User
@@ -395,6 +396,8 @@ def analysisrasteroutput_pre_delete(
 
 
 class UserAnalysisResults(models.Model):
+    """Model to store user analysis results."""
+
     created_by = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -421,6 +424,79 @@ class UserAnalysisResults(models.Model):
         AnalysisRasterOutput,
         related_name="analysis_results"
     )
+
+    name = models.CharField(
+        null=True,
+        blank=True,
+        max_length=255,
+        help_text="Name of the analysis result."
+    )
+    description = models.TextField(
+        null=True,
+        blank=True,
+        help_text="Description of the analysis result."
+    )
+
+    def _get_description(self, data):
+        analysis_type = data.get('analysisType', '')
+        if analysis_type == 'Baseline':
+            start_date = data.get('baselineStartDate', '')
+            end_date = data.get('baselineEndDate', '')
+            if start_date and end_date:
+                start_date = datetime.date.fromisoformat(start_date)
+                end_date = datetime.date.fromisoformat(end_date)
+                return (
+                    f"Baseline from {start_date.strftime('%d/%m/%Y')} to "
+                    f"{end_date.strftime('%d/%m/%Y')}"
+                )
+            return 'Baseline from 2015 to 2020'
+        elif analysis_type == 'Temporal':
+            temporal_res = data.get('temporalResolution', '')
+            period = data.get('period', {})
+            year = period.get('year', '')
+            month = period.get('month', '')
+            quarter = period.get('quarter', '')
+            if temporal_res == 'Quarterly':
+                return (
+                    f"Analysis for reference period {year} Q{quarter} "
+                    f"for {data.get('variable', '')}"
+                )
+            elif temporal_res == 'Monthly':
+                month_name = calendar.month_name[int(month)]
+                return (
+                    f"Analysis for reference period {year} {month_name} "
+                    f"for {data.get('variable', '')}"
+                )
+            elif temporal_res == 'Annual':
+                return (
+                    f"Analysis for reference period {year} "
+                    f"for {data.get('variable', '')}"
+                )
+        elif analysis_type == 'Spatial':
+            variable = data.get('variable', '')
+            return (
+                f'Relative % difference in {variable} between reference area '
+                'and selected camp(s).'
+            )
+        return ' - '
+
+    def _get_name(self, data):
+        """Generate name for the analysis result."""
+        return (
+            f"{data.get('analysisType', '')} Analysis of "
+            f"{data.get('landscape', '')} for {data.get('variable', '')}"
+        )
+
+    def save(self, *args, **kwargs):
+        if not self.pk:
+            data = (
+                self.analysis_results.get('data', {}) if
+                self.analysis_results else {}
+            )
+            # set name and description
+            self.name = self.name or self._get_name(data)
+            self.description = self.description or self._get_description(data)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         created_by = self.created_by.username if self.created_by else 'Unknown'

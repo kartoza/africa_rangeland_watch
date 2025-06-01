@@ -335,15 +335,27 @@ export function BaselineTable({ analysis, decimalPlaces }: Props) {
   ];
   let keys: string[] = ['Name'];
   const _keys = Object.keys(analysis.results.columns);
-  for (let i = 0; i < _keys.length; i++) {
-    const key = _keys[i];
-    if (keys.includes(key)) {
-      continue;
+  if (_keys.length === 0) {
+    // get from one of features
+    if (analysis.results.features.length > 0) {
+      const properties = analysis.results.features[0].properties;
+      for (const key in properties) {
+        if (properties.hasOwnProperty(key) && !keys.includes(key) && !excludeColumns.includes(key)) {
+          keys.push(key);
+        }
+      }
     }
-    if (excludeColumns.includes(key)) {
-      continue;
+  } else {
+    for (let i = 0; i < _keys.length; i++) {
+      const key = _keys[i];
+      if (keys.includes(key)) {
+        continue;
+      }
+      if (excludeColumns.includes(key)) {
+        continue;
+      }
+      keys.push(key);
     }
-    keys.push(key);
   }
 
   return <Table className='BaselineAnalysisResultTable' cellPadding={8}>

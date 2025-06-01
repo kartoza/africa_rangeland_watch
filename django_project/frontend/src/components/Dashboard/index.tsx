@@ -32,7 +32,7 @@ import {
   sortableKeyboardCoordinates,
   rectSortingStrategy,
 } from '@dnd-kit/sortable';
-import { FiMove, FiPlus, FiSave, FiDownload, FiEdit2, FiCheck, FiSlash, FiArrowUpCircle } from 'react-icons/fi';
+import { FiSave, FiDownload, FiEdit2, FiCheck, FiSlash, FiArrowUpCircle } from 'react-icons/fi';
 import {
     Widget,
     WidgetType,
@@ -45,18 +45,14 @@ import {
     tableData 
 } from './types';
 import SortableWidgetItem from './SortableWidgetItem';
-import { testWidgetData } from './fixtures'; // Import test data for widgets
+import { testWidgetData } from './fixtures'; // Import test data for 
+import { Item } from '../../store/mockUserAnalysisSlice';
+import ItemSelector from './ItemSelector';
+import { content } from 'html2canvas/dist/types/css/property-descriptors/content';
+import { add } from 'date-fns';
 
 // Main Dashboard Component
 const DynamicDashboard: React.FC = () => {
-  // const [widgets, setWidgets] = useState<Widget[]>([
-  //   { id: '1', type: 'chart', title: 'Sales Analytics', size: 2, height: 'medium', data: chartData },
-  //   { id: '2', type: 'table', title: 'Employee List', size: 2, height: 'large', data: tableData },
-  //   { id: '3', type: 'map', title: 'User Locations', size: 2, height: 'medium' },
-  //   { id: '4', type: 'text', title: 'Project Notes', size: 2, height: 'medium', content: sampleTextContent.notes },
-  //   { id: '5', type: 'text', title: 'Announcements', size: 2, height: 'small', content: sampleTextContent.announcement },
-  //   { id: '6', type: 'text', title: 'KPI Summary', size: 1, height: 'medium', content: sampleTextContent.metrics },
-  // ]);
   const [widgets, setWidgets] = useState<Widget[]>([]);
 
   const [selectedWidgetType, setSelectedWidgetType] = useState<WidgetType>('chart');
@@ -101,30 +97,120 @@ const DynamicDashboard: React.FC = () => {
     }
   };
 
-  const addWidget = () => {
-    const widgetTypes = {
-      chart: 'Chart Widget',
-      table: 'Data Table',
-      map: 'Location Map',
-      text: 'Text Notes'
-    };
+  const addWidget = (item: Item) => {
+    let summaryAdded = '';
+    let newWidgets: Widget[] = [];
+    const analysisResult = item.analysis_results || {};
+    const data = analysisResult.data || {};
+    if (!data) {
+      toast({
+        title: 'No Data Available',
+        description: 'The selected analysis result does not contain any data.',
+        status: 'warning',
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+    // analyisis type
+    const analysisType = data.analysisType;
+    if (analysisType === 'Baseline') {
+      const constraints = widgetConstraints['table'];
+      // add table widget
+      newWidgets.push({
+        id: item.id + '-table-new',
+        type: 'table',
+        title: item.name || 'Baseline Analysis',
+        size: constraints.minWidth,
+        height: constraints.recommendedHeight,
+        data: analysisResult,
+        content: null
+      })
+      summaryAdded = '1 table widget';
+    } else if (analysisType === 'Spatial') {
+      const chartConstraint = widgetConstraints['chart'];
+      const mapConstraint = widgetConstraints['map'];
+      // add chart widget
+      newWidgets.push({
+        id: item.id + '-chart-new',
+        type: 'chart',
+        title: item.name || 'Spatial Analysis',
+        size: chartConstraint.minWidth,
+        height: chartConstraint.recommendedHeight,
+        data: analysisResult,
+        content: null,
+        config: {}
+      });
+      const rasterOutputList = item.raster_output_list || [];
+      if (rasterOutputList.length > 0) {
+        // add map widget
+        newWidgets.push({
+          id: `${item.id}-map-new`,
+          type: 'map',
+          title: item.name ? `Map ${item.name}` : 'Spatial Analysis Map',
+          size: mapConstraint.minWidth,
+          height: mapConstraint.recommendedHeight,
+          data: rasterOutputList[0],
+          content: null,
+          config: {}
+        });
+        summaryAdded = '2 widgets';
+      } else {
+        summaryAdded = '1 widget';
+      }
+    } else if (analysisType === 'Temporal') {
+      const chartConstraint = widgetConstraints['chart'];
+      const mapConstraint = widgetConstraints['map'];
+      // add chart widgets
+      newWidgets.push({
+        id: item.id + '-barchart-new',
+        type: 'chart',
+        title: item.name || 'Temporal Analysis',
+        size: chartConstraint.minWidth,
+        height: chartConstraint.recommendedHeight,
+        data: analysisResult,
+        content: null,
+        config: {
+          'chartType': 'bar',
+        }
+      });
+      newWidgets.push({
+        id: item.id + '-linechart-new',
+        type: 'chart',
+        title: item.name || 'Temporal Analysis',
+        size: chartConstraint.minWidth,
+        height: chartConstraint.recommendedHeight,
+        data: analysisResult,
+        content: null,
+        config: {
+          'chartType': 'line',
+        }
+      });
+      summaryAdded = '2 widgets';
+      // add map widget for each raster output
+      const rasterOutputList = item.raster_output_list || [];
+      if (rasterOutputList.length > 0) {
+        rasterOutputList.forEach((raster, index) => {
+          newWidgets.push({
+            id: `${item.id}-map-${index}-new`,
+            type: 'map',
+            title: raster.name || `Map ${index + 1}`,
+            size: mapConstraint.minWidth,
+            height: mapConstraint.recommendedHeight,
+            data: raster,
+            content: null,
+            config: {}
+          });
+        });
+        summaryAdded += ` and ${rasterOutputList.length} map widget${rasterOutputList.length > 1 ? 's' : ''}`;
+      }
+    }
 
-    const constraints = widgetConstraints[selectedWidgetType];
-    const newWidget: Widget = {
-      id: Date.now().toString(),
-      type: selectedWidgetType,
-      title: widgetTypes[selectedWidgetType],
-      size: constraints.minWidth,
-      height: constraints.recommendedHeight,
-      data: selectedWidgetType === 'chart' ? chartData : selectedWidgetType === 'table' ? tableData : undefined,
-      content: selectedWidgetType === 'text' ? sampleTextContent.notes : undefined,
-    };
+    setWidgets((prev) => [...prev, ...newWidgets]);
 
-    setWidgets((prev) => [...prev, newWidget]);
-    
     toast({
       title: 'Widget Added',
-      description: `${widgetTypes[selectedWidgetType]} has been added to your dashboard.`,
+      description: `${summaryAdded} have been added to your dashboard.`,
       status: 'success',
       duration: 2000,
       isClosable: true,
@@ -324,7 +410,7 @@ const DynamicDashboard: React.FC = () => {
   // Calculate grid stats
   const totalColumns = widgets.reduce((sum, widget) => sum + widget.size, 0);
   const averageHeight = widgets.length > 0 ? 
-    widgets.reduce((sum, widget) => sum + heightConfig[widget.height].rows, 0) / widgets.length : 0;
+  widgets.reduce((sum, widget) => sum + heightConfig[widget.height].rows, 0) / widgets.length : 0;
 
   return (
     <Box minH="100vh" bg="gray.50" position="relative">
@@ -385,13 +471,6 @@ const DynamicDashboard: React.FC = () => {
                 />
               </HStack>
             )}
-            <HStack spacing={4} color="gray.500" fontSize="sm">
-              <Text>{widgets.length} widgets</Text>
-              <Text>•</Text>
-              <Text>{totalColumns} columns used</Text>
-              <Text>•</Text>
-              <Text>{averageHeight.toFixed(1)} avg height</Text>
-            </HStack>
           </VStack>
           <HStack spacing={3}>
             <Menu>
@@ -410,26 +489,13 @@ const DynamicDashboard: React.FC = () => {
                 </MenuItem>
               </MenuList>
             </Menu>
-            <Select
-              value={selectedWidgetType}
-              onChange={(e) => setSelectedWidgetType(e.target.value as WidgetType)}
-              w="auto"
-              size="sm"
-              bg="white"
-            >
-              <option value="chart">Chart Widget</option>
-              <option value="table">Table Widget</option>
-              <option value="map">Map Widget</option>
-              <option value="text">Text Widget</option>
-            </Select>
-            <Button
-              leftIcon={<FiPlus size={16} />}
-              colorScheme="blue"
-              size="sm"
-              onClick={addWidget}
-            >
-              Add Widget
-            </Button>
+            <ItemSelector
+              onItemSelect={(item: Item) => {
+                addWidget(item);
+              }}
+              title="Choose an Analysis Result"
+              placeholder="Select an analysis result to be added as a widget"
+            />
           </HStack>
         </Flex>
       </Box>

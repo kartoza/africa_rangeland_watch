@@ -20,7 +20,9 @@ class UserAnalysisResultsSerializer(serializers.ModelSerializer):
             'created_at',
             'source',
             'dashboards',
-            'raster_output_list'
+            'raster_output_list',
+            'name',
+            'description'
         ]
 
     def get_created_by(self, obj):
