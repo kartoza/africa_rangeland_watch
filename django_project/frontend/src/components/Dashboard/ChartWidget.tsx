@@ -2,10 +2,8 @@ import React from 'react';
 import {
   Box,
   Text,
-  VStack,
-  HStack
-} from '@chakra-ui/react';
-import { WidgetHeight, heightConfig } from './types';
+  VStack} from '@chakra-ui/react';
+import { WidgetHeight } from '../../store/dashboardSlice';
 import { SpatialBarChart, LineChart, BarChart } from '../Map/RightSide/AnalysisResult';
 
 // Chart Widget Component

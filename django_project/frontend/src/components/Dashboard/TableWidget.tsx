@@ -1,14 +1,7 @@
 import React from 'react';
 import {
-  Box,
-  Table,
-  Thead,
-  Tbody,
-  Tr,
-  Th,
-  Td,
-  Badge} from '@chakra-ui/react';
-import { WidgetHeight, heightConfig } from './types';
+  Box} from '@chakra-ui/react';
+import { WidgetHeight } from '../../store/dashboardSlice';
 import { BaselineTable } from '../Map/RightSide/AnalysisResult';
 
 

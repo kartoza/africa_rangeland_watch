@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
 import {
   Box,
   Grid,
@@ -33,6 +34,7 @@ import {
   rectSortingStrategy,
 } from '@dnd-kit/sortable';
 import { FiSave, FiDownload, FiEdit2, FiCheck, FiSlash, FiArrowUpCircle } from 'react-icons/fi';
+import { AppDispatch, RootState } from "../../store";
 import {
     Widget,
     WidgetType,
@@ -40,27 +42,24 @@ import {
     GridSize,
     WidgetHeight,
     heightConfig,
-    chartData,
-    sampleTextContent,
-    tableData 
-} from './types';
+    fetchDashboardByUuid
+} from '../../store/dashboardSlice';
 import SortableWidgetItem from './SortableWidgetItem';
-import { testWidgetData } from './fixtures'; // Import test data for 
-import { Item } from '../../store/mockUserAnalysisSlice';
+import { Item } from '../../store/userAnalysisSearchSlice';
 import ItemSelector from './ItemSelector';
-import { content } from 'html2canvas/dist/types/css/property-descriptors/content';
-import { add } from 'date-fns';
 
 // Main Dashboard Component
 const DynamicDashboard: React.FC = () => {
   const [widgets, setWidgets] = useState<Widget[]>([]);
-
-  const [selectedWidgetType, setSelectedWidgetType] = useState<WidgetType>('chart');
+  const dispatch = useDispatch<AppDispatch>();
   const [isScrolled, setIsScrolled] = useState(false);
   const [dashboardTitle, setDashboardTitle] = useState('Dynamic Dashboard');
   const [isEditingDashboardTitle, setIsEditingDashboardTitle] = useState(false);
   const [editDashboardTitle, setEditDashboardTitle] = useState(dashboardTitle);
   const toast = useToast();
+  const currentDashboard = useSelector(
+    (state: RootState) => state.dashboard.currentDashboard
+  );
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -81,8 +80,17 @@ const DynamicDashboard: React.FC = () => {
 
   // Load widgets data
   React.useEffect(() => {
-    loadConfiguration(testWidgetData);
+    // loadConfiguration(testWidgetData);
+    let uuid = 'f107fa2d-f951-43d0-be54-f3f12cdba32b';
+    dispatch(fetchDashboardByUuid(uuid))
   }, []);
+
+  React.useEffect(() => {
+    if (currentDashboard) {
+      loadConfiguration(currentDashboard);
+      console.log('Current Dashboard:', currentDashboard);
+    }
+  }, [currentDashboard]);
 
   const handleDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -124,7 +132,8 @@ const DynamicDashboard: React.FC = () => {
         size: constraints.minWidth,
         height: constraints.recommendedHeight,
         data: analysisResult,
-        content: null
+        content: null,
+        analysis_result_id: item.id,
       })
       summaryAdded = '1 table widget';
     } else if (analysisType === 'Spatial') {
@@ -139,7 +148,8 @@ const DynamicDashboard: React.FC = () => {
         height: chartConstraint.recommendedHeight,
         data: analysisResult,
         content: null,
-        config: {}
+        config: {},
+        analysis_result_id: item.id,
       });
       const rasterOutputList = item.raster_output_list || [];
       if (rasterOutputList.length > 0) {
@@ -152,7 +162,10 @@ const DynamicDashboard: React.FC = () => {
           height: mapConstraint.recommendedHeight,
           data: rasterOutputList[0],
           content: null,
-          config: {}
+          config: {
+            "raster_output_idx": 0, // Default to first raster output
+          },
+          analysis_result_id: item.id,
         });
         summaryAdded = '2 widgets';
       } else {
@@ -172,7 +185,8 @@ const DynamicDashboard: React.FC = () => {
         content: null,
         config: {
           'chartType': 'bar',
-        }
+        },
+        analysis_result_id: item.id,
       });
       newWidgets.push({
         id: item.id + '-linechart-new',
@@ -184,7 +198,8 @@ const DynamicDashboard: React.FC = () => {
         content: null,
         config: {
           'chartType': 'line',
-        }
+        },
+        analysis_result_id: item.id,
       });
       summaryAdded = '2 widgets';
       // add map widget for each raster output
@@ -199,7 +214,10 @@ const DynamicDashboard: React.FC = () => {
             height: mapConstraint.recommendedHeight,
             data: raster,
             content: null,
-            config: {}
+            config: {
+              "raster_output_idx": index
+            },
+            analysis_result_id: item.id,
           });
         });
         summaryAdded += ` and ${rasterOutputList.length} map widget${rasterOutputList.length > 1 ? 's' : ''}`;
@@ -320,8 +338,8 @@ const DynamicDashboard: React.FC = () => {
       });
       return;
     }
-    // map widgets and sort by order
-    const newWidgets = config.widgets.sort((a: any, b: any) => (a.order || 0) - (b.order || 0)).map((widget: any) => {
+    // map widgets (should be ordered from the API)
+    const newWidgets = config.widgets.map((widget: any) => {
       const constraints = widgetConstraints[widget.type as WidgetType];
       return {
         id: widget.id || Date.now().toString(),
@@ -332,12 +350,14 @@ const DynamicDashboard: React.FC = () => {
         data: widget.data,
         content: widget.content || null,
         config: widget.config || null,
+        analysis_result_id: widget.analysis_result_id || null,
+        last_updated: widget.last_updated || new Date().toISOString(),
       };
     });
     setWidgets(newWidgets);
-    setDashboardTitle(config.dashboardTitle || 'Dynamic Dashboard');
+    setDashboardTitle(config.title || 'Dashboard');
     setIsEditingDashboardTitle(false);
-    setEditDashboardTitle(config.dashboardTitle || 'Dynamic Dashboard');
+    setEditDashboardTitle(config.title || 'Dynamic Dashboard');
     toast({
       title: 'Configuration Loaded',
       description: 'Dashboard configuration has been successfully loaded.',
@@ -345,15 +365,14 @@ const DynamicDashboard: React.FC = () => {
       duration: 3000,
       isClosable: true,
     });
-    console.log('Loaded Configuration:', config);
   };
 
   // Save configuration function
   const saveConfiguration = () => {
     const config = {
       version: '1.0',
-      savedAt: new Date().toISOString(),
-      dashboardTitle: dashboardTitle,
+      last_updated: new Date().toISOString(),
+      title: dashboardTitle,
       widgets: widgets.map((widget) => ({
         id: widget.id,
         type: widget.type,
@@ -361,9 +380,10 @@ const DynamicDashboard: React.FC = () => {
         size: widget.size,
         height: widget.height,
         content: widget.content || null,
-        data: widget.data || null,
+        data: null,
         hasData: !!widget.data,
-        config: widget.config || null
+        config: widget.config,
+        analysis_result_id: widget.analysis_result_id
       })),
       metadata: {
         totalWidgets: widgets.length,

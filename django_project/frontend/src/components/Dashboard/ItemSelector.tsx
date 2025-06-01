@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   Box,
@@ -30,7 +30,7 @@ import {
 import { SearchIcon } from '@chakra-ui/icons';
 import { FiPlus } from 'react-icons/fi';
 import { AppDispatch, RootState } from "../../store";
-import { Item, setSearchTerm, resetItems, fetchItems, loadMoreItems, clearError } from '../../store/mockUserAnalysisSlice';
+import { Item, setSearchTerm, resetItems, fetchItems, loadMoreItems, clearError } from '../../store/userAnalysisSearchSlice';
 
 
 interface ItemSelectorProps {
@@ -53,8 +53,8 @@ const ItemSelector: React.FC<ItemSelectorProps> = ({
     hasMore, 
     currentPage, 
     totalItems,
-    searchTerm 
-  } = useSelector((state: RootState) => state.mockUserAnalysis);
+    searchTerm
+  } = useSelector((state: RootState) => state.userAnalysisSearch);
   
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [selectedItemId, setSelectedItemId] = useState<string>('');

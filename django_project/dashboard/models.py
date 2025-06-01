@@ -130,6 +130,10 @@ class DashboardWidget(models.Model):
         auto_now_add=True,
         help_text="The date and time when this widget was created."
     )
+    updated_at = models.DateTimeField(
+        auto_now_add=True,
+        help_text="The date and time when this widget was updated."
+    )
     analysis_result = models.ForeignKey(
         UserAnalysisResults,
         on_delete=models.CASCADE,

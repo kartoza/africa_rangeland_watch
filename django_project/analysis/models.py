@@ -11,6 +11,10 @@ from django.contrib.gis.db import models
 from django.contrib.gis.geos import GEOSGeometry
 from django.db.models.signals import pre_delete
 from django.dispatch import receiver
+from django.conf import settings
+from django.urls import reverse
+from cloud_native_gis.models import Layer, LayerType
+
 
 from core.models import TaskStatus
 from alerts.models import Indicator
@@ -436,6 +440,42 @@ class UserAnalysisResults(models.Model):
         blank=True,
         help_text="Description of the analysis result."
     )
+
+    @property
+    def rasters(self):
+        results = []
+        for item in self.raster_outputs.all():
+            result = {
+                "id": item.uuid,
+                "name": item.name,
+                "size": item.size,
+                "status": item.status,
+                "analysis": item.analysis,
+                "url": None,
+                "bounds": None
+            }
+            layer = Layer.objects.filter(
+                unique_id=item.uuid,
+                layer_type=LayerType.RASTER_TILE
+            ).first()
+            if layer and item.status == 'COMPLETED':
+                result['url'] = self._make_cog_url(layer.unique_id)
+                metadata = layer.metadata or {}
+                result['bounds'] = metadata.get('bounds', None)
+
+            results.append(result)
+        return results
+
+    def _make_cog_url(self, layer_uuid: str):
+        base_url = settings.DJANGO_BACKEND_URL
+        if base_url.endswith('/'):
+            base_url = base_url[:-1]
+        return (
+            f'cog://{base_url}' +
+            reverse('serve-cog', kwargs={
+                'layer_uuid': layer_uuid,
+            })
+        )
 
     def _get_description(self, data):
         analysis_type = data.get('analysisType', '')

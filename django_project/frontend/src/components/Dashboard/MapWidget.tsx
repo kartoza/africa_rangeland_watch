@@ -1,11 +1,8 @@
 import React, { useRef } from 'react';
 import {
   Box,
-  Text,
-  VStack,
-  HStack} from '@chakra-ui/react';
-import { FiMapPin } from 'react-icons/fi';
-import { WidgetHeight, heightConfig } from './types';
+  VStack} from '@chakra-ui/react';
+import { WidgetHeight } from '../../store/dashboardSlice';
 import { ReusableMapLibre } from "../Map/MapLibre";
 
 import { Layer } from "../../store/layerSlice";

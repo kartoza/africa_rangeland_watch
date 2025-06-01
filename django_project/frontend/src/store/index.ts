@@ -15,7 +15,7 @@ import indicatorReducer from "./indicatorSlice";
 import alertSettingReducer from "./alertSettingSlice";
 import dataPreviewReducer from './dataPreviewSlice';
 import downloadReducer from './downloadSlice';
-import mockUserAnalysisReducer from './mockUserAnalysisSlice';
+import userAnalysisSearchReducer from './userAnalysisSearchSlice';
 
 
 const store = configureStore({
@@ -36,7 +36,7 @@ const store = configureStore({
     alertSettings: alertSettingReducer,
     dataPreview: dataPreviewReducer,
     download: downloadReducer,
-    mockUserAnalysis: mockUserAnalysisReducer
+    userAnalysisSearch: userAnalysisSearchReducer
   },
 });
 

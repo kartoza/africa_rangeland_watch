@@ -1,6 +1,6 @@
 from analysis.serializer import UserAnalysisResultsSerializer
 from rest_framework import serializers
-from .models import Dashboard
+from .models import Dashboard, DashboardWidget
 
 
 class DashboardSerializer(serializers.ModelSerializer):
@@ -24,3 +24,78 @@ class DashboardSerializer(serializers.ModelSerializer):
     def get_owner(self, obj):
         user = self.context['request'].user
         return obj.created_by == user
+
+
+class DashboardWidgetSerializer(serializers.ModelSerializer):
+    last_updated = serializers.DateTimeField(source='updated_at')
+    type = serializers.CharField(source='widget_type')
+    content = serializers.CharField(source='text_content')
+    size = serializers.SerializerMethodField()
+    height = serializers.SerializerMethodField()
+    data = serializers.SerializerMethodField()
+
+    def get_size(self, obj):
+        return obj.config.get('size', 2)
+
+    def get_height(self, obj):
+        return obj.config.get('height', 'medium')
+
+    def get_data(self, obj):
+        if obj.widget_type in ['table', 'chart']:
+            return obj.analysis_result.analysis_results
+        elif obj.widget_type == 'text':
+            return obj.text_content
+        elif obj.widget_type == 'map':
+            raster_output_idx = obj.config.get('raster_output_idx', 0)
+            rasters = obj.analysis_result.rasters
+            if rasters and raster_output_idx < len(rasters):
+                return rasters[raster_output_idx]
+            else:
+                return None
+        return None
+
+    class Meta:
+        model = DashboardWidget
+        fields = [
+            'id',
+            'type',
+            'title',
+            'size',
+            'height',
+            'data',
+            'order',
+            'config',
+            'content',
+            'analysis_result_id',
+            'last_updated'
+        ]
+
+
+class DashboardDetailSerializer(serializers.ModelSerializer):
+    last_updated = serializers.DateTimeField(source='updated_at')
+    widgets = serializers.SerializerMethodField()
+    version = serializers.SerializerMethodField()
+
+    def get_version(self, obj):
+        return obj.config.get('version', '1.0')
+
+    def get_widgets(self, obj):
+        widgets = obj.widgets.select_related(
+            'analysis_result'
+        ).order_by('order').all()
+        return DashboardWidgetSerializer(
+            widgets,
+            many=True,
+            context=self.context
+        ).data
+
+    class Meta:
+        model = Dashboard
+        fields = [
+            'uuid',
+            'title',
+            'last_updated',
+            'metadata',
+            'version',
+            'widgets'
+        ]

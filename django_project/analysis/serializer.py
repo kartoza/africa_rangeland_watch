@@ -41,36 +41,4 @@ class UserAnalysisResultsSerializer(serializers.ModelSerializer):
         return [{"id": d.uuid, "title": d.title} for d in obj.dashboards.all()]
 
     def get_raster_output_list(self, obj):
-        results = []
-        for item in obj.raster_outputs.all():
-            result = {
-                "id": item.uuid,
-                "name": item.name,
-                "size": item.size,
-                "status": item.status,
-                "analysis": item.analysis,
-                "url": None,
-                "bounds": None
-            }
-            layer = Layer.objects.filter(
-                unique_id=item.uuid,
-                layer_type=LayerType.RASTER_TILE
-            ).first()
-            if layer and item.status == 'COMPLETED':
-                result['url'] = self._make_cog_url(layer.unique_id)
-                metadata = layer.metadata or {}
-                result['bounds'] = metadata.get('bounds', None)
-
-            results.append(result)
-        return results
-
-    def _make_cog_url(self, layer_uuid: str):
-        base_url = settings.DJANGO_BACKEND_URL
-        if base_url.endswith('/'):
-            base_url = base_url[:-1]
-        return (
-            f'cog://{base_url}' +
-            reverse('serve-cog', kwargs={
-                'layer_uuid': layer_uuid,
-            })
-        )
+        return obj.rasters

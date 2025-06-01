@@ -36,6 +36,76 @@ export interface FilterParams {
   owner?: string;
 }
 
+// Widget types
+export type WidgetType = 'chart' | 'table' | 'map' | 'text';
+export type GridSize = 1 | 2 | 3 | 4;
+export type WidgetHeight = 'small' | 'medium' | 'large' | 'xlarge';
+
+export interface Widget {
+  id: string;
+  type: WidgetType;
+  title: string;
+  size: GridSize;
+  height: WidgetHeight;
+  data?: any; // AnalysisResult
+  content?: string;
+  description?: string;
+  config?: any; // Additional configuration for the widget
+  analysis_result_id?: string;
+  last_updated?: string;
+  order?: number; // For sorting widgets within a dashboard
+}
+
+// Height configurations
+export const heightConfig = {
+  small: { minH: '200px', maxH: '250px', rows: 1 },
+  medium: { minH: '300px', maxH: '350px', rows: 2 },
+  large: { minH: '400px', maxH: '450px', rows: 3 },
+  xlarge: { minH: '500px', maxH: '550px', rows: 4 },
+};
+
+// Size constraints based on widget type
+export const widgetConstraints = {
+  chart: { 
+    minWidth: 2 as GridSize,
+    maxWidth: 4 as GridSize, 
+    minHeight: 'medium' as WidgetHeight,
+    maxHeight: 'xlarge' as WidgetHeight,
+    recommendedHeight: 'medium' as WidgetHeight
+  },
+  table: { 
+    minWidth: 2 as GridSize, 
+    maxWidth: 4 as GridSize, 
+    minHeight: 'medium' as WidgetHeight,
+    maxHeight: 'xlarge' as WidgetHeight,
+    recommendedHeight: 'large' as WidgetHeight
+  },
+  map: { 
+    minWidth: 2 as GridSize, 
+    maxWidth: 4 as GridSize, 
+    minHeight: 'medium' as WidgetHeight,
+    maxHeight: 'xlarge' as WidgetHeight,
+    recommendedHeight: 'large' as WidgetHeight
+  },
+  text: { 
+    minWidth: 1 as GridSize, 
+    maxWidth: 4 as GridSize, 
+    minHeight: 'small' as WidgetHeight,
+    maxHeight: 'xlarge' as WidgetHeight,
+    recommendedHeight: 'medium' as WidgetHeight
+  },
+};
+
+
+export interface DashboardItem {
+  uuid: string;
+  title: string;
+  last_updated: string;
+  metadata: any;
+  version: string;
+  widgets: Widget[];
+}
+
 // Fetch dashboards
 export const fetchDashboards = createAsyncThunk(
   'dashboard/fetchDashboards',
@@ -102,6 +172,19 @@ export const deleteDashboard = createAsyncThunk(
   }
 );
 
+// Fetch dashboard by UUID
+export const fetchDashboardByUuid = createAsyncThunk(
+  "dashboard/fetchDashboardByUuid",
+  async (uuid: string, { rejectWithValue }) => {
+    try {
+      const response = await axios.get(`/dashboards/${uuid}/detail/`);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || "Error fetching dashboard by UUID");
+    }
+  }
+);
+
 const dashboardSlice = createSlice({
   name: 'dashboard',
   initialState: {
@@ -111,6 +194,7 @@ const dashboardSlice = createSlice({
     error: null as string | null,
     dashboardCreated: false,
     dashboardUpdated: false,
+    currentDashboard: null as DashboardItem | null,
   },
   reducers: {
     resetDashboardUpdated: (state) => {
@@ -197,6 +281,20 @@ const dashboardSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
         state.dashboardUpdated = false;
+      })
+      .addCase(fetchDashboardByUuid.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.currentDashboard = null;
+      })
+      .addCase(fetchDashboardByUuid.fulfilled, (state, action) => {
+        state.loading = false;
+        state.currentDashboard = action.payload;
+      })
+      .addCase(fetchDashboardByUuid.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+        state.currentDashboard = null;
       });
   },
 });

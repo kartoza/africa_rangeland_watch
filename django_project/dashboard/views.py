@@ -1,10 +1,3 @@
-from base.models import Organisation, UserOrganisations
-from analysis.models import UserAnalysisResults
-from rest_framework import generics, status, permissions
-from rest_framework.response import Response
-from rest_framework.views import APIView
-from .models import Dashboard
-from .serializers import DashboardSerializer
 from django.db import models
 from django.contrib.auth.models import User
 from rest_framework.permissions import (
@@ -14,6 +7,15 @@ from rest_framework.permissions import (
 from django.db.models import Q
 import logging
 from django.shortcuts import get_object_or_404
+from rest_framework import generics, status, permissions
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework.decorators import action
+
+from base.models import Organisation, UserOrganisations
+from analysis.models import UserAnalysisResults
+from .models import Dashboard
+from .serializers import DashboardSerializer, DashboardDetailSerializer
 
 
 logger = logging.getLogger(__name__)
@@ -117,7 +119,6 @@ class DashboardListCreateView(generics.ListCreateAPIView):
         queryset = self.get_queryset()
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
-
 
 
 class DashboardCreateView(APIView):
@@ -253,8 +254,6 @@ class DashboardCreateView(APIView):
             )
 
 
-
-
 class DashboardRetrieveUpdateDestroyView(
     generics.RetrieveUpdateDestroyAPIView
 ):
@@ -302,7 +301,6 @@ class DashboardRetrieveUpdateDestroyView(
             },
             status=status.HTTP_403_FORBIDDEN,
         )
-
 
 
 class DashboardShareView(APIView):
@@ -397,3 +395,14 @@ class UpdateDashboardView(APIView):
             },
             status=status.HTTP_200_OK
         )
+
+
+class DashboardDetailView(APIView):
+    """View to retrieve detailed information about a dashboard."""
+
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, uuid):
+        dashboard = get_object_or_404(Dashboard, uuid=uuid)
+        serializer = DashboardDetailSerializer(dashboard)
+        return Response(serializer.data)

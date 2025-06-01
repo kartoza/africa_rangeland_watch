@@ -9,7 +9,7 @@ import {
   Textarea
 } from '@chakra-ui/react';
 import { FiSettings } from 'react-icons/fi';
-import { WidgetHeight, heightConfig } from './types';
+import { WidgetHeight, heightConfig } from '../../store/dashboardSlice';
 
 
 // Text Widget Component

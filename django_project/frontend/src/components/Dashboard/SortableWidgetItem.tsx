@@ -23,23 +23,23 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { FiMove, FiSettings, FiX, FiInfo, FiEdit2, FiSlash, FiCheck } from 'react-icons/fi';
+import { FiSettings, FiX, FiInfo, FiEdit2, FiSlash, FiCheck } from 'react-icons/fi';
 import {DragHandleIcon} from '@chakra-ui/icons';
 import ChartWidget from './ChartWidget';
 import TableWidget from './TableWidget';
 import MapWidget from './MapWidget';
 import TextWidget from './TextWidget';
 import {
+  widgetDescriptions,
+  sampleTextContent
+ } from './types';
+import {
     Widget,
     GridSize,
     WidgetHeight,
     heightConfig,
-    widgetConstraints,
-    widgetDescriptions,
-    chartData,
-    tableData,
-    sampleTextContent
- } from './types';
+    widgetConstraints
+ } from '../../store/dashboardSlice';
 
 
 // Sortable Widget Item Component
