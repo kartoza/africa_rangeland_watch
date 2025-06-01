@@ -185,6 +185,17 @@ export const fetchDashboardByUuid = createAsyncThunk(
   }
 );
 
+export const saveDashboardByUuid = createAsyncThunk(
+  "dashboard/saveDashboardByUuid",
+  async ({ uuid, data }: { uuid: string; data: any }, { rejectWithValue }) => {
+  try {
+    const response = await axios.post(`/dashboards/${uuid}/detail/`, data);
+    return response.data;
+  } catch (error) {
+    return rejectWithValue(error.response?.data || "Error saving dashboard by UUID");
+  }
+});
+
 const dashboardSlice = createSlice({
   name: 'dashboard',
   initialState: {
@@ -295,6 +306,17 @@ const dashboardSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
         state.currentDashboard = null;
+      })
+      .addCase(saveDashboardByUuid.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(saveDashboardByUuid.fulfilled, (state, action) => {
+        state.loading = false;
+      })
+      .addCase(saveDashboardByUuid.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
       });
   },
 });

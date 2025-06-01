@@ -30,8 +30,7 @@ import TableWidget from './TableWidget';
 import MapWidget from './MapWidget';
 import TextWidget from './TextWidget';
 import {
-  widgetDescriptions,
-  sampleTextContent
+  widgetDescriptions
  } from './types';
 import {
     Widget,
@@ -103,7 +102,7 @@ const SortableWidgetItem: React.FC<{
       case 'text':
         return (
           <TextWidget 
-            content={widget.content || sampleTextContent.notes} 
+            content={widget.content} 
             height={widget.height}
             onContentChange={(content) => onContentChange(widget.id, content)}
           />
@@ -145,7 +144,7 @@ const SortableWidgetItem: React.FC<{
       >
         <CardHeader pb={2}>
           <Flex justify="space-between" align="center">
-            <HStack>
+            <HStack overflowX={'hidden'}>
               <Box
                 {...attributes}
                 {...listeners}
@@ -205,7 +204,7 @@ const SortableWidgetItem: React.FC<{
               </VStack>
             </HStack>
             <HStack spacing={1}>
-              <Menu>
+              { widget.type !== 'text' ? <Menu>
                 <MenuButton
                   as={IconButton}
                   icon={<FiInfo size={16} />}
@@ -277,7 +276,7 @@ const SortableWidgetItem: React.FC<{
                     </VStack>
                   </Box>
                 </MenuList>
-              </Menu>
+              </Menu> : null}
               <Menu>
                 <MenuButton
                   as={IconButton}

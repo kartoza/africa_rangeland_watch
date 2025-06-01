@@ -10,11 +10,11 @@ from django.shortcuts import get_object_or_404
 from rest_framework import generics, status, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from rest_framework.decorators import action
+from django.utils import timezone
 
 from base.models import Organisation, UserOrganisations
 from analysis.models import UserAnalysisResults
-from .models import Dashboard
+from .models import Dashboard, DashboardWidget
 from .serializers import DashboardSerializer, DashboardDetailSerializer
 
 
@@ -406,3 +406,108 @@ class DashboardDetailView(APIView):
         dashboard = get_object_or_404(Dashboard, uuid=uuid)
         serializer = DashboardDetailSerializer(dashboard)
         return Response(serializer.data)
+
+    def post(self, request, uuid):
+        dashboard = get_object_or_404(Dashboard, uuid=uuid)
+
+        # Check if the request user is the owner of the dashboard
+        if dashboard.created_by != request.user:
+            return Response(
+                {
+                    "error":
+                    "You do not have permission to update this dashboard."
+                },
+                status=status.HTTP_403_FORBIDDEN
+            )
+
+        # save dashboard title and metadata
+        dashboard.title = request.data.get("title", dashboard.title)
+        dashboard.config = {
+            'version': request.data.get(
+                "version",
+                dashboard.config.get('version', '1.0')
+            )
+        }
+        dashboard.metadata = request.data.get(
+            "metadata", dashboard.metadata
+        )
+        dashboard.updated_at = timezone.now()
+        dashboard.save()
+    
+        # iterate widgets
+        ids = []
+        widgets = request.data.get("widgets", [])
+        for idx, widget_data in enumerate(widgets):
+            widget_id = str(widget_data.get("id", ""))
+            if widget_id and 'new' not in widget_id:
+                # Update existing widget
+                try:
+                    widget = dashboard.widgets.get(id=int(widget_id))
+                    widget.widget_type = widget_data.get(
+                        "type",
+                        widget.widget_type
+                    )
+                    widget.title = widget_data.get(
+                        "title", widget.title
+                    )
+                    widget.order = idx
+                    widget.config = widget_data.get("config", widget.config)
+                    widget.config['size'] = widget_data.get(
+                        "size", widget.config.get('size', 2)
+                    )
+                    widget.config['height'] = widget_data.get(
+                        "height", widget.config.get('height', 'medium')
+                    )
+                    widget.text_content = widget_data.get(
+                        "content", widget.text_content
+                    )
+                    widget.description = widget_data.get(
+                        "description", widget.description
+                    )
+                    widget.analysis_result_id = widget_data.get(
+                        "analysis_result_id", widget.analysis_result_id
+                    )
+                    widget.updated_at = timezone.now()
+                    widget.save()
+                    ids.append(widget.id)
+                except DashboardWidget.DoesNotExist:
+                    return Response(
+                        {"error": "Widget not found."},
+                        status=status.HTTP_404_NOT_FOUND
+                    )
+            else:
+                # Create new widget
+                config = widget_data.get("config") or {}
+                config['size'] = widget_data.get(
+                    "size", config.get('size', 2)
+                )
+                config['height'] = widget_data.get(
+                    "height", config.get('height', 'medium')
+                )
+                new_widget = DashboardWidget(
+                    dashboard=dashboard,
+                    widget_type=widget_data.get("type"),
+                    config=config,
+                    title=widget_data.get("title", ""),
+                    order=idx,
+                    text_content=widget_data.get("content"),
+                    description=widget_data.get("description"),
+                    analysis_result_id=widget_data.get(
+                        "analysis_result_id"
+                    ),
+                    created_at=timezone.now(),
+                    updated_at=timezone.now()
+                )
+                new_widget.save()
+                ids.append(new_widget.id)
+
+        # Remove widgets that are not in the request
+        existing_widget_ids = set(
+            dashboard.widgets.values_list('id', flat=True)
+        )
+        request_widget_ids = set(ids)
+        widgets_to_remove = existing_widget_ids - request_widget_ids
+        if widgets_to_remove:
+            dashboard.widgets.filter(id__in=widgets_to_remove).delete()
+
+        return Response(status=status.HTTP_200_OK)

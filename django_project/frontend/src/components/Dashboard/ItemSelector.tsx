@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, forwardRef, useImperativeHandle } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   Box,
@@ -39,11 +39,12 @@ interface ItemSelectorProps {
   placeholder?: string;
 }
 
-const ItemSelector: React.FC<ItemSelectorProps> = ({
+const ItemSelector = forwardRef(
+  ({
   onItemSelect,
   title = "Select an Item",
   placeholder = "Choose an item from the list"
-}) => {
+}: ItemSelectorProps, ref) => {
   const dispatch = useDispatch<AppDispatch>();
   const { 
     items, 
@@ -64,6 +65,11 @@ const ItemSelector: React.FC<ItemSelectorProps> = ({
   // Refs for infinite scroll
   const observerRef = useRef<IntersectionObserver | null>(null);
   const loadingRef = useRef<HTMLDivElement | null>(null);
+
+  useImperativeHandle(ref, () => ({
+    open: onOpen,
+    close: onClose,
+  }));
 
   // Debounce search term
   useEffect(() => {
@@ -174,7 +180,7 @@ const ItemSelector: React.FC<ItemSelectorProps> = ({
 
   return (
     <Box>
-      <Button
+      {/* <Button
         onClick={onOpen}
         leftIcon={<FiPlus size={16} />}
         size="sm"
@@ -182,7 +188,7 @@ const ItemSelector: React.FC<ItemSelectorProps> = ({
         colorScheme="green"
       >
         Add Widget
-      </Button>
+      </Button> */}
 
       <Drawer
         isOpen={isOpen}
@@ -347,6 +353,6 @@ const ItemSelector: React.FC<ItemSelectorProps> = ({
       </Drawer>
     </Box>
   );
-};
+});
 
 export default ItemSelector;

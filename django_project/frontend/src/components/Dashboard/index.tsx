@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import {
   Box,
@@ -33,7 +33,7 @@ import {
   sortableKeyboardCoordinates,
   rectSortingStrategy,
 } from '@dnd-kit/sortable';
-import { FiSave, FiDownload, FiEdit2, FiCheck, FiSlash, FiArrowUpCircle } from 'react-icons/fi';
+import { FiPlus, FiSave, FiDownload, FiEdit2, FiCheck, FiSlash, FiArrowUpCircle } from 'react-icons/fi';
 import { AppDispatch, RootState } from "../../store";
 import {
     Widget,
@@ -42,7 +42,8 @@ import {
     GridSize,
     WidgetHeight,
     heightConfig,
-    fetchDashboardByUuid
+    fetchDashboardByUuid,
+    saveDashboardByUuid
 } from '../../store/dashboardSlice';
 import SortableWidgetItem from './SortableWidgetItem';
 import { Item } from '../../store/userAnalysisSearchSlice';
@@ -50,6 +51,7 @@ import ItemSelector from './ItemSelector';
 
 // Main Dashboard Component
 const DynamicDashboard: React.FC = () => {
+  const itemSelectorRef = useRef(null);
   const [widgets, setWidgets] = useState<Widget[]>([]);
   const dispatch = useDispatch<AppDispatch>();
   const [isScrolled, setIsScrolled] = useState(false);
@@ -59,6 +61,12 @@ const DynamicDashboard: React.FC = () => {
   const toast = useToast();
   const currentDashboard = useSelector(
     (state: RootState) => state.dashboard.currentDashboard
+  );
+  const saveDashboardError = useSelector(
+    (state: RootState) => state.dashboard.error
+  );
+  const dashboardLoading = useSelector(
+    (state: RootState) => state.dashboard.loading
   );
 
   const sensors = useSensors(
@@ -80,7 +88,6 @@ const DynamicDashboard: React.FC = () => {
 
   // Load widgets data
   React.useEffect(() => {
-    // loadConfiguration(testWidgetData);
     let uuid = 'f107fa2d-f951-43d0-be54-f3f12cdba32b';
     dispatch(fetchDashboardByUuid(uuid))
   }, []);
@@ -88,7 +95,6 @@ const DynamicDashboard: React.FC = () => {
   React.useEffect(() => {
     if (currentDashboard) {
       loadConfiguration(currentDashboard);
-      console.log('Current Dashboard:', currentDashboard);
     }
   }, [currentDashboard]);
 
@@ -104,6 +110,12 @@ const DynamicDashboard: React.FC = () => {
       });
     }
   };
+
+  const mapWidgetTitle = (name: string) => {
+    if (name.endsWith('.tif')) {
+      return name.replace('.tif', '').replaceAll('_', ' ');
+    }
+  }
 
   const addWidget = (item: Item) => {
     let summaryAdded = '';
@@ -209,7 +221,7 @@ const DynamicDashboard: React.FC = () => {
           newWidgets.push({
             id: `${item.id}-map-${index}-new`,
             type: 'map',
-            title: raster.name || `Map ${index + 1}`,
+            title: mapWidgetTitle(raster.name) || `Map ${index + 1}`,
             size: mapConstraint.minWidth,
             height: mapConstraint.recommendedHeight,
             data: raster,
@@ -234,6 +246,39 @@ const DynamicDashboard: React.FC = () => {
       isClosable: true,
     });
 
+    // Scroll to the new widget after a brief delay
+    setTimeout(() => {
+      window.scrollTo({
+        top: document.documentElement.scrollHeight,
+        behavior: 'smooth'
+      });
+    }, 100);
+  };
+
+  const addTextWidget = () => {
+    const widgetId = `text-widget-${widgets.length + 1}-new`;   
+    const constraints = widgetConstraints['text'];
+    const newWidget: Widget = {
+      id: widgetId,
+      type: 'text',
+      title: 'New Text Widget',
+      size: constraints.minWidth,
+      height: constraints.recommendedHeight,
+      content: '',
+      data: null,
+      config: null,
+      analysis_result_id: null,
+    };
+    
+    setWidgets((prev) => [...prev, newWidget]);
+    
+    toast({
+      title: 'Text Widget Added',
+      description: 'A new text widget has been added to your dashboard.',
+      status: 'success',
+      duration: 2000,
+      isClosable: true,
+    });
     // Scroll to the new widget after a brief delay
     setTimeout(() => {
       window.scrollTo({
@@ -368,7 +413,7 @@ const DynamicDashboard: React.FC = () => {
   };
 
   // Save configuration function
-  const saveConfiguration = () => {
+  const saveConfiguration = async () => {
     const config = {
       version: '1.0',
       last_updated: new Date().toISOString(),
@@ -380,7 +425,7 @@ const DynamicDashboard: React.FC = () => {
         size: widget.size,
         height: widget.height,
         content: widget.content || null,
-        data: null,
+        data: null as any,
         hasData: !!widget.data,
         config: widget.config,
         analysis_result_id: widget.analysis_result_id
@@ -392,31 +437,19 @@ const DynamicDashboard: React.FC = () => {
       }
     };
 
-    // Convert to JSON string
-    const configJson = JSON.stringify(config, null, 2);
-    
-    // Log to console for debugging
-    console.log('Dashboard Configuration:', config);
-    
-    // Create blob and download
-    const blob = new Blob([configJson], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `dashboard-config-${new Date().toISOString().split('T')[0]}.json`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-    
-    toast({
-      title: 'Configuration Saved',
-      description: 'Dashboard configuration has been downloaded as JSON file.',
-      status: 'success',
-      duration: 3000,
-      isClosable: true,
-    });
-    
+    let uuid = 'f107fa2d-f951-43d0-be54-f3f12cdba32b';
+    const resultAction = await dispatch(saveDashboardByUuid({uuid, data: config}));
+
+    if (saveDashboardByUuid.fulfilled.match(resultAction)) {
+        toast({
+          title: 'Configuration Saved',
+          description: 'Dashboard configuration has been saved!',
+          status: 'success',
+          duration: 3000,
+          isClosable: true,
+        });
+    }
+
     return config;
   };
 
@@ -493,19 +526,30 @@ const DynamicDashboard: React.FC = () => {
             )}
           </VStack>
           <HStack spacing={3}>
+            <Button
+              size="sm"
+              leftIcon={<FiSave size={16} />}
+              variant="outline"
+              colorScheme="green"
+              onClick={saveConfiguration}
+              isLoading={dashboardLoading}
+            >Save Dashboard</Button>
             <Menu>
               <MenuButton
                 as={Button}
-                leftIcon={<FiSave size={16} />}
+                leftIcon={<FiPlus size={16} />}
                 size="sm"
                 variant="outline"
                 colorScheme="green"
               >
-                Save Config
+                Add Widget
               </MenuButton>
               <MenuList>
-                <MenuItem icon={<FiDownload size={16} />} onClick={saveConfiguration}>
-                  Download as JSON File
+                <MenuItem onClick={() => itemSelectorRef.current?.open()}>
+                  From Analysis Result
+                </MenuItem>
+                <MenuItem onClick={addTextWidget}>
+                  Add Text Widget
                 </MenuItem>
               </MenuList>
             </Menu>
@@ -515,6 +559,7 @@ const DynamicDashboard: React.FC = () => {
               }}
               title="Choose an Analysis Result"
               placeholder="Select an analysis result to be added as a widget"
+              ref={itemSelectorRef}
             />
           </HStack>
         </Flex>
