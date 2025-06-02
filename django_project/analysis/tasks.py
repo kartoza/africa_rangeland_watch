@@ -172,12 +172,6 @@ def store_cog_as_layer(uuid, name, gdrive_file, metadata={}):
             ).first()
         }
     )
-    layer_upload, _ = LayerUpload.objects.get_or_create(
-        layer=layer,
-        defaults={
-            'created_by': layer.created_by
-        }
-    )
     bounds = None
     with tempfile.TemporaryDirectory() as working_dir:
         file_path = f'{working_dir}/{gdrive_file["title"]}'
@@ -190,6 +184,12 @@ def store_cog_as_layer(uuid, name, gdrive_file, metadata={}):
 
         is_success = False
         if settings.DEBUG:
+            layer_upload, _ = LayerUpload.objects.get_or_create(
+                layer=layer,
+                defaults={
+                    'created_by': layer.created_by
+                }
+            )
             layer_upload.emptying_folder()
             # copy file to media folder for local testing
             shutil.copy(
@@ -217,7 +217,6 @@ def store_cog_as_layer(uuid, name, gdrive_file, metadata={}):
             )
 
         if not is_success:
-            layer_upload.delete()
             layer.delete()
             raise RuntimeError(
                 f'Upload cog file for {uuid} failed!'
