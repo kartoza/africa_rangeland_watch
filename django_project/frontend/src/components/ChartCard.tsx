@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from "react";
 import { Card, CardBody, Text, Box, IconButton, VStack, Flex, HStack} from "@chakra-ui/react";
 import { FiDownload, FiSettings, FiTrash2 } from "react-icons/fi"; 
 import { RenderResult } from "./DashboardCharts/CombinedCharts";
-import { Analysis } from "../store/analysisSlice";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import MiniMap from "./DashboardCharts/MapCard";
@@ -29,6 +28,7 @@ interface ChartCardProps {
       owner?: boolean;
     };
     analysisResults: any[];
+    rasterOutputIdx?: number;
   };
   className?: string;
 }
@@ -40,29 +40,15 @@ const ChartCard: React.FC<ChartCardProps> = ({ config, className }) => {
   const [isChart, setIsChart] = useState(false);
   const [dashboardName, setDashboardName] = useState("");
   const [isSettingsOpen, setSettingsOpen] = useState(false);
-  const [polygonCoordinates, setPolygonCoordinates] = useState<[number, number][]>([]);
-  const [isRenderFailed, setIsRenderFailed] = useState(false);
 
   const [dashboardSettings, setDashboardSettings] = useState(null);
   const dispatch = useDispatch<AppDispatch>();
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
 
-
   useEffect(() => {
     if (config?.config) {
       setIsChart(config.config.preference === "chart");
-      setDashboardName(config.config.dashboardName);
-
-      if(config.config.preference !== "chart"){
-        
-        if (config?.analysisResults?.[0]?.analysis_results?.results?.features) {
-          setPolygonCoordinates(
-            extractPolygonCoordinates(config.analysisResults[0].analysis_results.results.features)
-          );
-          setIsRenderFailed(false);
-        }
-        else setIsRenderFailed(true);
-      }
+      setDashboardName(config.title);
 
       setDashboardSettings({
         uuid: config.uuid,
@@ -93,26 +79,6 @@ const ChartCard: React.FC<ChartCardProps> = ({ config, className }) => {
       );
     }
   };
-
-  // Extract polygon coordinates
-  const extractPolygonCoordinates = (features: any[]) => {
-    if (!Array.isArray(features)) {
-      console.error("Invalid features array:", features);
-      return [];
-    }
-  
-    try {
-      const polygonFeature = features.find(
-        (feature) => feature?.geometry?.type === "Polygon"
-      );
-  
-      return polygonFeature ? polygonFeature.geometry.coordinates[0] : [];
-    } catch (e) {
-      console.error("Error extracting polygon coordinates:", e.message);
-      return [];
-    }
-  };
-  
 
   const downloadPDF = async () => {
     if (!containerRef.current) return;
@@ -149,7 +115,13 @@ const ChartCard: React.FC<ChartCardProps> = ({ config, className }) => {
   };
 
   const handleDeleteDashboard = (uuid: string) => {
-      dispatch(deleteDashboard(uuid));
+    // split by '__' to get the actual UUID
+    if (!uuid) {
+      console.error("Invalid UUID for dashboard deletion");
+      return;
+    }
+    const parts = uuid.split("__");
+    dispatch(deleteDashboard(parts[0]));
   };
 
   const handleOpenDeleteDialog = (dashboardId: string) => {
@@ -159,9 +131,6 @@ const ChartCard: React.FC<ChartCardProps> = ({ config, className }) => {
   const handleCloseDeleteDialog = () => {
     setIsConfirmDeleteOpen(false);
   };
-
-  
-
 
   return (
     <div ref={containerRef} className={className} style={{ width: "100%", height: "100%", overflow: "hidden" }}>
@@ -175,7 +144,7 @@ const ChartCard: React.FC<ChartCardProps> = ({ config, className }) => {
         <VStack spacing={2} width="100%" height="100%" align="stretch">
           {/* Header with Name and Icons */}
           <Flex width="100%" align="center" justify="space-between" p={2}>
-            <Text fontSize="xl" fontWeight="bold" color="black" id="dashboard-name">
+            <Text fontSize="l" fontWeight="bold" color="black" id="dashboard-name">
               {dashboardName} {config.config.owner && "(Owner)"}
             </Text>
             <HStack spacing={2} id="dashboard-icons">
@@ -223,12 +192,8 @@ const ChartCard: React.FC<ChartCardProps> = ({ config, className }) => {
 
           {/* Chart Component */}
           <Box width="100%" height="100%">
-            {isRenderFailed ? (
-              <Text color="red.500" fontSize="sm">
-                Analysis results saved on the dashboard cannot be rendered on the map. It should have polygon coordinates.
-              </Text>
-            ) : !isChart ? (
-              <MiniMap polygonCoordinates={polygonCoordinates} />
+            {!isChart ? (
+              <MiniMap uuid={config.uuid} analysisResults={dashboardSettings?.analysis_results} rasterOutputIdx={config.rasterOutputIdx} />
             ) : (
               getChartComponent()
             )}

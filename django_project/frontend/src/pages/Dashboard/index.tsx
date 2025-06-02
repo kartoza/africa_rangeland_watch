@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Flex,
@@ -14,8 +14,7 @@ import {
   MenuItem,
   useToast,
   Grid,
-  GridItem,
-  Icon,
+  GridItem
 } from "@chakra-ui/react";
 import { FaFilter } from "react-icons/fa";
 import Header from "../../components/Header";
@@ -31,7 +30,7 @@ import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
 import DashboardFilters from "../../components/DashboardFilters";
 import { FaCog } from "react-icons/fa"; 
 import { DragDropContext, Droppable, Draggable } from "react-beautiful-dnd";
-import { ResizableBox } from "react-resizable";
+import { formatMonthYear } from "../../utils/chartUtils";
 
 
 type DragPosition = {
@@ -64,7 +63,7 @@ const DashboardPage: React.FC = () => {
   const [filters, setFilters] = useState(null);
   const { dashboardUpdated } = useSelector((state: RootState) => state.dashboard);
   const [landscapes, setLandscapes] = useState<string[]>([]);
-  const [layoutMode, setLayoutMode] = useState("horizontal"); // Default layout
+  const [layoutMode, setLayoutMode] = useState("nested"); // Default layout
   const [layoutKey, setLayoutKey] = useState(0);
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
   const toast = useToast();
@@ -170,7 +169,25 @@ const DashboardPage: React.FC = () => {
   useEffect(() => {
     if (!loading && Array.isArray(dashboardData)) {
 
-      const updatedChartsConfig = dashboardData.map((dashboard, index) => {
+      // Foreach dashboard, create a card with default position and size
+      // For temporal analysis with map:
+      // - Iterate for each raster output
+      // - Add/Use correct naming in the title
+      // - Create card for each raster output
+      // For temporal analysis with chart:
+      // - Use correct naming in the title
+      // - Create card for line and bar charts
+      // TODO: ... handle other types of analysis
+      const updatedChartsConfig: any[] = [];
+      let cardIdx = 0;
+      for (let index = 0; index < dashboardData.length; index++) {
+        const dashboard = dashboardData[index];
+        const preference = dashboard.config?.preference || "chart"; // Default to chart if preference is not set
+        for (let analysisIdx = 0; analysisIdx < dashboard.analysis_results.length; analysisIdx++) {
+          const analysis = dashboard.analysis_results[analysisIdx];
+          const analysisType = analysis.analysis_results.data.analysisType;
+          const landscape = analysis.analysis_results.data.landscape;
+          const variable = analysis.analysis_results.data.variable;
 
           if (preference === "map" && ["Temporal", "Spatial"].includes(analysisType)) {
             for (let rasterIdx = 0; rasterIdx < analysis.raster_output_list.length; rasterIdx++) {
@@ -191,16 +208,37 @@ const DashboardPage: React.FC = () => {
                 title += ` Q${rasterOutput.analysis.quarter} ${rasterOutput.analysis.year}`;
               }
 
-        return {
-          config: dashboard.config,
-          analysisResults: dashboard.analysis_results,
-          title: dashboard.title,
-          uuid: dashboard.uuid,
-          owner: dashboard.owner,
-          privacy_type: dashboard.privacy_type,
-          card: matchingCard
+              updatedChartsConfig.push({
+                config: dashboard.config,
+                analysisResults: dashboard.analysis_results,
+                title: title,
+                uuid: `${dashboard.uuid}__${rasterOutput.id}`,
+                owner: dashboard.owner,
+                privacy_type: dashboard.privacy_type,
+                card: matchingCard,
+                rasterOutputIdx: rasterIdx
+              });
+            }
+          } else {
+            const matchingCard = cards.find((card) => card.id === cardIdx + 1) || {
+              id: cardIdx + 1,
+              position: { row: Math.floor(cardIdx / 3), col: cardIdx % 3 },
+              size: { width: 450, height: 400 }
+            };
+            cardIdx++;
+            updatedChartsConfig.push({
+              config: dashboard.config,
+              analysisResults: dashboard.analysis_results,
+              title: dashboard.title + ' - ' + landscape + (variable ? ` ${variable}` : ''),
+              uuid: dashboard.uuid,
+              owner: dashboard.owner,
+              privacy_type: dashboard.privacy_type,
+              card: matchingCard,
+              rasterOutputIdx: null
+            });
+          }
         }
-      });
+      }
 
       // Set the state to pass down to the chart cards
       setChartsConfig(updatedChartsConfig);
@@ -326,7 +364,7 @@ const DashboardPage: React.FC = () => {
                         const isDummy = config === null;
                         return (
                           <React.Fragment key={index}>
-                            <Draggable draggableId={config ? config.card.id.toString() : `dummy-${index}`} index={index}>
+                            <Draggable key={`panel-${index}`} draggableId={config ? config.card.id.toString() : `dummy-${index}`} index={index}>
                               {(provided) => (
                                 <Box
                                   ref={provided.innerRef}
@@ -439,7 +477,7 @@ const DashboardPage: React.FC = () => {
                         {...provided.droppableProps}
                         style={{ display: "flex", flexDirection: "column", width: "50%", marginLeft: "10px" }}
                       >
-                        <Draggable draggableId={mainPanels[0]?.uuid.toString()} index={0}>
+                        <Draggable key={mainPanels[0]?.uuid.toString()} draggableId={mainPanels[0]?.uuid.toString()} index={0}>
                           {(provided) => (
                             <Panel
                               defaultSize={50}
