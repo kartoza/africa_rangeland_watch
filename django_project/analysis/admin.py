@@ -166,7 +166,7 @@ def generate_raster_output(modeladmin, request, queryset):
             )
     modeladmin.message_user(
         request,
-        f"Raster generation tasks have been triggered!",
+        "Raster generation tasks have been triggered!",
         level=messages.SUCCESS
     )
 

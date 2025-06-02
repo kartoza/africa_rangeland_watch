@@ -410,6 +410,7 @@ class AnalysisRasterOutput(models.Model):
 
         return results
 
+
 @receiver(pre_delete, sender=AnalysisRasterOutput)
 def analysisrasteroutput_pre_delete(
         sender, instance: AnalysisRasterOutput, *args, **kwargs):

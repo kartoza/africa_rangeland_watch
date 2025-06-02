@@ -6,7 +6,6 @@ Africa Rangeland Watch (ARW).
 """
 import os
 from core.celery import app
-import uuid
 import ee
 import logging
 import tempfile
@@ -23,7 +22,6 @@ from cloud_native_gis.models.layer import Layer, LayerType
 from cloud_native_gis.models.layer_upload import LayerUpload
 from core.models import TaskStatus, Preferences
 from analysis.models import (
-    UserAnalysisResults,
     AnalysisResultsCache,
     AnalysisRasterOutput,
     AnalysisTask
@@ -80,6 +78,7 @@ def _get_bounds(raster_output):
     )
 
     return communities.filterBounds(selected_geos)
+
 
 @app.task(name='store_spatial_analysis_raster_output')
 def store_spatial_analysis_raster_output(raster_output_id: int):
