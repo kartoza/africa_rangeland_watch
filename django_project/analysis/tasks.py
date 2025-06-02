@@ -4,15 +4,24 @@ Africa Rangeland Watch (ARW).
 
 .. note:: Background task for analysis
 """
+import os
 from core.celery import app
 import uuid
 import ee
 import logging
+import tempfile
+import shutil
+import time
+import subprocess
 from datetime import date
 from dateutil.relativedelta import relativedelta
-
 from django.utils import timezone
-from core.models import TaskStatus
+from django.conf import settings
+from django.contrib.auth import get_user_model
+
+from cloud_native_gis.models.layer import Layer, LayerType
+from cloud_native_gis.models.layer_upload import LayerUpload
+from core.models import TaskStatus, Preferences
 from analysis.models import (
     UserAnalysisResults,
     AnalysisResultsCache,
@@ -25,10 +34,12 @@ from analysis.analysis import (
     get_rel_diff, calculate_temporal_to_img
 )
 from analysis.runner import AnalysisRunner
-from analysis.utils import get_gdrive_file, delete_gdrive_file
+from analysis.utils import get_gdrive_file, delete_gdrive_file, get_cog_bounds
 from layers.models import InputLayer as InputLayerFixture
+from layers.utils import upload_file
 
 logger = logging.getLogger(__name__)
+User = get_user_model()
 
 
 def _run_spatial_analysis(data):
@@ -106,9 +117,104 @@ def store_spatial_analysis_raster_output(analysis_result_id: int):
         }
     )
 
-    print(f'filename: {filename}.tif')
     analysis_result.raster_output_path = f'{filename}.tif'
     analysis_result.save()
+
+
+def fix_no_data_value(working_dir, file_name):
+    """Fix no data value in the raster file."""
+    tmp_path = os.path.join(
+        working_dir,
+        f'{time.time()}_{file_name}'
+    )
+    file_path = os.path.join(working_dir, file_name)
+    # rename the file to tmp_path
+    shutil.move(file_path, tmp_path)
+    # use gdal to fix no data value
+    cmd = [
+        'gdal_translate',
+        '-of',
+        'COG',
+        '-a_nodata',
+        '-9999',
+        tmp_path,
+        file_path
+    ]
+    subprocess.run(cmd, check=True)
+
+
+def store_cog_as_layer(uuid, name, gdrive_file, metadata={}):
+    """Store cog file as a layer."""
+    layer, _ = Layer.objects.get_or_create(
+        unique_id=uuid,
+        layer_type=LayerType.RASTER_TILE,
+        defaults={
+            'name': name,
+            'created_by': User.objects.filter(
+                is_superuser=True
+            ).first()
+        }
+    )
+    layer_upload, _ = LayerUpload.objects.get_or_create(
+        layer=layer,
+        defaults={
+            'created_by': layer.created_by
+        }
+    )
+    bounds = None
+    with tempfile.TemporaryDirectory() as working_dir:
+        file_path = f'{working_dir}/{gdrive_file["title"]}'
+        gdrive_file.GetContentFile(file_path)
+
+        # fix no data value
+        fix_no_data_value(working_dir, gdrive_file["title"])
+        # get bounds
+        bounds = get_cog_bounds(file_path)
+
+        is_success = False
+        if settings.DEBUG:
+            layer_upload.emptying_folder()
+            # copy file to media folder for local testing
+            shutil.copy(
+                file_path,
+                layer_upload.filepath(gdrive_file["title"])
+            )
+            is_success = True
+        else:
+            # upload to cloud native gis API
+            preferences = Preferences.load()
+            base_url = settings.DJANGO_BACKEND_URL
+            if base_url.endswith('/'):
+                base_url = base_url[:-1]
+            auth = f'Token {preferences.worker_layer_api_key}'
+
+            # upload to API
+            upload_path = (
+                base_url +
+                f'/api/layer/{layer.id}/layer-upload/'
+            )
+            is_success = upload_file(
+                upload_path,
+                file_path,
+                auth_header=auth
+            )
+
+        if not is_success:
+            layer_upload.delete()
+            layer.delete()
+            raise RuntimeError(
+                f'Upload cog file for {uuid} failed!'
+            )
+
+        # update layer is ready
+        layer.refresh_from_db()
+        layer.is_ready = True
+        metadata['bounds'] = bounds
+        layer.metadata = metadata
+        layer.save()
+
+        # delete gdrive file after download
+        gdrive_file.Delete()
 
 
 @app.task(name='generate_temporal_analysis_raster_output')
@@ -152,7 +258,7 @@ def generate_temporal_analysis_raster_output(raster_output_id):
         month_filter = quarter_dict[raster_output.analysis.get('quarter')]
         resolution = 'month'
 
-    print(
+    logger.info(
         f'Generating img {resolution} ({resolution_step}) '
         f'from {start_date} to {end_date}'
     )
@@ -204,7 +310,7 @@ def generate_temporal_analysis_raster_output(raster_output_id):
         folder='GEE_EXPORTS',
         file_name_prefix=str(raster_output.uuid),
         scale=120,  # same with temporal calc result
-        region=aoi.geometry().bounds(),
+        region=aoi.geometry(),
         vis_params=input_layer_fixture.get_vis_params()
     )
 
@@ -221,6 +327,12 @@ def generate_temporal_analysis_raster_output(raster_output_id):
         else:
             gdrive_file.FetchMetadata()
             size = gdrive_file.get("fileSize", 0)
+            store_cog_as_layer(
+                raster_output.uuid,
+                raster_output.name,
+                gdrive_file,
+                metadata=input_layer_fixture.get_vis_params()
+            )
 
     raster_output.status = final_status
     raster_output.size = size
