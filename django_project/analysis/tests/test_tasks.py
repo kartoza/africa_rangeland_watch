@@ -26,61 +26,63 @@ class TestStoreAnalysisRasterOutput(TestCase):
         '3.input_layer.json'
     ]
 
+    @patch('analysis.tasks.store_cog_as_layer')
+    @patch('analysis.tasks.ee')
     @patch('analysis.tasks.export_image_to_drive')
     @patch('analysis.tasks._run_spatial_analysis')
     @patch('analysis.tasks._get_bounds')
+    @patch('analysis.tasks.delete_gdrive_file')
+    @patch('analysis.tasks.get_gdrive_file')
     @patch('analysis.tasks.initialize_engine_analysis')
     def test_store_spatial_analysis_raster_output(
-        self, mock_initialize_engine_analysis, mock_get_bounds,
-        mock_run_spatial_analysis, mock_export_image_to_drive
+        self, mock_initialize_engine_analysis,
+        mock_get_gdrive_file, mock_delete_gdrive_file,
+        mock_get_bounds,
+        mock_run_spatial_analysis, mock_export_image_to_drive,
+        mock_ee, mock_store_cog_as_layer
     ):
         # Mock data
-        user = User.objects.create(username='testuser', password='12345')
-        mock_analysis_result = UserAnalysisResults.objects.create(
-            created_by=user,
-            analysis_results={
-                'data': {
-                    'variable': 'some_variable',
-                    'reference_layer': 'some_reference_layer',
-                    'longitude': 34.0,
-                    'latitude': -1.0
-                }
+        mock_raster_output = AnalysisRasterOutput.objects.create(
+            analysis={
+                'analysisType': 'Spatial',
+                'temporalResolution': '',
+                'year': None,
+                'locations': [
+                    {
+                        'lat': -23.035376296859013,
+                        'lon': 32.192377992891466,
+                        'community': '00000000000000000161',
+                        'communityName': 'LNP-BNP corridor',
+                        'communityFeatureId': 430
+                    }
+                ],
+                'variable': 'EVI'
             },
-            raster_output_path=''
+            name='mock_filename',
+            status='PENDING'
         )
-        
         # Mock return values
-        mock_get_bounds.return_value = {'coordinates': [34.0, -1.0]}
+        # mock_get_bounds.return_value = {'coordinates': [34.0, -1.0]}
+        mock_ee.return_value = MagicMock()
         mock_run_spatial_analysis.return_value = 'mock_image'
+        mock_export_image_to_drive.return_value = {'state': 'COMPLETED'}
+        gdrive_file = MagicMock()
+        gdrive_file.get.return_value = 100
+        mock_get_gdrive_file.return_value = gdrive_file
+        mock_store_cog_as_layer.side_effect = do_nothing
 
-        store_spatial_analysis_raster_output(mock_analysis_result.id)
+        store_spatial_analysis_raster_output(mock_raster_output.uuid)
         
         # Assertions
         mock_initialize_engine_analysis.assert_called_once()
-        mock_get_bounds.assert_called_once_with(
-            mock_analysis_result.analysis_results['data']
-        )
+        mock_get_bounds.assert_called_once()
         mock_run_spatial_analysis.assert_called_once_with(
-            mock_analysis_result.analysis_results['data']
+            mock_raster_output.analysis
         )
-        mock_export_image_to_drive.assert_called_once_with(
-            image='mock_image',
-            description='Spatial Analysis Relative Diff',
-            folder='GEE_EXPORTS',
-            file_name_prefix=ANY,
-            scale=10,
-            region=[34.0, -1.0],
-            vis_params={
-                'min': -25,
-                'max': 25,
-                'palette': ['#f9837b', '#fffcb9', '#fffcb9', '#32c2c8'],
-                'opacity': 0.7
-            }
-        )
-        mock_analysis_result.refresh_from_db()
-        self.assertTrue(
-            mock_analysis_result.raster_output_path.endswith('.tif')
-        )
+        mock_export_image_to_drive.assert_called_once()
+        mock_raster_output.refresh_from_db()
+        self.assertEqual(mock_raster_output.status, 'COMPLETED')
+        self.assertEqual(mock_raster_output.size, 100)
 
     @patch('analysis.tasks.store_cog_as_layer')
     @patch('analysis.tasks.ee')

@@ -189,7 +189,7 @@ const DashboardPage: React.FC = () => {
           const landscape = analysis.analysis_results.data.landscape;
           const variable = analysis.analysis_results.data.variable;
 
-          if (preference === "map" && analysisType === "Temporal") {
+          if (preference === "map" && ["Temporal", "Spatial"].includes(analysisType)) {
             for (let rasterIdx = 0; rasterIdx < analysis.raster_output_list.length; rasterIdx++) {
               const rasterOutput = analysis.raster_output_list[rasterIdx];
               const temporalResolution = rasterOutput.analysis.temporalResolution;
@@ -199,13 +199,13 @@ const DashboardPage: React.FC = () => {
                 size: { width: 450, height: 400 }
               };
               cardIdx++;
-              let title = dashboard.title + ' - ' + rasterOutput.analysis.landscape + ' ' + rasterOutput.analysis.variable + ' ';
-              if (temporalResolution === "Monthly") {
-                title += `${formatMonthYear(rasterOutput.analysis.month, rasterOutput.analysis.year)}`;
-              } else if (temporalResolution === "Annual") {
-                title += `${rasterOutput.analysis.year}`;
-              } else if (temporalResolution === "Quarterly") {
-                title += `Q${rasterOutput.analysis.quarter} ${rasterOutput.analysis.year}`;
+              let title = dashboard.title + ' - ' + rasterOutput.analysis.landscape + ' ' + rasterOutput.analysis.variable;
+              if (analysisType === 'Temporal' && temporalResolution === "Monthly") {
+                title += ` ${formatMonthYear(rasterOutput.analysis.month, rasterOutput.analysis.year)}`;
+              } else if (analysisType === 'Temporal' && temporalResolution === "Annual") {
+                title += ` ${rasterOutput.analysis.year}`;
+              } else if (analysisType === 'Temporal' && temporalResolution === "Quarterly") {
+                title += ` Q${rasterOutput.analysis.quarter} ${rasterOutput.analysis.year}`;
               }
 
               updatedChartsConfig.push({
