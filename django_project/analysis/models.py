@@ -317,7 +317,7 @@ class AnalysisRasterOutput(models.Model):
     )
     # should have: analysisType, variable, landscape,
     # temporalResolution, year, month, quarter,
-    # locations
+    # locations, reference_layer, reference_layer_id
     analysis = models.JSONField(default=dict)
 
     def __str__(self):
@@ -330,6 +330,21 @@ class AnalysisRasterOutput(models.Model):
     @staticmethod
     def generate_name(analysis):
         analysis_type = analysis.get('analysisType').lower()
+        variable = analysis.get('variable').lower().replace(' ', '_')
+        locations = analysis.get('locations')
+        if len(locations) > 1:
+            community = analysis.get('landscape', '').replace(' ', '_')
+        else:
+            community = locations[0].get(
+                'communityName',
+                ''
+            ).replace(' ', '_')
+
+        if analysis_type == 'Spatial':
+            return (
+                f'{community}_{variable}_{analysis_type}.tif'
+            )
+
         temporal_res = analysis.get('temporalResolution').lower()
         date_str = analysis.get('year')
         if temporal_res == 'quarterly':
@@ -341,15 +356,7 @@ class AnalysisRasterOutput(models.Model):
                 f"{calendar.month_name[analysis.get('month')].lower()}_"
                 f"{analysis.get('year')}"
             )
-        variable = analysis.get('variable').lower().replace(' ', '_')
-        locations = analysis.get('locations')
-        if len(locations) > 1:
-            community = analysis.get('landscape', '').replace(' ', '_')
-        else:
-            community = locations[0].get(
-                'communityName',
-                ''
-            ).replace(' ', '_')
+
         return (
             f'{community}_{variable}_{analysis_type}_'
             f'{temporal_res}_{date_str}.tif'
@@ -357,6 +364,7 @@ class AnalysisRasterOutput(models.Model):
 
     @staticmethod
     def from_temporal_analysis_input(data):
+        """Create analysis dict from temporal analysis input."""
         results = [
             {
                 'analysisType': data['analysisType'],
@@ -388,6 +396,23 @@ class AnalysisRasterOutput(models.Model):
                 'locations': data['locations']
             }
             results.append(analysis)
+        return results
+
+    @staticmethod
+    def from_spatial_analysis_input(data):
+        """Create analysis dict from spatial analysis input."""
+        results = {
+            'analysisType': data['analysisType'],
+            'variable': data['variable'],
+            'landscape': data['landscape'],
+            'temporalResolution': data['temporalResolution'],
+            'period': data.get('period', {}),
+            'comparisonPeriod': data.get('comparisonPeriod', {}),
+            'locations': data['locations'],
+            'reference_layer': data.get('reference_layer', {}),
+            'reference_layer_id': data.get('reference_layer_id', ''),
+        }
+
         return results
 
 

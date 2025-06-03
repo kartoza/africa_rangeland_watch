@@ -11,7 +11,10 @@ from dashboard.models import Dashboard
 from .models import UserAnalysisResults
 from .serializer import UserAnalysisResultsSerializer
 from analysis.models import AnalysisRasterOutput
-from analysis.tasks import generate_temporal_analysis_raster_output
+from analysis.tasks import (
+    generate_temporal_analysis_raster_output,
+    store_spatial_analysis_raster_output
+)
 from analysis.utils import get_gdrive_file
 
 
@@ -75,6 +78,34 @@ class UserAnalysisResultsViewSet(viewsets.ModelViewSet):
                 for new_output in new_output_list:
                     generate_temporal_analysis_raster_output\
                         .delay(new_output.uuid)
+            elif analysis_data.get('analysisType', '') == 'Spatial':
+                result_obj = UserAnalysisResults.objects.get(
+                    id=serializer.data.get('id')
+                )
+                raster_dict = (
+                    AnalysisRasterOutput.from_spatial_analysis_input(
+                        analysis_data
+                    )
+                )
+                should_generate = False
+                # check if output already exists
+                output_obj = AnalysisRasterOutput.objects.filter(
+                    analysis=raster_dict
+                ).last()
+                if output_obj is None:
+                    output_obj = AnalysisRasterOutput.objects.create(
+                        name=AnalysisRasterOutput.generate_name(
+                            raster_dict
+                        ),
+                        status='PENDING',
+                        analysis=raster_dict
+                    )
+                    should_generate = True
+                result_obj.raster_outputs.set([output_obj])
+                if should_generate:
+                    store_spatial_analysis_raster_output.delay(
+                        output_obj.uuid
+                    )
 
             return Response(serializer.data, status=201)
         return Response(serializer.errors, status=400)
