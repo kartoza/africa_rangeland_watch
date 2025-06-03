@@ -1,8 +1,5 @@
 from rest_framework import serializers
-from django.conf import settings
-from django.urls import reverse
 
-from cloud_native_gis.models import Layer, LayerType
 from .models import UserAnalysisResults
 
 

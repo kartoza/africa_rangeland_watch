@@ -1,7 +1,6 @@
 // src/store/mockUserAnalysis.ts
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import axios from 'axios';
-import { setCSRFToken } from "../utils/csrfUtils";
 
 export interface Item {
   id: string;
@@ -98,6 +97,9 @@ const userAnalysisSearchSlice = createSlice({
       state.hasMore = true;
       state.error = null;
     },
+    setInitialLoading: (state, action: PayloadAction<boolean>) => {
+      state.loading = action.payload;
+    }
   },
   extraReducers: (builder) => {
     builder
@@ -146,6 +148,6 @@ const userAnalysisSearchSlice = createSlice({
   },
 });
 
-export const { clearError, setSearchTerm, resetItems } = userAnalysisSearchSlice.actions;
+export const { clearError, setSearchTerm, resetItems, setInitialLoading } = userAnalysisSearchSlice.actions;
 
 export default userAnalysisSearchSlice.reducer;

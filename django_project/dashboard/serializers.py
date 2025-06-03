@@ -5,6 +5,7 @@ from .models import Dashboard, DashboardWidget
 
 class DashboardSerializer(serializers.ModelSerializer):
     owner = serializers.SerializerMethodField()
+    owner_name = serializers.SerializerMethodField()
     analysis_results = UserAnalysisResultsSerializer(many=True)
 
     class Meta:
@@ -19,11 +20,18 @@ class DashboardSerializer(serializers.ModelSerializer):
             'updated_at',
             'owner',
             'analysis_results',
+            'owner_name'
         ]
 
     def get_owner(self, obj):
         user = self.context['request'].user
         return obj.created_by == user
+
+    def get_owner_name(self, obj):
+        return (
+            obj.created_by.first_name + ' ' + obj.created_by.last_name if
+            obj.created_by else 'Unknown'
+        )
 
 
 class DashboardWidgetSerializer(serializers.ModelSerializer):

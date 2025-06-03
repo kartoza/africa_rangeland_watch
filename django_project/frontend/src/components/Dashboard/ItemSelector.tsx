@@ -28,9 +28,8 @@ import {
   Center,
 } from '@chakra-ui/react';
 import { SearchIcon } from '@chakra-ui/icons';
-import { FiPlus } from 'react-icons/fi';
 import { AppDispatch, RootState } from "../../store";
-import { Item, setSearchTerm, resetItems, fetchItems, loadMoreItems, clearError } from '../../store/userAnalysisSearchSlice';
+import { Item, setSearchTerm, resetItems, fetchItems, loadMoreItems, clearError, setInitialLoading } from '../../store/userAnalysisSearchSlice';
 
 
 interface ItemSelectorProps {
@@ -82,17 +81,17 @@ const ItemSelector = forwardRef(
 
   // Handle search term changes
   useEffect(() => {
-    if (debouncedSearchTerm !== searchTerm) {
+    if (debouncedSearchTerm !== searchTerm && error === null) {
       dispatch(setSearchTerm(debouncedSearchTerm));
       dispatch(resetItems());
       dispatch(fetchItems({ page: 1, limit: 10, search: debouncedSearchTerm }));
     }
-  }, [debouncedSearchTerm, searchTerm, dispatch]);
+  }, [debouncedSearchTerm, searchTerm, dispatch, error]);
 
   // Initial data fetch
   useEffect(() => {
-    if (isOpen && items.length === 0 && !loading) {
-      dispatch(fetchItems({ page: 1, limit: 10, search: searchTerm }));
+    if (isOpen && items.length === 0 && !loading && error === null && searchTerm === '') {
+      dispatch(fetchItems({ page: 1, limit: 10, search: '' }));
     }
   }, [isOpen, items.length, loading, searchTerm, dispatch]);
 
@@ -124,25 +123,48 @@ const ItemSelector = forwardRef(
 
   // Set up intersection observer
   useEffect(() => {
-    if (!isOpen) return;
+    if (!isOpen) {
+      if (observerRef.current) {
+        observerRef.current.disconnect();
+        observerRef.current = null;
+      }
+      return;
+    }
 
-    observerRef.current = new IntersectionObserver(
-      (entries) => {
-        const target = entries[0];
-        if (target.isIntersecting) {
-          handleLoadMore();
-        }
-      },
-      { threshold: 1.0 }
-    );
+    if (!observerRef.current) {
+      observerRef.current = new IntersectionObserver(
+        (entries) => {
+          const target = entries[0];
+          if (target.isIntersecting) {
+            handleLoadMore();
+          }
+        },
+        { threshold: 1.0 }
+      );
+    }
 
+    let ts: NodeJS.Timeout | null = null;
     if (loadingRef.current) {
       observerRef.current.observe(loadingRef.current);
+    } else {
+      // retry in next 500ms
+      ts = setTimeout(() => {
+        if (loadingRef.current) {
+          observerRef.current?.observe(loadingRef.current);
+        } else {
+          console.warn('loadingRef is still null after retry');
+        }
+      }
+      , 500);
     }
 
     return () => {
       if (observerRef.current) {
         observerRef.current.disconnect();
+        observerRef.current = null;
+      }
+      if (ts) {
+        clearTimeout(ts);
       }
     };
   }, [isOpen, handleLoadMore]);
@@ -180,16 +202,6 @@ const ItemSelector = forwardRef(
 
   return (
     <Box>
-      {/* <Button
-        onClick={onOpen}
-        leftIcon={<FiPlus size={16} />}
-        size="sm"
-        variant="outline"
-        colorScheme="green"
-      >
-        Add Widget
-      </Button> */}
-
       <Drawer
         isOpen={isOpen}
         placement="right"

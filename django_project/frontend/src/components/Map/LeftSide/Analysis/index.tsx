@@ -29,6 +29,7 @@ import BaselineDateRangeSelector from './BaselineDateRangeSelector';
 import { LayerCheckboxProps } from '../Layers';
 import { useSession } from '../../../../sessionProvider';
 import { saveAnalysis, clearSavedAnalysisFlag } from '../../../../store/userAnalysisSlice';
+import {resetItems} from '../../../../store/userAnalysisSearchSlice';
 
 
 interface Props extends LayerCheckboxProps {
@@ -84,6 +85,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
   const handleSaveAnalysis = () => {
     if (analysis?.analysis?.data?.analysisType) {
       dispatch(saveAnalysis(analysis.analysis));
+      dispatch(resetItems());
     } else {
       console.warn("Missing analysis data — not saving");
     }

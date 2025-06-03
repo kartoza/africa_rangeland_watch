@@ -79,7 +79,9 @@ class Dashboard(models.Model):
         UserAnalysisResults,
         related_name="dashboards",
         blank=True,
-        help_text="Analysis results associated with this dashboard (Deprecated)."
+        help_text=(
+            "Analysis results associated with this dashboard (Deprecated)."
+        )
     )
 
     created_at = models.DateTimeField(
@@ -95,7 +97,9 @@ class Dashboard(models.Model):
     metadata = models.JSONField(
         blank=True,
         null=True,
-        help_text="Additional metadata for the dashboard stored in JSON format."
+        help_text=(
+            "Additional metadata for the dashboard stored in JSON format."
+        )
     )
 
     class Meta:
@@ -124,7 +128,9 @@ class DashboardWidget(models.Model):
         default=dict,
         blank=True,
         null=True,
-        help_text="Configuration settings for the widget stored in JSON format."
+        help_text=(
+            "Configuration settings for the widget stored in JSON format."
+        )
     )
     created_at = models.DateTimeField(
         auto_now_add=True,

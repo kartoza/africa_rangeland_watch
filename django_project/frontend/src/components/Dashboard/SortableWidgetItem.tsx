@@ -39,6 +39,7 @@ import {
     heightConfig,
     widgetConstraints
  } from '../../store/dashboardSlice';
+ import EditableWrapper from '../EditableWrapper';
 
 
 // Sortable Widget Item Component
@@ -49,7 +50,8 @@ const SortableWidgetItem: React.FC<{
   onHeightChange: (id: string, height: WidgetHeight) => void;
   onContentChange: (id: string, content: string) => void;
   onTitleChange: (id: string, title: string) => void;
-}> = ({ widget, onRemove, onSizeChange, onHeightChange, onContentChange, onTitleChange }) => {
+  isEditable?: boolean;
+}> = ({ widget, onRemove, onSizeChange, onHeightChange, onContentChange, onTitleChange, isEditable }) => {
   const {
     attributes,
     listeners,
@@ -145,20 +147,22 @@ const SortableWidgetItem: React.FC<{
         <CardHeader pb={2}>
           <Flex justify="space-between" align="center">
             <HStack overflowX={'hidden'}>
-              <Box
-                {...attributes}
-                {...listeners}
-                cursor="grab"
-                _active={{ cursor: 'grabbing' }}
-                pl={1}
-                pr={1}
-                pt={2}
-                pb={2}
-                borderRadius="md"
-                _hover={{ bg: 'gray.100' }}
-              >
-                <DragHandleIcon />
-              </Box>
+              <EditableWrapper isEditable={isEditable}>
+                <Box
+                  {...attributes}
+                  {...listeners}
+                  cursor="grab"
+                  _active={{ cursor: 'grabbing' }}
+                  pl={1}
+                  pr={1}
+                  pt={2}
+                  pb={2}
+                  borderRadius="md"
+                  _hover={{ bg: 'gray.100' }}
+                >
+                  <DragHandleIcon />
+                </Box>
+              </EditableWrapper>
               <VStack align="start" spacing={0}>
                 {isEditingTitle ? (
                   <HStack spacing={1}>
@@ -190,15 +194,17 @@ const SortableWidgetItem: React.FC<{
                 ) : (
                   <HStack spacing={1}>
                     <Heading size="sm" color="black">{widget.title}</Heading>
-                    <IconButton
-                      icon={<FiEdit2 size={12} />}
-                      size="xs"
-                      variant="ghost"
-                      aria-label="Edit title"
-                      onClick={() => setIsEditingTitle(true)}
-                      opacity={0.6}
-                      _hover={{ opacity: 1 }}
-                    />
+                    <EditableWrapper isEditable={isEditable}>
+                      <IconButton
+                        icon={<FiEdit2 size={12} />}
+                        size="xs"
+                        variant="ghost"
+                        aria-label="Edit title"
+                        onClick={() => setIsEditingTitle(true)}
+                        opacity={0.6}
+                        _hover={{ opacity: 1 }}
+                      />
+                    </EditableWrapper>
                   </HStack>
                 )}
               </VStack>
@@ -277,51 +283,53 @@ const SortableWidgetItem: React.FC<{
                   </Box>
                 </MenuList>
               </Menu> : null}
-              <Menu>
-                <MenuButton
-                  as={IconButton}
-                  icon={<FiSettings size={16} />}
+              <EditableWrapper isEditable={isEditable}>
+                <Menu>
+                  <MenuButton
+                    as={IconButton}
+                    icon={<FiSettings size={16} />}
+                    size="sm"
+                    variant="ghost"
+                    aria-label="Widget settings"
+                  />
+                  <MenuList>
+                    <Text px={3} py={2} fontSize="xs" fontWeight="bold" color="gray.500" textTransform="uppercase">
+                      Width
+                    </Text>
+                    {getValidSizes().map((size) => (
+                      <MenuItem 
+                        key={size} 
+                        onClick={() => onSizeChange(widget.id, size)}
+                        bg={widget.size === size ? 'green.50' : 'transparent'}
+                        color={widget.size === size ? 'green.600' : 'inherit'}
+                      >
+                        {size === 1 ? 'Small' : size === 2 ? 'Medium' : size === 3 ? 'Large' : 'Extra Large'} ({size} column{size > 1 ? 's' : ''})
+                      </MenuItem>
+                    ))}
+                    <Text px={3} py={2} pt={4} fontSize="xs" fontWeight="bold" color="gray.500" textTransform="uppercase">
+                      Height
+                    </Text>
+                    {getValidHeights().map((height) => (
+                      <MenuItem 
+                        key={height} 
+                        onClick={() => onHeightChange(widget.id, height)}
+                        bg={widget.height === height ? 'green.50' : 'transparent'}
+                        color={widget.height === height ? 'green.600' : 'inherit'}
+                      >
+                        {height.charAt(0).toUpperCase() + height.slice(1)} ({heightConfig[height].minH})
+                      </MenuItem>
+                    ))}
+                  </MenuList>
+                </Menu>
+                <IconButton
+                  icon={<FiX size={16} />}
                   size="sm"
                   variant="ghost"
-                  aria-label="Widget settings"
+                  colorScheme="red"
+                  aria-label="Remove widget"
+                  onClick={() => onRemove(widget.id)}
                 />
-                <MenuList>
-                  <Text px={3} py={2} fontSize="xs" fontWeight="bold" color="gray.500" textTransform="uppercase">
-                    Width
-                  </Text>
-                  {getValidSizes().map((size) => (
-                    <MenuItem 
-                      key={size} 
-                      onClick={() => onSizeChange(widget.id, size)}
-                      bg={widget.size === size ? 'green.50' : 'transparent'}
-                      color={widget.size === size ? 'green.600' : 'inherit'}
-                    >
-                      {size === 1 ? 'Small' : size === 2 ? 'Medium' : size === 3 ? 'Large' : 'Extra Large'} ({size} column{size > 1 ? 's' : ''})
-                    </MenuItem>
-                  ))}
-                  <Text px={3} py={2} pt={4} fontSize="xs" fontWeight="bold" color="gray.500" textTransform="uppercase">
-                    Height
-                  </Text>
-                  {getValidHeights().map((height) => (
-                    <MenuItem 
-                      key={height} 
-                      onClick={() => onHeightChange(widget.id, height)}
-                      bg={widget.height === height ? 'green.50' : 'transparent'}
-                      color={widget.height === height ? 'green.600' : 'inherit'}
-                    >
-                      {height.charAt(0).toUpperCase() + height.slice(1)} ({heightConfig[height].minH})
-                    </MenuItem>
-                  ))}
-                </MenuList>
-              </Menu>
-              <IconButton
-                icon={<FiX size={16} />}
-                size="sm"
-                variant="ghost"
-                colorScheme="red"
-                aria-label="Remove widget"
-                onClick={() => onRemove(widget.id)}
-              />
+              </EditableWrapper>
             </HStack>
           </Flex>
         </CardHeader>

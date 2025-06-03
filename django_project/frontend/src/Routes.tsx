@@ -15,8 +15,8 @@ const UploadedResourcesPage  = React.lazy(() => import("./pages/UploadedResource
 const SupportPage = React.lazy(() => import("./pages/Support"));
 import AboutPage from "./pages/About";
 import ResourcesPage from "./pages/Resources";
-const DashboardPage = React.lazy(() => import("./pages/Dashboard"));
-const DynamicDashboardPage = React.lazy(() => import("./pages/Dashboard/DynamicDashboard"));
+const DashboardListPage = React.lazy(() => import("./pages/Dashboard"));
+const DashboardDetailPage = React.lazy(() => import("./pages/Dashboard/DashboardDetailPage"));
 const MapPage  = React.lazy(() => import("./pages/Map"));
 const LearnMorePage  = React.lazy(() => import("./pages/About/LearnMore"));
 const EarthRangerEventsPage = React.lazy(() => import("./pages/EarthrangerEvents"));
@@ -28,7 +28,32 @@ const ProjectRoutes = () => {
     { path: "*", element: <NotFound /> },
     { path: "/about", element: <AboutPage /> },
     { path: "/resources", element: <ResourcesPage /> },
-    { path: "/dashboard", element: <DynamicDashboardPage /> },
+    { 
+      path: "/dashboard",
+      children: [
+        {
+          index: true,
+          element: <DashboardListPage allDashboards={true} />,
+        },
+        {
+          path: ":uuid",
+          element: <DashboardDetailPage readOnly={true} />,
+        }
+      ]
+    },
+    { 
+      path: "/my-dashboard",
+      children: [
+        {
+          index: true,
+          element: <DashboardListPage allDashboards={false} />,
+        },
+        {
+          path: ":uuid",
+          element: <DashboardDetailPage readOnly={false} />,
+        }
+      ]
+    },
     { path: "/learn-more", element: <LearnMorePage /> },
     // Use PrivateRoute for protected routes
     {

@@ -433,7 +433,7 @@ class DashboardDetailView(APIView):
         )
         dashboard.updated_at = timezone.now()
         dashboard.save()
-    
+
         # iterate widgets
         ids = []
         widgets = request.data.get("widgets", [])

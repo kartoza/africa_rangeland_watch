@@ -130,7 +130,12 @@ class UserAnalysisResultsViewSet(viewsets.ModelViewSet):
         total_count = queryset.count()
         total_pages = math.ceil(total_count / int(limit))
         if int(page) < 1 or int(page) > total_pages:
-            raise Http404("Page not found")
+            return Response({
+                'results': [],
+                'count': 0,
+                'total_pages': 0,
+                'current_page': int(page)
+            })
         if total_count == 0:
             return Response({
                 'results': [],

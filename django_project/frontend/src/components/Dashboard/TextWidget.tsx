@@ -39,6 +39,7 @@ const TextWidget: React.FC<{
 
   // Simple markdown-like text rendering
   const renderText = (text: string) => {
+    if (!text) return <Text fontSize="sm" color="gray.500">No content provided.</Text>;
     return text.split('\n').map((line, index) => {
       // Handle headers
       if (line.startsWith('## ')) {

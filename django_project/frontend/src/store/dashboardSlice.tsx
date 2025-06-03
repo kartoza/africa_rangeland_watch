@@ -20,6 +20,7 @@ export interface DashboardData {
   privacy_type: "public" | "private" | "organisation" | "restricted";
   created_at?: string;
   updated_at?: string;
+  owner_name?: string; // Added for owner name
 }
 
 export interface FilterParams {
@@ -203,7 +204,7 @@ const dashboardSlice = createSlice({
     owners: [],
     loading: false,
     error: null as string | null,
-    dashboardCreated: false,
+    dashboardCreated: null as string | null,
     dashboardUpdated: false,
     currentDashboard: null as DashboardItem | null,
   },
@@ -212,7 +213,7 @@ const dashboardSlice = createSlice({
       state.dashboardUpdated = false;
     },
     clearDashboardCreated: (state) => {
-      state.dashboardCreated = false;
+      state.dashboardCreated = null;
     },
   },
   extraReducers: (builder) => {
@@ -235,16 +236,16 @@ const dashboardSlice = createSlice({
       .addCase(createDashboard.pending, (state) => {
         state.loading = true;
         state.error = null;
-        state.dashboardCreated = false;
+        state.dashboardCreated = null;
       })
       .addCase(createDashboard.fulfilled, (state, action) => {
         state.loading = false;
-        state.dashboardCreated = true;
+        state.dashboardCreated = action.payload.dashboard_id;
       })
       .addCase(createDashboard.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
-        state.dashboardCreated = false;
+        state.dashboardCreated = null;
       })
       .addCase(updateDashboard.pending, (state) => {
         state.loading = true;

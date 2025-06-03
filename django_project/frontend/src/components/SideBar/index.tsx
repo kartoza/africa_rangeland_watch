@@ -128,7 +128,7 @@ export default function Sidebar(props: Props) {
           >
             Organisation Information
           </MenuItem>
-          <MenuItem onClick={() => navigate("/dashboard")}>
+          <MenuItem onClick={() => navigate("/my-dashboard")}>
             My Dashboard
           </MenuItem>
           <MenuItem

@@ -48,9 +48,13 @@ import {
 import SortableWidgetItem from './SortableWidgetItem';
 import { Item } from '../../store/userAnalysisSearchSlice';
 import ItemSelector from './ItemSelector';
+import EditableWrapper from '../EditableWrapper';
 
 // Main Dashboard Component
-const DynamicDashboard: React.FC = () => {
+const DynamicDashboard: React.FC<{
+  uuid?: string;
+  isEditable?: boolean;
+}> = ({uuid, isEditable}) => {
   const itemSelectorRef = useRef(null);
   const [widgets, setWidgets] = useState<Widget[]>([]);
   const dispatch = useDispatch<AppDispatch>();
@@ -61,9 +65,6 @@ const DynamicDashboard: React.FC = () => {
   const toast = useToast();
   const currentDashboard = useSelector(
     (state: RootState) => state.dashboard.currentDashboard
-  );
-  const saveDashboardError = useSelector(
-    (state: RootState) => state.dashboard.error
   );
   const dashboardLoading = useSelector(
     (state: RootState) => state.dashboard.loading
@@ -88,7 +89,6 @@ const DynamicDashboard: React.FC = () => {
 
   // Load widgets data
   React.useEffect(() => {
-    let uuid = 'f107fa2d-f951-43d0-be54-f3f12cdba32b';
     dispatch(fetchDashboardByUuid(uuid))
   }, []);
 
@@ -129,6 +129,10 @@ const DynamicDashboard: React.FC = () => {
         status: 'warning',
         duration: 3000,
         isClosable: true,
+        position: "top-right",
+        containerStyle: {
+          color: "white",
+        },
       });
       return;
     }
@@ -244,6 +248,11 @@ const DynamicDashboard: React.FC = () => {
       status: 'success',
       duration: 2000,
       isClosable: true,
+      position: "top-right",
+      containerStyle: {
+        backgroundColor: "#00634b",
+        color: "white",
+      },
     });
 
     // Scroll to the new widget after a brief delay
@@ -278,6 +287,11 @@ const DynamicDashboard: React.FC = () => {
       status: 'success',
       duration: 2000,
       isClosable: true,
+      position: "top-right",
+      containerStyle: {
+        backgroundColor: "#00634b",
+        color: "white",
+      },
     });
     // Scroll to the new widget after a brief delay
     setTimeout(() => {
@@ -297,6 +311,10 @@ const DynamicDashboard: React.FC = () => {
       status: 'info',
       duration: 2000,
       isClosable: true,
+      position: "top-right",
+      containerStyle: {
+        color: "white",
+      },
     });
   };
 
@@ -380,6 +398,10 @@ const DynamicDashboard: React.FC = () => {
         status: 'error',
         duration: 3000,
         isClosable: true,
+        position: "top-right",
+        containerStyle: {
+          color: "white",
+        },
       });
       return;
     }
@@ -403,13 +425,6 @@ const DynamicDashboard: React.FC = () => {
     setDashboardTitle(config.title || 'Dashboard');
     setIsEditingDashboardTitle(false);
     setEditDashboardTitle(config.title || 'Dynamic Dashboard');
-    toast({
-      title: 'Configuration Loaded',
-      description: 'Dashboard configuration has been successfully loaded.',
-      status: 'success',
-      duration: 3000,
-      isClosable: true,
-    });
   };
 
   // Save configuration function
@@ -437,7 +452,6 @@ const DynamicDashboard: React.FC = () => {
       }
     };
 
-    let uuid = 'f107fa2d-f951-43d0-be54-f3f12cdba32b';
     const resultAction = await dispatch(saveDashboardByUuid({uuid, data: config}));
 
     if (saveDashboardByUuid.fulfilled.match(resultAction)) {
@@ -447,6 +461,11 @@ const DynamicDashboard: React.FC = () => {
           status: 'success',
           duration: 3000,
           isClosable: true,
+          position: "top-right",
+          containerStyle: {
+            backgroundColor: "#00634b",
+            color: "white",
+          },
         });
     }
 
@@ -513,54 +532,58 @@ const DynamicDashboard: React.FC = () => {
             ) : (
               <HStack spacing={2}>
                 <Heading size="lg" color="black">{dashboardTitle}</Heading>
-                <IconButton
-                  icon={<FiEdit2 size={16} />}
-                  size="sm"
-                  variant="ghost"
-                  aria-label="Edit dashboard title"
-                  onClick={() => setIsEditingDashboardTitle(true)}
-                  opacity={0.6}
-                  _hover={{ opacity: 1 }}
-                />
+                <EditableWrapper isEditable={isEditable}>
+                  <IconButton
+                    icon={<FiEdit2 size={16} />}
+                    size="sm"
+                    variant="ghost"
+                    aria-label="Edit dashboard title"
+                    onClick={() => setIsEditingDashboardTitle(true)}
+                    opacity={0.6}
+                    _hover={{ opacity: 1 }}
+                  />
+                </EditableWrapper>                
               </HStack>
             )}
           </VStack>
           <HStack spacing={3}>
-            <Button
-              size="sm"
-              leftIcon={<FiSave size={16} />}
-              variant="outline"
-              colorScheme="green"
-              onClick={saveConfiguration}
-              isLoading={dashboardLoading}
-            >Save Dashboard</Button>
-            <Menu>
-              <MenuButton
-                as={Button}
-                leftIcon={<FiPlus size={16} />}
+            <EditableWrapper isEditable={isEditable}>
+              <Button
                 size="sm"
+                leftIcon={<FiSave size={16} />}
                 variant="outline"
                 colorScheme="green"
-              >
-                Add Widget
-              </MenuButton>
-              <MenuList>
-                <MenuItem onClick={() => itemSelectorRef.current?.open()}>
-                  From Analysis Result
-                </MenuItem>
-                <MenuItem onClick={addTextWidget}>
-                  Add Text Widget
-                </MenuItem>
-              </MenuList>
-            </Menu>
-            <ItemSelector
-              onItemSelect={(item: Item) => {
-                addWidget(item);
-              }}
-              title="Choose an Analysis Result"
-              placeholder="Select an analysis result to be added as a widget"
-              ref={itemSelectorRef}
-            />
+                onClick={saveConfiguration}
+                isLoading={dashboardLoading}
+              >Save Dashboard</Button>
+              <Menu>
+                <MenuButton
+                  as={Button}
+                  leftIcon={<FiPlus size={16} />}
+                  size="sm"
+                  variant="outline"
+                  colorScheme="green"
+                >
+                  Add Widget
+                </MenuButton>
+                <MenuList>
+                  <MenuItem onClick={() => itemSelectorRef.current?.open()}>
+                    From Analysis Result
+                  </MenuItem>
+                  <MenuItem onClick={addTextWidget}>
+                    Add Text Widget
+                  </MenuItem>
+                </MenuList>
+              </Menu>
+              <ItemSelector
+                onItemSelect={(item: Item) => {
+                  addWidget(item);
+                }}
+                title="Choose an Analysis Result"
+                placeholder="Select an analysis result to be added as a widget"
+                ref={itemSelectorRef}
+              />
+            </EditableWrapper>
           </HStack>
         </Flex>
       </Box>
@@ -573,7 +596,7 @@ const DynamicDashboard: React.FC = () => {
             collisionDetection={closestCenter}
             onDragEnd={handleDragEnd}
           >
-            <SortableContext items={widgets.map(w => w.id)} strategy={rectSortingStrategy}>
+            <SortableContext items={widgets.map(w => w.id)} strategy={rectSortingStrategy} disabled={!isEditable}>
               <Grid templateColumns="repeat(4, 1fr)" gap={4} w="full">
                 {widgets.map((widget) => (
                   <SortableWidgetItem
@@ -584,6 +607,7 @@ const DynamicDashboard: React.FC = () => {
                     onHeightChange={changeHeightWidget}
                     onContentChange={changeContentWidget}
                     onTitleChange={changeTitleWidget}
+                    isEditable={isEditable}
                   />
                 ))}
               </Grid>

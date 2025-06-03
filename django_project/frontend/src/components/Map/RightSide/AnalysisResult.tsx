@@ -290,6 +290,7 @@ export function SpatialBarChart({ analysis }: Props) {
 
   const options:any = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: {
         position: "top",
@@ -322,7 +323,7 @@ export function SpatialBarChart({ analysis }: Props) {
     }
   };
 
-  return <Box>
+  return <Box height={"100%"}>
     <Bar options={options} data={chartData} />
   </Box>
 }

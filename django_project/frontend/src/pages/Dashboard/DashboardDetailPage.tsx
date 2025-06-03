@@ -1,4 +1,5 @@
 import React from "react";
+import { useParams } from 'react-router-dom';
 import {
   Box
 } from "@chakra-ui/react";
@@ -8,7 +9,13 @@ import Footer from "../../components/Footer";
 import DynamicDashboard from "../../components/Dashboard";
 
 
-const DynamicDashboardPage: React.FC = () => {
+interface DashboardDetailProps {
+  readOnly: boolean;
+}
+
+const DashboardDetailPage: React.FC<DashboardDetailProps> = ({readOnly}) => {
+    const { uuid } = useParams();
+
     return (
         <>
         <Box width="100%" minHeight={{base: "auto", md:"80vh"}}>
@@ -20,7 +27,7 @@ const DynamicDashboardPage: React.FC = () => {
             <Header />
 
             {/* Dashboard Component */}
-            <DynamicDashboard />
+            <DynamicDashboard uuid={uuid} isEditable={!readOnly} />
 
         </Box>
         <Footer />
@@ -30,4 +37,4 @@ const DynamicDashboardPage: React.FC = () => {
 };
 
 
-export default DynamicDashboardPage;
+export default DashboardDetailPage;
