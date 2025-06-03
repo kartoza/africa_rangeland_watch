@@ -100,8 +100,8 @@ const DashboardListPage: React.FC<DashboardListProps> = ({allDashboards}) => {
   }
 
   const onDashboardCreated = (uuid: string) => {
+    setCreateDashboard(false);
     if (uuid) {
-      setCreateDashboard(false);
       navigate(`/my-dashboard/${uuid}`);
     }
   }

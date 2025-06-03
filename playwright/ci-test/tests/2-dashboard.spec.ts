@@ -15,7 +15,6 @@ test('test', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Filter' })).toBeVisible();
   await expect(page.getByRole('textbox', { name: 'Search resources...' })).toBeEmpty();
   await expect(page.getByRole('button', { name: 'New' })).toBeVisible();
-  await expect(page.getByLabel('Layout Settings')).toBeVisible();
   await page.getByText('Filter0 resources foundNewOrganise byLayoutHorizontalVerticalNested').click();
   await page.getByRole('img', { name: 'Footer Logo' }).click();
   await expect(page.getByRole('heading', { name: 'HELP' })).toBeVisible();

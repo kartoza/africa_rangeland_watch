@@ -151,6 +151,18 @@ import { AppDispatch, RootState } from "../store"
           <ModalFooter>
             <Button
               colorScheme="green"
+              variant="outline"
+              mr={3}
+              onClick={() => onClose(null)}
+              width="auto"
+              borderRadius="0px"
+              h={10}
+              _hover={{ backgroundColor: "light_green.400" }}
+            >
+              Cancel
+            </Button>
+            <Button
+              colorScheme="green"
               variant="solid"
               backgroundColor="dark_green.800"
               _hover={{ backgroundColor: "light_green.400" }}
