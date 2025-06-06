@@ -21,11 +21,35 @@ class DeleteAnalysisTestCase(APITestCase):
         # Create test analyses
         self.analysis1 = UserAnalysisResults.objects.create(
             created_by=self.user,
-            analysis_results={"data": "test1"}
+            analysis_results={
+                "data": {
+                    "analysisType": "Spatial",
+                    "landscape": "Test Landscape",
+                    "variable": "NDVI",
+                    "temporalResolution": "",
+                    "period": {
+                        "year": 2021,
+                        "month": 1,
+                        "quarter": 1
+                    }
+                }
+            }
         )
         self.analysis2 = UserAnalysisResults.objects.create(
             created_by=self.user,
-            analysis_results={"data": "test2"}
+            analysis_results={
+                "data": {
+                    "analysisType": "Temporal",
+                    "landscape": "Test Landscape",
+                    "variable": "EVI",
+                    "temporalResolution": "Monthly",
+                    "period": {
+                        "year": 2021,
+                        "month": 1,
+                        "quarter": 1
+                    }
+                }
+            }
         )
 
         # Create dashboards
@@ -70,7 +94,21 @@ class DeleteAnalysisTestCase(APITestCase):
     def test_delete_analysis_not_associated_with_any_dashboard(self):
         # Create an analysis that is not linked to any dashboard
         independent_analysis = UserAnalysisResults.objects.create(
-            created_by=self.user, analysis_results={"data": "independent"})
+            created_by=self.user,
+            analysis_results={
+                "data": {
+                    "analysisType": "Spatial",
+                    "landscape": "Test Landscape",
+                    "variable": "NDVI",
+                    "temporalResolution": "",
+                    "period": {
+                        "year": 2021,
+                        "month": 1,
+                        "quarter": 1
+                    }
+                }
+            }
+        )
 
         response = self.client.delete(
             f"/user_analysis_results/{independent_analysis.id}/")

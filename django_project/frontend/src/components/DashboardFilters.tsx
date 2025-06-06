@@ -104,7 +104,7 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({ isOpen, onClose, se
               { label: 'My Dashboards', key: 'my_dashboards', disabled: false },
               { label: 'Maps', key: 'maps', disabled: false },
             ].map((item) => (
-              <>
+              <Box key={item.key} mb="2">
                 <Checkbox
                   key={item.key}
                   mb="4"
@@ -115,7 +115,7 @@ const DashboardFilters: React.FC<DashboardFiltersProps> = ({ isOpen, onClose, se
                   {item.label}
                 </Checkbox>
                 <br />
-              </>
+              </Box>
             ))
           }
   

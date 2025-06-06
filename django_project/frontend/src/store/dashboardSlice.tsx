@@ -20,6 +20,7 @@ export interface DashboardData {
   privacy_type: "public" | "private" | "organisation" | "restricted";
   created_at?: string;
   updated_at?: string;
+  owner_name?: string; // Added for owner name
 }
 
 export interface FilterParams {
@@ -34,6 +35,76 @@ export interface FilterParams {
   datasets?: string[];
   maps?: boolean;
   owner?: string;
+}
+
+// Widget types
+export type WidgetType = 'chart' | 'table' | 'map' | 'text';
+export type GridSize = 1 | 2 | 3 | 4;
+export type WidgetHeight = 'small' | 'medium' | 'large' | 'xlarge';
+
+export interface Widget {
+  id: string;
+  type: WidgetType;
+  title: string;
+  size: GridSize;
+  height: WidgetHeight;
+  data?: any; // AnalysisResult
+  content?: string;
+  description?: string;
+  config?: any; // Additional configuration for the widget
+  analysis_result_id?: string;
+  last_updated?: string;
+  order?: number; // For sorting widgets within a dashboard
+}
+
+// Height configurations
+export const heightConfig = {
+  small: { minH: '200px', maxH: '250px', rows: 1 },
+  medium: { minH: '300px', maxH: '350px', rows: 2 },
+  large: { minH: '400px', maxH: '450px', rows: 3 },
+  xlarge: { minH: '500px', maxH: '550px', rows: 4 },
+};
+
+// Size constraints based on widget type
+export const widgetConstraints = {
+  chart: { 
+    minWidth: 2 as GridSize,
+    maxWidth: 4 as GridSize, 
+    minHeight: 'medium' as WidgetHeight,
+    maxHeight: 'xlarge' as WidgetHeight,
+    recommendedHeight: 'medium' as WidgetHeight
+  },
+  table: { 
+    minWidth: 2 as GridSize, 
+    maxWidth: 4 as GridSize, 
+    minHeight: 'medium' as WidgetHeight,
+    maxHeight: 'xlarge' as WidgetHeight,
+    recommendedHeight: 'large' as WidgetHeight
+  },
+  map: { 
+    minWidth: 2 as GridSize, 
+    maxWidth: 4 as GridSize, 
+    minHeight: 'medium' as WidgetHeight,
+    maxHeight: 'xlarge' as WidgetHeight,
+    recommendedHeight: 'large' as WidgetHeight
+  },
+  text: { 
+    minWidth: 1 as GridSize, 
+    maxWidth: 4 as GridSize, 
+    minHeight: 'small' as WidgetHeight,
+    maxHeight: 'xlarge' as WidgetHeight,
+    recommendedHeight: 'medium' as WidgetHeight
+  },
+};
+
+
+export interface DashboardItem {
+  uuid: string;
+  title: string;
+  last_updated: string;
+  metadata: any;
+  version: string;
+  widgets: Widget[];
 }
 
 // Fetch dashboards
@@ -102,6 +173,30 @@ export const deleteDashboard = createAsyncThunk(
   }
 );
 
+// Fetch dashboard by UUID
+export const fetchDashboardByUuid = createAsyncThunk(
+  "dashboard/fetchDashboardByUuid",
+  async (uuid: string, { rejectWithValue }) => {
+    try {
+      const response = await axios.get(`/dashboards/${uuid}/detail/`);
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data || "Error fetching dashboard by UUID");
+    }
+  }
+);
+
+export const saveDashboardByUuid = createAsyncThunk(
+  "dashboard/saveDashboardByUuid",
+  async ({ uuid, data }: { uuid: string; data: any }, { rejectWithValue }) => {
+  try {
+    const response = await axios.post(`/dashboards/${uuid}/detail/`, data);
+    return response.data;
+  } catch (error) {
+    return rejectWithValue(error.response?.data || "Error saving dashboard by UUID");
+  }
+});
+
 const dashboardSlice = createSlice({
   name: 'dashboard',
   initialState: {
@@ -109,15 +204,16 @@ const dashboardSlice = createSlice({
     owners: [],
     loading: false,
     error: null as string | null,
-    dashboardCreated: false,
+    dashboardCreated: null as string | null,
     dashboardUpdated: false,
+    currentDashboard: null as DashboardItem | null,
   },
   reducers: {
     resetDashboardUpdated: (state) => {
       state.dashboardUpdated = false;
     },
     clearDashboardCreated: (state) => {
-      state.dashboardCreated = false;
+      state.dashboardCreated = null;
     },
   },
   extraReducers: (builder) => {
@@ -140,16 +236,16 @@ const dashboardSlice = createSlice({
       .addCase(createDashboard.pending, (state) => {
         state.loading = true;
         state.error = null;
-        state.dashboardCreated = false;
+        state.dashboardCreated = null;
       })
       .addCase(createDashboard.fulfilled, (state, action) => {
         state.loading = false;
-        state.dashboardCreated = true;
+        state.dashboardCreated = action.payload.dashboard_id;
       })
       .addCase(createDashboard.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
-        state.dashboardCreated = false;
+        state.dashboardCreated = null;
       })
       .addCase(updateDashboard.pending, (state) => {
         state.loading = true;
@@ -197,6 +293,31 @@ const dashboardSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
         state.dashboardUpdated = false;
+      })
+      .addCase(fetchDashboardByUuid.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+        state.currentDashboard = null;
+      })
+      .addCase(fetchDashboardByUuid.fulfilled, (state, action) => {
+        state.loading = false;
+        state.currentDashboard = action.payload;
+      })
+      .addCase(fetchDashboardByUuid.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
+        state.currentDashboard = null;
+      })
+      .addCase(saveDashboardByUuid.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(saveDashboardByUuid.fulfilled, (state, action) => {
+        state.loading = false;
+      })
+      .addCase(saveDashboardByUuid.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload as string;
       });
   },
 });

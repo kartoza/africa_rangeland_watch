@@ -32,7 +32,6 @@ import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "../../store";
 import { deleteAnalysis, fetchAnalysis } from "../../store/userAnalysisSlice";
 import "maplibre-gl/dist/maplibre-gl.css"; 
-import CreateDashboardModal from "../../components/CreateDashboard";
 import { format } from 'date-fns';
 import { IoCloseSharp } from "react-icons/io5";
 import { ChevronUpIcon } from "@chakra-ui/icons";
@@ -63,7 +62,6 @@ export default function AnalysisResults() {
   const [selectedAnalysis, setSelectedAnalysis] = useState([]);
   const [viewAnalysis, setViewAnalysis] = useState(null);
   const { isOpen, onOpen, onClose } = useDisclosure();
-  const [isCreateDashboardOpen, setCreateDashboard] = useState(false);
   const navigate = useNavigate()
 
   const dispatch = useDispatch<AppDispatch>();
@@ -169,41 +167,6 @@ export default function AnalysisResults() {
     });
   };
 
-  const handleCreateDashboardClick = () => {
-
-     // Filter analysis data based on selected analysis IDs
-    const matchedAnalysis = analysisData.filter((item: { id: any; }) => selectedAnalysis.includes(item.id));
-
-    // Extract analysis types from the matched analysis objects
-    const analysisTypes = matchedAnalysis.map((item: { analysis_results: { data: { analysisType: any; }; }; }) => item.analysis_results.data?.analysisType);
-
-    // Check if all analysis types are the same
-    const allSameType = analysisTypes.every((type: any) => type === analysisTypes[0]);
-
-    if (!allSameType) {
-      toast({
-        title: "Cannot create dashboard.",
-        description: `Can only create a dashboard from analysis results with the same analysis type! Current selected results have: ${analysisTypes.join(", ")}`,
-        status: "warning",
-        duration: 5000,
-        isClosable: true,
-        position: "top-right",
-        containerStyle: {
-          backgroundColor: "#00634b",
-          color: "white",
-        },
-      });
-      return;
-    }
-    // Open the Create Dashboard modal
-    setCreateDashboard(true);
-  };
-  
-  function handleSave(): void {
-    throw new Error("Function not implemented.");
-  }
-
-
   const landscapeOptions = Array.from(
     new Set(
       analysisData
@@ -286,19 +249,6 @@ export default function AnalysisResults() {
                 mb={{ base: 4, md: 0 }}
                 flexDirection={{ base: "column", md: "row" }}
               >
-                <Button
-                  colorScheme="green"
-                  variant="outline"
-                  borderColor="dark_green.800"
-                  textColor="dark_green.800"
-                  w="auto"
-                  borderRadius="0px"
-                  h={10}
-                  isDisabled={selectedAnalysis?.length === 0}
-                  onClick={handleCreateDashboardClick}
-                >
-                  Create Dashboard
-                </Button>
                 <Button
                   colorScheme="green"
                   variant="outline"
@@ -520,13 +470,6 @@ export default function AnalysisResults() {
               <Pagination currentPage={currentPage} totalPages={totalPages} handlePageChange={handlePageChange} />
             )}
             </Box>
-
-            <CreateDashboardModal
-              onClose={() => setCreateDashboard(false)}
-              selectedAnalysis={selectedAnalysis}
-              onSave={handleSave}
-              isOpen={isCreateDashboardOpen}
-            />
 
             {/* Right Sidebar */}
             <AnalysisSideBar isOpen={isOpen} onClose={onClose} selectedAnalysis={viewAnalysis} />

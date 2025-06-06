@@ -3,6 +3,7 @@ import uuid
 
 import ee
 import calendar
+import datetime
 from typing import Tuple
 from django.utils import timezone
 from django.contrib.auth.models import User
@@ -10,6 +11,10 @@ from django.contrib.gis.db import models
 from django.contrib.gis.geos import GEOSGeometry
 from django.db.models.signals import pre_delete
 from django.dispatch import receiver
+from django.conf import settings
+from django.urls import reverse
+from cloud_native_gis.models import Layer, LayerType
+
 
 from core.models import TaskStatus
 from alerts.models import Indicator
@@ -420,6 +425,8 @@ def analysisrasteroutput_pre_delete(
 
 
 class UserAnalysisResults(models.Model):
+    """Model to store user analysis results."""
+
     created_by = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
@@ -446,6 +453,115 @@ class UserAnalysisResults(models.Model):
         AnalysisRasterOutput,
         related_name="analysis_results"
     )
+
+    name = models.CharField(
+        null=True,
+        blank=True,
+        max_length=255,
+        help_text="Name of the analysis result."
+    )
+    description = models.TextField(
+        null=True,
+        blank=True,
+        help_text="Description of the analysis result."
+    )
+
+    @property
+    def rasters(self):
+        results = []
+        for item in self.raster_outputs.all():
+            result = {
+                "id": item.uuid,
+                "name": item.name,
+                "size": item.size,
+                "status": item.status,
+                "analysis": item.analysis,
+                "url": None,
+                "bounds": None
+            }
+            layer = Layer.objects.filter(
+                unique_id=item.uuid,
+                layer_type=LayerType.RASTER_TILE
+            ).first()
+            if layer and item.status == 'COMPLETED':
+                result['url'] = self._make_cog_url(layer.unique_id)
+                metadata = layer.metadata or {}
+                result['bounds'] = metadata.get('bounds', None)
+
+            results.append(result)
+        return results
+
+    def _make_cog_url(self, layer_uuid: str):
+        base_url = settings.DJANGO_BACKEND_URL
+        if base_url.endswith('/'):
+            base_url = base_url[:-1]
+        return (
+            f'cog://{base_url}' +
+            reverse('serve-cog', kwargs={
+                'layer_uuid': layer_uuid,
+            })
+        )
+
+    def _get_description(self, data):
+        analysis_type = data.get('analysisType', '')
+        if analysis_type == 'Baseline':
+            start_date = data.get('baselineStartDate', '')
+            end_date = data.get('baselineEndDate', '')
+            if start_date and end_date:
+                start_date = datetime.date.fromisoformat(start_date)
+                end_date = datetime.date.fromisoformat(end_date)
+                return (
+                    f"Baseline from {start_date.strftime('%d/%m/%Y')} to "
+                    f"{end_date.strftime('%d/%m/%Y')}"
+                )
+            return 'Baseline from 2015 to 2020'
+        elif analysis_type == 'Temporal':
+            temporal_res = data.get('temporalResolution', '')
+            period = data.get('period', {})
+            year = period.get('year', '')
+            month = period.get('month', '')
+            quarter = period.get('quarter', '')
+            if temporal_res == 'Quarterly':
+                return (
+                    f"Analysis for reference period {year} Q{quarter} "
+                    f"for {data.get('variable', '')}"
+                )
+            elif temporal_res == 'Monthly':
+                month_name = calendar.month_name[int(month)]
+                return (
+                    f"Analysis for reference period {year} {month_name} "
+                    f"for {data.get('variable', '')}"
+                )
+            elif temporal_res == 'Annual':
+                return (
+                    f"Analysis for reference period {year} "
+                    f"for {data.get('variable', '')}"
+                )
+        elif analysis_type == 'Spatial':
+            variable = data.get('variable', '')
+            return (
+                f'Relative % difference in {variable} between reference area '
+                'and selected camp(s).'
+            )
+        return ' - '
+
+    def _get_name(self, data):
+        """Generate name for the analysis result."""
+        return (
+            f"{data.get('analysisType', '')} Analysis of "
+            f"{data.get('landscape', '')} for {data.get('variable', '')}"
+        )
+
+    def save(self, *args, **kwargs):
+        if not self.pk:
+            data = (
+                self.analysis_results.get('data', {}) if
+                self.analysis_results else {}
+            )
+            # set name and description
+            self.name = self.name or self._get_name(data)
+            self.description = self.description or self._get_description(data)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         created_by = self.created_by.username if self.created_by else 'Unknown'

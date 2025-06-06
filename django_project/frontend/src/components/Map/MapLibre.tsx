@@ -121,7 +121,7 @@ export const ReusableMapLibre = forwardRef(
       baseMapRef,
       null,
       props.initialBound,
-      false,
+      true,
       1,
       RASTER_LAYER_PADDING
     );

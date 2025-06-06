@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Dashboard
+from .models import Dashboard, DashboardWidget
 
 
 @admin.register(Dashboard)
@@ -52,3 +52,18 @@ class DashboardAdmin(admin.ModelAdmin):
         )
 
     linked_analysis_results.short_description = "Linked Analysis Results"
+
+
+@admin.register(DashboardWidget)
+class DashboardWidgetAdmin(admin.ModelAdmin):
+    """Admin for DashboardWidget model."""
+    list_display = (
+        'id',
+        'dashboard',
+        'widget_type',
+        'title',
+        'order',
+        'created_at'
+    )
+    list_filter = ('widget_type', 'dashboard')
+    search_fields = ('dashboard__title', 'title')
