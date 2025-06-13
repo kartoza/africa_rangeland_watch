@@ -1,4 +1,5 @@
 from rest_framework import serializers
+
 from .models import UserAnalysisResults
 
 
@@ -16,7 +17,9 @@ class UserAnalysisResultsSerializer(serializers.ModelSerializer):
             'created_at',
             'source',
             'dashboards',
-            'raster_output_list'
+            'raster_output_list',
+            'name',
+            'description'
         ]
 
     def get_created_by(self, obj):
@@ -35,11 +38,4 @@ class UserAnalysisResultsSerializer(serializers.ModelSerializer):
         return [{"id": d.uuid, "title": d.title} for d in obj.dashboards.all()]
 
     def get_raster_output_list(self, obj):
-        return [
-            {
-                "id": item.uuid,
-                "name": item.name,
-                "size": item.size,
-                "status": item.status
-            } for item in obj.raster_outputs.all()
-        ]
+        return obj.rasters

@@ -1,17 +1,20 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { createContext, useContext, useState, useRef } from 'react';
 import { Map } from 'maplibre-gl';
 
 interface MapContextProps {
-    map: Map | null;
-    setMap: React.Dispatch<React.SetStateAction<Map | null>>;
+    mapRef: React.MutableRefObject<maplibregl.Map | null>;
+    isMapLoaded: boolean;
+    setIsMapLoaded: React.Dispatch<React.SetStateAction<boolean>>;
 }
 
 const MapContext = createContext<MapContextProps | undefined>(undefined);
 
 export const MapProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-    const [map, setMap] = useState<Map | null>(null);
+    const mapRef = useRef<Map | null>(null);
+    const [isMapLoaded, setIsMapLoaded] = useState(false);
+
     return (
-        <MapContext.Provider value={{ map, setMap }}>
+        <MapContext.Provider value={{ mapRef, isMapLoaded, setIsMapLoaded }}>
             {children}
         </MapContext.Provider>
     );

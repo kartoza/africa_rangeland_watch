@@ -1,15 +1,20 @@
-from dashboard.models import Dashboard
+import math
 from rest_framework import viewsets
+from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.http import Http404, StreamingHttpResponse
-from .models import UserAnalysisResults
-from .serializer import UserAnalysisResultsSerializer
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
 
+from dashboard.models import Dashboard
+from .models import UserAnalysisResults
+from .serializer import UserAnalysisResultsSerializer
 from analysis.models import AnalysisRasterOutput
-from analysis.tasks import generate_temporal_analysis_raster_output
+from analysis.tasks import (
+    generate_temporal_analysis_raster_output,
+    store_spatial_analysis_raster_output
+)
 from analysis.utils import get_gdrive_file
 
 
@@ -73,6 +78,34 @@ class UserAnalysisResultsViewSet(viewsets.ModelViewSet):
                 for new_output in new_output_list:
                     generate_temporal_analysis_raster_output\
                         .delay(new_output.uuid)
+            elif analysis_data.get('analysisType', '') == 'Spatial':
+                result_obj = UserAnalysisResults.objects.get(
+                    id=serializer.data.get('id')
+                )
+                raster_dict = (
+                    AnalysisRasterOutput.from_spatial_analysis_input(
+                        analysis_data
+                    )
+                )
+                should_generate = False
+                # check if output already exists
+                output_obj = AnalysisRasterOutput.objects.filter(
+                    analysis=raster_dict
+                ).last()
+                if output_obj is None:
+                    output_obj = AnalysisRasterOutput.objects.create(
+                        name=AnalysisRasterOutput.generate_name(
+                            raster_dict
+                        ),
+                        status='PENDING',
+                        analysis=raster_dict
+                    )
+                    should_generate = True
+                result_obj.raster_outputs.set([output_obj])
+                if should_generate:
+                    store_spatial_analysis_raster_output.delay(
+                        output_obj.uuid
+                    )
 
             return Response(serializer.data, status=201)
         return Response(serializer.errors, status=400)
@@ -107,6 +140,51 @@ class UserAnalysisResultsViewSet(viewsets.ModelViewSet):
                 f'attachment; filename="{raster_output.name}"'
             )
             return response
+
+    @action(detail=False, methods=['get'])
+    def fetch(self, request):
+        """Fetch analysis results with pagination."""
+        page = request.GET.get('page', 1)
+        limit = request.GET.get('limit', 10)
+        search = request.GET.get('search', '')
+        queryset = UserAnalysisResults.objects.filter(
+            created_by=request.user
+        )
+        if search:
+            queryset = queryset.filter(
+                Q(name__icontains=search) |
+                Q(description__icontains=search)
+            )
+        queryset = queryset.order_by('-created_at')
+
+        # Pagination logic
+        total_count = queryset.count()
+        total_pages = math.ceil(total_count / int(limit))
+        if int(page) < 1 or int(page) > total_pages:
+            return Response({
+                'results': [],
+                'count': 0,
+                'total_pages': 0,
+                'current_page': int(page)
+            })
+        if total_count == 0:
+            return Response({
+                'results': [],
+                'count': 0,
+                'total_pages': 0,
+                'current_page': int(page)
+            })
+
+        start = (int(page) - 1) * int(limit)
+        end = start + int(limit)
+        paginated_results = queryset[start:end]
+        serializer = self.get_serializer(paginated_results, many=True)
+        return Response({
+            'results': serializer.data,
+            'count': total_count,
+            'total_pages': total_pages,
+            'current_page': int(page)
+        })
 
     def destroy(self, request, *args, **kwargs):
         instance = self.get_object()

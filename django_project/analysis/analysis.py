@@ -1551,13 +1551,25 @@ def export_image_to_drive(
     None
     """
     # Configure the export task
+    # Reproject the image to EPSG:3857
+    reprojected = image.reproject(crs='EPSG:3857', scale=scale)
+    # Clip and mask the image using the geometry of selected features
+    masked = reprojected.clip(region)
+    # Unmask the image with a no-data value
     no_data_val = -9999
+    final_image = masked.unmask(
+        value=no_data_val, sameFootprint=True
+    )
     task = ee.batch.Export.image.toDrive(
-        image=image.visualize(**vis_params) if vis_params else image,
+        image=(
+            final_image.visualize(**vis_params) if vis_params else
+            final_image
+        ),
         description=description,
         folder=folder,
         fileNamePrefix=file_name_prefix,
         scale=scale,
+        crs='EPSG:3857',
         region=region,
         maxPixels=max_pixels,
         formatOptions={

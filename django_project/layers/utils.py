@@ -57,6 +57,13 @@ def upload_file(url, file_path, field_name="file", auth_header=None):
         # Send the POST request with the file
         response = requests.post(url, files=files, headers=headers)
 
+    if response.status_code != 200:
+        # log error response
+        logger.error(
+            "File upload failed: %s → %s",
+            response.status_code, response.text
+        )
+
     return response.status_code == 200
 
 

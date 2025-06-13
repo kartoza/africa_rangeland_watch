@@ -25,10 +25,6 @@ test('test', async ({ page }) => {
   await page.getByText('resources found').click();
   await expect(page.getByRole('textbox', { name: 'Search resources...' })).toBeEmpty();
   await expect(page.getByRole('button', { name: 'New' })).toBeVisible();
-  await expect(page.getByLabel('Layout Settings')).toBeVisible();
-  await page.getByLabel('Layout Settings').click();
-  await expect(page.getByLabel('Layout Settings')).toBeVisible();
-  await page.getByLabel('Layout Settings').click();
   await page.getByRole('button', { name: 'New' }).click();
   await expect(page.locator('#app')).toContainText('Analysis Results');
   await expect(page.getByRole('button', { name: 'New Analysis' })).toBeVisible();

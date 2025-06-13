@@ -162,6 +162,7 @@ export function BarChart({ analysis }: Props) {
 
   const options:any = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: {
         position: "top",
@@ -177,7 +178,7 @@ export function BarChart({ analysis }: Props) {
     }
   };
 
-  return <Box maxWidth={400} overflowX={"auto"}>
+  return <Box height={"100%"}>
     <Bar options={options} data={chartData} />
   </Box>
 }
@@ -267,12 +268,12 @@ export function LineChart({ analysis }: Props) {
     },
   };
 
-  return <Box maxWidth={400} overflowX={"auto"}>
+  return <Box height={"100%"}>
     <Line options={options} data={chartData}/>
   </Box>
 }
 
-function SpatialBarChart({ analysis }: Props) {
+export function SpatialBarChart({ analysis }: Props) {
   const featureCollection: FeatureCollection = analysis.results;
 
   const labels: string[] = featureCollection.features.map((feature) => feature.properties['Name'])
@@ -289,6 +290,7 @@ function SpatialBarChart({ analysis }: Props) {
 
   const options:any = {
     responsive: true,
+    maintainAspectRatio: false,
     plugins: {
       legend: {
         position: "top",
@@ -321,13 +323,12 @@ function SpatialBarChart({ analysis }: Props) {
     }
   };
 
-  return <Box maxWidth={400} overflowX={"auto"}>
+  return <Box height={"100%"}>
     <Bar options={options} data={chartData} />
   </Box>
 }
 
-
-export function RenderBaseline({ analysis, decimalPlaces }: Props) {
+export function BaselineTable({ analysis, decimalPlaces }: Props) {
   const _decimalPlaces = decimalPlaces || DEFAULT_DECIMAL_PLACES;
   const excludeColumns: string[] = [
     'system:index',
@@ -335,18 +336,30 @@ export function RenderBaseline({ analysis, decimalPlaces }: Props) {
   ];
   let keys: string[] = ['Name'];
   const _keys = Object.keys(analysis.results.columns);
-  for (let i = 0; i < _keys.length; i++) {
-    const key = _keys[i];
-    if (keys.includes(key)) {
-      continue;
+  if (_keys.length === 0) {
+    // get from one of features
+    if (analysis.results.features.length > 0) {
+      const properties = analysis.results.features[0].properties;
+      for (const key in properties) {
+        if (properties.hasOwnProperty(key) && !keys.includes(key) && !excludeColumns.includes(key)) {
+          keys.push(key);
+        }
+      }
     }
-    if (excludeColumns.includes(key)) {
-      continue;
+  } else {
+    for (let i = 0; i < _keys.length; i++) {
+      const key = _keys[i];
+      if (keys.includes(key)) {
+        continue;
+      }
+      if (excludeColumns.includes(key)) {
+        continue;
+      }
+      keys.push(key);
     }
-    keys.push(key);
   }
-  return <Box id="BaselineTableContainer" maxWidth={400} overflowX={"auto"}>
-    <Table className='BaselineAnalysisResultTable' cellPadding={8}>
+
+  return <Table className='BaselineAnalysisResultTable' cellPadding={8}>
       <thead>
       <tr>
         {
@@ -373,6 +386,11 @@ export function RenderBaseline({ analysis, decimalPlaces }: Props) {
       }
       </tbody>
     </Table>
+}
+
+export function RenderBaseline({ analysis, decimalPlaces }: Props) {
+  return <Box id="BaselineTableContainer" maxWidth={400} overflowX={"auto"}>
+    <BaselineTable analysis={analysis} decimalPlaces={decimalPlaces}/>
   </Box>
 }
 

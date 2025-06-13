@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import maplibregl from "maplibre-gl";
-import { COMMUNITY_ID, EARTH_EANGER_EVENT } from "../../DataTypes";
+import { COMMUNITY_ID } from "../../DataTypes";
 import { Community, Landscape } from "../../../../store/landscapeSlice";
 import { useMap } from '../../../../MapContext';
 
@@ -24,96 +24,11 @@ let clickFunction: (ev: maplibregl.MapMouseEvent & {
 export default function AnalysisLandscapeGeometrySelector(
   { landscape, enableSelection, onSelected, featureIds }: Props
 ) {
-  const { map } = useMap();
+  const { mapRef, isMapLoaded } = useMap();
 
   useEffect(() => {
-    try {
-      if (!map) {
-        return
-      }
-      // render Earth Ranger Events
-      map.addSource(
-        EARTH_EANGER_EVENT, {
-          type: 'vector',
-          tiles: [
-            document.location.origin + '/frontend-api/earth-ranger/events/vector_tile/{z}/{x}/{y}/'
-          ]
-        }
-      );
-      map.addLayer({
-        'id': EARTH_EANGER_EVENT,
-        'type': 'circle',
-        'source': EARTH_EANGER_EVENT,
-        'source-layer': 'default',
-        'paint': {
-          'circle-radius': 15,
-          'circle-color': '#FF0000',
-          'circle-opacity': 0.8,
-          'circle-stroke-width': 2,
-          'circle-stroke-color': '#FFFFFF',
-          'circle-stroke-opacity': 1
-        }
-      });
-
-
-      // render community layer
-      map.addSource(
-        COMMUNITY_ID, {
-          type: 'vector',
-          tiles: [
-            document.location.origin + '/frontend-api/landscapes/vector_tile/{z}/{x}/{y}/'
-          ]
-        }
-      );
-      map.addLayer({
-        'id': COMMUNITY_ID,
-        'type': 'line',
-        'source': COMMUNITY_ID,
-        'source-layer': 'default',
-        'paint': {
-          'line-color': '#777777',
-          'line-width': 1
-        }
-      });
-      map.addLayer({
-        'id': COMMUNITY_ID + '-community',
-        'type': 'line',
-        'source': COMMUNITY_ID,
-        'source-layer': 'default',
-        'paint': {
-          'line-color': '#0B6623',
-          'line-width': 2
-        },
-        "filter": ["==", "landscape_id", 0]
-      });
-      map.addLayer({
-        'id': COMMUNITY_ID + '-highlight',
-        'type': 'fill',
-        'source': COMMUNITY_ID,
-        'source-layer': 'default',
-        'paint': {
-          'fill-color': '#0B6623',
-          'fill-opacity': 0.5
-        },
-        "filter": ["==", "landscape_id", 0]
-      });
-      map.addLayer({
-        'id': COMMUNITY_FILL_ID,
-        'type': 'fill',
-        'source': COMMUNITY_ID,
-        'source-layer': 'default',
-        'paint': {
-          'fill-color': '#777777',
-          'fill-opacity': 0
-        }
-      });
-    } catch (err) {
-      console.log(err)
-    }
-  }, [map])
-
-  useEffect(() => {
-    if (!map) {
+    const map = mapRef.current;
+    if (!isMapLoaded || !map) {
       return
     }
     if (typeof map.getSource(COMMUNITY_ID) === 'undefined') {
@@ -200,7 +115,7 @@ export default function AnalysisLandscapeGeometrySelector(
       map.off('mousemove', COMMUNITY_ID, hoverFunction);
     }
       
-  }, [map, landscape, featureIds, enableSelection])
+  }, [isMapLoaded, landscape, featureIds, enableSelection])
 
   return <></>
 }

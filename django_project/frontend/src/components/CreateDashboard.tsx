@@ -6,35 +6,28 @@ import {
     ModalBody,
     ModalFooter,
     Button,
-    Flex,
     Input,
     FormLabel,
     FormControl,
-    RadioGroup,
-    Radio,
-    Stack,
     Select,
-    useBreakpointValue,
     useToast,
   } from "@chakra-ui/react";
 import React, { useEffect, useState } from "react";
 import { useSelector, useDispatch } from 'react-redux';
 import { createDashboard, DashboardData, clearDashboardCreated } from "../store/dashboardSlice";
 import { AppDispatch, RootState } from "../store"
-import CONFIG from "../config";
 
 
   
   interface CreateDashboardModalProps {
     isOpen: boolean;
-    onClose: () => void;
-    onSave: () => void;
+    onClose: (dashboard_uuid: string) => void;
     selectedAnalysis: any;
   }
   
   type PrivacyType = "organisation" | "public" | "private" | "restricted";
 
-  const CreateDashboardModal: React.FC<CreateDashboardModalProps> = ({ isOpen, onClose, onSave, selectedAnalysis }) => {
+  const CreateDashboardModal: React.FC<CreateDashboardModalProps> = ({ isOpen, onClose, selectedAnalysis }) => {
     const [dashboardName, setDashboardName] = useState("");
     const [preference, setPreference] = useState("chart");
     const [chartType, setChartType] = useState("");
@@ -63,7 +56,7 @@ import CONFIG from "../config";
                 },
               });
               dispatch(clearDashboardCreated());
-              onClose();
+              onClose(dashboardCreated);
         }
       }, [dashboardCreated]);
 
@@ -96,7 +89,7 @@ import CONFIG from "../config";
     
   
     return (
-      <Modal isOpen={isOpen} onClose={onClose} isCentered>
+      <Modal isOpen={isOpen} onClose={() => onClose(null)} isCentered>
         <ModalOverlay />
         <ModalContent
           maxW={{ base: "90vw", md: "50vw" }}
@@ -120,36 +113,6 @@ import CONFIG from "../config";
                 borderColor="gray.500"
               />
             </FormControl>
-  
-            {/* Preferences */}
-            <FormControl mb={4}>
-              <FormLabel fontWeight="bold">Preferences</FormLabel>
-              <RadioGroup
-                onChange={(value) => setPreference(value)}
-                value={preference}
-              >
-                <Stack direction="row" spacing={5}>
-                  <Radio value="chart">Chart</Radio>
-                  <Radio value="map">Map</Radio>
-                </Stack>
-              </RadioGroup>
-            </FormControl>
-  
-            {/* Chart Options (Visible only if 'Chart' is selected) */}
-            {preference === "chart" && CONFIG.ENABLE_CHART_TYPE && (
-              <FormControl mb={4}>
-                <FormLabel fontWeight="bold">Chart Type</FormLabel>
-                <Select
-                  placeholder="Select Chart Type"
-                  value={chartType}
-                  onChange={(e) => setChartType(e.target.value)}
-                >
-                  <option value="line">Line Chart</option>
-                  <option value="bar">Bar Graph</option>
-                  <option value="pie">Pie Chart</option>
-                </Select>
-              </FormControl>
-            )}
   
             {/* Access Level */}
             <FormControl mb={4}>
@@ -186,6 +149,18 @@ import CONFIG from "../config";
           </ModalBody>
   
           <ModalFooter>
+            <Button
+              colorScheme="green"
+              variant="outline"
+              mr={3}
+              onClick={() => onClose(null)}
+              width="auto"
+              borderRadius="0px"
+              h={10}
+              _hover={{ backgroundColor: "light_green.400" }}
+            >
+              Cancel
+            </Button>
             <Button
               colorScheme="green"
               variant="solid"
