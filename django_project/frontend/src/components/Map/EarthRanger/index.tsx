@@ -12,8 +12,9 @@ let clickFunction: (ev: maplibregl.MapMouseEvent & {
 /** Landscape geometry selector. */
 export default function EarthRanger() {
   const { mapRef, isMapLoaded } = useMap();
-  const [popup, setPopup] = useState<maplibregl.Popup | null>(null);
-  const [popupData, setPopupData] = useState<any>(null);
+  const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const [popupOpen, setPopupOpen] = useState(false);
+  const [clickPosition, setClickPosition] = useState({ x: 0, y: 0 });
 
   useEffect(() => {
     try {
@@ -61,15 +62,8 @@ export default function EarthRanger() {
     clickFunction = (e: any) => {
       if (e.features && e.features.length > 0) {
         const feature = e.features[0];
-        console.log(feature);
         const properties = JSON.parse(feature.properties.data);
-        console.log(properties);
         
-        // Close existing popup
-        if (popup) {
-          popup.remove();
-        }
-
         // Parse the data JSON
         let eventData;
         try {
@@ -79,30 +73,25 @@ export default function EarthRanger() {
           return;
         }
 
-        // Create popup container
-        const popupContainer = document.createElement('div');
-        
-        // Create new popup
-        const newPopup = new maplibregl.Popup({
-          closeButton: false,
-          closeOnClick: false,
-          maxWidth: '600px'
-        })
-          .setLngLat(e.lngLat)
-          .setDOMContent(popupContainer)
-          .addTo(map);
-
-        setPopup(newPopup);
-        setPopupData({
-          data: eventData,
-          earthRangerUuid: properties.earth_ranger_uuid,
-          container: popupContainer
+        // Get screen coordinates for the popup
+        const canvas = map.getCanvas();
+        const rect = canvas.getBoundingClientRect();
+        setClickPosition({
+          x: e.point.x + rect.left,
+          y: e.point.y + rect.top
         });
+
+        // Set the selected event and open popup
+        setSelectedEvent({
+          data: eventData,
+          earthRangerUuid: properties.earth_ranger_uuid || properties.id
+        });
+        setPopupOpen(true);
       }
     };
     map.on('click', EARTH_EANGER_EVENT, clickFunction);
 
-    // Add hover effect for Earth Ranger events using type assertion
+    // Add hover effect for Earth Ranger events
     const handleMouseEnter = () => {
       map.getCanvas().style.cursor = 'pointer';
     };
@@ -111,44 +100,35 @@ export default function EarthRanger() {
       map.getCanvas().style.cursor = '';
     };
 
-    // Use type assertion to bypass TypeScript errors
     (map as any).on('mouseenter', EARTH_EANGER_EVENT, handleMouseEnter);
     (map as any).on('mouseleave', EARTH_EANGER_EVENT, handleMouseLeave);
 
     return () => {
       map.off('click', EARTH_EANGER_EVENT, clickFunction);
-      // Clean up mouse events with type assertion
       (map as any).off('mouseenter', EARTH_EANGER_EVENT, handleMouseEnter);
       (map as any).off('mouseleave', EARTH_EANGER_EVENT, handleMouseLeave);
-      if (popup) {
-        popup.remove();
-      }
     }
       
-  }, [isMapLoaded, popup])
+  }, [isMapLoaded])
 
   // Handle popup close
   const handlePopupClose = () => {
-    if (popup) {
-      popup.remove();
-      setPopup(null);
-      setPopupData(null);
-    }
+    setPopupOpen(false);
+    setSelectedEvent(null);
   };
 
-  // Render popup content when popupData is available
-  useEffect(() => {
-    if (popupData && popupData.container) {
-      const root = ReactDOM.createRoot(popupData.container);
-      root.render(
+  return (
+    <>
+      {/* Render popup when event is selected */}
+      {selectedEvent && (
         <EarthRangerEventPopup
-          data={popupData.data}
-          earthRangerUuid={popupData.earthRangerUuid}
+          data={selectedEvent.data}
+          earthRangerUuid={selectedEvent.earthRangerUuid}
+          isOpen={popupOpen}
           onClose={handlePopupClose}
+          position={clickPosition}
         />
-      );
-    }
-  }, [popupData]);
-
-  return <></>
+      )}
+    </>
+  )
 }

@@ -15,6 +15,21 @@ from earthranger.models import EarthRangerEvents
 from core.pagination import Pagination
 from frontend.serializers.earth_ranger import EarthRangerEventSerializer 
 
+import requests
+import base64
+from django.conf import settings
+from django.http import HttpResponse, Http404
+from django.views.decorators.cache import cache_page
+from django.utils.decorators import method_decorator
+from rest_framework.views import APIView
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
+from rest_framework import status
+import logging
+
+
+logger = logging.getLogger(__name__)
+
 
 from django.db import connection
 import math

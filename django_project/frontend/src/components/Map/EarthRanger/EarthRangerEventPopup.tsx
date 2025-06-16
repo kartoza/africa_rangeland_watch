@@ -9,8 +9,6 @@ import {
   IconButton,
   Heading,
   Divider,
-  Grid,
-  GridItem,
   Collapse,
   Button,
   Modal,
@@ -19,6 +17,7 @@ import {
   ModalHeader,
   ModalBody,
   ModalCloseButton,
+  Portal,
   useDisclosure,
   useColorModeValue
 } from '@chakra-ui/react';
@@ -187,9 +186,17 @@ interface Props {
   data: EarthRangerEventData;
   earthRangerUuid: string;
   onClose: () => void;
+  isOpen: boolean;
+  position: { x: number; y: number };
 }
 
-export default function EarthRangerEventPopup({ data, earthRangerUuid, onClose }: Props) {
+export default function EarthRangerEventPopup({ 
+  data, 
+  earthRangerUuid, 
+  onClose, 
+  isOpen,
+  position 
+}: Props) {
   const bgColor = useColorModeValue('white', 'gray.800');
   const borderColor = useColorModeValue('gray.200', 'gray.600');
   const textColor = useColorModeValue('gray.600', 'gray.300');
@@ -197,8 +204,37 @@ export default function EarthRangerEventPopup({ data, earthRangerUuid, onClose }
   
   const [expandedNotes, setExpandedNotes] = useState<Set<string>>(new Set());
   const [expandedFiles, setExpandedFiles] = useState<Set<string>>(new Set());
-  const { isOpen, onOpen, onClose: onModalClose } = useDisclosure();
+  const { isOpen: isImageModalOpen, onOpen: onImageModalOpen, onClose: onImageModalClose } = useDisclosure();
   const [selectedImage, setSelectedImage] = useState<string>('');
+
+  // Add this helper function at the top of your component
+  const getProxiedImageUrl = (originalUrl: string) => {
+    if (!originalUrl) return '';
+    
+    try {
+      const urlObj = new URL(originalUrl);
+      // Remove the base URL and leading slash to get the path
+      const pathWithoutLeadingSlash = urlObj.pathname.substring(1);
+      
+      // Use your Django API endpoint
+      return `/api/earth-ranger/proxy-image/${pathWithoutLeadingSlash}`;
+    } catch (error) {
+      console.error('Error parsing image URL:', error);
+      return ''; // Return empty string for fallback
+    }
+  };
+
+  // Add error handling for images
+  const [imageErrors, setImageErrors] = useState<Set<string>>(new Set());
+
+  // With this:
+  const handleImageError = (imageUrl: string) => {
+    setImageErrors(prev => {
+      const newSet = new Set(prev);
+      newSet.add(imageUrl);
+      return newSet;
+    });
+  };
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleString();
@@ -244,7 +280,7 @@ export default function EarthRangerEventPopup({ data, earthRangerUuid, onClose }
 
   const openImageModal = (imageUrl: string) => {
     setSelectedImage(imageUrl);
-    onOpen();
+    onImageModalOpen();
   };
 
   // Combine and sort notes and files by time
@@ -277,97 +313,146 @@ export default function EarthRangerEventPopup({ data, earthRangerUuid, onClose }
       !(Array.isArray(value) && value.length === 0)
     );
 
+  // Calculate position to ensure popup stays within viewport
+  const getPopupPosition = () => {
+    const popupWidth = 400;
+    const popupHeight = 400; // estimated
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
+    
+    let left = position.x - (popupWidth / 2); // Center horizontally
+    let top = position.y + 10; // 10px below click point
+    
+    // Adjust if popup would go off-screen
+    if (left < 10) left = 10;
+    if (left + popupWidth > viewportWidth - 10) left = viewportWidth - popupWidth - 10;
+    if (top + popupHeight > viewportHeight - 10) top = position.y - popupHeight - 10; // Show above if no room below
+    
+    return { left, top };
+  };
+
+  const popupPosition = getPopupPosition();
+
+  if (!isOpen) return null;
+
   return (
     <>
-      <Box
-        bg={bgColor}
-        borderRadius="lg"
-        boxShadow="xl"
-        maxW="600px"
-        maxH="80vh"
-        overflowY="auto"
-        border="1px"
-        borderColor={borderColor}
-      >
-        {/* Header with Close Button */}
-        <HStack justify="space-between" p={4} borderBottom="1px" borderColor={borderColor}>
-          <Text fontSize="lg" fontWeight="bold">Event Details</Text>
-          <IconButton
-            aria-label="Close popup"
-            icon={<CloseIcon />}
-            size="sm"
-            variant="ghost"
-            onClick={onClose}
+      <Portal>
+        {/* Backdrop */}
+        <Box
+          position="fixed"
+          top="0"
+          left="0"
+          right="0"
+          bottom="0"
+          zIndex={1400}
+          onClick={onClose}
+        />
+        
+        {/* Popup */}
+        <Box
+          position="fixed"
+          top={`${popupPosition.top}px`}
+          left={`${popupPosition.left}px`}
+          zIndex={1500}
+          bg={bgColor}
+          borderRadius="lg"
+          boxShadow="xl"
+          maxW="600px"
+          maxH="40vh"
+          overflowY="auto"
+          border="1px"
+          borderColor={borderColor}
+        >
+          {/* Arrow pointing up to click location */}
+          <Box
+            position="absolute"
+            top="-8px"
+            left="50%"
+            transform="translateX(-50%)"
+            width="0"
+            height="0"
+            borderLeft="8px solid transparent"
+            borderRight="8px solid transparent"
+            borderBottom={`8px solid ${borderColor}`}
           />
-        </HStack>
+          <Box
+            position="absolute"
+            top="-7px"
+            left="50%"
+            transform="translateX(-50%)"
+            width="0"
+            height="0"
+            borderLeft="8px solid transparent"
+            borderRight="8px solid transparent"
+            borderBottom={`8px solid ${bgColor}`}
+          />
 
-        {/* Two Column Layout */}
-        <Grid templateColumns="120px 1fr" gap={4} p={4}>
-          {/* Left Column */}
-          <VStack spacing={4} align="stretch">
-            {/* Icon */}
-            <Box>
+          {/* Header with Close Button */}
+          <HStack justify="space-between" p={4} borderBottom="1px" borderColor={borderColor}>
+            <HStack spacing={3}>
               <Image
                 src={data.image_url}
                 alt="Event Icon"
-                boxSize="60px"
+                boxSize="32px"
                 borderRadius="md"
-                fallbackSrc="https://via.placeholder.com/60"
+                fallbackSrc="https://via.placeholder.com/32"
               />
-            </Box>
+              <Text color={textColor} fontSize="lg" fontWeight="bold">Event Details</Text>
+            </HStack>
+            <IconButton
+              aria-label="Close popup"
+              icon={<CloseIcon />}
+              size="sm"
+              variant="ghost"
+              onClick={onClose}
+            />
+          </HStack>
 
-            {/* Details Label */}
-            <Box>
-              <Text fontSize="xs" fontWeight="bold" color={textColor}>
-                DETAILS
-              </Text>
-            </Box>
-
-            {/* Activity Label */}
-            <Box>
-              <Text fontSize="xs" fontWeight="bold" color={textColor}>
-                ACTIVITY
-              </Text>
-            </Box>
-          </VStack>
-
-          {/* Right Column */}
-          <VStack spacing={4} align="stretch">
+          {/* Single Column Content */}
+          <VStack spacing={4} p={4} align="stretch">
             {/* Header Section */}
             <VStack align="stretch" spacing={2}>
-              <Heading size="md">{humanizeEventType(data.event_type)}</Heading>
-              <VStack align="flex-start" spacing={1}>
-                <Text fontSize="sm" color={textColor}>
+              <Heading size="md" color={textColor}>{humanizeEventType(data.event_type)}</Heading>
+              <HStack spacing={2}>
+                <Text color={textColor} fontSize="sm">
                   Created: {formatDate(data.created_at)}
                 </Text>
-              </VStack>
+                <Badge colorScheme={getPriorityColorScheme(data.priority)} variant="solid">
+                  {data.priority_label}
+                </Badge>
+              </HStack>
             </VStack>
 
             <Divider />
 
             {/* Details Section */}
             <VStack align="stretch" spacing={3}>
+              <Text color={textColor} fontSize="sm" fontWeight="bold">
+                DETAILS
+              </Text>
+              
               {/* Basic Info */}
               <VStack align="stretch" spacing={2}>
                 <HStack justify="space-between">
-                  <Text fontSize="xs" fontWeight="bold" color={textColor}>
+                  <Text color={textColor} fontSize="xs" fontWeight="bold">
                     REPORTED BY
                   </Text>
-                  <Text fontSize="sm">{data.reported_by?.name}</Text>
+                  <Text color={textColor} fontSize="sm">{data.reported_by?.name}</Text>
                 </HStack>
                 {data.location ? <HStack justify="space-between">
-                  <Text fontSize="xs" fontWeight="bold" color={textColor}>
+                  <Text color={textColor} fontSize="xs" fontWeight="bold">
                     LOCATION
                   </Text>
-                  <Text fontSize="sm">
+                  <Text color={textColor} fontSize="sm">
                     {data.location.latitude.toFixed(4)}, {data.location.longitude.toFixed(4)}
                   </Text>
                 </HStack> : null}
                 <HStack justify="space-between">
-                  <Text fontSize="xs" fontWeight="bold" color={textColor}>
+                  <Text color={textColor} fontSize="xs" fontWeight="bold">
                     TIME
                   </Text>
-                  <Text fontSize="sm">{formatDate(data.time)}</Text>
+                  <Text color={textColor} fontSize="sm">{formatDate(data.time)}</Text>
                 </HStack>
               </VStack>
 
@@ -376,16 +461,16 @@ export default function EarthRangerEventPopup({ data, earthRangerUuid, onClose }
                 <>
                   <Divider />
                   <Box>
-                    <Text fontSize="sm" fontWeight="bold" mb={2}>
+                    <Text color={textColor} fontSize="sm" fontWeight="bold" mb={2}>
                       Event Details
                     </Text>
                     <VStack align="stretch" spacing={2}>
                       {eventDetailsEntries.map(([key, value]) => (
                         <HStack key={key} justify="space-between">
-                          <Text fontSize="xs" fontWeight="bold" color={textColor} textTransform="uppercase">
+                          <Text color={textColor} fontSize="xs" fontWeight="bold" textTransform="uppercase">
                             {key.replace(/_/g, ' ')}
                           </Text>
-                          <Text fontSize="sm" textAlign="right" maxW="200px">
+                          <Text color={textColor} fontSize="sm" textAlign="right" maxW="300px">
                             {typeof value === 'object' ? JSON.stringify(value) : String(value)}
                           </Text>
                         </HStack>
@@ -400,34 +485,38 @@ export default function EarthRangerEventPopup({ data, earthRangerUuid, onClose }
 
             {/* Activity Section */}
             <VStack align="stretch" spacing={3}>
+              <Text color={textColor} fontSize="sm" fontWeight="bold">
+                ACTIVITY
+              </Text>
+              
               {activities.length === 0 ? (
-                <Text fontSize="sm" color={textColor} fontStyle="italic">
+                <Text color={textColor} fontSize="sm" fontStyle="italic">
                   No activity recorded
                 </Text>
               ) : (
-                activities.map((activity) => (
+                                activities.map((activity) => (
                   <Box key={activity.id} p={3} bg={headerBg} borderRadius="md">
                     <HStack spacing={3} align="flex-start">
-                      <Image
+                      {/* <Image
                         src={activity.icon_url}
                         alt="Activity icon"
                         boxSize="24px"
                         borderRadius="sm"
                         fallbackSrc="https://via.placeholder.com/24"
-                      />
+                      /> */}
                       <VStack align="stretch" flex={1} spacing={2}>
                         <HStack justify="space-between">
                           <Badge variant="outline" size="sm">
                             {activity.type.toUpperCase()}
                           </Badge>
-                          <Text fontSize="xs" color={textColor}>
+                          <Text color={textColor} fontSize="xs">
                             {formatDate(activity.created_at)}
                           </Text>
                         </HStack>
                         
                         {activity.type === 'note' && (
                           <>
-                            <Text fontSize="sm">
+                            <Text color={textColor} fontSize="sm">
                               {expandedNotes.has(activity.id) 
                                 ? activity.text 
                                 : truncateText(activity.text)
@@ -442,12 +531,12 @@ export default function EarthRangerEventPopup({ data, earthRangerUuid, onClose }
                               >
                                 {expandedNotes.has(activity.id) ? 'Show Less' : 'Show More'}
                               </Button>
-                                                          )}
+                            )}
                           </>
                         )}
                         
                         {activity.type === 'file' && (
-                          <>
+  <>
                             <Text fontSize="sm">
                               {expandedFiles.has(activity.id) 
                                 ? activity.filename 
@@ -470,7 +559,7 @@ export default function EarthRangerEventPopup({ data, earthRangerUuid, onClose }
                                   size="xs"
                                   colorScheme="blue"
                                   variant="outline"
-                                  onClick={() => openImageModal(activity.images!.original)}
+                                  onClick={() => openImageModal(getProxiedImageUrl(activity.images!.original))}
                                 >
                                   View Image
                                 </Button>
@@ -478,14 +567,32 @@ export default function EarthRangerEventPopup({ data, earthRangerUuid, onClose }
                             </HStack>
                             <Collapse in={expandedFiles.has(activity.id)}>
                               {activity.file_type === 'image' && activity.images?.thumbnail && (
-                                <Image
-                                  src={activity.images.thumbnail}
-                                  alt={activity.filename}
-                                  maxW="150px"
-                                  borderRadius="md"
-                                  cursor="pointer"
-                                  onClick={() => openImageModal(activity.images!.original)}
-                                />
+                                <>
+                                  {!imageErrors.has(getProxiedImageUrl(activity.images.thumbnail)) ? (
+                                    <Image
+                                      src={getProxiedImageUrl(activity.images.thumbnail)}
+                                      alt={activity.filename}
+                                      maxW="200px"
+                                      borderRadius="md"
+                                      cursor="pointer"
+                                      onClick={() => openImageModal(getProxiedImageUrl(activity.images!.original))}
+                                      onError={() => handleImageError(getProxiedImageUrl(activity.images!.thumbnail))}
+                                      fallbackSrc="https://via.placeholder.com/200?text=Image+Not+Available"
+                                    />
+                                  ) : (
+                                    <Box
+                                      maxW="200px"
+                                      h="100px"
+                                      bg="gray.100"
+                                      borderRadius="md"
+                                      display="flex"
+                                      alignItems="center"
+                                      justifyContent="center"
+                                    >
+                                      <Text fontSize="xs" color="gray.500">Image not available</Text>
+                                    </Box>
+                                  )}
+                                </>
                               )}
                             </Collapse>
                           </>
@@ -497,18 +604,18 @@ export default function EarthRangerEventPopup({ data, earthRangerUuid, onClose }
               )}
             </VStack>
           </VStack>
-        </Grid>
 
-        {/* Footer */}
-        <Box p={4} borderTop="1px" borderColor={borderColor} textAlign="center">
-          <Text fontSize="xs" color={textColor}>
-            UUID: {earthRangerUuid} | Serial: {data.serial_number}
-          </Text>
+          {/* Footer */}
+          <Box p={4} borderTop="1px" borderColor={borderColor} textAlign="center">
+            <Text color={textColor} fontSize="xs">
+              UUID: {earthRangerUuid} | Serial: {data.serial_number}
+            </Text>
+          </Box>
         </Box>
-      </Box>
+      </Portal>
 
       {/* Image Modal */}
-      <Modal isOpen={isOpen} onClose={onModalClose} size="xl">
+      <Modal isOpen={isImageModalOpen} onClose={onImageModalClose} size="xl">
         <ModalOverlay />
         <ModalContent>
           <ModalHeader>Image Preview</ModalHeader>
@@ -526,3 +633,4 @@ export default function EarthRangerEventPopup({ data, earthRangerUuid, onClose }
     </>
   );
 }
+

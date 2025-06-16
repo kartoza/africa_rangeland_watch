@@ -1,5 +1,5 @@
-from django.urls import path
-from .views import list_events, fetch_event_details
+from django.urls import path, re_path
+from .views import list_events, fetch_event_details, EarthRangerImageProxyView
 
 
 urlpatterns = [
@@ -9,4 +9,10 @@ urlpatterns = [
         fetch_event_details,
         name="fetch_event_details"
     ),
+    path(
+        'earthranger/proxy-image/<str:image_path>', 
+        EarthRangerImageProxyView.as_view(), 
+        name='earth_ranger_image_proxy'
+    ),
+
 ]
