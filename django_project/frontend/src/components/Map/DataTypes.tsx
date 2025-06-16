@@ -38,7 +38,8 @@ export interface AnalysisData {
 export const GroupName = {
   BaselineGroup: 'baseline',
   NearRealtimeGroup: 'near-real-time',
-  UserDefinedGroup: 'user-defined'
+  UserDefinedGroup: 'user-defined',
+  EarthRangerGroup: 'earth-ranger',
 }
 export const COMMUNITY_ID = 'Communities'
 export const CUSTOM_GEOM_ID = 'CustomGeom'

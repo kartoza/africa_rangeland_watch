@@ -49,7 +49,7 @@ export default function MapPage() {
                 leftSideRef?.current.toggle()
               }}
             />
-            <EarthRanger/>
+            {/* <EarthRanger/> */}
             <MapLibre ref={mapLibreRef}/>
           </Box>
           <RightSide/>
