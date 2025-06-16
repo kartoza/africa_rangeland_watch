@@ -542,46 +542,34 @@ export default function EarthRangerEventPopup({
                         )}
                         
                         {activity.type === 'file' && (
-  <>
-                            <Text fontSize="sm">
-                              {expandedFiles.has(activity.id) 
-                                ? activity.filename 
-                                : truncateText(activity.filename)
-                              }
-                            </Text>
-                            <HStack spacing={2}>
-                              {activity.filename.length > 50 && (
-                                <Button
-                                  size="xs"
-                                  variant="ghost"
-                                  leftIcon={expandedFiles.has(activity.id) ? <ChevronUpIcon /> : <ChevronDownIcon />}
-                                  onClick={() => toggleFileExpansion(activity.id)}
-                                >
-                                  {expandedFiles.has(activity.id) ? 'Show Less' : 'Show More'}
-                                </Button>
-                              )}
-                              {activity.file_type === 'image' && activity.images?.original && (
-                                <Button
-                                  size="xs"
-                                  colorScheme="blue"
-                                  variant="outline"
-                                  onClick={() => openImageModal(getProxiedImageUrl(activity.images!.original))}
-                                >
-                                  View Image
-                                </Button>
-                              )}
+                          <>
+                            <HStack >
+                              <Text fontSize="sm" color={textColor}>
+                                {expandedFiles.has(activity.id) 
+                                  ? activity.filename 
+                                  : truncateText(activity.filename)
+                                }
+                              </Text>
+                              <Button
+                                size="xs"
+                                variant="ghost"
+                                leftIcon={expandedFiles.has(activity.id) ? <ChevronUpIcon /> : <ChevronDownIcon />}
+                                onClick={() => toggleFileExpansion(activity.id)}
+                              >
+                                {expandedFiles.has(activity.id) ? 'See Preview' : 'Close Preview'}
+                              </Button>
                             </HStack>
                             <Collapse in={expandedFiles.has(activity.id)}>
-                              {activity.file_type === 'image' && activity.images?.thumbnail && (
+                              {activity.file_type === 'image' && activity.images?.large && (
                                 <>
-                                  {!imageErrors.has(getProxiedImageUrl(activity.images.thumbnail)) ? (
+                                  {!imageErrors.has(getProxiedImageUrl(activity.images.large)) ? (
                                     <Image
-                                      src={getProxiedImageUrl(activity.images.thumbnail)}
+                                      src={getProxiedImageUrl(activity.images.large)}
                                       alt={activity.filename}
                                       maxW="200px"
                                       borderRadius="md"
                                       cursor="pointer"
-                                      onClick={() => openImageModal(getProxiedImageUrl(activity.images!.original))}
+                                      // onClick={() => openImageModal(getProxiedImageUrl(activity.images!.large))}
                                       onError={() => handleImageError(getProxiedImageUrl(activity.images!.thumbnail))}
                                       fallbackSrc="https://via.placeholder.com/200?text=Image+Not+Available"
                                     />
