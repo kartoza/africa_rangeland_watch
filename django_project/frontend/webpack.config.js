@@ -14,7 +14,7 @@ const statsFilename = isDev ? './webpack-stats.dev.json' : './webpack-stats.prod
 const output = {
     path: path.resolve(__dirname, "./bundles/frontend"),
     filename: `${filename}.js`,
-    publicPath: isServe && isDev ? 'http://dev.local:9000/static/' : undefined,
+    publicPath: isServe && isDev ? 'http://127.0.0.1:9000/static/' : undefined,
 };
 
 const config = {

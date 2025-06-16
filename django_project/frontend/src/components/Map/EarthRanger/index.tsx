@@ -11,13 +11,14 @@ let clickFunction: (ev: maplibregl.MapMouseEvent & {
 
 /** Landscape geometry selector. */
 export default function EarthRanger() {
-  const { map } = useMap();
+  const { mapRef, isMapLoaded } = useMap();
   const [popup, setPopup] = useState<maplibregl.Popup | null>(null);
   const [popupData, setPopupData] = useState<any>(null);
 
   useEffect(() => {
     try {
-      if (!map) {
+      const map = mapRef.current;
+      if (!isMapLoaded || !map) {
         return
       }
       // render Earth Ranger Events
@@ -47,10 +48,11 @@ export default function EarthRanger() {
     } catch (err) {
       console.log(err)
     }
-  }, [map])
+  }, [isMapLoaded])
 
   useEffect(() => {
-    if (!map) {
+    const map = mapRef.current;
+    if (!isMapLoaded || !map) {
       return
     }
 
@@ -59,7 +61,9 @@ export default function EarthRanger() {
     clickFunction = (e: any) => {
       if (e.features && e.features.length > 0) {
         const feature = e.features[0];
-        const properties = feature.properties;
+        console.log(feature);
+        const properties = JSON.parse(feature.properties.data);
+        console.log(properties);
         
         // Close existing popup
         if (popup) {
@@ -82,7 +86,7 @@ export default function EarthRanger() {
         const newPopup = new maplibregl.Popup({
           closeButton: false,
           closeOnClick: false,
-          maxWidth: '400px'
+          maxWidth: '600px'
         })
           .setLngLat(e.lngLat)
           .setDOMContent(popupContainer)
@@ -121,7 +125,7 @@ export default function EarthRanger() {
       }
     }
       
-  }, [map, popup])
+  }, [isMapLoaded, popup])
 
   // Handle popup close
   const handlePopupClose = () => {

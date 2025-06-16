@@ -52,7 +52,6 @@ def fetch_event_details(request, event_id):
     api_url = f"{settings.EARTH_RANGER_API_URL}/activity/event/{event_id}/"
     headers = {
         "accept": "application/json",
-        "X-CSRFToken": settings.EARTH_RANGER_CSRF_TOKEN,
         "Authorization": f"Bearer {settings.EARTH_RANGER_AUTH_TOKEN}"
     }
 

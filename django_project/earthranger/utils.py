@@ -26,24 +26,24 @@ def fetch_and_store_data(endpoint, model_class, name):
             data = response.json()
 
             if model_class == EarthRangerEvents:
-                for feature in data['features']:
+                for feature in data['data']['results']:
                     # Always replace the old data with new data
                     try:
-                        geom = GEOSGeometry(json.dumps(feature['geometry']))
+                        geom = GEOSGeometry(json.dumps(feature['geojson']['geometry']))
                         model_class.objects.update_or_create(
-                            earth_ranger_uuid=feature['properties']['id'],
+                            earth_ranger_uuid=feature['id'],
                             defaults={
-                                "data": feature['properties'], 
+                                "data": feature, 
                                 "updated_at": now(),
                                 "geometry": geom
                             }
                         )
-                    except GDALException:
+                    except (GDALException, TypeError):
                         pass
 
                 print(f"events data updated successfully.")
-                if data['next']:
-                    api_url = data['next']
+                if data['data']['next']:
+                    api_url = data['data']['next']
                 else:
                     fetch_data = False
 
@@ -63,7 +63,12 @@ def fetch_all_earth_ranger_data():
     # fetch_and_store_data("features", EarthRangerFeature, "Features")
     # fetch_and_store_data("layers", EarthRangerLayer, "Layers")
     # fetch_and_store_data("mapping", EarthRangerMapping, "Mapping")
-    fetch_and_store_data("/activity/events/geojson", EarthRangerEvents, "Events")
+    events_url = (
+        'activity/events?include_notes=true&include_related_events=true&state=active&state='
+        'new&filter={"text":"","sort":["down",{"value":"updated_at","key":"updatedAtLabel"}]}&'
+        'include_updates=false&sort_by=-updated_at'
+    )
+    fetch_and_store_data(events_url, EarthRangerEvents, "Events")
 
     # Update the schedule log
     APISchedule.objects.update_or_create(
