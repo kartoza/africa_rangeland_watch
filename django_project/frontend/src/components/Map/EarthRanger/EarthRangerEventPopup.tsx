@@ -214,7 +214,7 @@ export default function EarthRangerEventPopup({
     try {
       const urlObj = new URL(originalUrl);
       // Remove the base URL and leading slash to get the path
-      const pathWithoutLeadingSlash = urlObj.pathname.substring(1);
+      const pathWithoutLeadingSlash = urlObj.pathname.substring(1).replace("api/v1.0/", "");
       
       // Use your Django API endpoint
       return `/api/earth-ranger/proxy-image/${pathWithoutLeadingSlash}`;
@@ -359,8 +359,8 @@ export default function EarthRangerEventPopup({
           borderRadius="lg"
           boxShadow="xl"
           maxW="600px"
-          maxH="40vh"
-          overflowY="auto"
+          // overflowY="auto"
+          // maxH="40vh"
           border="1px"
           borderColor={borderColor}
         >
@@ -410,7 +410,13 @@ export default function EarthRangerEventPopup({
           </HStack>
 
           {/* Single Column Content */}
-          <VStack spacing={4} p={4} align="stretch">
+          <VStack 
+            spacing={4} 
+            p={4} 
+            align="stretch"
+            overflowY="auto"
+            maxH="40vh"
+          >
             {/* Header Section */}
             <VStack align="stretch" spacing={2}>
               <Heading size="md" color={textColor}>{humanizeEventType(data.event_type)}</Heading>
@@ -616,11 +622,10 @@ export default function EarthRangerEventPopup({
 
       {/* Image Modal */}
       <Modal isOpen={isImageModalOpen} onClose={onImageModalClose} size="xl">
-        <ModalOverlay />
-        <ModalContent>
-          <ModalHeader>Image Preview</ModalHeader>
-          <ModalCloseButton />
-          <ModalBody pb={6}>
+        <ModalContent bg="white" zIndex={999999}>
+          <ModalHeader bg="white" color="black">Image Preview</ModalHeader>
+          <ModalCloseButton color="black" />
+          <ModalBody pb={6} bg="white" zIndex={999999}>
             <Image
               src={selectedImage}
               alt="Full size image"

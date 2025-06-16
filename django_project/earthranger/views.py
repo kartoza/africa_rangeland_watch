@@ -107,7 +107,7 @@ class EarthRangerImageProxyView(APIView):
     # permission_classes = [IsAuthenticated]
     permission_classes = (AllowAny,)
     
-    # @method_decorator(cache_page(60 * 15))  # Cache for 15 minutes
+    @method_decorator(cache_page(60 * 15))  # Cache for 15 minutes
     def get(self, request, image_path):
         """
         Fetch and return image from EarthRanger with proper authentication
@@ -120,7 +120,7 @@ class EarthRangerImageProxyView(APIView):
             }
             # Clean and construct the full URL
             image_path = image_path.lstrip('/')
-            full_url = f"{settings.EARTH_RANGER_API_URL}/{image_path}/"
+            full_url = f"{settings.EARTH_RANGER_API_URL}{image_path}"
             
             # Fetch the image with timeout
             response = requests.get(

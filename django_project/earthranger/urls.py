@@ -9,10 +9,9 @@ urlpatterns = [
         fetch_event_details,
         name="fetch_event_details"
     ),
-    path(
-        'earthranger/proxy-image/<str:image_path>', 
+    re_path(
+        r'^api/earth-ranger/proxy-image/(?P<image_path>.*)$', 
         EarthRangerImageProxyView.as_view(), 
         name='earth_ranger_image_proxy'
     ),
-
 ]
