@@ -204,6 +204,7 @@ export default function EarthRangerEventPopup({
   
   const [expandedNotes, setExpandedNotes] = useState<Set<string>>(new Set());
   const [expandedFiles, setExpandedFiles] = useState<Set<string>>(new Set());
+  console.log(expandedFiles);
   const { isOpen: isImageModalOpen, onOpen: onImageModalOpen, onClose: onImageModalClose } = useDisclosure();
   const [selectedImage, setSelectedImage] = useState<string>('');
 
@@ -542,22 +543,26 @@ export default function EarthRangerEventPopup({
                         )}
                         
                         {activity.type === 'file' && (
-                          <>
-                            <HStack >
+  <>
+                            <HStack spacing={2}>
                               <Text fontSize="sm" color={textColor}>
                                 {expandedFiles.has(activity.id) 
                                   ? activity.filename 
                                   : truncateText(activity.filename)
                                 }
                               </Text>
-                              <Button
-                                size="xs"
-                                variant="ghost"
-                                leftIcon={expandedFiles.has(activity.id) ? <ChevronUpIcon /> : <ChevronDownIcon />}
-                                onClick={() => toggleFileExpansion(activity.id)}
-                              >
-                                {expandedFiles.has(activity.id) ? 'See Preview' : 'Close Preview'}
-                              </Button>
+                              {activity.file_type === 'image' && activity.images?.large && (
+                                <Button
+                                  size="xs"
+                                  colorScheme="blue"
+                                  variant="outline"
+                                  // onClick={() => openImageModal(getProxiedImageUrl(activity.images!.large))}
+                                  onClick={() => toggleFileExpansion(activity.id)}
+                                  
+                                >
+                                  {expandedFiles.has(activity.id) ? 'Close Image' : 'View Image'}
+                                </Button>
+                              )}
                             </HStack>
                             <Collapse in={expandedFiles.has(activity.id)}>
                               {activity.file_type === 'image' && activity.images?.large && (
@@ -569,7 +574,6 @@ export default function EarthRangerEventPopup({
                                       maxW="200px"
                                       borderRadius="md"
                                       cursor="pointer"
-                                      // onClick={() => openImageModal(getProxiedImageUrl(activity.images!.large))}
                                       onError={() => handleImageError(getProxiedImageUrl(activity.images!.thumbnail))}
                                       fallbackSrc="https://via.placeholder.com/200?text=Image+Not+Available"
                                     />
@@ -610,6 +614,7 @@ export default function EarthRangerEventPopup({
 
       {/* Image Modal */}
       <Modal isOpen={isImageModalOpen} onClose={onImageModalClose} size="xl">
+        <ModalOverlay bg="blackAlpha.300" />
         <ModalContent bg="white" zIndex={999999}>
           <ModalHeader bg="white" color="black">Image Preview</ModalHeader>
           <ModalCloseButton color="black" />
