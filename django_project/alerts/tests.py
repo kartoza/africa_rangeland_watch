@@ -234,7 +234,8 @@ class CategorizedAlertsViewTests(APITestCase):
 class ProcessAlertsTest(TestCase):
     fixtures = [
         '1.project.json',
-        '2.landscape.json'
+        '2.landscape.json',
+        '3.gee_asset.json'
     ]
 
     def setUp(self):
@@ -286,10 +287,6 @@ class ProcessAlertsTest(TestCase):
 
     @patch("alerts.tasks.initialize_engine_analysis")
     @patch("alerts.tasks.trigger_alert")
-    @patch(
-        "alerts.tasks.check_threshold",
-        side_effect=lambda setting, value: value > 0.5
-    )
     @patch("alerts.tasks.run_analysis")
     @patch("alerts.tasks.run_analysis_task")
     @patch("django.utils.timezone.now")
@@ -298,7 +295,6 @@ class ProcessAlertsTest(TestCase):
         mock_now,
         mock_run_analysis_task,
         mock_run_analysis,
-        mock_check_threshold,
         mock_trigger_alert,
         mock_init
     ):
@@ -319,15 +315,52 @@ class ProcessAlertsTest(TestCase):
         process_alerts()
 
         # Assert that trigger_alert is called only for values > 0.5
-        self.assertEqual(mock_trigger_alert.call_count, 2)
+        # and empty result
+        self.assertEqual(mock_trigger_alert.call_count, 3)
         called_names = [
             call.args[2] for call in mock_trigger_alert.call_args_list
         ]
         self.assertIn("Zone A", called_names)
         self.assertIn("Zone C", called_names)
 
+        called_message = [
+            call.args[3] for call in mock_trigger_alert.call_args_list
+        ]
+        self.assertIn("Zone A", called_names)
+
         # Check mock_run_analysis_task is called once
+        self.assertIn(
+            f"No data found on {self.now.year}-01-01",
+            called_message
+        )
+
+    @patch("alerts.tasks.initialize_engine_analysis")
+    @patch("alerts.tasks.trigger_alert")
+    @patch("alerts.tasks.run_analysis")
+    @patch("alerts.tasks.run_analysis_task")
+    @patch("django.utils.timezone.now")
+    def test_alerts_triggered_with_empty_results(
+        self,
+        mock_now,
+        mock_run_analysis_task,
+        mock_run_analysis,
+        mock_trigger_alert,
+        mock_init
+    ):
+        mock_now.return_value = self.now
+        # Mock the run_analysis to return None
+        mock_run_analysis.return_value = None
+        process_alerts()
+
+        # Assert that trigger_alert is called twice
+        self.assertEqual(mock_trigger_alert.call_count, 2)
+        called_messages = [
+            call.args[3] for call in mock_trigger_alert.call_args_list
+        ]
         self.assertEqual(
-            mock_run_analysis_task.call_count,
-            1
+            called_messages,
+            [
+                f"No data found on {self.now.year}-01-01",
+                f"No data found on {self.now.year}-01-01"
+            ]
         )

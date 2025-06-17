@@ -1,9 +1,9 @@
 from celery import shared_task
 from django.utils import timezone
-from alerts.models import AlertSetting, AnalysisTypes
+from alerts.models import AlertSetting, AnalysisTypes, RunningInterval
 from alerts.utils import (
     trigger_alert,
-    check_threshold,
+    check_threshold
 )
 from analysis.analysis import (
     run_analysis, initialize_engine_analysis
@@ -54,6 +54,8 @@ def process_alert(setting: AlertSetting, runner: AnalysisRunner):
             analysis_dict,
             custom_geom=data.get("custom_geom"),
         )
+        if analysis_result is None:
+            analysis_result = {}
     elif setting.analysis_type == AnalysisTypes.TEMPORAL:
         try:
             lat = setting.location.geometry.centroid.y if\
@@ -113,6 +115,10 @@ def process_alert(setting: AlertSetting, runner: AnalysisRunner):
             analysis_result = analysis_task.result[0]
         except IndexError:
             analysis_result = {'features': []}
+        except TypeError:
+            analysis_task.result = []
+            analysis_task.save()
+            analysis_result = {'features': []}
 
     features = (
         analysis_result[0].get("features", [])
@@ -128,9 +134,12 @@ def process_alert(setting: AlertSetting, runner: AnalysisRunner):
             )
             if name is not None or value is not None:
                 if check_threshold(setting, value):
-                    trigger_alert(setting, value, name)
+                    trigger_alert(setting, value, name, None)
                     setting.last_alert = now
                     setting.save()
+    else:
+        message = f"No data found on {now.date()}"
+        trigger_alert(setting, None, None, message)
 
 
 @shared_task
@@ -163,17 +172,23 @@ def process_alerts():
             analysis_type=AnalysisTypes.TEMPORAL
         )
         for setting in temporal_settings:
-            # Run monthly analysis on 1st date every month
             run_task = False
-            if setting.reference_period.get('month') and now.day == 1:
+
+            # Run weekly analysis every Monday
+            if setting.running_interval == RunningInterval.WEEKLY and\
+                now.isoweekday() == 1:
+                run_task = True
+            # Run monthly analysis every 1st date of month
+            elif setting.running_interval == RunningInterval.MONTHLY and\
+                now.day == 1:
                 run_task = True
             # Run quarterly analysis on 1st date on quarter month
-            elif setting.reference_period.get('quarter') and\
+            elif setting.running_interval == RunningInterval.QUARTERLY and\
                 now.day == 1 and\
                     now.month in [1, 4, 7, 10]:
                 run_task = True
             # Run annual analysis on January 1st
-            elif setting.reference_period.get('year') and\
+            elif setting.running_interval == RunningInterval.ANNUAL and\
                 now.day == 1 and\
                     now.month == 1:
                 run_task = True

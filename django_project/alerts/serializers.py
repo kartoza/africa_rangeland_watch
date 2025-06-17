@@ -26,9 +26,12 @@ class AlertSettingSerializer(serializers.ModelSerializer):
             'last_alert', 'threshold_comparison', 'threshold_value',
             'anomaly_detection_alert', 'email_alert', 'in_app_alert',
             'created_at', 'updated_at', 'user', 'location',
-            'analysis_type', 'reference_period'
+            'analysis_type', 'reference_period', 'running_interval'
         ]
-        read_only_fields = ['created_at', 'updated_at']
+        read_only_fields = [
+            'created_at', 'updated_at',
+            'running_interval', 'reference_period'
+        ]
 
 
 class IndicatorSerializer(serializers.ModelSerializer):

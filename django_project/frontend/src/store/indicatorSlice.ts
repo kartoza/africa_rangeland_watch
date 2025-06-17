@@ -19,6 +19,7 @@ interface AlertSetting {
   user: number;
   analysis_type: string,
   temporal_resolution: string,
+  running_interval: string,
   reference_period: object,
 }
 
