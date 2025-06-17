@@ -9,52 +9,76 @@ let clickFunction: (ev: maplibregl.MapMouseEvent & {
   features?: maplibregl.MapGeoJSONFeature[];
 } & Object) => void = null
 
+interface EarthRangerProps {
+  isVisible: boolean;
+}
+
 /** Landscape geometry selector. */
-export default function EarthRanger() {
+export default function EarthRanger({ isVisible }: EarthRangerProps) {
   const { mapRef, isMapLoaded } = useMap();
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [popupOpen, setPopupOpen] = useState(false);
   const [clickPosition, setClickPosition] = useState({ x: 0, y: 0 });
 
-  useEffect(() => {
-    try {
-      const map = mapRef.current;
-      if (!isMapLoaded || !map) {
-        return
-      }
-      // render Earth Ranger Events
-      map.addSource(
-        EARTH_EANGER_EVENT, {
-          type: 'vector',
-          tiles: [
-            document.location.origin + '/frontend-api/earth-ranger/events/vector_tile/{z}/{x}/{y}/'
-          ]
-        }
-      );
-      map.addLayer({
-        'id': EARTH_EANGER_EVENT,
-        'type': 'circle',
-        'source': EARTH_EANGER_EVENT,
-        'source-layer': 'default',
-        'paint': {
-          'circle-radius': 15,
-          'circle-color': '#FF0000',
-          'circle-opacity': 0.8,
-          'circle-stroke-width': 2,
-          'circle-stroke-color': '#FFFFFF',
-          'circle-stroke-opacity': 1
-        }
-      });
-
-    } catch (err) {
-      console.log(err)
-    }
-  }, [isMapLoaded])
-
+  // Effect to handle layer visibility changes
   useEffect(() => {
     const map = mapRef.current;
     if (!isMapLoaded || !map) {
-      return
+      return;
+    }
+
+    if (isVisible) {
+      // Add source and layer if they don't exist
+      try {
+        if (!map.getSource(EARTH_EANGER_EVENT)) {
+          map.addSource(EARTH_EANGER_EVENT, {
+            type: 'vector',
+            tiles: [
+              document.location.origin + '/frontend-api/earth-ranger/events/vector_tile/{z}/{x}/{y}/'
+            ]
+          });
+        }
+
+        if (!map.getLayer(EARTH_EANGER_EVENT)) {
+          map.addLayer({
+            'id': EARTH_EANGER_EVENT,
+            'type': 'circle',
+            'source': EARTH_EANGER_EVENT,
+            'source-layer': 'default',
+            'paint': {
+              'circle-radius': 15,
+              'circle-color': '#FF0000',
+              'circle-opacity': 0.8,
+              'circle-stroke-width': 2,
+              'circle-stroke-color': '#FFFFFF',
+              'circle-stroke-opacity': 1
+            }
+          });
+        } else {
+          // If layer exists but was hidden, show it
+          map.setLayoutProperty(EARTH_EANGER_EVENT, 'visibility', 'visible');
+        }
+      } catch (err) {
+        console.log('Error adding EarthRanger layer:', err);
+      }
+    } else {
+      // Hide the layer when not visible
+      try {
+        map.removeLayer(EARTH_EANGER_EVENT);
+        map.removeSource(EARTH_EANGER_EVENT);
+        // Close any open popup when hiding the layer
+        setPopupOpen(false);
+        setSelectedEvent(null);
+      } catch (err) {
+        console.log('Error hiding EarthRanger layer:', err);
+      }
+    }
+  }, [isMapLoaded, isVisible]);
+
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!isMapLoaded || !map || !isVisible) {
+      return;
     }
 
     // Click event for Earth Ranger Events
@@ -109,7 +133,7 @@ export default function EarthRanger() {
       (map as any).off('mouseleave', EARTH_EANGER_EVENT, handleMouseLeave);
     }
       
-  }, [isMapLoaded])
+  }, [isMapLoaded, isVisible]);
 
   // Handle popup close
   const handlePopupClose = () => {
@@ -119,8 +143,8 @@ export default function EarthRanger() {
 
   return (
     <>
-      {/* Render popup when event is selected */}
-      {selectedEvent && (
+      {/* Render popup when event is selected and layer is visible */}
+      {selectedEvent && isVisible && (
         <EarthRangerEventPopup
           data={selectedEvent.data}
           earthRangerUuid={selectedEvent.earthRangerUuid}

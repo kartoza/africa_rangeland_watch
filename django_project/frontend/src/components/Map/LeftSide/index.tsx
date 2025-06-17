@@ -35,7 +35,6 @@ export const LeftSide = forwardRef((props: LayerCheckboxProps, ref) => {
   const dispatch = useDispatch<AppDispatch>();
   const { landscapes } = useSelector((state: RootState) => state.landscape);
   const { layers } = useSelector((state: RootState) => state.layer);
-  console.log(JSON.stringify(layers));
   const isAuthenticated = useSelector(selectIsLoggedIn);
   const { loadingSession, session } = useSession();
 
