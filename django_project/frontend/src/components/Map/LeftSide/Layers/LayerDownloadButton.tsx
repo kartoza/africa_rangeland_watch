@@ -1,36 +1,125 @@
-import * as React from "react";
-import { Button } from "@chakra-ui/react";
-import { setCSRFToken } from "../../../../utils/csrfUtils";
+// src/components/Map/LeftSide/LayerDownloadButton.tsx
+import React, { useState, useEffect } from 'react';
+import { Button, Spinner, Box, useToast } from '@chakra-ui/react';
 
+/* ------------------------------------------------------------------ */
+/*  Props                                                              */
+/* ------------------------------------------------------------------ */
 interface Props {
   layerId: string;
-  isSelected: boolean;
+  landscapeId: string;
+  taskId?: string;          // returned by POST /export/
+  downloadUrl?: string;     // present when BE said “already exported”
+  isSelected?: boolean;     // (kept for styling parity, not used here)
 }
 
-export default function CogDownloadButton({ layerId, isSelected}: Props) {
+/* ------------------------------------------------------------------ */
+/*  Component                                                          */
+/* ------------------------------------------------------------------ */
+export default function CogDownloadButton({
+  layerId,
+  landscapeId,
+  taskId,
+  downloadUrl: downloadUrlProp,   // <- grab the prop and rename locally
+}: Props) {
+  const toast = useToast();
 
-  const handleDownload = () => {
-    setCSRFToken();
-    if (!layerId) return;
+  /* ---------------------------------------------------------------- */
+  /*  Local state                                                     */
+  /* ---------------------------------------------------------------- */
+  const [status, setStatus] = useState<
+    'idle' | 'processing' | 'completed' | 'error'
+  >(downloadUrlProp ? 'completed' : 'idle');
 
-    const url = `/nrt-layer/${layerId}/download/`;
-    const link = document.createElement("a");
-    link.href = url;
-    link.setAttribute("download", `${layerId}.tif`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-  };
-
-  if (!isSelected) return null;
-
-  return (
-    <Button
-      size="xs"
-      colorScheme="green"
-      onClick={handleDownload}
-    >
-      Download
-    </Button>
+  const [downloadUrl, setDownloadUrl] = useState<string | null>(
+    downloadUrlProp ?? null
   );
+
+  /* ---------------------------------------------------------------- */
+  /*  Poll the server *only if* we have a taskId and no URL yet.       */
+  /* ---------------------------------------------------------------- */
+  useEffect(() => {
+    // already have URL  → nothing to poll
+    if (downloadUrlProp) return;
+
+    // “READY” sentinel (from Layers) → mark complete w/out polling
+    if (taskId === 'READY') {
+      setStatus('completed');
+      return;
+    }
+
+    if (!taskId) return;
+
+    let cancelled = false;
+    setStatus('processing');
+
+    const check = async () => {
+      try {
+        const res = await fetch(
+          `/nrt-layer/${layerId}/export-status/${taskId}/?landscape_id=${landscapeId}`
+        );
+        const json = await res.json();
+
+        if (json.status === 'completed') {
+          if (!cancelled) {
+            setDownloadUrl(json.download_url);
+            setStatus('completed');
+            toast({
+              title: 'Export ready!',
+              position: 'top-right',
+              duration: 3000,
+              status: 'success',
+              isClosable: true,
+            });
+          }
+        } else if (json.status === 'error') {
+          if (!cancelled) setStatus('error');
+        }
+        // else still processing
+      } catch {
+        if (!cancelled) setStatus('error');
+      }
+    };
+
+    // first check, then poll every 3 s
+    check();
+    const interval = setInterval(check, 3000);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, [taskId, layerId, landscapeId, toast, downloadUrlProp]);
+
+  /* ---------------------------------------------------------------- */
+  /*  Render                                                          */
+  /* ---------------------------------------------------------------- */
+  if (!taskId && !downloadUrlProp) return null;
+
+  if (status === 'processing') {
+    return <Spinner size="sm" />;
+  }
+
+  if (status === 'completed' && downloadUrl) {
+    return (
+      <Button
+        as="a"
+        href={downloadUrl}
+        size="xs"
+        colorScheme="green"
+        download
+      >
+        Download
+      </Button>
+    );
+  }
+
+  if (status === 'error') {
+    return (
+      <Box fontSize="xs" color="red.500">
+        Export failed
+      </Box>
+    );
+  }
+
+  return null;
 }

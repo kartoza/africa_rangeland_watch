@@ -3,6 +3,8 @@ import tempfile
 import logging
 import mimetypes
 from collections import defaultdict
+from datetime import datetime, timedelta, timezone
+from googleapiclient.errors import HttpError
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.shortcuts import render  # noqa: F401
@@ -11,7 +13,9 @@ from django.contrib.auth.decorators import login_required
 
 from django.shortcuts import get_object_or_404
 from django.http import FileResponse, Http404
+from django.urls import reverse
 
+from celery.result import AsyncResult
 from cloud_native_gis.models import Layer
 from analysis.utils import _initialize_gdrive_instance
 from .models import InputLayer, ExportedCog
@@ -97,13 +101,41 @@ def trigger_cog_export(request, uuid):
     if not landscape_id:
         return Response({"error": "landscape_id is required"}, status=400)
 
-    try:
-        layer = get_object_or_404(InputLayer, uuid=uuid)
-        export_ee_image_to_cog_task.delay(str(layer.uuid), landscape_id)
-        return Response({"message": "Export task triggered."})
-    except Exception as ex:
-        logger.error(f"Export failed {ex}", exc_info=True)
-        return Response({"error": "An internal error occurred."}, status=500)
+    layer = get_object_or_404(InputLayer, uuid=uuid)
+
+    # ------------------------------------------------------------------ #
+    # A)  See if we already have a fresh, downloaded COG for *this*
+    #     layer + landscape.  (Here "fresh" means <24 h old – tweak!)
+    # ------------------------------------------------------------------ #
+    cog_qs = ExportedCog.objects.filter(
+        input_layer=layer,
+        landscape_id=landscape_id,
+        downloaded=True,
+        created_at__gte=datetime.now(timezone.utc) - timedelta(hours=24)
+    )
+
+    if cog_qs.exists():
+        cog = cog_qs.first()
+        gdrive = _initialize_gdrive_instance()
+        try:
+            # quick existence check — inexpensive 'files.get' call
+            gdrive.CreateFile({'id': cog.gdrive_file_id}).FetchMetadata()
+        except HttpError:
+            # file was deleted on Drive -> fall through and re-export
+            cog_qs.delete()
+        else:
+            download_url = reverse('download_from_gdrive', args=[uuid])
+            return Response({
+                "already_exported": True,
+                "download_url": download_url
+            })
+
+    # ------------------------------------------------------------------ #
+    # B)  No usable COG found → queue Celery task as before
+    # ------------------------------------------------------------------ #
+    async_result = export_ee_image_to_cog_task.delay(str(layer.uuid),
+                                                     landscape_id)
+    return Response({"task_id": async_result.id})
 
 
 @api_view(['GET'])
@@ -143,3 +175,43 @@ def download_from_gdrive(request, uuid):
     except Exception as ex:
         logger.error(f"Download failed: {ex}", exc_info=True)
         raise Http404("Download failed.")
+
+
+@api_view(['GET'])
+@login_required
+def cog_export_status(request, uuid, task_id):
+    """
+    Client polls this to learn when the COG is ready.
+    """
+    # 1) check the Celery task
+    res = AsyncResult(task_id)
+    if res.state in ('PENDING', 'STARTED', 'RETRY'):
+        return Response({"status": "processing"})
+    if res.state == 'FAILURE':
+        return Response(
+            {"status": "error", "info": str(res.result)},
+            status=500
+        )
+
+    # 2) task succeeded — look up the ExportedCog row
+    landscape_id = request.query_params.get("landscape_id")
+    try:
+        exp = ExportedCog.objects.get(
+            input_layer__uuid=uuid,
+            landscape_id=landscape_id,
+            downloaded=True
+        )
+        # if we found it, return its info
+        if exp.file_name:
+            pass
+
+    except ExportedCog.DoesNotExist:
+        # it might not yet have saved the record
+        return Response({"status": "processing"})
+
+    if task_id == "READY":
+        download_url = reverse('download_from_gdrive', args=[uuid])
+        return Response({
+            "status": "completed",
+            "download_url": download_url
+        })
