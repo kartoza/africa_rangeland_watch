@@ -10,7 +10,7 @@ interface Props {
   landscapeId: string;
   taskId?: string;          // returned by POST /export/
   downloadUrl?: string;     // present when BE said “already exported”
-  isSelected?: boolean;     // (kept for styling parity, not used here)
+  isSelected?: boolean;
 }
 
 /* ------------------------------------------------------------------ */
@@ -20,7 +20,7 @@ export default function CogDownloadButton({
   layerId,
   landscapeId,
   taskId,
-  downloadUrl: downloadUrlProp,   // <- grab the prop and rename locally
+  downloadUrl: downloadUrlProp,
 }: Props) {
   const toast = useToast();
 
@@ -39,10 +39,8 @@ export default function CogDownloadButton({
   /*  Poll the server *only if* we have a taskId and no URL yet.       */
   /* ---------------------------------------------------------------- */
   useEffect(() => {
-    // already have URL  → nothing to poll
     if (downloadUrlProp) return;
 
-    // “READY” sentinel (from Layers) → mark complete w/out polling
     if (taskId === 'READY') {
       setStatus('completed');
       return;

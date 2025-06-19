@@ -103,10 +103,6 @@ def trigger_cog_export(request, uuid):
 
     layer = get_object_or_404(InputLayer, uuid=uuid)
 
-    # ------------------------------------------------------------------ #
-    # A)  See if we already have a fresh, downloaded COG for *this*
-    #     layer + landscape.  (Here "fresh" means <24 h old – tweak!)
-    # ------------------------------------------------------------------ #
     cog_qs = ExportedCog.objects.filter(
         input_layer=layer,
         landscape_id=landscape_id,
@@ -130,9 +126,6 @@ def trigger_cog_export(request, uuid):
                 "download_url": download_url
             })
 
-    # ------------------------------------------------------------------ #
-    # B)  No usable COG found → queue Celery task as before
-    # ------------------------------------------------------------------ #
     async_result = export_ee_image_to_cog_task.delay(str(layer.uuid),
                                                      landscape_id)
     return Response({"task_id": async_result.id})
