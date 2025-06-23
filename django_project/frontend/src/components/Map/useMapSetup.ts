@@ -103,10 +103,17 @@ export const useMapSetup = (
             basemapControlRef.current = basemapControl;
             map.addControl(basemapControl, 'bottom-left');
             
-            // Set default basemap
-            baseMapRef?.current?.setBaseMapLayer(baseMaps[0]);
+            // Set default basemap - add a small delay to ensure the control is fully initialized
+            setTimeout(() => {
+                if (baseMapRef.current && typeof baseMapRef.current.setBaseMapLayer === 'function') {
+                    baseMapRef.current.setBaseMapLayer(baseMaps[0]);
+                } else {
+                    console.log('baseMapRef.current is not ready or setBaseMapLayer method not found');
+                }
+            }, 400);
         }
     }, [isMapLoaded, baseMaps]);
+
 
 
 
