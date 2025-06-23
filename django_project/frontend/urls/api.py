@@ -5,7 +5,7 @@ Africa Rangeland Watch (ARW).
 .. note:: ARW Frontend API urls.
 """
 
-from django.urls import path, re_path
+from django.urls import path
 from rest_framework.routers import DefaultRouter
 
 from frontend.api_views.analysis import AnalysisAPI, FetchAnalysisTaskAPI

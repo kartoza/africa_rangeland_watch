@@ -6,7 +6,6 @@ Africa Rangeland Watch (ARW).
 """
 
 from rest_framework import serializers
-from django.core.cache import cache
 
 from earthranger.models import EarthRangerEvents
 

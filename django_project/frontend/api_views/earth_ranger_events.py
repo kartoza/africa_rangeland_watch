@@ -4,35 +4,20 @@ Africa Rangeland Watch (ARW).
 
 .. note:: Landscape APIs
 """
-from cloud_native_gis.utils.vector_tile import querying_vector_tile
+import logging
+import math
+
+from django.db import connection
 from django.http import Http404, HttpResponse
-from rest_framework import filters
 from rest_framework.decorators import action
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny
 from rest_framework.viewsets import mixins, GenericViewSet
 
 from earthranger.models import EarthRangerEvents
 from core.pagination import Pagination
-from frontend.serializers.earth_ranger import EarthRangerEventSerializer 
-
-import requests
-import base64
-from django.conf import settings
-from django.http import HttpResponse, Http404
-from django.views.decorators.cache import cache_page
-from django.utils.decorators import method_decorator
-from rest_framework.views import APIView
-from rest_framework.permissions import IsAuthenticated
-from rest_framework.response import Response
-from rest_framework import status
-import logging
-
+from frontend.serializers.earth_ranger import EarthRangerEventSerializer
 
 logger = logging.getLogger(__name__)
-
-
-from django.db import connection
-import math
 
 
 def querying_vector_tile(
@@ -56,14 +41,14 @@ def querying_vector_tile(
 
     # Build field selection with JSON expansion
     field_selections = []
-    
+
     for field in field_names:
         if json_fields and field in json_fields:
             # Option 1: Expand JSON as text (preserves structure)
             field_selections.append(f'"{field}"::text as "{field}"')
         else:
             field_selections.append(f'"{field}"')
-    
+
     sql = f"""
         WITH mvtgeom AS
         (
