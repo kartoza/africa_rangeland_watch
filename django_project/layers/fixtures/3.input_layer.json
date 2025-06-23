@@ -468,18 +468,18 @@
     },
     {
         "model": "layers.inputlayer",
-        "pk": "0f84862d-fcc2-49a2-bff4-49a50ce47627",
+        "pk": "8217a032-4ff4-49ff-a526-aef91a603a1a",
         "fields": {
-            "name": "test_data_kml.kml",
+            "name": "EarthRanger Events",
             "layer_type": "vector",
-            "data_provider": 2,
-            "url": "pmtiles://http://localhost:8888/api/serve-pmtile/0f84862d-fcc2-49a2-bff4-49a50ce47627/",
-            "group": 3,
+            "data_provider": 3,
+            "url": "",
+            "group": 4,
             "metadata": {},
-            "created_by": 2,
-            "updated_by": 2,
-            "created_at": "2025-05-28T08:54:42.708Z",
-            "updated_at": "2025-05-28T08:54:45.793Z"
+            "created_by": null,
+            "updated_by": null,
+            "created_at": "2025-06-16T09:24:35.587Z",
+            "updated_at": "2025-06-16T11:44:16.832Z"
         }
-    },
+    }
 ]
