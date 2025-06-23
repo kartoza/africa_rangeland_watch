@@ -324,7 +324,8 @@ class ProcessAlertsTest(TestCase):
         self.assertIn("Zone C", called_names)
 
         called_message = [
-            call.args[3] if len(call.args) >= 4 else None for call in mock_trigger_alert.call_args_list
+            call.args[3] if len(call.args) >= 4 else None
+            for call in mock_trigger_alert.call_args_list
         ]
         self.assertIn("Zone A", called_names)
 
