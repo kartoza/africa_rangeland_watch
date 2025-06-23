@@ -465,5 +465,21 @@
             "created_at": "2025-05-01T00:00:00Z",
             "updated_at": "2025-05-01T00:00:00Z"
         }
-    }
+    },
+    {
+        "model": "layers.inputlayer",
+        "pk": "0f84862d-fcc2-49a2-bff4-49a50ce47627",
+        "fields": {
+            "name": "test_data_kml.kml",
+            "layer_type": "vector",
+            "data_provider": 2,
+            "url": "pmtiles://http://localhost:8888/api/serve-pmtile/0f84862d-fcc2-49a2-bff4-49a50ce47627/",
+            "group": 3,
+            "metadata": {},
+            "created_by": 2,
+            "updated_by": 2,
+            "created_at": "2025-05-28T08:54:42.708Z",
+            "updated_at": "2025-05-28T08:54:45.793Z"
+        }
+    },
 ]
