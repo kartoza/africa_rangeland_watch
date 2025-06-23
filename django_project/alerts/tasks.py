@@ -132,9 +132,9 @@ def process_alert(setting: AlertSetting, runner: AnalysisRunner):
             value = feature.get("properties", {}).get(
                 setting.indicator.name
             )
-            if name is not None or value is not None:
+            if name is not None and value is not None:
                 if check_threshold(setting, value):
-                    trigger_alert(setting, value, name, None)
+                    trigger_alert(setting, value, name)
                     setting.last_alert = now
                     setting.save()
     else:
