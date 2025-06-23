@@ -20,5 +20,16 @@
         "created_at": "2024-11-20T16:33:42.946Z",
         "updated_at": "2024-11-20T16:33:42.946Z"
     }
+},
+{
+    "model": "layers.dataprovider",
+    "pk": 3,
+    "fields": {
+        "name": "EarthRanger",
+        "file": "",
+        "url": "https://csah4h.pamdas.org",
+        "created_at": "2025-06-16T09:24:23.138Z",
+        "updated_at": "2025-06-16T09:30:18.733Z"
+    }
 }
 ]

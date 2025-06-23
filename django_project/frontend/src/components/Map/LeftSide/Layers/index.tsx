@@ -81,6 +81,35 @@ export default function Layers(
         <h2>
           <AccordionButton>
             <Box flex="1" textAlign="left" fontWeight='bold' fontSize='13px'>
+              EarthRanger
+            </Box>
+            <AccordionIcon/>
+          </AccordionButton>
+        </h2>
+        <AccordionPanel
+          pb={4}
+          fontSize='13px'
+        >
+          {
+            layers ?
+              layers?.filter(
+                layer => layer.group === GroupName.EarthRangerGroup
+              ).map(
+                layer => <LayerCheckbox
+                  key={layer.id}
+                  layer={layer}
+                  onToggle={(checked) => checked ? onLayerChecked(layer) : onLayerUnchecked(layer)}
+                />
+              ) :
+              <LeftSideLoading/>
+          }
+        </AccordionPanel>
+      </AccordionItem>
+
+      <AccordionItem>
+        <h2>
+          <AccordionButton>
+            <Box flex="1" textAlign="left" fontWeight='bold' fontSize='13px'>
               Near-real time
             </Box>
             <AccordionIcon/>

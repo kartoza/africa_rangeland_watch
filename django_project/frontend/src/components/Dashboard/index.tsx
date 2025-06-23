@@ -69,6 +69,7 @@ const DynamicDashboard: React.FC<{
   const dashboardLoading = useSelector(
     (state: RootState) => state.dashboard.loading
   );
+  console.log(widgets);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -368,6 +369,14 @@ const DynamicDashboard: React.FC<{
     );
   };
 
+  const changeConfigWidget = (id: string, config: any) => {
+    setWidgets((prev) =>
+      prev.map((widget) =>
+        widget.id === id ? { ...widget, config } : widget
+      )
+    );
+  };
+
   // Dashboard title editing functions
   const handleDashboardTitleSave = () => {
     if (editDashboardTitle.trim()) {
@@ -607,6 +616,7 @@ const DynamicDashboard: React.FC<{
                     onHeightChange={changeHeightWidget}
                     onContentChange={changeContentWidget}
                     onTitleChange={changeTitleWidget}
+                    onConfigChange={changeConfigWidget}
                     isEditable={isEditable}
                   />
                 ))}

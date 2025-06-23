@@ -11,6 +11,9 @@ from rest_framework.routers import DefaultRouter
 from frontend.api_views.analysis import AnalysisAPI, FetchAnalysisTaskAPI
 from frontend.api_views.base_map import BaseMapAPI, MapConfigAPI
 from frontend.api_views.landscape import LandscapeViewSet
+from frontend.api_views.earth_ranger_events import (
+    EarthRangerEventsViewSet
+)
 from frontend.api_views.layers import (
     LayerAPI,
     UploadLayerAPI,
@@ -83,6 +86,11 @@ urlpatterns = base_map_urls + layers_urls + router.urls + [
         'landscapes/vector_tile/<int:z>/<int:x>/<int:y>/',
         LandscapeViewSet.as_view({'get': 'vector_tile'}),
         name='landscape-vector-tile'
+    ),
+    path(
+        'earth-ranger/events/vector_tile/<int:z>/<int:x>/<int:y>/',
+        EarthRangerEventsViewSet.as_view({'get': 'vector_tile'}),
+        name='earth-ranger-events-vector-tile'
     ),
     path(
         'analysis/task/<int:task_id>/',

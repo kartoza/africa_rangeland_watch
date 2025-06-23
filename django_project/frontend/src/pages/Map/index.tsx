@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useRef, useState } from "react";
 import { Helmet } from "react-helmet";
 import Header from "../../components/Header";
 import { Box } from "@chakra-ui/react";
@@ -6,11 +6,13 @@ import { LeftSide } from "../../components/Map/LeftSide";
 import { MapLibre } from "../../components/Map/MapLibre";
 import TopSide from "../../components/Map/TopSide";
 import RightSide from "../../components/Map/RightSide";
+import EarthRanger from "../../components/Map/EarthRanger"
 
 /** Map page **/
 export default function MapPage() {
   const leftSideRef = useRef(null);
   const mapLibreRef = useRef(null);
+  const [showEarthRanger, setShowEarthRanger] = useState(false);
 
   return (
     <>
@@ -32,10 +34,18 @@ export default function MapPage() {
           <LeftSide
             ref={leftSideRef}
             onLayerChecked={layer => {
-              mapLibreRef?.current.renderLayer(layer)
+              if ((layer.group as string) === 'earth-ranger') {
+                setShowEarthRanger(true);
+              } else {
+                mapLibreRef?.current.renderLayer(layer);
+              }
             }}
             onLayerUnchecked={(layer, isRemoveSource?) => {
-              mapLibreRef?.current.removeLayer(layer, isRemoveSource)
+              if ((layer.group as string) === 'earth-ranger') {
+                setShowEarthRanger(false);
+              } else {
+                mapLibreRef?.current.removeLayer(layer, isRemoveSource);
+              }
             }}
           />
           <Box
@@ -48,6 +58,7 @@ export default function MapPage() {
                 leftSideRef?.current.toggle()
               }}
             />
+            <EarthRanger isVisible={showEarthRanger} />
             <MapLibre ref={mapLibreRef}/>
           </Box>
           <RightSide/>
