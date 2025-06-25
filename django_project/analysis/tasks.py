@@ -45,15 +45,18 @@ def _run_spatial_analysis(data):
     """Run spatial analysis to get difference of relative layer."""
     input_layers = InputLayer()
     reference_layer_geom = AnalysisRunner.get_reference_layer_geom(data)
-    analysis_dict = AnalysisRunner.get_analysis_dict_spatial(data)
+    (
+        spatial_analysis_dict, 
+        temporal_analysis_dict
+    ) = AnalysisRunner.get_analysis_dict_spatial(data)
     filter_start_date, filter_end_date = spatial_get_date_filter(
-        analysis_dict
+        spatial_analysis_dict
     )
     rel_diff = get_rel_diff(
         input_layers.get_spatial_layer_dict(
             filter_start_date, filter_end_date
         ),
-        analysis_dict,
+        spatial_analysis_dict,
         reference_layer_geom
     )
     return rel_diff
@@ -367,6 +370,8 @@ def run_analysis_task(analysis_task_id: int):
         analysis_task.result = results
         analysis_task.status = TaskStatus.COMPLETED
     except Exception as e:
+        import traceback
+        print(traceback.format_exc())
         analysis_task.status = TaskStatus.FAILED
         analysis_task.error = {
             'message': str(e)

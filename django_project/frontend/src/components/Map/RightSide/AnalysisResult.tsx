@@ -323,7 +323,7 @@ export function SpatialBarChart({ analysis }: Props) {
     }
   };
 
-  return <Box height={"100%"}>
+  return <Box minHeight={"200px"}>
     <Bar options={options} data={chartData} />
   </Box>
 }
@@ -417,7 +417,15 @@ export function RenderResult({ analysis, decimalPlaces }: Props) {
     case "Temporal":
       return <RenderTemporal analysis={analysis}/>
     case "Spatial":
-      return <RenderSpatial analysis={analysis} decimalPlaces={decimalPlaces}/>
+      // Create a deep copy to make it fully mutable
+      const newAnalysis = JSON.parse(JSON.stringify(analysis));
+      newAnalysis.results.spatial.data = analysis.data;
+      newAnalysis.results.temporal.data = analysis.data;
+
+      return <Box>
+        <RenderSpatial analysis={newAnalysis.results.spatial} decimalPlaces={decimalPlaces}/>
+        <RenderTemporal analysis={newAnalysis.results.temporal}/>
+      </Box>
     default:
       return null
   }
@@ -531,12 +539,15 @@ export default function AnalysisResult() {
       header += ` (${analysis.data.spatialStartYear} - ${analysis.data.spatialEndYear})`
     }
   }
+  console.log(loading);
 
   return (
     <Box ref={containerRef} backgroundColor='white'
          borderRadius={8}
          boxShadow="0px 0px 5px 0px #00000030"
          pointerEvents='auto'
+         overflowY={"auto"} 
+         maxHeight={"80vh"}
          p={4}>
       <Flex width="100%" align="center" justify="space-between">
         <Text fontSize="1.5rem" fontWeight={600} color='green.600'>
