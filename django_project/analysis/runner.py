@@ -4,7 +4,9 @@ Africa Rangeland Watch (ARW).
 
 .. note:: Analysis Runner Class
 """
+import asyncio
 import uuid
+from concurrent.futures import ThreadPoolExecutor
 from collections import OrderedDict
 from datetime import date
 from copy import deepcopy
@@ -545,16 +547,33 @@ class AnalysisRunner:
                 preferences.result_cache_ttl
             )
 
-        results_spatial = run_analysis(
-            locations=locations,
-            analysis_dict=spatial_analysis_dict,
-            reference_layer=reference_layer_geom,
-            custom_geom=data.get('custom_geom', None)
-        )
+        # CONCURRENT EXECUTION - Replace your selected code with this:
+        with ThreadPoolExecutor(max_workers=2) as executor:
+            # Submit both GEE operations to run concurrently
+            spatial_future = executor.submit(
+                run_analysis,
+                locations=locations,
+                analysis_dict=spatial_analysis_dict,
+                reference_layer=reference_layer_geom,
+                custom_geom=data.get('custom_geom', None)
+            )
+            
+            temporal_future = executor.submit(
+                self.run_temporal_analysis,
+                data,
+                temporal_analysis_dict
+            )
+            
+            try:
+                # Get results with timeout (blocks until both complete)
+                results_spatial = spatial_future.result(timeout=300)  # 5 min timeout
+                results_temporal = temporal_future.result(timeout=300)
+            except Exception as e:
+                print(f"Concurrent GEE analysis failed: {e}")
+                raise
 
-
+        # Process custom geometry names (same as your original code)
         if data.get('custom_geom', None):
-            # add Name to the results
             name = data.get('userDefinedFeatureName', 'User Defined Geometry')
             for feature in results_spatial.get('features', []):
                 if 'properties' not in feature:
@@ -562,8 +581,16 @@ class AnalysisRunner:
                 if 'Name' in feature['properties']:
                     continue
                 feature['properties']['Name'] = name
-
-        results_temporal = self.run_temporal_analysis(data, temporal_analysis_dict)
+        
+        # Process results_spatial for custom_geom
+        if data.get('custom_geom', None):
+            name = data.get('userDefinedFeatureName', 'User Defined Geometry')
+            for feature in results_spatial.get('features', []):
+                if 'properties' not in feature:
+                    continue
+                if 'Name' in feature['properties']:
+                    continue
+                feature['properties']['Name'] = name
 
         return {
             'spatial': {'results': results_spatial},
@@ -577,7 +604,6 @@ class AnalysisRunner:
         elif data['analysisType'] == 'Temporal':
             return self.run_temporal_analysis(data)
         elif data['analysisType'] == 'Spatial':
-            # return self.run_spatial_analysis(data)
             return self.run_spatial_analysis(data)
         else:
             raise ValueError('Invalid analysis type!')

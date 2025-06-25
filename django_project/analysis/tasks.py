@@ -370,8 +370,6 @@ def run_analysis_task(analysis_task_id: int):
         analysis_task.result = results
         analysis_task.status = TaskStatus.COMPLETED
     except Exception as e:
-        import traceback
-        print(traceback.format_exc())
         analysis_task.status = TaskStatus.FAILED
         analysis_task.error = {
             'message': str(e)
