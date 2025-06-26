@@ -4,7 +4,6 @@ Africa Rangeland Watch (ARW).
 
 .. note:: Analysis APIs
 """
-import json
 import logging
 from datetime import date
 from rest_framework import status
@@ -19,7 +18,7 @@ from analysis.analysis import (
     spatial_get_date_filter,
     validate_spatial_date_range_filter
 )
-from analysis.models import AnalysisTask, LandscapeCommunity
+from analysis.models import AnalysisTask
 from analysis.runner import AnalysisRunner
 from analysis.tasks import run_analysis_task
 
@@ -89,7 +88,7 @@ class AnalysisAPI(APIView):
             )
 
         (
-            spatial_analysis_dict, 
+            spatial_analysis_dict,
             temporal_analysis_dict
         ) = AnalysisRunner.get_analysis_dict_spatial(data)
         filter_start_date, filter_end_date = spatial_get_date_filter(

@@ -46,7 +46,7 @@ def _run_spatial_analysis(data):
     input_layers = InputLayer()
     reference_layer_geom = AnalysisRunner.get_reference_layer_geom(data)
     (
-        spatial_analysis_dict, 
+        spatial_analysis_dict,
         temporal_analysis_dict
     ) = AnalysisRunner.get_analysis_dict_spatial(data)
     filter_start_date, filter_end_date = spatial_get_date_filter(

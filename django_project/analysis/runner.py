@@ -4,7 +4,6 @@ Africa Rangeland Watch (ARW).
 
 .. note:: Analysis Runner Class
 """
-import asyncio
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from collections import OrderedDict
@@ -159,7 +158,9 @@ class AnalysisRunner:
                 'Quarterly': {
                     'ref': data.get('period', {}).get('quarter', '')
                     if data['temporalResolution'] == 'Quarterly' else '',
-                    'test': [data.get('comparisonPeriod', {}).get('quarter', '')]
+                    'test': [
+                        data.get('comparisonPeriod', {}).get('quarter', '')
+                    ]
                     if data['temporalResolution'] == 'Quarterly' else ''
                 },
                 'Monthly': {
@@ -390,7 +391,8 @@ class AnalysisRunner:
 
         # Compute min, max, and mean
         results = {}
-        unprocessed_years = [y for y in years] if isinstance(years, list) else [years]
+        unprocessed_years = [y for y in years] \
+            if isinstance(years, list) else [years]
         names = set()
 
         for location_year, values in aggregated.items():
@@ -470,7 +472,7 @@ class AnalysisRunner:
             )
 
         (
-            spatial_analysis_dict, 
+            spatial_analysis_dict,
             temporal_analysis_dict
         ) = self.get_analysis_dict_spatial(data)
         analysis_cache = AnalysisResultsCacheUtils({
@@ -546,9 +548,7 @@ class AnalysisRunner:
                 preferences.result_cache_ttl
             )
 
-        # CONCURRENT EXECUTION - Replace your selected code with this:
         with ThreadPoolExecutor(max_workers=2) as executor:
-            # Submit both GEE operations to run concurrently
             spatial_future = executor.submit(
                 run_analysis,
                 locations=locations,
@@ -556,22 +556,20 @@ class AnalysisRunner:
                 reference_layer=reference_layer_geom,
                 custom_geom=data.get('custom_geom', None)
             )
-            
+
             temporal_future = executor.submit(
                 self.run_temporal_analysis,
                 data,
                 temporal_analysis_dict
             )
-            
+
             try:
-                # Get results with timeout (blocks until both complete)
-                results_spatial = spatial_future.result(timeout=300)  # 5 min timeout
+                results_spatial = spatial_future.result(timeout=300)
                 results_temporal = temporal_future.result(timeout=300)
             except Exception as e:
                 print(f"Concurrent GEE analysis failed: {e}")
                 raise
 
-        # Process custom geometry names (same as your original code)
         if data.get('custom_geom', None):
             name = data.get('userDefinedFeatureName', 'User Defined Geometry')
             for feature in results_spatial.get('features', []):
@@ -580,7 +578,7 @@ class AnalysisRunner:
                 if 'Name' in feature['properties']:
                     continue
                 feature['properties']['Name'] = name
-        
+
         # Process results_spatial for custom_geom
         if data.get('custom_geom', None):
             name = data.get('userDefinedFeatureName', 'User Defined Geometry')
