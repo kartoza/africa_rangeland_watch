@@ -5,6 +5,7 @@ from .views import (
     download_layer,
     user_input_layers,
     trigger_cog_export,
+    cog_export_status,
     download_from_gdrive,
 )
 from .views_api import (
@@ -47,6 +48,11 @@ urlpatterns = [
         'nrt-layer/<uuid:uuid>/export/',
         trigger_cog_export,
         name='trigger_cog_export'
+    ),
+    path(
+        'nrt-layer/<uuid:uuid>/export-status/<str:task_id>/',
+        cog_export_status,
+        name='cog-export-status'
     ),
     path(
         'nrt-layer/<uuid:uuid>/download/',
