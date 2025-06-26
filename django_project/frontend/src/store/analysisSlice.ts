@@ -244,13 +244,6 @@ export const analysisSlice = createSlice({
               ...action.payload.results.spatial.results,
               id: REFERENCE_LAYER_DIFF_ID
             }
-            const newPayload = JSON.parse(JSON.stringify(action.payload));
-            newPayload.data.analysisType = "Temporal";
-            state.analysis = {
-              ...state.analysis,
-              data: newPayload.data,
-              results: newPayload.results.temporal.results
-            }
           } else {
             state.analysis = {
               ...state.analysis,

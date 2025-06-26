@@ -537,12 +537,11 @@ class AnalysisRunner:
                 })['tile_fetcher'].url_format,
                 'style': None
             }
-            results_temporal = self.run_temporal_analysis(data, temporal_analysis_dict)
             preferences = Preferences.load()
             return analysis_cache.create_analysis_cache(
                 {
                     'spatial': {'results': results},
-                    'temporal': {'results': results_temporal}
+                    'temporal': {'results': {}}
                 },
                 preferences.result_cache_ttl
             )

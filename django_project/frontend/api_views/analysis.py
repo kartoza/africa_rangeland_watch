@@ -118,18 +118,6 @@ class AnalysisAPI(APIView):
                 ['Baseline', 'Temporal', 'Spatial']
             ):
                 raise ValueError('Invalid analysis type')
-            
-            if data['analysisType'] == 'Spatial':
-                intersects_communities = LandscapeCommunity.objects.filter(
-                    geometry__intersects=json.dumps(data['reference_layer']['features'][0]['geometry'])
-                ).order_by('community_id')
-                data['locations'] = [{
-                    "lat": community.geometry.centroid.y,
-                    "lon": community.geometry.centroid.x,
-                    "community": community.community_id,
-                    "communityName": community.community_name,
-                    "communityFeatureId": community.id
-                } for community in intersects_communities]
 
             # check if analysis is already cached
             results = self.check_cache(data)
