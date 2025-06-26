@@ -35,6 +35,9 @@ export const useMapSetup = (
     const { baseMaps } = useSelector((state: RootState) => state.baseMap);
     const { mapConfig } = useSelector((state: RootState) => state.mapConfig);
     const isAuthenticated = useSelector(selectIsLoggedIn);
+    
+    // Add a ref to track the basemap control
+    const basemapControlRef = useRef<BasemapControl | null>(null);
 
     /** Fetch the initial data **/
     useEffect(() => {
@@ -66,8 +69,7 @@ export const useMapSetup = (
             mapRef.current = _map;
             setIsMapLoaded(true);
         })
-        // BaseMapControl must be added
-        _map.addControl(new BasemapControl(baseMaps, baseMapRef), 'bottom-left');
+
         if (legendRef) {
             _map.addControl(new LegendControl(legendRef), 'top-left');
         }
@@ -88,18 +90,32 @@ export const useMapSetup = (
         };
     }, []);
 
-    /** Handle base map changes **/
+    /** Handle basemap control - only add when both map and baseMaps are ready **/
     useEffect(() => {
-        if (!isMapLoaded || !mapRef.current) {
-            return;
-        }
-        if (baseMaps.length == 0) {
+        const map = mapRef.current;
+        if (!isMapLoaded || !map || baseMaps.length === 0) {
             return;
         }
 
-        // render default base map
-        baseMapRef?.current?.setBaseMapLayer(baseMaps[0])
-    }, [isMapLoaded, baseMaps])
+        // Only add if we haven't added it yet
+        if (!basemapControlRef.current) {
+            const basemapControl = new BasemapControl(baseMaps, baseMapRef);
+            basemapControlRef.current = basemapControl;
+            map.addControl(basemapControl, 'bottom-left');
+            
+            // Set default basemap - add a small delay to ensure the control is fully initialized
+            setTimeout(() => {
+                if (baseMapRef.current && typeof baseMapRef.current.setBaseMapLayer === 'function') {
+                    baseMapRef.current.setBaseMapLayer(baseMaps[0]);
+                } else {
+                    console.log('baseMapRef.current is not ready or setBaseMapLayer method not found');
+                }
+            }, 400);
+        }
+    }, [isMapLoaded, baseMaps]);
+
+
+
 
     /** Handle map config changes **/
     useEffect(() => {
