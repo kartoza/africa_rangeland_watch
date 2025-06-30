@@ -264,7 +264,7 @@ class IndicatorAdmin(admin.ModelAdmin):
 
     list_display = (
         'name', 'source', 'get_analysis_type',
-        'get_temporal_resolution',
+        'get_temporal_resolution', 'is_active',
     )
     search_fields = ('name',)
 

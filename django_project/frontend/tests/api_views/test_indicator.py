@@ -8,7 +8,7 @@ Africa Rangeland Watch (ARW).
 from django.urls import reverse
 
 from core.tests.common import BaseAPIViewTest
-from analysis.models import Indicator, IndicatorSource
+from analysis.models import Indicator
 from frontend.api_views.indicator import IndicatorAPI
 
 
@@ -30,6 +30,6 @@ class IndicatorAPITest(BaseAPIViewTest):
         self.assertEqual(
             len(response.data),
             Indicator.objects.filter(
-                source=IndicatorSource.BASE
+                is_active=True,
             ).count()
         )

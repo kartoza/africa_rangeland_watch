@@ -846,6 +846,11 @@ class Indicator(models.Model):
         null=True
     )
 
+    is_active = models.BooleanField(
+        default=True,
+        help_text="Indicates if the indicator is active."
+    )
+
     def clean(self):
         super().clean()
         invalid_analysis_types = (

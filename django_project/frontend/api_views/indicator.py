@@ -9,7 +9,7 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from analysis.models import Indicator, IndicatorSource
+from analysis.models import Indicator
 
 
 class IndicatorAPI(APIView):
@@ -28,7 +28,7 @@ class IndicatorAPI(APIView):
                 'source': indicator.source,
             }
             for indicator in Indicator.objects.filter(
-                source=IndicatorSource.BASE
+                is_active=True
             )
         ]
         
