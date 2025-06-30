@@ -464,6 +464,7 @@ class AnalysisRunner:
 
     def run_spatial_analysis(self, data):
         """Run the spatial analysis."""
+        preferences = Preferences.load()
         reference_layer_geom = self.get_reference_layer_geom(data)
         if reference_layer_geom is None:
             raise ValueError(
@@ -484,9 +485,9 @@ class AnalysisRunner:
                 'custom_geom': data.get('custom_geom', None)
             }
         })
-        # output = analysis_cache.get_analysis_cache()
-        # if output:
-        #     return output
+        output = analysis_cache.get_analysis_cache()
+        if output:
+            return output
 
         filter_start_date, filter_end_date = spatial_get_date_filter(
             spatial_analysis_dict
@@ -564,7 +565,7 @@ class AnalysisRunner:
             )
 
             try:
-                results_spatial = spatial_future.result(timeout=300)
+                results_spatial = spatial_future.result(timeout=preferences.max_wait_analysis_run_time)
                 results_temporal = temporal_future.result(timeout=300)
             except Exception as e:
                 print(f"Concurrent GEE analysis failed: {e}")
