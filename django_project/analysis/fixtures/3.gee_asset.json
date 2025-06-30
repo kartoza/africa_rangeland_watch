@@ -359,5 +359,53 @@
         "type": "table",
         "metadata": {}
     }
+},
+{
+    "model": "analysis.geeasset",
+    "pk": 35,
+    "fields": {
+        "key": "grassland_dominant_class",
+        "source": "projects/global-pasture-watch/assets/ggc-30m/v1/grassland_c",
+        "type": "image_collection",
+        "metadata": {
+            "start_date": "2000-01-01",
+            "end_date": "2022-12-31",
+            "band_names": [
+                "dominant_class"
+            ]
+        }
+    }
+},
+{
+    "model": "analysis.geeasset",
+    "pk": 36,
+    "fields": {
+        "key": "prob_cultivated_grassland",
+        "source": "projects/global-pasture-watch/assets/ggc-30m/v1/cultiv-grassland_p",
+        "type": "image_collection",
+        "metadata": {
+            "start_date": "2000-01-01",
+            "end_date": "2022-12-31",
+            "band_names": [
+                "probability"
+            ]
+        }
+    }
+},
+{
+    "model": "analysis.geeasset",
+    "pk": 37,
+    "fields": {
+        "key": "prob_natural_semi_grassland",
+        "source": "projects/global-pasture-watch/assets/ggc-30m/v1/nat-semi-grassland_p",
+        "type": "image_collection",
+        "metadata": {
+            "start_date": "2000-01-01",
+            "end_date": "2022-12-31",
+            "band_names": [
+                "probability"
+            ]
+        }
+    }
 }
 ]

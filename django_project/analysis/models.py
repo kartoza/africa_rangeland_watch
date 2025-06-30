@@ -861,7 +861,8 @@ class Indicator(models.Model):
                 f"Invalid analysis types: {', '.join(invalid_analysis_types)}."
             )
         invalid_temporal_resolutions = (
-            set(self.temporal_resolution) - set(self.ALLOWED_TEMPORAL_RESOLUTIONS)
+            set(self.temporal_resolution) -
+            set(self.ALLOWED_TEMPORAL_RESOLUTIONS)
         )
         if invalid_temporal_resolutions:
             raise ValidationError(
@@ -869,6 +870,39 @@ class Indicator(models.Model):
                 f"{', '.join(invalid_temporal_resolutions)}."
             )
 
+    def get_reducer(self):
+        """Get the reducer based on the configuration."""
+        reducer = ee.Reducer.mean()
+
+        reducer_config = self.config.get('reducer', None)
+        if reducer_config:
+            if reducer_config == 'mean':
+                reducer = ee.Reducer.mean()
+            elif reducer_config == 'sum':
+                reducer = ee.Reducer.sum()
+            elif reducer_config == 'median':
+                reducer = ee.Reducer.median()
+            elif reducer_config == 'mode':
+                reducer = ee.Reducer.mode()
+            elif reducer_config == 'min':
+                reducer = ee.Reducer.min()
+            elif reducer_config == 'max':
+                reducer = ee.Reducer.max()
+
+        return reducer
+
+    def get_reducer_name(self):
+        """Get the name of the reducer based on the configuration."""
+        return self.config.get('reducer', 'mean')
+
+    @classmethod
+    def has_statistics(cls, variable_name: str) -> bool:
+        """Check if the indicator has statistics."""
+        try:
+            indicator = cls.objects.get(variable_name=variable_name)
+            return indicator.source == IndicatorSource.BASE
+        except cls.DoesNotExist:
+            return False
 
     class Meta:
         verbose_name = "Indicator"

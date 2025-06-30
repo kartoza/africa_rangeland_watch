@@ -31,7 +31,7 @@ class IndicatorAPI(APIView):
                 is_active=True
             )
         ]
-        
+
         return Response(
             status=200,
             data=data

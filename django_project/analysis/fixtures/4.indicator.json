@@ -290,7 +290,7 @@
     "fields": {
         "name": "Grassland dominant class",
         "description": "",
-        "variable_name": "grassland_dominant_class",
+        "variable_name": "Grassland dominant class",
         "source": "GPW",
         "analysis_types": [
             "Temporal",
@@ -309,9 +309,12 @@
             "minValue": 1
         },
         "config": {
-            "reducer": "mode"
+            "reducer": "mode",
+            "asset_keys": [
+                "grassland_dominant_class"
+            ]
         },
-        "is_active": false
+        "is_active": true
     }
 },
 {
@@ -320,7 +323,7 @@
     "fields": {
         "name": "Probabilities of Cultivated Grasslands",
         "description": "",
-        "variable_name": "prob_cultivated_grassland",
+        "variable_name": "Probabilities of Cultivated Grasslands",
         "source": "GPW",
         "analysis_types": [
             "Temporal",
@@ -339,8 +342,12 @@
             "maxValue": 85,
             "minValue": 15
         },
-        "config": {},
-        "is_active": false
+        "config": {
+            "asset_keys": [
+                "prob_cultivated_grassland"
+            ]
+        },
+        "is_active": true
     }
 },
 {
@@ -349,7 +356,7 @@
     "fields": {
         "name": "Probabilities of Natural/Semi-Natural Grasslands",
         "description": "",
-        "variable_name": "prob_natural_semi_grassland",
+        "variable_name": "Probabilities of Natural/Semi-Natural Grasslands",
         "source": "GPW",
         "analysis_types": [
             "Temporal",
@@ -368,8 +375,12 @@
             "maxValue": 85,
             "minValue": 15
         },
-        "config": {},
-        "is_active": false
+        "config": {
+            "asset_keys": [
+                "prob_natural_semi_grassland"
+            ]
+        },
+        "is_active": true
     }
 }
 ]
