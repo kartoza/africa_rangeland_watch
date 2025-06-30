@@ -1,5 +1,4 @@
 from core.celery import app
-from dashboard.models import Dashboard
 
 
 @app.task(name='generate_dashboard_thumbnail')
