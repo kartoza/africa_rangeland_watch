@@ -20,7 +20,8 @@ class DashboardSerializer(serializers.ModelSerializer):
             'updated_at',
             'owner',
             'analysis_results',
-            'owner_name'
+            'owner_name',
+            'thumbnail'
         ]
 
     def get_owner(self, obj):

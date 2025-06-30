@@ -87,9 +87,12 @@ class AnalysisAPI(APIView):
                 f'{data.get('reference_layer_id')}!'
             )
 
-        analysis_dict = AnalysisRunner.get_analysis_dict_spatial(data)
+        (
+            spatial_analysis_dict,
+            temporal_analysis_dict
+        ) = AnalysisRunner.get_analysis_dict_spatial(data)
         filter_start_date, filter_end_date = spatial_get_date_filter(
-            analysis_dict
+            spatial_analysis_dict
         )
 
         valid_filters, start_meta, end_meta = (
