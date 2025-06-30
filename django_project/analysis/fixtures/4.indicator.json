@@ -338,6 +338,7 @@
                 "#ae7947",
                 "#3a2200"
             ],
+            "opacity": 0.7,
             "maxValue": 85,
             "minValue": 15
         },
@@ -371,6 +372,7 @@
                 "#803d3b",
                 "#322c2b"
             ],
+            "opacity": 0.7,
             "maxValue": 85,
             "minValue": 15
         },
