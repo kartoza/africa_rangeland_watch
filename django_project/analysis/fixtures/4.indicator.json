@@ -293,8 +293,7 @@
         "variable_name": "Grassland dominant class",
         "source": "GPW",
         "analysis_types": [
-            "Temporal",
-            "Spatial"
+            "Temporal"
         ],
         "temporal_resolution": [
             "Annual"
