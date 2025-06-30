@@ -241,7 +241,7 @@ export const analysisSlice = createSlice({
           state.saveAnalysisFlag = true;
           if (data.analysisType === 'Spatial' && (data.locations === null || data.locations.length === 0)) {
             state.referenceLayerDiff = {
-              ...action.payload.results,
+              ...action.payload.results.spatial.results,
               id: REFERENCE_LAYER_DIFF_ID
             }
           } else {
