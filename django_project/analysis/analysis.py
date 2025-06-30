@@ -788,6 +788,27 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
                 select = baseline_table.filterBounds(custom_geom)
             else:
                 select = baseline_table.filterBounds(selected_geos)
+
+            # add livestock baseline
+            livestock_baseline = calculate_livestock_baseline(
+                custom_geom if custom_geom else
+                communities.filterBounds(selected_geos)
+            )
+            join_filter = ee.Filter.equals(
+                leftField='Name',
+                rightField='Name'
+            )
+            inner_join = ee.Join.inner()
+            joined_fc = inner_join.apply(
+                select,
+                livestock_baseline,
+                join_filter
+            )
+            # flatten the joined features
+            select = joined_fc.map(
+                lambda f: ee.Feature(f.get('primary'))
+                            .copyProperties(ee.Feature(f.get('secondary')))
+            )
         return analysis_cache.create_analysis_cache(select.getInfo())
 
     if analysis_dict['analysisType'] == "Temporal":
@@ -2108,6 +2129,17 @@ def calculate_baseline(aoi, start_date, end_date, is_custom_geom=False):
             'label': 'SOC change kg/m2'
         })
 
+    # Add livestock all species
+    livestock_map = ee.Image(
+        GEEAsset.fetch_asset_source('livestock_all_2020')
+    ).clip(selected_area)
+    livestock_map = livestock_map.select('b1').rename('LivestockDensity')
+    image_list.append({
+        'asset': livestock_map,
+        'attribute': 'LivestockDensity',
+        'label': 'Livestock Density 2020 head/km2'
+    })
+
     if len(image_list) == 0:
         raise ValueError('No baseline in the input date ranges.')
 
@@ -2301,3 +2333,43 @@ def _split_dates_by_year(start_date: datetime.date, end_date: datetime.date):
         current_year += 1
 
     return results
+
+
+def calculate_livestock_baseline(selected_area):
+    """
+    Calculate livestock baseline for the selected area.
+
+    Parameters
+    ----------
+    selected_area : ee.Geometry or ee.FeatureCollection
+        The area of interest for calculating livestock baseline.
+
+    Returns
+    -------
+    ee.Image
+        An image representing the livestock baseline.
+    """
+    # Get the livestock density map
+    livestock_map = ee.Image(
+        GEEAsset.fetch_asset_source('livestock_all_2020')
+    ).clip(selected_area)
+
+    # Rename the band to 'LivestockDensity'
+    livestock_map = livestock_map.select('b1').rename('LivestockDensity')
+
+    # Reduce the regions to get mean values
+    reduced = livestock_map.reduceRegions(
+        selected_area,
+        ee.Reducer.mean(),
+        100
+    )
+    reduced = reduced.distinct(['Name', 'Area ha'])
+
+    reduced = reduced.map(
+        lambda feature: ee.Feature(None, {
+            'Name': feature.get('Name'),
+            'Livestock Density 2020 head/km2': feature.get('mean')
+        })
+    )
+
+    return reduced
