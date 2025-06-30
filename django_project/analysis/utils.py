@@ -162,4 +162,3 @@ def split_dates_by_year(start_date: datetime.date, end_date: datetime.date):
         current_year += 1
 
     return results
-

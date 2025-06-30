@@ -429,7 +429,7 @@ class AnalysisRunner:
             )
         else:
             results[0]['statistics'] = {}
-            
+
         return results
 
     def run_spatial_analysis(self, data):

@@ -825,7 +825,7 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
                 custom_geom if custom_geom else selected_geos,
                 True if custom_geom else False
             )
-            
+
             # Run analysis for GPW datasets
             return gpw_annual_temporal_analysis(
                 variable,
