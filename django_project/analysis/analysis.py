@@ -7,7 +7,17 @@ import ee
 import os
 from functools import reduce
 
-from analysis.models import AnalysisResultsCache, GEEAsset
+from analysis.models import (
+    AnalysisResultsCache,
+    GEEAsset,
+    Indicator,
+    IndicatorSource
+)
+from analysis.utils import split_dates_by_year
+from analysis.external.gpw import (
+    gpw_annual_temporal_analysis,
+    gpw_spatial_analysis_dict
+)
 
 SERVICE_ACCOUNT_KEY = os.environ.get('SERVICE_ACCOUNT_KEY', '')
 SERVICE_ACCOUNT = os.environ.get('SERVICE_ACCOUNT', '')
@@ -422,6 +432,10 @@ class InputLayer:
             'Soil carbon': soc_lt_mean,
             'Soil carbon change': soc_lt_trend
         }
+        gpw_dict = gpw_spatial_analysis_dict(
+            self.countries, start_date, end_date
+        )
+        spatial_layer_dict.update(gpw_dict)
         return spatial_layer_dict
 
     def get_landscape_dict(self):
@@ -618,7 +632,7 @@ def run_monthly_analysis(
     end_date = max(dates)
 
     # use start date of 2015-01-01
-    date_ranges = _split_dates_by_year(
+    date_ranges = split_dates_by_year(
         datetime.date(2015, 1, 1),
         end_date
     )
@@ -791,11 +805,36 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
         return analysis_cache.create_analysis_cache(select.getInfo())
 
     if analysis_dict['analysisType'] == "Temporal":
+        variable = analysis_dict['variable']
         res = analysis_dict['t_resolution']
         baseline_yr = int(analysis_dict['Temporal']['Annual']['ref'])
         test_years = [
             int(year) for year in analysis_dict['Temporal']['Annual']['test']
         ]
+        indicator = Indicator.objects.filter(
+            variable_name=variable
+        ).first()
+        if not indicator:
+            raise ValueError(f"Indicator for variable {variable} not found")
+
+        if indicator.source == IndicatorSource.GPW:
+            baseline_dt = datetime.date(
+                baseline_yr, 1, 1
+            )
+            select_geo = input_layers.get_selected_area(
+                custom_geom if custom_geom else selected_geos,
+                True if custom_geom else False
+            )
+            
+            # Run analysis for GPW datasets
+            return gpw_annual_temporal_analysis(
+                variable,
+                baseline_dt,
+                test_years,
+                select_geo,
+                analysis_cache
+            )
+
         temporal_table, temporal_table_yr = input_layers.get_temporal_table()
 
         if res == "Quarterly":
@@ -2285,19 +2324,3 @@ def calculate_temporal_to_img(
 
     col = col.select(band)
     return col
-
-
-def _split_dates_by_year(start_date: datetime.date, end_date: datetime.date):
-    if start_date > end_date:
-        raise ValueError("start_date must be before or equal to end_date")
-
-    current_year = start_date.year
-    results = []
-
-    while current_year <= end_date.year:
-        year_start = max(start_date, datetime.date(current_year, 1, 1))
-        year_end = min(end_date, datetime.date(current_year, 12, 31))
-        results.append((year_start, year_end))
-        current_year += 1
-
-    return results
