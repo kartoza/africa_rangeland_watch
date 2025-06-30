@@ -13,7 +13,8 @@ import {
   CardBody,
   Tag,
   TagLabel,
-  Heading
+  Heading,
+  Image
 } from "@chakra-ui/react";
 import { FaFilter } from "react-icons/fa";
 import { format } from 'date-fns';
@@ -222,7 +223,9 @@ const DashboardListPage: React.FC<DashboardListProps> = ({allDashboards}) => {
                         justify="space-between"
                       >
                         {/* Content */}
-                        <Box
+                        <Flex direction="row" gap={4} w="100%">
+                          {/* First Column - Dashboard Info */}
+                          <Box
                             flex="1"
                             display="flex"
                             flexDirection="column"
@@ -230,22 +233,28 @@ const DashboardListPage: React.FC<DashboardListProps> = ({allDashboards}) => {
                             onClick={() => handleItemClick(dashboard)}
                             cursor="pointer"
                           >
+                            <Heading size="md" fontWeight="bold" color="black" mb={2}>
+                              {dashboard.title}
+                            </Heading>
 
-                          <Heading size="md" fontWeight="bold" color="black" mb={2}>
-                            {dashboard.title}
-                          </Heading>
-
-                          <Box mt={4} display="flex" flexWrap="wrap" gap={2}>
-                            <Tag colorScheme="green" mr={2}>
-                              <TagLabel>
-                                {format(new Date(dashboard?.updated_at), "MMMM dd, yyyy HH:mm:ss")}
-                              </TagLabel>
-                            </Tag>
-                            <Tag colorScheme="teal">
-                              <TagLabel>{dashboard.owner_name}</TagLabel>
-                            </Tag>
+                            <Box mt={4} display="flex" flexWrap="wrap" gap={2}>
+                              <Tag colorScheme="green" mr={2}>
+                                <TagLabel>
+                                  {format(new Date(dashboard?.updated_at), "MMMM dd, yyyy HH:mm:ss")}
+                                </TagLabel>
+                              </Tag>
+                              <Tag colorScheme="teal">
+                                <TagLabel>{dashboard.owner_name}</TagLabel>
+                              </Tag>
+                            </Box>
                           </Box>
-                        </Box>
+
+                          {/* Second Column - Thumbnail */}
+                          <Box>
+                            <Image src={dashboard.thumbnail} height={100} width={100}></Image>
+                          </Box>
+                        </Flex>
+
 
                         {/* View Button */}
                         { isEditable && (
