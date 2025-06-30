@@ -14,6 +14,7 @@ from django.dispatch import receiver
 from django.conf import settings
 from django.urls import reverse
 from cloud_native_gis.models import Layer, LayerType
+from django.core.exceptions import ValidationError
 
 
 from core.models import TaskStatus
@@ -765,3 +766,109 @@ class AnalysisTask(models.Model):
         blank=True,
         help_text='Error message if the task failed.'
     )
+
+
+class IndicatorSource(models.TextChoices):
+    """Choices for the source of an indicator."""
+
+    BASE = 'base', 'Base'
+    # Global Pasteur Watch
+    GPW = 'GPW', 'Global Pasteur Watch'
+    OTHER = 'other', 'Other'
+
+
+class Indicator(models.Model):
+    """Model to represent an indicator used in analysis."""
+
+    ALLOWED_ANALYSIS_TYPES = [
+        'Baseline',
+        'Temporal',
+        'Spatial'
+    ]
+    ALLOWED_TEMPORAL_RESOLUTIONS = [
+        'Annual',
+        'Quarterly',
+        'Monthly'
+    ]
+
+    name = models.CharField(
+        max_length=255,
+        unique=True,
+        help_text="The name of the indicator."
+    )
+
+    description = models.TextField(
+        blank=True,
+        null=True,
+        help_text="Description of the indicator."
+    )
+
+    variable_name = models.CharField(
+        max_length=255,
+        unique=True,
+        help_text="The variable name used in the analysis."
+    )
+
+    source = models.CharField(
+        max_length=50,
+        choices=IndicatorSource.choices,
+        default=IndicatorSource.BASE,
+        help_text="The source of the indicator."
+    )
+
+    analysis_types = models.JSONField(
+        default=list,
+        help_text="List of analysis types this indicator can be used for.",
+        blank=True,
+        null=True
+    )
+
+    temporal_resolution = models.JSONField(
+        default=list,
+        help_text=(
+            "List of temporal resolutions this indicator can be used for."
+        ),
+        blank=True,
+        null=True
+    )
+
+    metadata = models.JSONField(
+        default=dict,
+        help_text="Additional metadata for the indicator.",
+        blank=True,
+        null=True
+    )
+
+    config = models.JSONField(
+        default=dict,
+        help_text="Additional configuration for the indicator.",
+        blank=True,
+        null=True
+    )
+
+    def clean(self):
+        super().clean()
+        invalid_analysis_types = (
+            set(self.analysis_types) - set(self.ALLOWED_ANALYSIS_TYPES)
+        )
+        if invalid_analysis_types:
+            raise ValidationError(
+                f"Invalid analysis types: {', '.join(invalid_analysis_types)}."
+            )
+        invalid_temporal_resolutions = (
+            set(self.temporal_resolution) - set(self.ALLOWED_TEMPORAL_RESOLUTIONS)
+        )
+        if invalid_temporal_resolutions:
+            raise ValidationError(
+                f"Invalid temporal resolutions: "
+                f"{', '.join(invalid_temporal_resolutions)}."
+            )
+
+
+    class Meta:
+        verbose_name = "Indicator"
+        verbose_name_plural = "Indicators"
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
