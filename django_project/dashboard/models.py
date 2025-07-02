@@ -1,6 +1,7 @@
 import uuid
 import json
 import io
+import logging
 import matplotlib.pyplot as plt
 import geopandas as gpd
 import contextily as ctx
@@ -12,6 +13,8 @@ from django.core.files.base import ContentFile
 
 from base.models import Organisation
 from analysis.models import UserAnalysisResults, LandscapeCommunity
+
+logger = logging.getLogger(__name__)
 
 
 class Dashboard(models.Model):
@@ -133,11 +136,11 @@ class Dashboard(models.Model):
     def generate_and_save_thumbnail(self):
         """Generate OSM thumbnail with clearly visible features."""
 
-        print(f'Generating dashbord thumbnail for Dashboard {self.uuid}')
+        logger.info(f'Generating dashbord thumbnail for Dashboard {self.uuid}')
 
         result_ids = self.widgets.values_list('analysis_result', flat=True)
         if not result_ids.exists():
-            print("Result does not exist")
+            logger.error("Result does not exist")
             return None
         result = UserAnalysisResults.objects.filter(id__in=result_ids).first()
         location_ids = [
@@ -151,7 +154,7 @@ class Dashboard(models.Model):
         )
 
         if not communities.exists():
-            print("No communities found")
+            logger.error("No communities found")
             return None
 
         # Create GeoDataFrame
@@ -167,11 +170,11 @@ class Dashboard(models.Model):
                     'name': community.community_name or f'Community {i + 1}',
                 })
             except Exception as e:
-                print(f"Error processing community {i}: {e}")
+                logger.error(f"Error processing community {i}: {e}")
                 continue
 
         if not data:
-            print("No valid geometries found")
+            logger.error("No valid geometries found")
             return None
 
         # Create GeoDataFrame
@@ -233,9 +236,9 @@ class Dashboard(models.Model):
                 zoom='auto',
                 alpha=1.0,
             )
-            print("Basemap added successfully")
+            logger.info("Basemap added successfully")
         except Exception as e:
-            print(f"Error adding basemap: {e}")
+            logger.error(f"Error adding basemap: {e}")
             # Fallback: just use a simple background
             ax.set_facecolor('lightgray')
 
@@ -270,7 +273,7 @@ class Dashboard(models.Model):
         plt.close(fig)
         buffer.close()
 
-        print(
+        logger.info(
             f"OSM thumbnail with visible features saved: {self.thumbnail.url}"
         )
         return self.thumbnail.url

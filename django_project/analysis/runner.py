@@ -5,7 +5,6 @@ Africa Rangeland Watch (ARW).
 .. note:: Analysis Runner Class
 """
 import uuid
-from concurrent.futures import ThreadPoolExecutor
 from collections import OrderedDict
 from datetime import date
 from copy import deepcopy
@@ -110,7 +109,7 @@ class AnalysisRunner:
     @staticmethod
     def get_analysis_dict_spatial(data):
         """Get analysis dictionary for spatial."""
-        spatial_analysis_dict = {
+        return {
             'landscape': '',
             'analysisType': 'Spatial',
             'variable': data['variable'],
@@ -144,39 +143,6 @@ class AnalysisRunner:
                 }
             }
         }
-
-        temporal_analysis_dict = {
-            'landscape': data['landscape'],
-            'analysisType': 'Temporal',
-            'variable': data['variable'],
-            't_resolution': data['temporalResolution'],
-            'Temporal': {
-                'Annual': {
-                    'ref': data.get('period', {}).get('year', ''),
-                    'test': [data.get('comparisonPeriod', {}).get('year', '')]
-                },
-                'Quarterly': {
-                    'ref': data.get('period', {}).get('quarter', '')
-                    if data['temporalResolution'] == 'Quarterly' else '',
-                    'test': [
-                        data.get('comparisonPeriod', {}).get('quarter', '')
-                    ]
-                    if data['temporalResolution'] == 'Quarterly' else ''
-                },
-                'Monthly': {
-                    'ref': data.get('period', {}).get('month', '')
-                    if data['temporalResolution'] == 'Monthly' else '',
-                    'test': [data.get('comparisonPeriod', {}).get('month', '')]
-                    if data['temporalResolution'] == 'Monthly' else ''
-                }
-            },
-            'Spatial': {
-                'Annual': '',
-                'Quarterly': ''
-            }
-        }
-
-        return spatial_analysis_dict, temporal_analysis_dict
 
     @staticmethod
     def get_reference_layer_geom(data):
@@ -358,7 +324,6 @@ class AnalysisRunner:
         return output_results
 
     def add_statistics(self, years, features):
-        years = years if isinstance(years, list) else [years]
         new_features = [
             a['properties'] for a in filter(
                 lambda x: x['properties']['year'] in years,
@@ -391,8 +356,7 @@ class AnalysisRunner:
 
         # Compute min, max, and mean
         results = {}
-        unprocessed_years = [y for y in years] \
-            if isinstance(years, list) else [years]
+        unprocessed_years = [y for y in years]
         names = set()
 
         for location_year, values in aggregated.items():
@@ -446,13 +410,13 @@ class AnalysisRunner:
         }
         return results
 
-    def run_temporal_analysis(self, data, analysis_dict=None):
+    def run_temporal_analysis(self, data):
         """Run the temporal analysis."""
-        analysis_dict = analysis_dict or self.get_analysis_dict_temporal(data)
+        analysis_dict = self.get_analysis_dict_temporal(data)
         initialize_engine_analysis()
 
         results = run_analysis(
-            locations=data.get('locations', []) or [],
+            locations=data.get('locations', []),
             analysis_dict=analysis_dict,
             custom_geom=data.get('custom_geom', None)
         )
@@ -471,25 +435,22 @@ class AnalysisRunner:
                 f'{data.get('reference_layer_id')}!'
             )
 
-        (
-            spatial_analysis_dict,
-            temporal_analysis_dict
-        ) = self.get_analysis_dict_spatial(data)
+        analysis_dict = self.get_analysis_dict_spatial(data)
         analysis_cache = AnalysisResultsCacheUtils({
             'locations': data.get('locations', []),
-            'analysis_dict': spatial_analysis_dict,
+            'analysis_dict': analysis_dict,
             'args': [],
             'kwargs': {
                 'reference_layer': reference_layer_geom,
                 'custom_geom': data.get('custom_geom', None)
             }
         })
-        # output = analysis_cache.get_analysis_cache()
-        # if output:
-        #     return output
+        output = analysis_cache.get_analysis_cache()
+        if output:
+            return output
 
         filter_start_date, filter_end_date = spatial_get_date_filter(
-            spatial_analysis_dict
+            analysis_dict
         )
 
         valid_filters, start_meta, end_meta = (
@@ -497,6 +458,7 @@ class AnalysisRunner:
                 data['variable'], filter_start_date, filter_end_date
             )
         )
+        print(valid_filters, start_meta, end_meta)
         if not valid_filters:
             # validate the filter is within asset date ranges
             raise ValueError(
@@ -515,7 +477,7 @@ class AnalysisRunner:
                     filter_start_date,
                     filter_end_date
                 ),
-                spatial_analysis_dict,
+                analysis_dict,
                 reference_layer_geom
             )
             metadata = {
@@ -541,58 +503,28 @@ class AnalysisRunner:
             }
             preferences = Preferences.load()
             return analysis_cache.create_analysis_cache(
-                {
-                    'spatial': {'results': results},
-                    'temporal': {'results': {}}
-                },
+                results,
                 preferences.result_cache_ttl
             )
 
-        with ThreadPoolExecutor(max_workers=2) as executor:
-            spatial_future = executor.submit(
-                run_analysis,
-                locations=locations,
-                analysis_dict=spatial_analysis_dict,
-                reference_layer=reference_layer_geom,
-                custom_geom=data.get('custom_geom', None)
-            )
-
-            temporal_future = executor.submit(
-                self.run_temporal_analysis,
-                data,
-                temporal_analysis_dict
-            )
-
-            try:
-                results_spatial = spatial_future.result(timeout=300)
-                results_temporal = temporal_future.result(timeout=300)
-            except Exception as e:
-                print(f"Concurrent GEE analysis failed: {e}")
-                raise
+        results = run_analysis(
+            locations=locations,
+            analysis_dict=analysis_dict,
+            reference_layer=reference_layer_geom,
+            custom_geom=data.get('custom_geom', None)
+        )
 
         if data.get('custom_geom', None):
+            # add Name to the results
             name = data.get('userDefinedFeatureName', 'User Defined Geometry')
-            for feature in results_spatial.get('features', []):
+            for feature in results.get('features', []):
                 if 'properties' not in feature:
                     continue
                 if 'Name' in feature['properties']:
                     continue
                 feature['properties']['Name'] = name
 
-        # Process results_spatial for custom_geom
-        if data.get('custom_geom', None):
-            name = data.get('userDefinedFeatureName', 'User Defined Geometry')
-            for feature in results_spatial.get('features', []):
-                if 'properties' not in feature:
-                    continue
-                if 'Name' in feature['properties']:
-                    continue
-                feature['properties']['Name'] = name
-
-        return {
-            'spatial': {'results': results_spatial},
-            'temporal': {'results': results_temporal}
-        }
+        return results
 
     def run(self, data):
         """Run the analysis."""
