@@ -6,11 +6,11 @@ import { BaselineTable } from '../Map/RightSide/AnalysisResult';
 
 
 // Table Widget Component
-const TableWidget: React.FC<{ data: any; height: WidgetHeight }> = ({ data, height }) => {
+const TableWidget: React.FC<{ widgetId: string, data: any; height: WidgetHeight }> = ({ widgetId, data, height }) => {
   const tableHeight = height === 'small' ? '120px' : height === 'medium' ? '200px' : height === 'large' ? '300px' : '400px';
   
   return (
-    <Box overflowY="auto" h={tableHeight}>
+    <Box id={`table-${widgetId}`} overflowY="auto" h={tableHeight}>
       <BaselineTable analysis={data}/>
     </Box>
   );

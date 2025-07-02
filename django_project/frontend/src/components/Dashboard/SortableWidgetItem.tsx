@@ -11,7 +11,6 @@ import {
   CardHeader,
   CardBody,
   Heading,
-  Badge,
   Flex,
   Menu,
   MenuButton,
@@ -23,15 +22,12 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { FiSettings, FiX, FiInfo, FiEdit2, FiSlash, FiCheck } from 'react-icons/fi';
+import { FiSettings, FiX, FiInfo, FiEdit2, FiSlash, FiCheck, FiDownload } from 'react-icons/fi';
 import {DragHandleIcon} from '@chakra-ui/icons';
 import ChartWidget from './ChartWidget';
 import TableWidget from './TableWidget';
 import MapWidget from './MapWidget';
 import TextWidget from './TextWidget';
-import {
-  widgetDescriptions
- } from './types';
 import {
     Widget,
     GridSize,
@@ -40,6 +36,9 @@ import {
     widgetConstraints
  } from '../../store/dashboardSlice';
  import EditableWrapper from '../EditableWrapper';
+ import AnalysisInfo from './AnalysisInfo';
+ import { downloadPDF } from '../../utils/downloadPDF';
+import { downloadCog } from '../../utils/api';
 
 
 // Sortable Widget Item Component
@@ -72,6 +71,8 @@ const SortableWidgetItem: React.FC<{
   const borderColor = useColorModeValue('gray.200', 'gray.600');
   const config = heightConfig[widget.height];
   const constraints = widgetConstraints[widget.type];
+  const [downloadLoading, setDownloadLoading] = useState(false);
+  const cardRef = React.useRef<HTMLDivElement>(null);
 
   const handleTitleSave = () => {
     if (editTitle.trim()) {
@@ -96,9 +97,9 @@ const SortableWidgetItem: React.FC<{
   const renderWidgetContent = () => {
     switch (widget.type) {
       case 'chart':
-        return <ChartWidget data={widget.data} height={widget.height} config={widget.config} />;
+        return <ChartWidget widgetId={widget.id} data={widget.data} height={widget.height} config={widget.config} />;
       case 'table':
-        return <TableWidget data={widget.data} height={widget.height} />;
+        return <TableWidget widgetId={widget.id} data={widget.data} height={widget.height} />;
       case 'map':
         return <MapWidget widgetId={widget.id} data={widget.data} height={widget.height} config={widget.config} />;
       case 'text':
@@ -143,6 +144,7 @@ const SortableWidgetItem: React.FC<{
         transition="all 0.2s"
         overflow="visible"
         position="relative"
+        ref={cardRef}
       >
         <CardHeader pb={2}>
           <Flex justify="space-between" align="center">
@@ -193,7 +195,7 @@ const SortableWidgetItem: React.FC<{
                   </HStack>
                 ) : (
                   <HStack spacing={1}>
-                    <Heading size="sm" color="black">{widget.title}</Heading>
+                    <Heading size="sm" color="black" minH={'40px'} display={'flex'} alignItems={'center'}>{widget.title}</Heading>
                     <EditableWrapper isEditable={isEditable}>
                       <IconButton
                         icon={<FiEdit2 size={12} />}
@@ -209,7 +211,7 @@ const SortableWidgetItem: React.FC<{
                 )}
               </VStack>
             </HStack>
-            <HStack spacing={1}>
+            <HStack spacing={1} id="widget-actions">
               { widget.type !== 'text' ? <Menu>
                 <MenuButton
                   as={IconButton}
@@ -227,62 +229,40 @@ const SortableWidgetItem: React.FC<{
                   borderColor="gray.200"
                   bg="white"
                 >
-                  <Box p={4}>
-                    <VStack align="start" spacing={3}>
-                      <Box>
-                        <Text fontWeight="bold" fontSize="sm" color="green.600">
-                          {widgetDescriptions[widget.type].title}
-                        </Text>
-                        <Text fontSize="xs" color="gray.600" mt={1}>
-                          {widgetDescriptions[widget.type].description}
-                        </Text>
-                      </Box>
-                      
-                      <Box>
-                        <Text fontWeight="semibold" fontSize="xs" color="gray.700" mb={1}>
-                          Features:
-                        </Text>
-                        <VStack align="start" spacing={1}>
-                          {widgetDescriptions[widget.type].features.map((feature, index) => (
-                            <Text key={index} fontSize="xs" color="gray.600">
-                              • {feature}
-                            </Text>
-                          ))}
-                        </VStack>
-                      </Box>
-                      
-                      <Box>
-                        <Text fontWeight="semibold" fontSize="xs" color="gray.700" mb={1}>
-                          Data Source:
-                        </Text>
-                        <Text fontSize="xs" color="gray.600">
-                          {widgetDescriptions[widget.type].dataSource}
-                        </Text>
-                      </Box>
-                      
-                      <Box>
-                        <Text fontWeight="semibold" fontSize="xs" color="gray.700" mb={1}>
-                          Last Updated:
-                        </Text>
-                        <Text fontSize="xs" color="gray.600">
-                          {widgetDescriptions[widget.type].lastUpdated}
-                        </Text>
-                      </Box>
-                      
-                      <Box pt={2} borderTop="1px solid" borderColor="gray.200" w="full">
-                        <HStack justify="space-between">
-                          <Text fontSize="xs" color="gray.500">
-                            Widget ID: {widget.id}
-                          </Text>
-                          <Badge size="sm" colorScheme="green" variant="subtle">
-                            {widget.size} col × {widget.height}
-                          </Badge>
-                        </HStack>
-                      </Box>
-                    </VStack>
-                  </Box>
+                  <AnalysisInfo data={widget.data} />
                 </MenuList>
               </Menu> : null}
+              { widget.type !== 'text' && !isEditable && (
+                <IconButton
+                  icon={<FiDownload size={12} />}
+                  size="xs"
+                  variant="ghost"
+                  aria-label="Download"
+                  onClick={() => {
+                    const analysisData = widget.data.data || widget.data.analysis;
+                    if (widget.type === 'map') {
+                      setDownloadLoading(true);
+                      downloadCog(widget.data.id)
+                        .then(() => setDownloadLoading(false))
+                        .catch(() => setDownloadLoading(false));
+                      return;
+                    }
+
+                    setDownloadLoading(true);
+                    const exportAnalysis = {
+                      analysisType: analysisData?.analysisType,
+                      temporalResolution: analysisData?.temporalResolution,
+                      variable: analysisData?.variable,
+                    };
+                    downloadPDF(cardRef, exportAnalysis, 'BaselineTableContainer', ['widget-actions'])
+                      .then(() => setDownloadLoading(false))
+                      .catch(() => setDownloadLoading(false));
+                  }}
+                  opacity={0.6}
+                  _hover={{ opacity: 1 }}
+                  disabled={downloadLoading}
+                />
+              )}              
               <EditableWrapper isEditable={isEditable}>
                 <Menu>
                   <MenuButton

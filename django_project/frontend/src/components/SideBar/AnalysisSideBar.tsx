@@ -2,8 +2,8 @@ import React, {useState} from "react";
 import { Box, Button, Tabs, TabList, Tab, TabPanels, TabPanel, Table, Thead, Tbody, Tr, Th, Td, Flex, Divider, Text, Heading, Link, Spinner } from "@chakra-ui/react";
 import { FaTimes } from "react-icons/fa";
 import { motion } from "framer-motion";
-import { InProgressBadge } from "../InProgressBadge";
 import { RenderResult } from "../DashboardCharts/CombinedCharts";
+import { downloadCog } from "../../utils/api";
 
 interface SidebarProps {
   isOpen: boolean;
@@ -23,36 +23,7 @@ const AnalysisSideBar = ({ isOpen, onClose, selectedAnalysis }: SidebarProps) =>
     try {
       event.preventDefault();
       setIsDownloading(id);
-      let url = `user_analysis_results/download_raster_output/${id}`;
-      const response = await fetch(url);
-      if (!response.ok) {
-        setIsDownloading(null);
-        if (response.status === 404) {
-          alert("File not found (404). Please check the ID and try again.");
-        } else {
-          alert(`Download failed with status: ${response.status}`);
-        }
-        return;
-      }
-
-      // Extract filename from Content-Disposition header
-      const contentDisposition = response.headers.get("Content-Disposition");
-      let filename = `${id}.tif`; // Default filename
-
-      if (contentDisposition) {
-        const match = contentDisposition.match(/filename="?([^"]+)"?/);
-        if (match && match[1]) {
-          filename = match[1];
-        }
-      }
-
-      const blob = await response.blob();
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = filename;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
+      await downloadCog(id);
     } catch (error) {
       console.error("Download failed", error);
       alert("An error occurred while downloading the file. Please try again.");
