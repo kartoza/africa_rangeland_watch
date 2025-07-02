@@ -21,9 +21,9 @@ class LiveStockGenerator(BaseLayerGenerator):
 
     def get_provider(self):
         """Get GEE Data Provider"""
-        return DataProvider.objects.get(
+        return DataProvider.objects.filter(
             name='FAO'
-        )
+        ).first()
 
     def _get_asset_key(self, animal_name):
         asset_key = animal_name.lower().replace(' ', '_')

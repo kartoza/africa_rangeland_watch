@@ -488,7 +488,7 @@
         "fields": {
             "name": "Gridded livestock all species density 2020",
             "layer_type": "raster",
-            "data_provider": 3,
+            "data_provider": 4,
             "url": "",
             "group": 1,
             "metadata": {
@@ -520,7 +520,7 @@
         "fields": {
             "name": "Gridded livestock Buffalo density 2020",
             "layer_type": "raster",
-            "data_provider": 3,
+            "data_provider": 4,
             "url": "",
             "group": 1,
             "metadata": {
@@ -552,7 +552,7 @@
         "fields": {
             "name": "Gridded livestock Chicken density 2020",
             "layer_type": "raster",
-            "data_provider": 3,
+            "data_provider": 4,
             "url": "",
             "group": 1,
             "metadata": {
@@ -585,7 +585,7 @@
         "fields": {
             "name": "Gridded livestock Cattle density 2020",
             "layer_type": "raster",
-            "data_provider": 3,
+            "data_provider": 4,
             "url": "",
             "group": 1,
             "metadata": {
@@ -617,7 +617,7 @@
         "fields": {
             "name": "Gridded livestock Goat density 2020",
             "layer_type": "raster",
-            "data_provider": 3,
+            "data_provider": 4,
             "url": "",
             "group": 1,
             "metadata": {
@@ -649,7 +649,7 @@
         "fields": {
             "name": "Gridded livestock Pig density 2020",
             "layer_type": "raster",
-            "data_provider": 3,
+            "data_provider": 4,
             "url": "",
             "group": 1,
             "metadata": {
@@ -681,7 +681,7 @@
         "fields": {
             "name": "Gridded livestock Sheep density 2020",
             "layer_type": "raster",
-            "data_provider": 3,
+            "data_provider": 4,
             "url": "",
             "group": 1,
             "metadata": {
