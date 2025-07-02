@@ -128,7 +128,14 @@ export default function Sidebar(props: Props) {
           >
             Organisation Information
           </MenuItem>
-          <MenuItem onClick={() => navigate("/my-dashboard")}>
+          <MenuItem
+            style={{
+              backgroundColor: isActive("/my-dashboard")
+                ? "#a8d159"
+                : "transparent",
+            }}
+            onClick={() => navigate("/my-dashboard")}
+          >
             My Dashboard
           </MenuItem>
           <MenuItem
@@ -248,8 +255,13 @@ export default function Sidebar(props: Props) {
                   Organisation Information
                 </MenuItem>
                 <MenuItem
+                style={{
+                  backgroundColor: isActive("/my-dashboard")
+                    ? "#a8d159"
+                    : "transparent",
+                }}
                   onClick={() => {
-                    navigate("/dashboard");
+                    navigate("/my-dashboard");
                     onClose();
                   }}
                 >
