@@ -50,4 +50,5 @@ class APIScheduleAdmin(admin.ModelAdmin):
 
 @admin.register(EarthRangerEvents)
 class EarthRangerEventsAdmin(admin.ModelAdmin):
-    list_display = ("name", "last_updated")
+    list_display = ("id", "earth_ranger_uuid", "created_at")
+    search_fields = ("earth_ranger_uuid", "id")

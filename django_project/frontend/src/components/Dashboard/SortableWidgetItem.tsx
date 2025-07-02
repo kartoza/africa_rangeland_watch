@@ -16,7 +16,8 @@ import {
   MenuButton,
   MenuList,
   MenuItem,
-  Input
+  Input,
+  Checkbox
 } from '@chakra-ui/react';
 import {
   useSortable,
@@ -49,8 +50,10 @@ const SortableWidgetItem: React.FC<{
   onHeightChange: (id: string, height: WidgetHeight) => void;
   onContentChange: (id: string, content: string) => void;
   onTitleChange: (id: string, title: string) => void;
+  onConfigChange: (id: string, config: any) => void;
   isEditable?: boolean;
-}> = ({ widget, onRemove, onSizeChange, onHeightChange, onContentChange, onTitleChange, isEditable }) => {
+}> = ({ widget, onRemove, onSizeChange, onHeightChange, 
+  onContentChange, onTitleChange, onConfigChange, isEditable }) => {
   const {
     attributes,
     listeners,
@@ -299,6 +302,22 @@ const SortableWidgetItem: React.FC<{
                         {height.charAt(0).toUpperCase() + height.slice(1)} ({heightConfig[height].minH})
                       </MenuItem>
                     ))}
+                    <Text px={3} py={2} pt={4} fontSize="xs" fontWeight="bold" color="gray.500" textTransform="uppercase">
+                      Layers
+                    </Text>
+                      <MenuItem 
+                        key={'earth-ranger'} 
+                        closeOnSelect={false}
+                      >
+                        <Checkbox
+                          isChecked={widget.config?.earth_ranger === true}
+                          onChange={(e) => {
+                            onConfigChange(widget.id, { ...widget.config, earth_ranger: e.target.checked });
+                          }}
+                        >
+                          Earth Ranger
+                        </Checkbox>
+                      </MenuItem>
                   </MenuList>
                 </Menu>
                 <IconButton
