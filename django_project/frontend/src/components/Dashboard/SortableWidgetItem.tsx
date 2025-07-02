@@ -11,7 +11,6 @@ import {
   CardHeader,
   CardBody,
   Heading,
-  Badge,
   Flex,
   Menu,
   MenuButton,
@@ -39,6 +38,7 @@ import {
  import EditableWrapper from '../EditableWrapper';
  import AnalysisInfo from './AnalysisInfo';
  import { downloadPDF } from '../../utils/downloadPDF';
+import { downloadCog } from '../../utils/api';
 
 
 // Sortable Widget Item Component
@@ -239,8 +239,16 @@ const SortableWidgetItem: React.FC<{
                   variant="ghost"
                   aria-label="Download"
                   onClick={() => {
-                    setDownloadLoading(true);
                     const analysisData = widget.data.data || widget.data.analysis;
+                    if (widget.type === 'map') {
+                      setDownloadLoading(true);
+                      downloadCog(widget.data.id)
+                        .then(() => setDownloadLoading(false))
+                        .catch(() => setDownloadLoading(false));
+                      return;
+                    }
+
+                    setDownloadLoading(true);
                     const exportAnalysis = {
                       analysisType: analysisData?.analysisType,
                       temporalResolution: analysisData?.temporalResolution,
