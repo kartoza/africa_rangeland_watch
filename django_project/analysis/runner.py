@@ -565,7 +565,9 @@ class AnalysisRunner:
             )
 
             try:
-                results_spatial = spatial_future.result(timeout=preferences.max_wait_analysis_run_time)
+                results_spatial = spatial_future.result(
+                    timeout=preferences.max_wait_analysis_run_time
+                )
                 results_temporal = temporal_future.result(timeout=300)
             except Exception as e:
                 print(f"Concurrent GEE analysis failed: {e}")

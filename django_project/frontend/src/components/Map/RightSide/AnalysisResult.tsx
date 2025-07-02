@@ -539,7 +539,6 @@ export default function AnalysisResult() {
       header += ` (${analysis.data.spatialStartYear} - ${analysis.data.spatialEndYear})`
     }
   }
-  console.log(loading);
 
   return (
     <Box ref={containerRef} backgroundColor='white'
