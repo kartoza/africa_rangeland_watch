@@ -35,6 +35,7 @@ interface ItemsState {
   totalPages: number;
   totalItems: number;
   searchTerm: string;
+  isInitialized: boolean;
 }
 
 // fetch user analysis results from API
@@ -83,6 +84,7 @@ const userAnalysisSearchSlice = createSlice({
     totalPages: 0,
     totalItems: 0,
     searchTerm: '',
+    isInitialized: false,
   } as ItemsState,
   reducers: {
     clearError: (state) => {
@@ -96,6 +98,12 @@ const userAnalysisSearchSlice = createSlice({
       state.currentPage = 0;
       state.hasMore = true;
       state.error = null;
+      state.totalPages = 0;
+      state.totalItems = 0;
+      state.isInitialized = false;
+      state.loading = false;
+      state.loadingMore = false;
+      state.searchTerm = '';
     },
     setInitialLoading: (state, action: PayloadAction<boolean>) => {
       state.loading = action.payload;
@@ -122,6 +130,7 @@ const userAnalysisSearchSlice = createSlice({
         state.totalPages = action.payload.totalPages;
         state.totalItems = action.payload.totalItems;
         state.error = null;
+        state.isInitialized = true;
       })
       .addCase(fetchItems.rejected, (state, action) => {
         state.loading = false;
