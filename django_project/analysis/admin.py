@@ -264,7 +264,7 @@ class IndicatorAdmin(admin.ModelAdmin):
 
     list_display = (
         'name', 'source', 'get_analysis_type',
-        'get_temporal_resolution', 'is_active',
+        'get_temporal_resolutions', 'is_active',
     )
     search_fields = ('name',)
 
@@ -273,10 +273,10 @@ class IndicatorAdmin(admin.ModelAdmin):
         return ', '.join(obj.analysis_types) if obj.analysis_types else '-'
     get_analysis_type.short_description = 'Analysis Types'
 
-    def get_temporal_resolution(self, obj: Indicator):
+    def get_temporal_resolutions(self, obj: Indicator):
         """Return a comma-separated string of temporal resolutions."""
         return (
-            ', '.join(obj.temporal_resolution) if
-            obj.temporal_resolution else '-'
+            ', '.join(obj.temporal_resolutions) if
+            obj.temporal_resolutions else '-'
         )
-    get_temporal_resolution.short_description = 'Temporal Resolutions'
+    get_temporal_resolutions.short_description = 'Temporal Resolutions'

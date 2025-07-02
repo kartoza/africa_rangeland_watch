@@ -823,7 +823,7 @@ class Indicator(models.Model):
         null=True
     )
 
-    temporal_resolution = models.JSONField(
+    temporal_resolutions = models.JSONField(
         default=list,
         help_text=(
             "List of temporal resolutions this indicator can be used for."
@@ -861,7 +861,7 @@ class Indicator(models.Model):
                 f"Invalid analysis types: {', '.join(invalid_analysis_types)}."
             )
         invalid_temporal_resolutions = (
-            set(self.temporal_resolution) -
+            set(self.temporal_resolutions) -
             set(self.ALLOWED_TEMPORAL_RESOLUTIONS)
         )
         if invalid_temporal_resolutions:

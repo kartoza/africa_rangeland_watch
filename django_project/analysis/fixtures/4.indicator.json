@@ -11,7 +11,7 @@
             "Temporal",
             "Spatial"
         ],
-        "temporal_resolution": [
+        "temporal_resolutions": [
             "Annual",
             "Quarterly",
             "Monthly"
@@ -60,7 +60,7 @@
             "Temporal",
             "Spatial"
         ],
-        "temporal_resolution": [
+        "temporal_resolutions": [
             "Annual",
             "Quarterly",
             "Monthly"
@@ -109,7 +109,7 @@
             "Temporal",
             "Spatial"
         ],
-        "temporal_resolution": [
+        "temporal_resolutions": [
             "Annual",
             "Quarterly",
             "Monthly"
@@ -148,7 +148,7 @@
         "analysis_types": [
             "Spatial"
         ],
-        "temporal_resolution": [],
+        "temporal_resolutions": [],
         "metadata": {
             "colors": [
                 "#f9837b",
@@ -179,7 +179,7 @@
         "analysis_types": [
             "Spatial"
         ],
-        "temporal_resolution": [],
+        "temporal_resolutions": [],
         "metadata": {
             "colors": [
                 "#f9837b",
@@ -210,7 +210,7 @@
         "analysis_types": [
             "Spatial"
         ],
-        "temporal_resolution": [],
+        "temporal_resolutions": [],
         "metadata": {
             "colors": [
                 "#f9837b",
@@ -237,7 +237,7 @@
         "analysis_types": [
             "Spatial"
         ],
-        "temporal_resolution": [],
+        "temporal_resolutions": [],
         "metadata": {
             "colors": [
                 "#f9837b",
@@ -264,7 +264,7 @@
         "analysis_types": [
             "Spatial"
         ],
-        "temporal_resolution": [],
+        "temporal_resolutions": [],
         "metadata": {
             "colors": [
                 "#f9837b",
@@ -295,7 +295,7 @@
         "analysis_types": [
             "Temporal"
         ],
-        "temporal_resolution": [
+        "temporal_resolutions": [
             "Annual"
         ],
         "metadata": {
@@ -328,7 +328,7 @@
             "Temporal",
             "Spatial"
         ],
-        "temporal_resolution": [
+        "temporal_resolutions": [
             "Annual"
         ],
         "metadata": {
@@ -362,7 +362,7 @@
             "Temporal",
             "Spatial"
         ],
-        "temporal_resolution": [
+        "temporal_resolutions": [
             "Annual"
         ],
         "metadata": {
