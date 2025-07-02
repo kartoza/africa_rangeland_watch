@@ -4,7 +4,7 @@ from rest_framework import status
 from django.contrib.auth.models import User, Group
 from base.models import Organisation, UserProfile
 from analysis.models import UserAnalysisResults
-from dashboard.models import Dashboard
+from dashboard.models import Dashboard, DashboardWidget
 from django.urls import reverse
 from django.test import TestCase
 from django.contrib.auth import get_user_model
@@ -81,7 +81,6 @@ class DashboardAPITest(APITestCase):
         payload = {"users": [self.user.id]}
         response = self.client.post(self.share_url(dashboard.pk), payload, format="json")
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
-
 
 
 class DashboardListTests(APITestCase):
@@ -189,7 +188,6 @@ class DashboardListTests(APITestCase):
 
         # Verify that the dashboard is deleted from the database
         self.assertFalse(Dashboard.objects.filter(pk=dashboard_to_delete.pk).exists())
-
 
 
 class UpdateDashboardViewTests(TestCase):
@@ -325,3 +323,256 @@ class DashboardFilterTests(TestCase):
         self.assertEqual(len(response.data), 3)
 
 
+class DashboardDetailViewTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(username="testuser", password="password")
+        self.other_user = User.objects.create_user(username="otheruser", password="password")
+        self.client.force_authenticate(user=self.user)
+        
+        self.dashboard = Dashboard.objects.create(
+            uuid=uuid4(), 
+            title="Original Title", 
+            privacy_type="private", 
+            created_by=self.user,
+            config={"version": "1.0", "dashboardDescription": "Original description"},
+            metadata={"key": "value"}
+        )
+        
+        self.analysis_result = UserAnalysisResults.objects.create(
+            created_by=self.user, analysis_results={"key": "value"}
+        )
+        
+        # Create some widgets for testing
+        self.widget1 = DashboardWidget.objects.create(
+            dashboard=self.dashboard,
+            widget_type="chart",
+            title="Widget 1",
+            order=0,
+            config={"size": 2, "height": "medium"},
+            text_content="Content 1",
+            description="Description 1",
+            analysis_result=self.analysis_result
+        )
+        
+        self.widget2 = DashboardWidget.objects.create(
+            dashboard=self.dashboard,
+            widget_type="map",
+            title="Widget 2",
+            order=1,
+            config={"size": 4, "height": "large"},
+            text_content="Content 2",
+            description="Description 2",
+            analysis_result=self.analysis_result
+        )
+
+    def test_get_dashboard_detail(self):
+        """Test retrieving dashboard details."""
+        url = f"/dashboards/{self.dashboard.uuid}/detail/"
+        response = self.client.get(url)
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data["title"], "Original Title")
+
+    def test_get_dashboard_detail_unauthenticated(self):
+        """Test that unauthenticated users cannot access dashboard details."""
+        self.client.logout()
+        url = f"/dashboards/{self.dashboard.uuid}/detail/"
+        response = self.client.get(url)
+        
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_get_non_existent_dashboard(self):
+        """Test retrieving details of a non-existent dashboard."""
+        url = f"/dashboards/{uuid4()}/detail/"
+        response = self.client.get(url)
+        
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+
+    def test_update_dashboard_title_and_metadata(self):
+        """Test updating dashboard title and metadata via POST."""
+        url = f"/dashboards/{self.dashboard.uuid}/detail/"
+        data = {
+            "title": "Updated Title",
+            "version": "2.0",
+            "description": "Updated description",
+            "metadata": {"new_key": "new_value"}
+        }
+        response = self.client.post(url, data, format='json')
+        
+        self.dashboard.refresh_from_db()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(self.dashboard.title, "Updated Title")
+        self.assertEqual(self.dashboard.config["version"], "2.0")
+        self.assertEqual(self.dashboard.config["dashboardDescription"], "Updated description")
+        self.assertEqual(self.dashboard.metadata, {"new_key": "new_value"})
+
+    def test_update_dashboard_by_non_owner(self):
+        """Test that non-owners cannot update dashboard."""
+        self.client.force_authenticate(user=self.other_user)
+        url = f"/dashboards/{self.dashboard.uuid}/detail/"
+        data = {"title": "Unauthorized Update"}
+        response = self.client.post(url, data, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
+        self.assertIn("You do not have permission to update this dashboard", response.data["error"])
+
+    def test_update_existing_widget(self):
+        """Test updating an existing widget."""
+        url = f"/dashboards/{self.dashboard.uuid}/detail/"
+        data = {
+            "widgets": [
+                {
+                    "id": str(self.widget1.id),
+                    "type": "updated_chart",
+                    "title": "Updated Widget 1",
+                    "config": {"custom": "config"},
+                    "size": 3,
+                    "height": "large",
+                    "content": "Updated content",
+                    "description": "Updated description",
+                    "analysis_result_id": self.analysis_result.id
+                }
+            ]
+        }
+        response = self.client.post(url, data, format='json')
+        
+        self.widget1.refresh_from_db()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(self.widget1.widget_type, "updated_chart")
+        self.assertEqual(self.widget1.title, "Updated Widget 1")
+        self.assertEqual(self.widget1.config["size"], 3)
+        self.assertEqual(self.widget1.config["height"], "large")
+        self.assertEqual(self.widget1.text_content, "Updated content")
+        self.assertEqual(self.widget1.description, "Updated description")
+        self.assertEqual(self.widget1.analysis_result_id, self.analysis_result.id)
+
+    def test_create_new_widget(self):
+        """Test creating a new widget."""
+        url = f"/dashboards/{self.dashboard.uuid}/detail/"
+        data = {
+            "widgets": [
+                {
+                    "id": "new_widget_1",
+                    "type": "new_chart",
+                    "title": "New Widget",
+                    "config": {"new": "config"},
+                    "size": 2,
+                    "height": "medium",
+                    "content": "New content",
+                    "description": "New description",
+                    "analysis_result_id": self.analysis_result.id
+                }
+            ]
+        }
+        response = self.client.post(url, data, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        new_widget = self.dashboard.widgets.filter(title="New Widget").first()
+        self.assertIsNotNone(new_widget)
+        self.assertEqual(new_widget.widget_type, "new_chart")
+        self.assertEqual(new_widget.config["size"], 2)
+        self.assertEqual(new_widget.config["height"], "medium")
+
+    def test_remove_widgets_not_in_request(self):
+        """Test that widgets not included in the request are removed."""
+        url = f"/dashboards/{self.dashboard.uuid}/detail/"
+        # Only include widget1, widget2 should be removed
+        data = {
+            "widgets": [
+                {
+                    "id": str(self.widget1.id),
+                    "type": self.widget1.widget_type,
+                    "title": self.widget1.title
+                }
+            ]
+        }
+        response = self.client.post(url, data, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertTrue(DashboardWidget.objects.filter(id=self.widget1.id).exists())
+        self.assertFalse(DashboardWidget.objects.filter(id=self.widget2.id).exists())
+
+    def test_update_non_existent_widget(self):
+        """Test updating a widget that doesn't exist."""
+        url = f"/dashboards/{self.dashboard.uuid}/detail/"
+        data = {
+            "widgets": [
+                {
+                    "id": "99999",  # Non-existent widget ID
+                    "type": "chart",
+                    "title": "Non-existent Widget"
+                }
+            ]
+        }
+        response = self.client.post(url, data, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
+        self.assertIn("Widget not found", response.data["error"])
+
+    def test_widget_order_preservation(self):
+        """Test that widget order is preserved based on array index."""
+        url = f"/dashboards/{self.dashboard.uuid}/detail/"
+        data = {
+            "widgets": [
+                {
+                    "id": str(self.widget2.id),
+                    "type": self.widget2.widget_type,
+                    "title": self.widget2.title
+                },
+                {
+                    "id": str(self.widget1.id),
+                    "type": self.widget1.widget_type,
+                    "title": self.widget1.title
+                }
+            ]
+        }
+        response = self.client.post(url, data, format='json')
+        
+        self.widget1.refresh_from_db()
+        self.widget2.refresh_from_db()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(self.widget2.order, 0)  # First in array
+        self.assertEqual(self.widget1.order, 1)  # Second in array
+
+    def test_empty_widgets_removes_all(self):
+        """Test that passing empty widgets array removes all widgets."""
+        url = f"/dashboards/{self.dashboard.uuid}/detail/"
+        data = {"widgets": []}
+        response = self.client.post(url, data, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(self.dashboard.widgets.count(), 0)
+
+    def test_partial_dashboard_update(self):
+        """Test updating only some dashboard fields."""
+        url = f"/dashboards/{self.dashboard.uuid}/detail/"
+        data = {
+            "title": "Partially Updated Title"
+            # Not including version, description, metadata, or widgets
+        }
+        response = self.client.post(url, data, format='json')
+        
+        self.dashboard.refresh_from_db()
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(self.dashboard.title, "Partially Updated Title")
+        # Original values should be preserved
+        self.assertEqual(self.dashboard.config["version"], "1.0")
+        self.assertEqual(self.dashboard.config["dashboardDescription"], "Original description")
+
+    def test_update_dashboard_unauthenticated(self):
+        """Test that unauthenticated users cannot update dashboard."""
+        self.client.logout()
+        url = f"/dashboards/{self.dashboard.uuid}/detail/"
+        data = {"title": "Unauthorized Update"}
+        response = self.client.post(url, data, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_update_non_existent_dashboard(self):
+        """Test updating a non-existent dashboard."""
+        url = f"/dashboards/{uuid4()}/detail/"
+        data = {"title": "Non-existent Dashboard"}
+        response = self.client.post(url, data, format='json')
+        
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)

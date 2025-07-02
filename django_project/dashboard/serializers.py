@@ -81,8 +81,12 @@ class DashboardWidgetSerializer(serializers.ModelSerializer):
 
 class DashboardDetailSerializer(serializers.ModelSerializer):
     last_updated = serializers.DateTimeField(source='updated_at')
+    description = serializers.SerializerMethodField()
     widgets = serializers.SerializerMethodField()
     version = serializers.SerializerMethodField()
+
+    def get_description(self, obj):
+        return obj.config.get('dashboardDescription', '')
 
     def get_version(self, obj):
         return obj.config.get('version', '1.0')
@@ -102,6 +106,7 @@ class DashboardDetailSerializer(serializers.ModelSerializer):
         fields = [
             'uuid',
             'title',
+            'description',
             'last_updated',
             'metadata',
             'version',

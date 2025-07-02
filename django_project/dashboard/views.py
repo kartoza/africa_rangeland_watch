@@ -1,3 +1,4 @@
+from copy import deepcopy
 from django.db import models
 from django.contrib.auth.models import User
 from rest_framework.permissions import (
@@ -132,6 +133,7 @@ class DashboardCreateView(APIView):
             # Extract data from the request
             data = request.data
             dashboard_name = data.get("config", {}).get("dashboardName")
+            dashboard_description = data.get("config", {}).get("dashboardDescription")
             preference = data.get("config", {}).get("preference")
             chart_type = data.get("config", {}).get("chartType")
             privacy_type = data.get("privacy_type")
@@ -142,6 +144,7 @@ class DashboardCreateView(APIView):
                 title=dashboard_name,
                 config={
                     "dashboardName": dashboard_name,
+                    "dashboardDescription": dashboard_description,
                     "preference": preference,
                     "chartType": chart_type,
                 },
@@ -422,12 +425,16 @@ class DashboardDetailView(APIView):
 
         # save dashboard title and metadata
         dashboard.title = request.data.get("title", dashboard.title)
-        dashboard.config = {
+        dashboard.config.update({
             'version': request.data.get(
                 "version",
                 dashboard.config.get('version', '1.0')
+            ),
+            'dashboardDescription': request.data.get(
+                "description",
+                dashboard.config.get('dashboardDescription', '')
             )
-        }
+        })
         dashboard.metadata = request.data.get(
             "metadata", dashboard.metadata
         )

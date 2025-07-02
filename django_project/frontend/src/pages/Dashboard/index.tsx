@@ -106,6 +106,8 @@ const DashboardListPage: React.FC<DashboardListProps> = ({allDashboards}) => {
     }
   }
 
+  console.log(paginatedData);
+
   return (
     <>
       <Box width="100%" minHeight={{base: "auto", md:"80vh"}}>
@@ -234,6 +236,10 @@ const DashboardListPage: React.FC<DashboardListProps> = ({allDashboards}) => {
                           <Heading size="md" fontWeight="bold" color="black" mb={2}>
                             {dashboard.title}
                           </Heading>
+
+                          <Text color="black">
+                            {dashboard.config.dashboardDescription}
+                          </Text>
 
                           <Box mt={4} display="flex" flexWrap="wrap" gap={2}>
                             <Tag colorScheme="green" mr={2}>
