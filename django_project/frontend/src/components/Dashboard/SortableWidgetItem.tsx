@@ -38,6 +38,7 @@ import {
  } from '../../store/dashboardSlice';
  import EditableWrapper from '../EditableWrapper';
  import AnalysisInfo from './AnalysisInfo';
+ import { downloadPDF } from '../../utils/downloadPDF';
 
 
 // Sortable Widget Item Component
@@ -71,6 +72,7 @@ const SortableWidgetItem: React.FC<{
   const config = heightConfig[widget.height];
   const constraints = widgetConstraints[widget.type];
   const [downloadLoading, setDownloadLoading] = useState(false);
+  const cardRef = React.useRef<HTMLDivElement>(null);
 
   const handleTitleSave = () => {
     if (editTitle.trim()) {
@@ -95,9 +97,9 @@ const SortableWidgetItem: React.FC<{
   const renderWidgetContent = () => {
     switch (widget.type) {
       case 'chart':
-        return <ChartWidget data={widget.data} height={widget.height} config={widget.config} />;
+        return <ChartWidget widgetId={widget.id} data={widget.data} height={widget.height} config={widget.config} />;
       case 'table':
-        return <TableWidget data={widget.data} height={widget.height} />;
+        return <TableWidget widgetId={widget.id} data={widget.data} height={widget.height} />;
       case 'map':
         return <MapWidget widgetId={widget.id} data={widget.data} height={widget.height} config={widget.config} />;
       case 'text':
@@ -142,6 +144,7 @@ const SortableWidgetItem: React.FC<{
         transition="all 0.2s"
         overflow="visible"
         position="relative"
+        ref={cardRef}
       >
         <CardHeader pb={2}>
           <Flex justify="space-between" align="center">
@@ -192,7 +195,7 @@ const SortableWidgetItem: React.FC<{
                   </HStack>
                 ) : (
                   <HStack spacing={1}>
-                    <Heading size="sm" color="black">{widget.title}</Heading>
+                    <Heading size="sm" color="black" minH={'40px'}>{widget.title}</Heading>
                     <EditableWrapper isEditable={isEditable}>
                       <IconButton
                         icon={<FiEdit2 size={12} />}
@@ -208,7 +211,7 @@ const SortableWidgetItem: React.FC<{
                 )}
               </VStack>
             </HStack>
-            <HStack spacing={1}>
+            <HStack spacing={1} id="widget-actions">
               { widget.type !== 'text' ? <Menu>
                 <MenuButton
                   as={IconButton}
@@ -229,16 +232,29 @@ const SortableWidgetItem: React.FC<{
                   <AnalysisInfo data={widget.data} />
                 </MenuList>
               </Menu> : null}
-              <IconButton
-                icon={<FiDownload size={12} />}
-                size="xs"
-                variant="ghost"
-                aria-label="Download"
-                onClick={() => {}}
-                opacity={0.6}
-                _hover={{ opacity: 1 }}
-                disabled={downloadLoading}
-              />
+              { widget.type !== 'text' && !isEditable && (
+                <IconButton
+                  icon={<FiDownload size={12} />}
+                  size="xs"
+                  variant="ghost"
+                  aria-label="Download"
+                  onClick={() => {
+                    setDownloadLoading(true);
+                    const analysisData = widget.data.data || widget.data.analysis;
+                    const exportAnalysis = {
+                      analysisType: analysisData?.analysisType,
+                      temporalResolution: analysisData?.temporalResolution,
+                      variable: analysisData?.variable,
+                    };
+                    downloadPDF(cardRef, exportAnalysis, 'BaselineTableContainer', ['widget-actions'])
+                      .then(() => setDownloadLoading(false))
+                      .catch(() => setDownloadLoading(false));
+                  }}
+                  opacity={0.6}
+                  _hover={{ opacity: 1 }}
+                  disabled={downloadLoading}
+                />
+              )}              
               <EditableWrapper isEditable={isEditable}>
                 <Menu>
                   <MenuButton
