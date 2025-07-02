@@ -10,6 +10,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from analysis.models import Indicator
+from frontend.serializers.indicator import IndicatorSerializer
 
 
 class IndicatorAPI(APIView):
@@ -19,20 +20,10 @@ class IndicatorAPI(APIView):
 
     def get(self, request, *args, **kwargs):
         """Fetch list of Indicator."""
-        data = [
-            {
-                'name': indicator.name,
-                'variable': indicator.variable_name,
-                'analysis_types': indicator.analysis_types,
-                'temporal_resolutions': indicator.temporal_resolution,
-                'source': indicator.source,
-            }
-            for indicator in Indicator.objects.filter(
-                is_active=True
-            )
-        ]
+        queryset = Indicator.objects.filter(is_active=True)
+        serializer = IndicatorSerializer(queryset, many=True)
 
         return Response(
             status=200,
-            data=data
+            data=serializer.data
         )

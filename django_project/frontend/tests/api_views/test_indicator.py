@@ -33,3 +33,9 @@ class IndicatorAPITest(BaseAPIViewTest):
                 is_active=True,
             ).count()
         )
+        item = response.data[0]
+        self.assertIn('name', item)
+        self.assertIn('variable', item)
+        self.assertIn('analysis_types', item)
+        self.assertIn('temporal_resolutions', item)
+        self.assertIn('source', item)
