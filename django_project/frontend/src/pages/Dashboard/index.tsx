@@ -106,8 +106,6 @@ const DashboardListPage: React.FC<DashboardListProps> = ({allDashboards}) => {
     }
   }
 
-  console.log(paginatedData);
-
   return (
     <>
       <Box width="100%" minHeight={{base: "auto", md:"80vh"}}>

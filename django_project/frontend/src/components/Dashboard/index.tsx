@@ -73,7 +73,6 @@ const DynamicDashboard: React.FC<{
   const dashboardLoading = useSelector(
     (state: RootState) => state.dashboard.loading
   );
-  console.log(widgets);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -459,8 +458,6 @@ const DynamicDashboard: React.FC<{
     setDashboardTitle(config.title || 'Dashboard');
     setIsEditingDashboardTitle(false);
     setEditDashboardTitle(config.title || 'Dynamic Dashboard');
-
-    console.log(config)
 
     setDashboardDescription(config.description || '');
     setIsEditingDashboardDescription(false);
