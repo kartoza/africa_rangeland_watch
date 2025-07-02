@@ -1,4 +1,3 @@
-from copy import deepcopy
 from django.db import models
 from django.contrib.auth.models import User
 from rest_framework.permissions import (
@@ -133,7 +132,9 @@ class DashboardCreateView(APIView):
             # Extract data from the request
             data = request.data
             dashboard_name = data.get("config", {}).get("dashboardName")
-            dashboard_description = data.get("config", {}).get("dashboardDescription")
+            dashboard_description = data.get(
+                "config", {}
+            ).get("dashboardDescription")
             preference = data.get("config", {}).get("preference")
             chart_type = data.get("config", {}).get("chartType")
             privacy_type = data.get("privacy_type")
