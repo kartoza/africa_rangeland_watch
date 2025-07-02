@@ -195,7 +195,7 @@ const SortableWidgetItem: React.FC<{
                   </HStack>
                 ) : (
                   <HStack spacing={1}>
-                    <Heading size="sm" color="black" minH={'40px'}>{widget.title}</Heading>
+                    <Heading size="sm" color="black" minH={'40px'} display={'flex'} alignItems={'center'}>{widget.title}</Heading>
                     <EditableWrapper isEditable={isEditable}>
                       <IconButton
                         icon={<FiEdit2 size={12} />}
