@@ -17,9 +17,9 @@ def send_alert_email(user_email, subject, message):
     )
 
 
-def trigger_alert(alert_setting, value, name):
+def trigger_alert(alert_setting, value, name, message=""):
     """Trigger alert and send email if enabled."""
-    message = (
+    message = message or (
         f"Threshold met for '{name}': {value} "
         f"({alert_setting.indicator.name})"
     )
