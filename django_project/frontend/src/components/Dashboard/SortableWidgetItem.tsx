@@ -23,15 +23,12 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { FiSettings, FiX, FiInfo, FiEdit2, FiSlash, FiCheck } from 'react-icons/fi';
+import { FiSettings, FiX, FiInfo, FiEdit2, FiSlash, FiCheck, FiDownload } from 'react-icons/fi';
 import {DragHandleIcon} from '@chakra-ui/icons';
 import ChartWidget from './ChartWidget';
 import TableWidget from './TableWidget';
 import MapWidget from './MapWidget';
 import TextWidget from './TextWidget';
-import {
-  widgetDescriptions
- } from './types';
 import {
     Widget,
     GridSize,
@@ -40,6 +37,7 @@ import {
     widgetConstraints
  } from '../../store/dashboardSlice';
  import EditableWrapper from '../EditableWrapper';
+ import AnalysisInfo from './AnalysisInfo';
 
 
 // Sortable Widget Item Component
@@ -72,6 +70,7 @@ const SortableWidgetItem: React.FC<{
   const borderColor = useColorModeValue('gray.200', 'gray.600');
   const config = heightConfig[widget.height];
   const constraints = widgetConstraints[widget.type];
+  const [downloadLoading, setDownloadLoading] = useState(false);
 
   const handleTitleSave = () => {
     if (editTitle.trim()) {
@@ -227,62 +226,19 @@ const SortableWidgetItem: React.FC<{
                   borderColor="gray.200"
                   bg="white"
                 >
-                  <Box p={4}>
-                    <VStack align="start" spacing={3}>
-                      <Box>
-                        <Text fontWeight="bold" fontSize="sm" color="green.600">
-                          {widgetDescriptions[widget.type].title}
-                        </Text>
-                        <Text fontSize="xs" color="gray.600" mt={1}>
-                          {widgetDescriptions[widget.type].description}
-                        </Text>
-                      </Box>
-                      
-                      <Box>
-                        <Text fontWeight="semibold" fontSize="xs" color="gray.700" mb={1}>
-                          Features:
-                        </Text>
-                        <VStack align="start" spacing={1}>
-                          {widgetDescriptions[widget.type].features.map((feature, index) => (
-                            <Text key={index} fontSize="xs" color="gray.600">
-                              • {feature}
-                            </Text>
-                          ))}
-                        </VStack>
-                      </Box>
-                      
-                      <Box>
-                        <Text fontWeight="semibold" fontSize="xs" color="gray.700" mb={1}>
-                          Data Source:
-                        </Text>
-                        <Text fontSize="xs" color="gray.600">
-                          {widgetDescriptions[widget.type].dataSource}
-                        </Text>
-                      </Box>
-                      
-                      <Box>
-                        <Text fontWeight="semibold" fontSize="xs" color="gray.700" mb={1}>
-                          Last Updated:
-                        </Text>
-                        <Text fontSize="xs" color="gray.600">
-                          {widgetDescriptions[widget.type].lastUpdated}
-                        </Text>
-                      </Box>
-                      
-                      <Box pt={2} borderTop="1px solid" borderColor="gray.200" w="full">
-                        <HStack justify="space-between">
-                          <Text fontSize="xs" color="gray.500">
-                            Widget ID: {widget.id}
-                          </Text>
-                          <Badge size="sm" colorScheme="green" variant="subtle">
-                            {widget.size} col × {widget.height}
-                          </Badge>
-                        </HStack>
-                      </Box>
-                    </VStack>
-                  </Box>
+                  <AnalysisInfo data={widget.data} />
                 </MenuList>
               </Menu> : null}
+              <IconButton
+                icon={<FiDownload size={12} />}
+                size="xs"
+                variant="ghost"
+                aria-label="Download"
+                onClick={() => {}}
+                opacity={0.6}
+                _hover={{ opacity: 1 }}
+                disabled={downloadLoading}
+              />
               <EditableWrapper isEditable={isEditable}>
                 <Menu>
                   <MenuButton
