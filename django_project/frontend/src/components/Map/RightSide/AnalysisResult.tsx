@@ -7,11 +7,10 @@ import { Analysis } from "../../../store/analysisSlice";
 import { Bar, Line } from "react-chartjs-2";
 import { CategoryScale } from "chart.js";
 import Chart from "chart.js/auto";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
 import {FeatureCollection} from "geojson";
 import 'chartjs-adapter-date-fns';
 import { getTrendLineData, formatMonthYear } from "../../../utils/chartUtils";
+import { downloadPDF } from '../../../utils/downloadPDF';
 
 import './style.css';
 
@@ -35,12 +34,6 @@ const COLORS = [
   "#00FF00", // Lime
   "#008080"  // Teal
 ];
-
-// Export Settings
-const EXPORT_SCALE = 5.0; // scale to 500% of original size
-const EXPORT_BASELINE_RATIO = 1.0; // no reduction
-const EXPORT_CHART_RATIO = 0.85; // reduce to 85% of original size
-const EXPORT_Y_POSITION = 10; // y position of the chart in mm
 
 const splitAndTruncateString = (str: string, maxLength: number) => {
   const words = str.split(' ');
@@ -323,7 +316,7 @@ export function SpatialBarChart({ analysis }: Props) {
     }
   };
 
-  return <Box height={"100%"}>
+  return <Box minHeight={"200px"}>
     <Bar options={options} data={chartData} />
   </Box>
 }
@@ -417,7 +410,15 @@ export function RenderResult({ analysis, decimalPlaces }: Props) {
     case "Temporal":
       return <RenderTemporal analysis={analysis}/>
     case "Spatial":
-      return <RenderSpatial analysis={analysis} decimalPlaces={decimalPlaces}/>
+      // Create a deep copy to make it fully mutable
+      const newAnalysis = JSON.parse(JSON.stringify(analysis));
+      newAnalysis.results.spatial.data = analysis.data;
+      newAnalysis.results.temporal.data = analysis.data;
+
+      return <Box>
+        <RenderSpatial analysis={newAnalysis.results.spatial} decimalPlaces={decimalPlaces}/>
+        <RenderTemporal analysis={newAnalysis.results.temporal}/>
+      </Box>
     default:
       return null
   }
@@ -432,83 +433,6 @@ export default function AnalysisResult() {
   } = useSelector((state: RootState) => state.analysis);
   const { mapConfig } = useSelector((state: RootState) => state.mapConfig);
   const containerRef = useRef<HTMLDivElement>(null);
-
-  const downloadPDF = async () => {
-    if (!containerRef.current) return;
-
-    const clone = containerRef.current.cloneNode(true) as HTMLDivElement;
-
-    // remove the download button
-    const iconsElement = clone.querySelector("#download-button") as HTMLDivElement;
-    if (iconsElement) iconsElement.style.display = "none";
-
-    // remove box shadow
-    clone.style.boxShadow = "none";
-
-    // if Baseline, we need to expand the table
-    if (analysis.data.analysisType === "Baseline") {
-      const table = clone.querySelector("#BaselineTableContainer") as HTMLDivElement;
-      if (table) {
-        table.style.maxWidth = "none";
-        table.style.overflowX = "visible";
-      }
-    }
-
-    // Copy all canvas drawings
-    const originalCanvases = containerRef.current.querySelectorAll('canvas');
-    const clonedCanvases = clone.querySelectorAll('canvas');
-
-    originalCanvases.forEach((origCanvas, i) => {
-        const clonedCanvas = clonedCanvases[i];
-        const ctx = clonedCanvas.getContext('2d');
-        ctx.drawImage(origCanvas, 0, 0);
-    });
-
-    // Set styles to avoid showing the clone
-    clone.style.position = 'absolute';
-    clone.style.top = '-9999px';
-    clone.style.left = '-9999px';
-    document.body.appendChild(clone);
-
-    // convert the clone to canvas
-    const canvas = await html2canvas(clone, {
-      backgroundColor: "white",
-      scale: EXPORT_SCALE,
-    });
-    document.body.removeChild(clone); 
-    const imgData = canvas.toDataURL("image/jpeg");
-    const imgWidth = canvas.width;
-    const imgHeight = canvas.height;
-
-    // Create a new jsPDF instance
-    const pdfOrientation = analysis.data.analysisType === "Baseline" ? "l" : "p";
-    const pdf = new jsPDF(pdfOrientation, "mm", "a4");
-    const pageWidth = pdf.internal.pageSize.getWidth();
-    const pageHeight = pdf.internal.pageSize.getHeight();
-
-    // Calculate image dimensions while preserving aspect ratio
-    const ratio = Math.min(pageWidth / imgWidth, pageHeight / imgHeight);
-    const reducedRatio = ratio * (analysis.data.analysisType === "Baseline" ? EXPORT_BASELINE_RATIO : EXPORT_CHART_RATIO);
-    const finalImgWidth = imgWidth * reducedRatio;
-    const finalImgHeight = imgHeight * reducedRatio;
-    // center the image
-    const x = (pageWidth - finalImgWidth) / 2;
-    const y = EXPORT_Y_POSITION;
-
-    // Add the chart image
-    pdf.addImage(imgData, "JPEG", x, y, finalImgWidth, finalImgHeight);
-  
-    let fileName = '';
-    if (analysis.data.analysisType === "Baseline") {
-      fileName = 'Baseline Analysis';
-    } else if (analysis.data.analysisType === "Temporal") {
-      fileName = `${analysis.data.temporalResolution} Temporal Analysis on ${analysis.data.variable}`;
-    } else if (analysis.data.analysisType === "Spatial") {
-      fileName = `Spatial Analysis on ${analysis.data.variable}`;
-    }
-
-    pdf.save(`${fileName}.pdf`);
-  }
 
   if (!loading && !error && !analysis) {
     return null
@@ -537,6 +461,8 @@ export default function AnalysisResult() {
          borderRadius={8}
          boxShadow="0px 0px 5px 0px #00000030"
          pointerEvents='auto'
+         overflowY={"auto"} 
+         maxHeight={"80vh"}
          p={4}>
       <Flex width="100%" align="center" justify="space-between">
         <Text fontSize="1.5rem" fontWeight={600} color='green.600'>
@@ -545,7 +471,14 @@ export default function AnalysisResult() {
         <IconButton
           id="download-button"
           icon={<FiDownload />} 
-          onClick={downloadPDF} 
+          onClick={() => {
+            const exportAnalysis = {
+              analysisType: analysis.data.analysisType,
+              temporalResolution: analysis.data.temporalResolution,
+              variable: analysis.data.variable,
+            };
+            downloadPDF(containerRef, exportAnalysis, 'BaselineTableContainer', ['download-button'])
+          }} 
           colorScheme="teal" 
           aria-label="Download"
           size="sm"

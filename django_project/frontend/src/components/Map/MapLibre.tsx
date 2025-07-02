@@ -15,6 +15,7 @@ import { selectIsLoggedIn } from "../../store/authSlice";
 import { COMMUNITY_ID } from "./DataTypes";
 import { useMap } from '../../MapContext';
 import { useMapSetup } from './useMapSetup';
+import EarthRanger from "../Map/EarthRanger";
 
 import 'maplibre-gl/dist/maplibre-gl.css';
 import './style.css';
@@ -30,6 +31,7 @@ interface ReusableMapProps {
   selectedCommmunityIds?: string[];
   referenceLayer?: FeatureCollection | null;
   referenceLayerId?: string;
+  config?: any;
 }
 
 const RASTER_LAYER_PADDING = 70;
@@ -195,7 +197,13 @@ export const ReusableMapLibre = forwardRef(
     }, [isMapLoaded, props.referenceLayer, props.referenceLayerId])
 
     return (
-      <Box id={props.mapContainerId} flexGrow={1}/>
+      <Box id={props.mapContainerId} flexGrow={1}>
+        <EarthRanger
+          isVisible={props.config?.earth_ranger} 
+          isMapLoaded={isMapLoaded} 
+          mapRef={mapRef}
+          initialBound={props.initialBound}/>
+      </Box>
     )
   }
 )
