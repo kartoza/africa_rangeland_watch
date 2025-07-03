@@ -5,7 +5,7 @@ from dateutil.relativedelta import relativedelta
 
 import ee
 import os
-from functools import reduce
+from functools import reduce, partial
 
 from analysis.models import AnalysisResultsCache, GEEAsset
 
@@ -2301,3 +2301,174 @@ def _split_dates_by_year(start_date: datetime.date, end_date: datetime.date):
         current_year += 1
 
     return results
+
+
+def _calculate_baci_for_period(
+    selected_area, start_date, end_date, variable,
+    resolution, resolution_step
+):
+    geo = selected_area.geometry().bounds()
+
+    col = get_sentinel_by_resolution(
+        geo, start_date, end_date, resolution, resolution_step
+    )
+
+    band = variable.lower()
+    if band == 'bare ground':
+        band = 'bare'
+        classifier = train_bgt(
+            geo, GEEAsset.fetch_asset_source('random_forest_training')
+        )
+
+        def process_image(i):
+            bg = classify_bgt(i, classifier).select('bare')
+            bg = bg.set(
+                'year', i.get('year'),
+                'month', i.get('month')
+            )
+            return bg
+        col = col.map(process_image)
+
+    col = col.select(band)
+    return col
+
+
+def calculate_baci(
+    locations, reference_layer, variable, temporal_resolution,
+    before, after
+):
+    """
+    Calculate Before-After-Control-Impact (BACI) statistics.
+
+    Parameters
+    ----------
+    locations : List
+        Locations to calculate BACI statistics.
+    reference_layer : ee.ImageCollection
+        Reference layer for the BACI analysis.
+    variable : str
+        Variable to analyze (e.g., 'EVI', 'NDVI').
+    temporal_resolution : str
+        Temporal resolution ('Monthly', 'Quarterly', 'Annual').
+    before : dict
+        Before period dictionary with 'year' and 'month' or 'quarter'.
+    after : dict
+        After period dictionary with 'year' and 'month' or 'quarter'.
+
+    Returns
+    -------
+    ee.FeatureCollection
+        Features with BACI statistics.
+    """
+    from analysis.utils import (
+        get_date_range_for_analysis
+    )
+    # Prepare the area of interest
+    input_layers = InputLayer()
+    selected_geos = input_layers.get_selected_geos()
+    communities = input_layers.get_communities()
+
+    features_geo = []
+    for location in locations:
+        geo = ee.Geometry.Point(
+            [location.get('lon'), location.get('lat')]
+        )
+        features_geo.append(ee.Feature(geo))
+    selected_geos = selected_geos.merge(
+        ee.FeatureCollection(features_geo)
+    )
+    select_names = communities.filterBounds(selected_geos).distinct(
+        ['Name']
+    ).reduceColumns(ee.Reducer.toList(), ['Name']).getInfo()['list']
+    select_geo = communities.filter(
+        ee.Filter.inList('Name', select_names)
+    )
+    # add reference layer
+    if reference_layer['type'] == 'Polygon':
+        ref_layer_geo = ee.Geometry.Polygon(reference_layer['coordinates'])
+    else:
+        ref_layer_geo = ee.Geometry.MultiPolygon(
+            reference_layer['coordinates']
+        )
+    select_geo = select_geo.merge(
+        ee.FeatureCollection([
+            ee.Feature(ref_layer_geo, {
+                'Name': 'Reference Area',
+                'Project': 'Reference Area',
+                'area': ref_layer_geo.area().divide(1e6),  # Convert to ha
+            })
+        ])
+    )   
+
+    # Calculate date ranges for before and after periods
+    before_date_range = get_date_range_for_analysis(
+        temporal_resolution,
+        before.get('year'),
+        before.get('quarter'),
+        before.get('month')
+    )
+    after_date_range = get_date_range_for_analysis(
+        temporal_resolution,
+        after.get('year'),
+        after.get('quarter'),
+        after.get('month')
+    )
+
+    def process_image(out_variable, i):
+        # Reduce the image to the selected geometries
+        reduced = i.reduceRegions(
+            collection=select_geo,
+            reducer=ee.Reducer.mean(),
+            scale=120,
+            tileScale=4
+        )
+        # remove geometry from the feature
+        reduced = reduced.map(
+            lambda ft: ft.setGeometry(None).set({
+                out_variable: ft.get('mean'),
+                'mean': None
+            })
+        )
+        return reduced
+
+    # Calculate the variable for the before and after periods
+    before_col = _calculate_baci_for_period(
+        select_geo,
+        before_date_range['start_date'].isoformat(),
+        before_date_range['end_date'].isoformat(),
+        variable,
+        before_date_range['resolution'],
+        before_date_range['resolution_step']
+    )
+    after_col = _calculate_baci_for_period(
+        select_geo,
+        after_date_range['start_date'].isoformat(),
+        after_date_range['end_date'].isoformat(),
+        variable,
+        after_date_range['resolution'],
+        after_date_range['resolution_step']
+    )
+
+    # Process the before and after collections into feature collection
+    before_map_img = partial(process_image, f'{variable} Before')
+    before_col = before_col.map(before_map_img).flatten()
+    after_map_img = partial(process_image, f'{variable} After')
+    after_col = after_col.map(after_map_img).flatten()
+
+    # Join the before and after collections
+    name_filter = ee.Filter.equals(
+        leftField='Name',
+        rightField='Name'
+    )
+    inner_join = ee.Join.inner()
+    joined_fc = inner_join.apply(
+        before_col,
+        after_col,
+        name_filter
+    )
+    # flatten the joined features
+    select = joined_fc.map(
+        lambda f: ee.Feature(f.get('primary'))
+                    .copyProperties(ee.Feature(f.get('secondary')))
+    )
+    print(select.getInfo())    

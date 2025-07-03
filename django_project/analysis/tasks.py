@@ -33,7 +33,12 @@ from analysis.analysis import (
     spatial_get_date_filter
 )
 from analysis.runner import AnalysisRunner
-from analysis.utils import get_gdrive_file, delete_gdrive_file, get_cog_bounds
+from analysis.utils import (
+    get_gdrive_file,
+    delete_gdrive_file,
+    get_cog_bounds,
+    get_date_range_for_analysis
+)
 from layers.models import InputLayer as InputLayerFixture
 from layers.utils import upload_file
 
@@ -250,32 +255,17 @@ def generate_temporal_analysis_raster_output(raster_output_id):
     initialize_engine_analysis()
 
     # get date filter
-    start_date = date(raster_output.analysis.get('year'), 1, 1)
-    end_date = date(raster_output.analysis.get('year') + 1, 1, 1)
-    resolution = 'year'
-    resolution_step = 1
-    month_filter = None
-    if temporal_resolution == 'Monthly':
-        start_date = start_date.replace(
-            month=raster_output.analysis.get('month')
-        )
-        end_date = start_date + relativedelta(months=1)
-        month_filter = raster_output.analysis.get('month')
-        resolution = 'month'
-    elif temporal_resolution == 'Quarterly':
-        quarter_dict = {
-            1: 1,
-            2: 4,
-            3: 7,
-            4: 10
-        }
-        start_date = start_date.replace(
-            month=quarter_dict[raster_output.analysis.get('quarter')]
-        )
-        end_date = start_date + relativedelta(months=3)
-        resolution_step = 3
-        month_filter = quarter_dict[raster_output.analysis.get('quarter')]
-        resolution = 'month'
+    date_range_result = get_date_range_for_analysis(
+        temporal_resolution,
+        raster_output.analysis.get('year'),
+        raster_output.analysis.get('quarter'),
+        raster_output.analysis.get('month')
+    )
+    start_date = date_range_result['start_date']
+    end_date = date_range_result['end_date']
+    resolution = date_range_result['resolution']
+    resolution_step = date_range_result['resolution_step']
+    month_filter = date_range_result['month_filter']
 
     logger.info(
         f'Generating img {resolution} ({resolution_step}) '
