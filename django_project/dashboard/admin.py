@@ -6,6 +6,7 @@ from .models import Dashboard, DashboardWidget
 class DashboardAdmin(admin.ModelAdmin):
     list_display = (
         'uuid',
+        'title',
         'privacy_type',
         'created_at',
         'updated_at',

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import {
   Box,
   Flex,
@@ -9,25 +9,26 @@ import {
   useDisclosure,
   useToast,
   Divider,
+  Heading,
   Card,
   CardBody,
   Tag,
   TagLabel,
-  Heading
+  Image
 } from "@chakra-ui/react";
-import { FaFilter } from "react-icons/fa";
 import { format } from 'date-fns';
+import { FaFilter } from "react-icons/fa";
 import Header from "../../components/Header";
 import { Helmet } from "react-helmet";
 import Footer from "../../components/Footer";
-import Pagination from "../../components/Pagination";
+import AllDashboardList from "../../components/DashboardList";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "../../store";
 import { fetchDashboards, deleteDashboard } from "../../store/dashboardSlice";
 import DashboardFilters from "../../components/DashboardFilters";
-import ConfirmDeleteDialog from "../../components/ConfirmDeleteDialog";
 import CreateDashboardModal from "../../components/CreateDashboard";
-
+import Pagination from "../../components/Pagination";
+import ConfirmDeleteDialog from "../../components/ConfirmDeleteDialog";
 
 interface DashboardListProps {
   allDashboards: boolean;
@@ -35,6 +36,8 @@ interface DashboardListProps {
 
 const DashboardListPage: React.FC<DashboardListProps> = ({allDashboards}) => {
   const navigate = useNavigate();
+  const location = useLocation();
+  console.log(location.pathname);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [isFilterActive, setIsFilterActive] = useState(false);
@@ -44,12 +47,16 @@ const DashboardListPage: React.FC<DashboardListProps> = ({allDashboards}) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [isCreateDashboardOpen, setCreateDashboard] = useState(false);
   const dispatch = useDispatch<AppDispatch>();
-  const dashboardData = useSelector((state: any) => state.dashboard.dashboards);
+  const dashboardData1 = useSelector((state: any) => state.dashboard.dashboards);
+  const dashboardData = [];
+  for (let i = 0; i < 4; i++) {
+    dashboardData.push(...dashboardData1);
+  }
   const loading = useSelector((state: any) => state.dashboard.loading);
   const error = useSelector((state: any) => state.dashboard.error);
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
   const isEditable = !allDashboards;
-  const itemsPerPage = 4;
+  const itemsPerPage = allDashboards ? 10 : 4;
 
   // SEARCH FUNCTION
   const filteredData = dashboardData.filter((chartConfig: any) =>
@@ -195,8 +202,20 @@ const DashboardListPage: React.FC<DashboardListProps> = ({allDashboards}) => {
         {!loading && !filteredData?.length && <Text>No dashboard available.</Text>}
         {error && <Text>{error}</Text>}
      
-        {/* Main Section */}
-        <Box
+        {/* Dashboard List Component */}
+        {/* Dashboard List Component */}
+        {
+          allDashboards ? 
+          <AllDashboardList
+            paginatedData={paginatedData}
+            filteredData={filteredData}
+            currentPage={currentPage}
+            totalPages={totalPages}
+            itemsPerPage={itemsPerPage}
+            handlePageChange={handlePageChange}
+            handleItemClick={handleItemClick}
+          /> : 
+          <Box
           maxHeight="calc(100vh - 250px)"
           overflowY="auto"
           mb={6}
@@ -221,6 +240,18 @@ const DashboardListPage: React.FC<DashboardListProps> = ({allDashboards}) => {
                         gap={4}
                         justify="space-between"
                       >
+                        {/* Thumbnail */}
+                        <Box flexShrink={0}>
+                          <Image
+                            src={dashboard.thumbnail} 
+                            height="120px" 
+                            width="200px" 
+                            objectFit="cover"
+                            borderRadius="md"
+                            fallbackSrc="https://via.placeholder.com/200x120?text=No+Image"
+                          />
+                        </Box>
+
                         {/* Content */}
                         <Box
                             flex="1"
@@ -229,11 +260,23 @@ const DashboardListPage: React.FC<DashboardListProps> = ({allDashboards}) => {
                             justifyContent="space-between"
                             onClick={() => handleItemClick(dashboard)}
                             cursor="pointer"
+                            ml={4}
                           >
 
                           <Heading size="md" fontWeight="bold" color="black" mb={2}>
                             {dashboard.title}
                           </Heading>
+
+                          {/* Description */}
+                          <Text
+                            color="gray.600" 
+                            fontSize="sm" 
+                            mb={3}
+                            noOfLines={2}
+                            flex="1"
+                          >
+                            {dashboard.config?.dashboardDescription || "No description available"}
+                          </Text>
 
                           <Box mt={4} display="flex" flexWrap="wrap" gap={2}>
                             <Tag colorScheme="green" mr={2}>
@@ -280,10 +323,11 @@ const DashboardListPage: React.FC<DashboardListProps> = ({allDashboards}) => {
             )
           )
         }
-        {paginatedData?.length === 4 && (
+        {filteredData?.length > itemsPerPage && (
           <Pagination currentPage={currentPage} totalPages={totalPages} handlePageChange={handlePageChange} />
         )}
         </Box>
+        }
 
         {/* Filter Panel (Drawer) */}
         <DashboardFilters 
