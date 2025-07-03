@@ -17,13 +17,15 @@ import {
   MenuList,
   MenuItem,
   Input,
-  Checkbox
+  Checkbox,
+  Spinner,
 } from '@chakra-ui/react';
+import { CheckIcon } from '@chakra-ui/icons';
 import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { FiSettings, FiX, FiInfo, FiEdit2, FiSlash, FiCheck, FiDownload } from 'react-icons/fi';
+import { FiSettings, FiX, FiInfo, FiEdit2, FiSlash, FiCheck, FiDownload, FiAlertCircle } from 'react-icons/fi';
 import {DragHandleIcon} from '@chakra-ui/icons';
 import ChartWidget from './ChartWidget';
 import TableWidget from './TableWidget';
@@ -215,6 +217,43 @@ const SortableWidgetItem: React.FC<{
               </VStack>
             </HStack>
             <HStack spacing={1} id="widget-actions">
+              {widget.type === 'map' && (
+                <>
+                  {widget.data.status === 'RUNNING' && (
+                    <Box 
+                      bg="blue.100" 
+                      p={2} 
+                      borderRadius="md" 
+                      display="flex" 
+                      alignItems="center" 
+                      gap={2}
+                      mb={2}
+                    >
+                      <Spinner size="sm" color="blue.500" />
+                      <Text fontSize="sm" color="blue.700">
+                        Generating TIFF.
+                      </Text>
+                    </Box>
+                  )}
+                  {widget.data.status === 'FAILED' && (
+                    <Box 
+                      bg="red.100" 
+                      p={2} 
+                      borderRadius="md" 
+                      display="flex" 
+                      alignItems="center" 
+                      gap={2}
+                      mb={2}
+                    >
+                      <FiAlertCircle/>
+                      <Text fontSize="sm" color="green.700">
+                        Failed to generate TIFF
+                      </Text>
+                    </Box>
+                  )}
+                </>
+              )}
+
               { widget.type !== 'text' ? <Menu>
                 <MenuButton
                   as={IconButton}
