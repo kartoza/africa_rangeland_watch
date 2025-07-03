@@ -292,13 +292,13 @@ class Command(BaseCommand):
               ]
             ]
           }
-        calculate_baci(
+        result = calculate_baci(
             [{
                 'lon': reference_layer_geojson['coordinates'][0][0][0],
                 'lat': reference_layer_geojson['coordinates'][0][0][1],
             }],
             reference_layer_geojson,
-            'EVI',
+            'Bare Ground',
             'Annual',
             {
                 'year': 2022,
@@ -311,7 +311,7 @@ class Command(BaseCommand):
                 'month': None
             }
         )
-        # print(spatial)
+        print(result.getInfo())
 
     def handle(self, *args, **options):
         logging.basicConfig(level=logging.DEBUG)

@@ -2235,17 +2235,18 @@ def calculate_temporal(
     return col.map(process_image).flatten()
 
 
-def calculate_temporal_to_img(
-    aoi, start_date, end_date, resolution, resolution_step,
-    band, is_custom_geom=False
+def calculate_temporal_modis_veg(
+    selected_area, start_date, end_date,
+    resolution, resolution_step,
+    variable
 ):
     """
-    Calculate temporal timeseries stats.
+    Calculate temporal for modis vegetation dataset.
 
     Parameters
     ----------
-    aoi : ee.Polygon
-        Polygon area of interest.
+    selected_area : ee.FeatureCollection
+        Selected area of interest.
     start_date : str
         Start date to calculate baseline.
     end_date : str
@@ -2254,22 +2255,22 @@ def calculate_temporal_to_img(
         Temporal resolution: month or year.
     resolution_step : str
         Resolution: 1 for each month or 3 for quarterly.
-    is_custom_geom : boolean
-        If False, then use Communities polygon that intersects with aoi.
+    variable : str
+        Variable to analyze ('EVI', 'NDVI', or 'Bare Ground').
 
     Returns
     -------
     ee.ImageCollection
     """
-    input_layer = InputLayer()
-    selected_area = input_layer.get_selected_area(aoi, is_custom_geom)
     geo = selected_area.geometry().bounds()
 
     col = get_sentinel_by_resolution(
         geo, start_date, end_date, resolution, resolution_step
     )
 
-    if band == 'bare':
+    band = variable.lower()
+    if band == 'bare ground':
+        band = 'bare'
         classifier = train_bgt(
             geo, GEEAsset.fetch_asset_source('random_forest_training')
         )
@@ -2301,36 +2302,6 @@ def _split_dates_by_year(start_date: datetime.date, end_date: datetime.date):
         current_year += 1
 
     return results
-
-
-def _calculate_baci_for_period(
-    selected_area, start_date, end_date, variable,
-    resolution, resolution_step
-):
-    geo = selected_area.geometry().bounds()
-
-    col = get_sentinel_by_resolution(
-        geo, start_date, end_date, resolution, resolution_step
-    )
-
-    band = variable.lower()
-    if band == 'bare ground':
-        band = 'bare'
-        classifier = train_bgt(
-            geo, GEEAsset.fetch_asset_source('random_forest_training')
-        )
-
-        def process_image(i):
-            bg = classify_bgt(i, classifier).select('bare')
-            bg = bg.set(
-                'year', i.get('year'),
-                'month', i.get('month')
-            )
-            return bg
-        col = col.map(process_image)
-
-    col = col.select(band)
-    return col
 
 
 def calculate_baci(
@@ -2398,7 +2369,7 @@ def calculate_baci(
                 'area': ref_layer_geo.area().divide(1e6),  # Convert to ha
             })
         ])
-    )   
+    )
 
     # Calculate date ranges for before and after periods
     before_date_range = get_date_range_for_analysis(
@@ -2432,21 +2403,21 @@ def calculate_baci(
         return reduced
 
     # Calculate the variable for the before and after periods
-    before_col = _calculate_baci_for_period(
+    before_col = calculate_temporal_modis_veg(
         select_geo,
         before_date_range['start_date'].isoformat(),
         before_date_range['end_date'].isoformat(),
-        variable,
         before_date_range['resolution'],
-        before_date_range['resolution_step']
+        before_date_range['resolution_step'],
+        variable
     )
-    after_col = _calculate_baci_for_period(
+    after_col = calculate_temporal_modis_veg(
         select_geo,
         after_date_range['start_date'].isoformat(),
         after_date_range['end_date'].isoformat(),
-        variable,
         after_date_range['resolution'],
-        after_date_range['resolution_step']
+        after_date_range['resolution_step'],
+        variable
     )
 
     # Process the before and after collections into feature collection
@@ -2471,4 +2442,4 @@ def calculate_baci(
         lambda f: ee.Feature(f.get('primary'))
                     .copyProperties(ee.Feature(f.get('secondary')))
     )
-    print(select.getInfo())    
+    return select

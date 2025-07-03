@@ -12,8 +12,6 @@ import tempfile
 import shutil
 import time
 import subprocess
-from datetime import date
-from dateutil.relativedelta import relativedelta
 from django.utils import timezone
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -29,7 +27,7 @@ from analysis.models import (
 from analysis.analysis import (
     export_image_to_drive,
     initialize_engine_analysis, InputLayer,
-    get_rel_diff, calculate_temporal_to_img,
+    get_rel_diff, calculate_temporal_modis_veg,
     spatial_get_date_filter
 )
 from analysis.runner import AnalysisRunner
@@ -273,6 +271,8 @@ def generate_temporal_analysis_raster_output(raster_output_id):
     )
     # get aoi
     aoi = _get_bounds(raster_output)
+    input_layer = InputLayer()
+    selected_area = input_layer.get_selected_area(aoi, False)
 
     # find input layer for get the vis param config
     input_layer_fixture = InputLayerFixture.objects.get(
@@ -280,11 +280,10 @@ def generate_temporal_analysis_raster_output(raster_output_id):
     )
 
     # generate the image
-    img = calculate_temporal_to_img(
-        aoi, start_date.isoformat(), end_date.isoformat(),
+    img = calculate_temporal_modis_veg(
+        selected_area, start_date.isoformat(), end_date.isoformat(),
         resolution, resolution_step,
-        'bare' if raster_output.analysis.get('variable') == 'Bare ground' else
-        raster_output.analysis.get('variable').lower()
+        raster_output.analysis.get('variable')
     )
     if temporal_resolution == 'Annual':
         img = img.filter(

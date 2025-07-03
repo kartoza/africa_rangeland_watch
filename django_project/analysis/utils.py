@@ -185,4 +185,3 @@ def get_date_range_for_analysis(temporal_resolution, year, quarter, month):
         'resolution_step': resolution_step,
         'month_filter': month_filter
     }
-
