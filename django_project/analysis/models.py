@@ -502,6 +502,22 @@ class UserAnalysisResults(models.Model):
             })
         )
 
+    def _get_baci_period(self, period):
+        """Get the BACI period string."""
+        year = period.get('year', '')
+        month = period.get('month', '')
+        quarter = period.get('quarter', '')
+        if isinstance(year, list):
+            # get the first item
+            year = year[0] if year else ''
+            month = month[0] if month else ''
+            quarter = quarter[0] if quarter else ''
+        return {
+            'year': year,
+            'month': calendar.month_name[int(month)] if month else '',
+            'quarter': f'Q{quarter}' if quarter else ''
+        }
+
     def _get_description(self, data):
         analysis_type = data.get('analysisType', '')
         if analysis_type == 'Baseline':
@@ -543,6 +559,31 @@ class UserAnalysisResults(models.Model):
                 f'Relative % difference in {variable} between reference area '
                 'and selected camp(s).'
             )
+        elif analysis_type == 'BACI':
+            temporal_res = data.get('temporalResolution', '')
+            before_period = self._get_baci_period(
+                data.get('period', {})
+            )
+            after_period = self._get_baci_period(
+                data.get('comparisonPeriod', {})
+            )
+            if temporal_res == 'Annual':
+                return (
+                    f'Analysis between {before_period["year"]} and '
+                    f'{after_period["year"]}'
+                )
+            elif temporal_res == 'Quarterly':
+                return (
+                    f'Analysis between {before_period["quarter"]} '
+                    f'{before_period["year"]} and '
+                    f'{after_period["quarter"]} {after_period["year"]}'
+                )
+            elif temporal_res == 'Monthly':
+                return (
+                    f'Analysis between {before_period["month"]} '
+                    f'{before_period["year"]} and '
+                    f'{after_period["month"]} {after_period["year"]}'
+                )
         return ' - '
 
     def _get_name(self, data):

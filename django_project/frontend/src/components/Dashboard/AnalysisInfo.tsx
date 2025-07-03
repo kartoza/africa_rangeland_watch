@@ -35,13 +35,18 @@ const AnalysisInfo: React.FC<AnalysisInfoProps> = ({ data }) => {
     };
     const isValidTemporalResolution = analysisData?.temporalResolution && period?.year;
     let comparisonPeriod = [];
-    if (analysisData?.comparisonPeriod && analysisData?.comparisonPeriod?.year) {
+    if (analysisData?.comparisonPeriod && analysisData?.comparisonPeriod?.year && Array.isArray(analysisData?.comparisonPeriod?.year)) {
         for (let ci=0; ci < analysisData?.comparisonPeriod.year.length; ci++) {
             const year = analysisData?.comparisonPeriod.year[ci];
             const month = analysisData?.comparisonPeriod.month ? analysisData?.comparisonPeriod.month[ci] : null;
             const quarter = analysisData?.comparisonPeriod.quarter ? analysisData?.comparisonPeriod.quarter[ci] : null;
             comparisonPeriod.push(getReferencePeriod({ year, month, quarter }));
         }
+    } else if (analysisData?.comparisonPeriod && analysisData?.comparisonPeriod?.year) {
+        const year = analysisData?.comparisonPeriod.year;
+        const month = analysisData?.comparisonPeriod.month || null;
+        const quarter = analysisData?.comparisonPeriod.quarter || null;
+        comparisonPeriod.push(getReferencePeriod({ year, month, quarter }));
     }
     return (
         <Box p={4}>

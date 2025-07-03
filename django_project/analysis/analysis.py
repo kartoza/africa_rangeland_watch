@@ -953,7 +953,7 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
             'month': test_month
         }
         result = calculate_baci(
-            locations, reference_layer, 
+            locations, reference_layer,
             analysis_dict['variable'], res,
             before_dict, after_dict
         )
