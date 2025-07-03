@@ -56,7 +56,7 @@ const DashboardListPage: React.FC<DashboardListProps> = ({allDashboards}) => {
   const error = useSelector((state: any) => state.dashboard.error);
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
   const isEditable = !allDashboards;
-  const itemsPerPage = allDashboards ? 10 : 4;
+  const itemsPerPage = allDashboards ? 12 : 4;
 
   // SEARCH FUNCTION
   const filteredData = dashboardData.filter((chartConfig: any) =>
