@@ -2,10 +2,15 @@ import math
 from rest_framework import viewsets
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
-from django.http import Http404, StreamingHttpResponse
+from django.http import Http404, FileResponse
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.decorators import action
+from cloud_native_gis.models import (
+    Layer,
+    LayerType,
+    LayerUpload
+)
 
 from dashboard.models import Dashboard
 from .models import UserAnalysisResults
@@ -15,7 +20,6 @@ from analysis.tasks import (
     generate_temporal_analysis_raster_output,
     store_spatial_analysis_raster_output
 )
-from analysis.utils import get_gdrive_file
 
 
 class UserAnalysisResultsViewSet(viewsets.ModelViewSet):
@@ -121,19 +125,31 @@ class UserAnalysisResultsViewSet(viewsets.ModelViewSet):
             uuid=uuid
         )
 
-        file = get_gdrive_file(raster_output.raster_filename)
-        if not file:
-            raise Http404("File not found in Google Drive")
-        else:
-            # Download and stream the file
-            def file_iterator():
-                file.FetchContent()
-                # Read in 8MB chunks
-                while chunk := file.content.read(8 * 1024 * 1024):
-                    yield chunk
+        layer = Layer.objects.filter(
+            unique_id=raster_output.uuid,
+            layer_type=LayerType.RASTER_TILE
+        ).first()
 
-            response = StreamingHttpResponse(
-                file_iterator(),
+        if not layer:
+            raise Http404("File not found.")
+        else:
+            # Fetch the LayerUpload object associated with the layer
+            layer_upload = LayerUpload.objects.filter(
+                layer=layer
+            ).last()
+
+            file = None
+            if layer_upload:
+                files = layer_upload.files
+                if files:
+                    # Get the first file from the LayerUpload
+                    file = layer_upload.filepath(files[0])
+
+            if not layer.is_ready or not file:
+                raise Http404("File is not ready.")
+
+            response = FileResponse(
+                open(file, 'rb'),
                 content_type='image/tiff'
             )
             response['Content-Disposition'] = (
