@@ -911,6 +911,54 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
             )
         )
 
+    if analysis_dict['analysisType'] == "BACI":
+        reference_layer = kwargs.get('reference_layer', None)
+        if not reference_layer:
+            raise ValueError("Reference layer not provided")
+
+        res = analysis_dict['t_resolution']
+        before_dict = {
+            'year': int(analysis_dict['Temporal']['Annual']['ref']),
+            'quarter': (
+                int(analysis_dict['Temporal']['Quarterly']['ref']) if
+                res == 'Quarterly' else None
+            ),
+            'month': (
+                int(analysis_dict['Temporal']['Monthly']['ref']) if
+                res == 'Monthly' else None
+            )
+        }
+        test_year = analysis_dict['Temporal']['Annual']['test']
+        if isinstance(test_year, list):
+            test_year = int(test_year[0])
+        else:
+            test_year = int(test_year)
+        test_quarter = analysis_dict['Temporal']['Quarterly']['test']
+        if isinstance(test_quarter, list):
+            test_quarter = int(test_quarter[0])
+        elif res == 'Quarterly':
+            test_quarter = int(test_quarter)
+        else:
+            test_quarter = None
+        test_month = analysis_dict['Temporal']['Monthly']['test']
+        if isinstance(test_month, list):
+            test_month = int(test_month[0])
+        elif res == 'Monthly':
+            test_month = int(test_month)
+        else:
+            test_month = None
+        after_dict = {
+            'year': test_year,
+            'quarter': test_quarter,
+            'month': test_month
+        }
+        result = calculate_baci(
+            locations, reference_layer, 
+            analysis_dict['variable'], res,
+            before_dict, after_dict
+        )
+        return analysis_cache.create_analysis_cache(result.getInfo())
+
 
 def initialize_engine_analysis():
     """
