@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Flex,
@@ -36,8 +36,6 @@ interface DashboardListProps {
 
 const DashboardListPage: React.FC<DashboardListProps> = ({allDashboards}) => {
   const navigate = useNavigate();
-  const location = useLocation();
-  console.log(location.pathname);
   const [searchTerm, setSearchTerm] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [isFilterActive, setIsFilterActive] = useState(false);
