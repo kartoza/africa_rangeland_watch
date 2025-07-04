@@ -15,7 +15,7 @@ from django.conf import settings
 def fetch_and_store_data(
         endpoint, model_class, name,
         max_retries: int = 3, retry_delay: float = 1.0):
-    api_url = f"{settings.EARTH_RANGER_API_URL}/{endpoint}/"
+    api_url = f"{settings.EARTH_RANGER_API_URL}{endpoint}/"
     headers = {
         "accept": "application/json",
         "Authorization": f"Bearer {settings.EARTH_RANGER_AUTH_TOKEN}"
