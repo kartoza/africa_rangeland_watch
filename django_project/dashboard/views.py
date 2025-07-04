@@ -11,11 +11,14 @@ from rest_framework import generics, status, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.utils import timezone
-
 from base.models import Organisation, UserOrganisations
 from analysis.models import UserAnalysisResults
-from .models import Dashboard, DashboardWidget
-from .serializers import DashboardSerializer, DashboardDetailSerializer
+from dashboard.models import Dashboard, DashboardWidget
+from dashboard.serializers import (
+    DashboardSerializer,
+    DashboardDetailSerializer,
+    DashboardWidgetSerializer
+)
 
 
 logger = logging.getLogger(__name__)
@@ -513,38 +516,31 @@ class DashboardDetailView(APIView):
         return Response(status=status.HTTP_200_OK)
 
 
-from rest_framework import status
-from rest_framework.response import Response
-from rest_framework.views import APIView
-from django.shortcuts import get_object_or_404
-from .models import Dashboard, DashboardWidget
-from .serializers import DashboardSerializer, DashboardDetailSerializer, DashboardWidgetSerializer
-
-# Add this new view class
 class DashboardWidgetDetailView(APIView):
     """
     Retrieve a specific dashboard widget by ID.
     """
-    
+
     def get(self, request, pk):
         """
         Get dashboard widget details by primary key.
         """
         try:
             widget = get_object_or_404(
-                DashboardWidget.objects.select_related('analysis_result', 'dashboard'),
+                DashboardWidget.objects.select_related(
+                    'analysis_result', 'dashboard'
+                ),
                 pk=pk
             )
-            
-            # Optional: Check if user has permission to view this widget
-            # You can add permission checks here based on dashboard privacy settings
+
             dashboard = widget.dashboard
             user = request.user
-            
+
             # Check if user can access the dashboard (and thus the widget)
-            if dashboard.privacy_type == 'private' and dashboard.created_by != user:
+            if dashboard.privacy_type == 'private' and\
+                dashboard.created_by != user:
                 return Response(
-                    {"error": "You do not have permission to view this widget."},
+                    {"error": "You do not have permission to view this widget."},  # noqa
                     status=status.HTTP_403_FORBIDDEN
                 )
             elif dashboard.privacy_type == 'organisation':
@@ -552,19 +548,27 @@ class DashboardWidgetDetailView(APIView):
                     id__in=dashboard.organisations.all()
                 ).exists():
                     return Response(
-                        {"error": "You do not have permission to view this widget."},
+                        {"error": "You do not have permission to view this widget."},  # noqa
                         status=status.HTTP_403_FORBIDDEN
                     )
             elif dashboard.privacy_type == 'restricted':
-                if not dashboard.users.filter(id=user.id).exists():
+                if dashboard.created_by != user:
                     return Response(
-                        {"error": "You do not have permission to view this widget."},
+                        {"error": "You do not have permission to view this widget."},  # noqa
                         status=status.HTTP_403_FORBIDDEN
                     )
-            
-            serializer = DashboardWidgetSerializer(widget, context={'request': request})
+                elif not dashboard.users.filter(id=user.id).exists():
+                    return Response(
+                        {"error": "You do not have permission to view this widget."},  # noqa
+                        status=status.HTTP_403_FORBIDDEN
+                    )
+
+            serializer = DashboardWidgetSerializer(
+                widget,
+                context={'request': request}
+            )
             return Response(serializer.data, status=status.HTTP_200_OK)
-            
+
         except DashboardWidget.DoesNotExist:
             return Response(
                 {"error": "Widget not found."},
