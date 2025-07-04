@@ -23,6 +23,7 @@ class AnalysisAPITest(BaseAPIViewTest):
     fixtures = [
         '1.project.json',
         '2.landscape.json',
+        '4.indicator.json',
     ]
 
     @patch('analysis.runner.run_analysis')
