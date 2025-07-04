@@ -120,9 +120,11 @@ const DashboardListPage: React.FC<DashboardListProps> = ({allDashboards}) => {
 
         <Flex direction={{ base: "column", md: "row" }} align="start" gap="30px">
           {/* left-hand column: sidebar (only on /my-dashboard) */}
-          {hash.startsWith("#/my-dashboard") && (
+          {!allDashboards && (
             <Box
-              display={{ base: "none", md: "flex" }}
+              display={{ base: "none", md: "block" }}
+              w="286px"
+              flexShrink={0}
             >
               <Sidebar w="full" />
             </Box>

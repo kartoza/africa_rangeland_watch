@@ -130,7 +130,8 @@ export default function Sidebar(props: Props) {
           </MenuItem>
           <MenuItem
             style={{
-              backgroundColor: isActive("/my-dashboard")
+              backgroundColor: isActive("/my-dashboard") ||
+                location.pathname.startsWith("/my-dashboard/")
                 ? "#a8d159"
                 : "transparent",
             }}
