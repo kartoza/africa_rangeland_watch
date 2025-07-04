@@ -12,8 +12,6 @@ import AnalysisTemporalResolutionSelector
   from "./AnalysisTemporalResolutionSelector";
 import AnalysisVariableSelector from "./AnalysisVariableSelector";
 import AnalysisReferencePeriod from "./AnalysisReferencePeriod";
-import AnalysisVariableBySpatialSelector
-  from "./AnalysisVariableBySpatialSelector";
 import AnalysisLandscapeGeometrySelector
   from "./AnalysisLandscapeGeometrySelector";
 import { AppDispatch, RootState } from "../../../../store";
@@ -383,8 +381,9 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
         {/* 3) Select variable for spatial*/}
         {
           data.analysisType === Types.SPATIAL &&
-          <AnalysisVariableBySpatialSelector
+          <AnalysisVariableSelector
             data={data}
+            analysisType={'Spatial'}
             onSelected={(value) => setData({
               ...data,
               variable: value
@@ -396,7 +395,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
           data.temporalResolution && [Types.TEMPORAL, Types.BACI].includes(data.analysisType) &&
           <AnalysisVariableSelector
             data={data}
-            layers={layers}
+            analysisType={'Temporal'}
             onSelected={(value) => setData({
               ...data,
               variable: value

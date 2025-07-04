@@ -18,6 +18,7 @@ import { AppDispatch, RootState } from "../../../store";
 import { fetchLandscapes } from '../../../store/landscapeSlice';
 import { fetchLayers } from '../../../store/layerSlice';
 import { selectIsLoggedIn } from "../../../store/authSlice";
+import { fetchAnalysisIndicator } from '../../../store/analysisSlice';
 import Layers, { LayerCheckboxProps } from "./Layers";
 import Analysis from "./Analysis";
 import { useSession } from '../../../sessionProvider'
@@ -54,6 +55,7 @@ export const LeftSide = forwardRef((props: LayerCheckboxProps, ref) => {
   useEffect(() => {
     dispatch(fetchLayers());
     dispatch(fetchLandscapes());
+    dispatch(fetchAnalysisIndicator());
   }, [dispatch]);
 
   // Toggle LeftSide visibility
