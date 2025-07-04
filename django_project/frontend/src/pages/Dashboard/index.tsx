@@ -235,6 +235,10 @@ const DashboardListPage: React.FC<DashboardListProps> = ({allDashboards}) => {
                             {dashboard.title}
                           </Heading>
 
+                          <Text color="black">
+                            {dashboard.config.dashboardDescription}
+                          </Text>
+
                           <Box mt={4} display="flex" flexWrap="wrap" gap={2}>
                             <Tag colorScheme="green" mr={2}>
                               <TagLabel>

@@ -7,6 +7,7 @@ import {
     ModalFooter,
     Button,
     Input,
+    Textarea,
     FormLabel,
     FormControl,
     Select,
@@ -29,6 +30,7 @@ import { AppDispatch, RootState } from "../store"
 
   const CreateDashboardModal: React.FC<CreateDashboardModalProps> = ({ isOpen, onClose, selectedAnalysis }) => {
     const [dashboardName, setDashboardName] = useState("");
+    const [dashboardDescription, setDashboardDescription] = useState("");
     const [preference, setPreference] = useState("chart");
     const [chartType, setChartType] = useState("");
     const [accessLevel, setAccessLevel] = useState<PrivacyType>("private");
@@ -71,9 +73,10 @@ import { AppDispatch, RootState } from "../store"
    
     const handleCreateDashboard = () => {
         const newDashboard: DashboardData = {
-            title: "My Dashboard",
+            title: dashboardName,
             config: {
               dashboardName: dashboardName,
+              dashboardDescription: dashboardDescription,
               preference: preference,
               chartType: preference === "chart" ? chartType : null,
             },
@@ -108,6 +111,22 @@ import { AppDispatch, RootState } from "../store"
                 placeholder="Enter Dashboard Name"
                 value={dashboardName}
                 onChange={(e) => setDashboardName(e.target.value)}
+                borderRadius="md"
+                borderWidth="1px"
+                borderColor="gray.500"
+              />
+            </FormControl>
+
+            {/* Dashboard Description */}
+            <FormControl mb={4}>
+              <FormLabel htmlFor="dashboardDescription" fontWeight="bold">
+                Dashboard Description
+              </FormLabel>
+              <Textarea
+                id="dashboardDescrription"
+                placeholder="Enter Dashboard Description"
+                value={dashboardDescription}
+                onChange={(e) => setDashboardDescription(e.target.value)}
                 borderRadius="md"
                 borderWidth="1px"
                 borderColor="gray.500"
