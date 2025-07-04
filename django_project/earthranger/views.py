@@ -1,55 +1,91 @@
-
 import requests
 import logging
-from django.shortcuts import get_object_or_404
 from rest_framework.response import Response
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework import status
+from rest_framework.generics import ListAPIView
 from django.conf import settings
 from django.http import Http404, HttpResponse
-from earthranger.models import EarthRangerEvents
 from django.views.decorators.cache import cache_page
 from django.utils.decorators import method_decorator
 from rest_framework.views import APIView
+from earthranger.serializers import EarthRangerEventsSerializer
+from earthranger.models import EarthRangerEvents
+from core.pagination import Pagination
 
 
 logger = logging.getLogger(__name__)
 
 
-
-
-@api_view(["GET"])
-@permission_classes([IsAuthenticated])
-def list_events(request):
+class ListEventsView(ListAPIView):
     """
-    Fetch all stored events with optional filtering.
+    List all stored events with optional filtering and pagination.
     """
+    serializer_class = EarthRangerEventsSerializer
+    permission_classes = [IsAuthenticated]
+    pagination_class = Pagination
 
-    # Extract optional filters from query parameters
-    event_type = request.GET.get("event_type")
-    event_category = request.GET.get("event_category")
+    def get_queryset(self):
+        """
+        Get queryset with optional filtering.
+        """
+        queryset = EarthRangerEvents.objects.all()
 
-    # Get the stored event data
-    event_instance = get_object_or_404(EarthRangerEvents, name="Events")
+        # Extract optional filters from query parameters
+        event_type = self.request.GET.get("event_type")
+        event_category = self.request.GET.get("event_category")
 
-    # Extract JSON data
-    event_data = event_instance.data.get("data", {}).get("results", [])
+        # Apply filters at the database level for better performance
+        if event_type:
+            queryset = queryset.filter(data__event_type=event_type)
+        if event_category:
+            queryset = queryset.filter(data__event_category=event_category)
 
-    # Apply filters
-    if event_type:
-        event_data = [
-            event for event in event_data
-            if event.get("event_type") == event_type
-        ]
+        return queryset
 
-    if event_category:
-        event_data = [
-            event for event in event_data
-            if event.get("event_category") == event_category
-        ]
+    def list(self, request, *args, **kwargs):
+        """
+        Override list method to customize response format.
+        """
+        queryset = self.filter_queryset(self.get_queryset())
 
-    return Response({"events": event_data}, status=status.HTTP_200_OK)
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            # Extract data field from each event
+            event_data = [event.data for event in page]
+            simple = request.GET.get(
+                "simple", "false"
+            ).lower() in ["true", "1", "yes"]
+            if simple:
+                pass
+                event_data = [
+                    {
+                        "id": event.get("id"),
+                        "event_type": event.get("event_type", "Unknown"),
+                        "time": event.get("time", "Unknown"),
+                        "reported_by": event.get(
+                            "reported_by", {}
+                        ).get("name", "Unknown"),
+                        "location": event.get("location", {}),
+                        "priority_label": event.get(
+                            "priority_label", "Unknown"
+                        ),
+                        "event_details": {
+                            "Comment": event.get(
+                                "event_details", {}
+                            ).get("Comment", "Unknown"),
+                            "Auc_vill_name": event.get(
+                                "event_details", {}
+                            ).get("Auc_vill_name", "Unknown")
+                        },
+                    } for event in event_data
+                ]
+            return self.get_paginated_response(event_data)
+
+        # If pagination is not applied
+        event_data = [event.data for event in queryset]
+        return Response(event_data, status=status.HTTP_200_OK)
 
 
 @api_view(["GET"])
@@ -82,9 +118,7 @@ def fetch_event_details(request, event_id):
 class EarthRangerImageProxyView(APIView):
     """
     Proxy images from EarthRanger with authentication.
-    Requires user to be authenticated to access images.
     """
-    # permission_classes = [IsAuthenticated]
     permission_classes = (AllowAny,)
 
     @method_decorator(cache_page(60 * 15))  # Cache for 15 minutes

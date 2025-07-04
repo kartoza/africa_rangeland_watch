@@ -15,7 +15,7 @@ from django.conf import settings
 def fetch_and_store_data(
         endpoint, model_class, name,
         max_retries: int = 3, retry_delay: float = 1.0):
-    api_url = f"{settings.EARTH_RANGER_API_URL}/{endpoint}/"
+    api_url = f"{settings.EARTH_RANGER_API_URL}{endpoint}/"
     headers = {
         "accept": "application/json",
         "Authorization": f"Bearer {settings.EARTH_RANGER_AUTH_TOKEN}"
@@ -156,8 +156,15 @@ def fetch_all_earth_ranger_data():
     )
     fetch_and_store_data(events_url, EarthRangerEvents, "Events")
 
-    # Update the schedule log
-    APISchedule.objects.update_or_create(
+    # Get or create the schedule object
+    schedule, _ = APISchedule.objects.get_or_create(
         name="Earth Ranger Fetch Job",
-        defaults={"last_run_at": now()}
+        defaults={
+            "last_run_at": now()
+        }
     )
+
+    # Always update last_run_at regardless of whether
+    # it was created or already existed
+    schedule.last_run_at = now()
+    schedule.save()

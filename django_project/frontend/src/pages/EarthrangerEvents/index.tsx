@@ -17,42 +17,71 @@ import Header from "../../components/Header";
 import Sidebar from "../../components/SideBar";
 import Pagination from "../../components/Pagination";
 
+interface EarthRangerEvent {
+  id: string;
+  event_type: string;
+  time: string;
+  reported_by: string;
+  location: {
+    latitude: number;
+    longitude: number;
+  };
+  priority_label: string;
+  event_details: {
+    Comment: string;
+    Auc_vill_name: string;
+  };
+}
+
+interface EarthRangerResponse {
+  count: number;
+  next: string | null;
+  previous: string | null;
+  page: number;
+  total_page: number;
+  page_size: number;
+  results: EarthRangerEvent[];
+}
+
 export default function EarthRangerEventsPage() {
-  const [events, setEvents] = useState<any[]>([]);
+  const [eventsData, setEventsData] = useState<EarthRangerResponse | null>(null);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const pageSize = 5;
+
+  const fetchEvents = async (page: number) => {
+    setLoading(true);
+    try {
+      const response = await fetch(`/earthranger/events/?page=${page}&page_size=${pageSize}&simple=true`);
+      const data: EarthRangerResponse = await response.json();
+      setEventsData(data);
+      setCurrentPage(data.page);
+    } catch (error) {
+      console.error("Error fetching EarthRanger events:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    fetch("/earthranger/events")
-      .then((res) => res.json())
-      .then((data) => {
-        setEvents(data.events || []);
-        setLoading(false);
-      })
-      .catch((error) => {
-        console.error("Error fetching EarthRanger events:", error);
-        setLoading(false);
-      });
+    fetchEvents(1);
   }, []);
-
-  const totalPages = Math.ceil(events.length / itemsPerPage);
-  const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentItems = events.slice(indexOfFirstItem, indexOfLastItem);
 
   function toggleDetails(eventId: string) {
     if (selectedEventId === eventId) {
-      setSelectedEventId(null); // collapse if clicking the same event
+      setSelectedEventId(null);
     } else {
-      setSelectedEventId(eventId); // open
+      setSelectedEventId(eventId);
     }
   }
 
   function handlePageChange(page: number) {
-    setCurrentPage(page);
+    fetchEvents(page);
   }
+
+  const events = eventsData?.results || [];
+  const totalPages = eventsData?.total_page || 0;
 
   return (
     <>
@@ -73,11 +102,17 @@ export default function EarthRangerEventsPage() {
               EarthRanger Events
             </Text>
 
+            {eventsData && (
+              <Text fontSize="sm" color="gray.600" mb={4}>
+                Showing {events.length} of {eventsData.count} events (Page {currentPage} of {totalPages})
+              </Text>
+            )}
+
             {loading ? (
               <Center h="70vh">
                 <Spinner size="xl" />
               </Center>
-            ) : currentItems.length === 0 ? (
+            ) : events.length === 0 ? (
               <Text>No EarthRanger events found.</Text>
             ) : (
               <>
@@ -93,12 +128,12 @@ export default function EarthRangerEventsPage() {
                     </Tr>
                   </Thead>
                   <Tbody>
-                    {currentItems.map((event) => (
+                    {events.map((event) => (
                       <React.Fragment key={event.id}>
                         <Tr _hover={{ bg: "gray.50" }}>
                           <Td>{event.event_type || "Unknown"}</Td>
                           <Td>{event.time || "Unknown"}</Td>
-                          <Td>{event.reported_by?.name || "Unknown"}</Td>
+                          <Td>{event.reported_by || "Unknown"}</Td>
                           <Td>
                             {event.location
                               ? `${event.location.latitude}, ${event.location.longitude}`
@@ -116,9 +151,9 @@ export default function EarthRangerEventsPage() {
                                     ? "green.500"
                                     : event.priority_label === "Yellow"
                                       ? "yellow.400"
-                                      : "gray.400" // fallback for "Unknown"
+                                      : "gray.400"
                               }
-                              mx="auto" // center the circle inside the cell
+                              mx="auto"
                             />
                           </Td>
                           <Td>
