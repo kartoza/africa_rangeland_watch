@@ -1,13 +1,13 @@
 import React from "react";
 import { useParams } from 'react-router-dom';
 import {
-  Box
+  Box, Flex,
 } from "@chakra-ui/react";
 import Header from "../../components/Header";
 import { Helmet } from "react-helmet";
 import Footer from "../../components/Footer";
 import DynamicDashboard from "../../components/Dashboard";
-
+import Sidebar from "../../components/SideBar";
 
 interface DashboardDetailProps {
   readOnly: boolean;
@@ -26,8 +26,19 @@ const DashboardDetailPage: React.FC<DashboardDetailProps> = ({readOnly}) => {
     
             <Header />
 
-            {/* Dashboard Component */}
-            <DynamicDashboard uuid={uuid} isEditable={!readOnly} />
+            <Flex direction={{ base: "column", md: "row" }} align="start">
+              {/* Sidebar on md+ */}
+              {!readOnly && (
+                <Box display={{ base: "none", md: "block" }} w="286px" flexShrink={0}>
+                  <Sidebar />
+                </Box>
+              )}
+
+              {/* Dashboard Component */}
+              <Box flex="1" overflow="auto">
+                <DynamicDashboard uuid={uuid!} isEditable={!readOnly} />
+              </Box>
+            </Flex>
 
         </Box>
         <Footer />
