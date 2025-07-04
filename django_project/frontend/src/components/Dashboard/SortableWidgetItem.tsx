@@ -99,7 +99,6 @@ const SortableWidgetItem: React.FC<{
       }
     } catch (error) {
       console.error('Error fetching widget status:', error);
-      // Continue polling even on error, but you might want to implement retry logic
     }
   };
 
