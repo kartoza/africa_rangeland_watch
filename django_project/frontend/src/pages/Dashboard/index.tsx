@@ -45,11 +45,7 @@ const DashboardListPage: React.FC<DashboardListProps> = ({allDashboards}) => {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [isCreateDashboardOpen, setCreateDashboard] = useState(false);
   const dispatch = useDispatch<AppDispatch>();
-  const dashboardData1 = useSelector((state: any) => state.dashboard.dashboards);
-  const dashboardData = [];
-  for (let i = 0; i < 4; i++) {
-    dashboardData.push(...dashboardData1);
-  }
+  const dashboardData = useSelector((state: any) => state.dashboard.dashboards);
   const loading = useSelector((state: any) => state.dashboard.loading);
   const error = useSelector((state: any) => state.dashboard.error);
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
@@ -246,7 +242,7 @@ const DashboardListPage: React.FC<DashboardListProps> = ({allDashboards}) => {
                             width="200px" 
                             objectFit="cover"
                             borderRadius="md"
-                            fallbackSrc="https://via.placeholder.com/200x120?text=No+Image"
+                            fallbackSrc="static/images/sa_map.png"
                           />
                         </Box>
 

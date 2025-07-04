@@ -90,7 +90,7 @@ const AllDashboardList: React.FC<AllDashboardListProps> = ({
                             width="100%"
                             objectFit="cover"
                             borderRadius="md"
-                            fallbackSrc="https://via.placeholder.com/300x120?text=No+Image"
+                            fallbackSrc="static/images/sa_map.png"
                           />
                           <Heading
                             size="md"
