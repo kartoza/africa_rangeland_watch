@@ -24,6 +24,15 @@ export default function AnalysisVariableSelector(
 ) {
   const { indicators } = useSelector((state: RootState) => state.analysis);
 
+  const filteredIndicators = indicators.filter(
+      indicator => {
+        if (analysisType === 'Temporal') {
+          return indicator.analysis_types.includes(analysisType) && indicator.temporal_resolutions.includes(data.temporalResolution)
+        }
+
+        return indicator.analysis_types.includes(analysisType)
+      }
+  )
   return (
     <AccordionItem>
       <h2>
@@ -49,9 +58,7 @@ export default function AnalysisVariableSelector(
           }
         >
           {
-            indicators.filter(
-                indicator => indicator.analysis_types.includes(analysisType) && ((indicator.temporal_resolutions.includes(data.temporalResolution) && data.temporalResolution === 'Temporal') || true)
-            ).map(indicator => {
+            filteredIndicators.map(indicator => {
               return <option
                 key={indicator.variable}
                 value={indicator.variable}
