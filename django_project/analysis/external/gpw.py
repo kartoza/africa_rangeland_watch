@@ -28,12 +28,23 @@ def gpw_annual_temporal_analysis(
     :param analysis_cache: Cache for analysis results.
     :return: Analysis results.
     """
-    indicator = Indicator.objects.get(
+    indicator = Indicator.objects.filter(
         variable_name=variable
+    ).first()
+    if not indicator:
+        raise ValueError(
+            f'Indicator with variable name {variable} not found.'
+        )
+
+    asset_keys = indicator.config.get(
+        'asset_keys', []
     )
-    asset_key = indicator.config.get(
-        'asset_keys', [variable]
-    )[0]
+    if not asset_keys:
+        raise ValueError(
+            f'No asset keys found for indicator {indicator.name}.'
+        )
+    # Use the first asset key
+    asset_key = asset_keys[0]
 
     dates = [
         datetime.date(
@@ -51,9 +62,19 @@ def gpw_annual_temporal_analysis(
     gee_asset = GEEAsset.objects.filter(
         key=asset_key
     ).first()
-    var_name = gee_asset.metadata.get(
+    if not gee_asset:
+        raise ValueError(
+            f'GEEAsset with key {asset_key} not found.'
+        )
+    var_names = gee_asset.metadata.get(
         'band_names', [variable]
-    )[0]
+    )
+    if not var_names:
+        raise ValueError(
+            f'No band names found for GEEAsset {gee_asset.key}.'
+        )
+    # use the first variable/band name
+    var_name = var_names[0]
     var_rename = indicator.name
     image_col = ee.ImageCollection(
         gee_asset.source
