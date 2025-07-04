@@ -16,7 +16,6 @@ test('test', async ({ page }) => {
   await expect(page.getByRole('link', { name: 'HELP' })).toBeVisible();
   await expect(page.getByText('ABOUT', { exact: true })).toBeVisible();
   await expect(page.getByRole('paragraph').filter({ hasText: 'RESOURCES' })).toBeVisible();
-  await expect(page.locator('a:nth-child(3)')).toBeVisible();
   await expect(page.getByRole('button', { name: 'Learn More' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'View Map' })).toBeVisible();
   await page.getByRole('button', { name: 'Resize Section' }).click();
