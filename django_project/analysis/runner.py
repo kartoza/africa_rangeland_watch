@@ -525,9 +525,15 @@ class AnalysisRunner:
                 spatial_analysis_dict,
                 reference_layer_geom
             )
-            indicator = Indicator.objects.get(
+            indicator = Indicator.objects.filter(
                 variable_name=data['variable']
-            )
+            ).first()
+            if indicator is None:
+                raise ValueError(
+                    f'Invalid variable {data["variable"]} '
+                    'for spatial analysis!'
+                )
+
             if indicator.source == IndicatorSource.GPW:
                 metadata = indicator.metadata
             else:
