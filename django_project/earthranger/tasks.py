@@ -1,8 +1,5 @@
 from celery import shared_task
-from django.utils.timezone import now
-from earthranger.models import APISchedule
 from earthranger.utils import fetch_all_earth_ranger_data
-
 
 
 @shared_task

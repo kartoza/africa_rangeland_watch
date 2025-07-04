@@ -156,8 +156,15 @@ def fetch_all_earth_ranger_data():
     )
     fetch_and_store_data(events_url, EarthRangerEvents, "Events")
 
-    # Update the schedule log
-    APISchedule.objects.update_or_create(
+    # Get or create the schedule object
+    schedule, _ = APISchedule.objects.get_or_create(
         name="Earth Ranger Fetch Job",
-        defaults={"last_run_at": now()}
+        defaults={
+            "last_run_at": now()
+        }
     )
+
+    # Always update last_run_at regardless of whether
+    # it was created or already existed
+    schedule.last_run_at = now()
+    schedule.save()
