@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useRef, useEffect} from 'react';
 import {
   Box,
   GridItem,
@@ -20,10 +20,10 @@ import {
   Checkbox,
   Spinner,
 } from '@chakra-ui/react';
-import { CheckIcon } from '@chakra-ui/icons';
 import {
   useSortable,
 } from '@dnd-kit/sortable';
+import axios from 'axios';
 import { CSS } from '@dnd-kit/utilities';
 import { FiSettings, FiX, FiInfo, FiEdit2, FiSlash, FiCheck, FiDownload, FiAlertCircle } from 'react-icons/fi';
 import {DragHandleIcon} from '@chakra-ui/icons';
@@ -64,8 +64,11 @@ const SortableWidgetItem: React.FC<{
     transition,
     isDragging,
   } = useSortable({ id: widget.id });
+  const [updatedWidget, setUpdatedWidget] = useState(widget);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editTitle, setEditTitle] = useState(widget.title);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const isMountedRef = useRef(true);
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -78,6 +81,77 @@ const SortableWidgetItem: React.FC<{
   const constraints = widgetConstraints[widget.type];
   const [downloadLoading, setDownloadLoading] = useState(false);
   const cardRef = React.useRef<HTMLDivElement>(null);
+
+
+  // Periodic fetch function
+  const fetchWidgetStatus = async () => {
+    try {
+      const response = await axios.get(`/dashboards/widgets/${updatedWidget.id}/`);
+      
+      if (isMountedRef.current) {
+        const newWidgetData = response.data;
+        setUpdatedWidget(newWidgetData);
+        
+        // Check if status is no longer RUNNING
+        if (newWidgetData.data?.status !== 'RUNNING') {
+          stopPeriodicFetch();
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching widget status:', error);
+      // Continue polling even on error, but you might want to implement retry logic
+    }
+  };
+
+  // Start periodic fetch
+  const startPeriodicFetch = () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+    
+    // Fetch immediately
+    fetchWidgetStatus();
+    
+    // Then set up periodic fetching every 5 seconds
+    intervalRef.current = setInterval(fetchWidgetStatus, 5000);
+  };
+
+  // Stop periodic fetch
+  const stopPeriodicFetch = () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  };
+
+  // Effect to handle periodic fetching based on status
+  useEffect(() => {
+    if (updatedWidget.data?.status === 'RUNNING') {
+      startPeriodicFetch();
+    } else {
+      stopPeriodicFetch();
+    }
+
+    // Cleanup on unmount
+    return () => {
+      stopPeriodicFetch();
+    };
+  }, [updatedWidget.data?.status]);
+
+  // Update widget when prop changes
+  useEffect(() => {
+    setUpdatedWidget(widget);
+  }, [widget]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    isMountedRef.current = true;
+    
+    return () => {
+      isMountedRef.current = false;
+      stopPeriodicFetch();
+    };
+  }, []);
 
   const handleTitleSave = () => {
     if (editTitle.trim()) {
@@ -102,11 +176,11 @@ const SortableWidgetItem: React.FC<{
   const renderWidgetContent = () => {
     switch (widget.type) {
       case 'chart':
-        return <ChartWidget widgetId={widget.id} data={widget.data} height={widget.height} config={widget.config} />;
+        return <ChartWidget widgetId={widget.id} data={updatedWidget.data} height={widget.height} config={widget.config} />;
       case 'table':
-        return <TableWidget widgetId={widget.id} data={widget.data} height={widget.height} />;
+        return <TableWidget widgetId={widget.id} data={updatedWidget.data} height={widget.height} />;
       case 'map':
-        return <MapWidget widgetId={widget.id} data={widget.data} height={widget.height} config={widget.config} />;
+        return <MapWidget widgetId={widget.id} data={updatedWidget.data} height={widget.height} config={widget.config} />;
       case 'text':
         return (
           <TextWidget 
@@ -219,7 +293,7 @@ const SortableWidgetItem: React.FC<{
             <HStack spacing={1} id="widget-actions">
               {widget.type === 'map' && (
                 <>
-                  {widget.data.status === 'RUNNING' && (
+                  {updatedWidget.data.status === 'RUNNING' && (
                     <Box 
                       bg="blue.100" 
                       p={2} 
@@ -231,11 +305,11 @@ const SortableWidgetItem: React.FC<{
                     >
                       <Spinner size="sm" color="blue.500" />
                       <Text fontSize="sm" color="blue.700">
-                        Generating TIFF.
+                        Generating TIFF
                       </Text>
                     </Box>
                   )}
-                  {widget.data.status === 'FAILED' && (
+                  {updatedWidget.data.status === 'FAILED' && (
                     <Box 
                       bg="red.100" 
                       p={2} 
@@ -271,7 +345,7 @@ const SortableWidgetItem: React.FC<{
                   borderColor="gray.200"
                   bg="white"
                 >
-                  <AnalysisInfo data={widget.data} />
+                  <AnalysisInfo data={updatedWidget.data} />
                 </MenuList>
               </Menu> : null}
               { widget.type !== 'text' && !isEditable && (
@@ -281,10 +355,10 @@ const SortableWidgetItem: React.FC<{
                   variant="ghost"
                   aria-label="Download"
                   onClick={() => {
-                    const analysisData = widget.data.data || widget.data.analysis;
+                    const analysisData = updatedWidget.data.data || updatedWidget.data.analysis;
                     if (widget.type === 'map') {
                       setDownloadLoading(true);
-                      downloadCog(widget.data.id)
+                      downloadCog(updatedWidget.data.id)
                         .then(() => setDownloadLoading(false))
                         .catch(() => setDownloadLoading(false));
                       return;
