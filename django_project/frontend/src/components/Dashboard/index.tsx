@@ -69,7 +69,6 @@ const DynamicDashboard: React.FC<{
   const dashboardLoading = useSelector(
     (state: RootState) => state.dashboard.loading
   );
-  console.log(widgets);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -139,13 +138,13 @@ const DynamicDashboard: React.FC<{
     }
     // analyisis type
     const analysisType = data.analysisType;
-    if (analysisType === 'Baseline') {
+    if (['Baseline', 'BACI'].includes(analysisType)) {
       const constraints = widgetConstraints['table'];
       // add table widget
       newWidgets.push({
         id: item.id + '-table-new',
         type: 'table',
-        title: item.name || 'Baseline Analysis',
+        title: item.name || `${analysisType} Analysis`,
         size: constraints.minWidth,
         height: constraints.recommendedHeight,
         data: analysisResult,

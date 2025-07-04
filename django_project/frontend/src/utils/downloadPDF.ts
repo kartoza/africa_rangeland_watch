@@ -94,6 +94,8 @@ export const downloadPDF = async (
       fileName = `${analysis.temporalResolution} Temporal Analysis on ${analysis.variable}`;
     } else if (analysis.analysisType === "Spatial") {
       fileName = `Spatial Analysis on ${analysis.variable}`;
+    } else if (analysis.analysisType === "BACI") {
+      fileName = `BACI Analysis on ${analysis.variable}`;
     }
 
     pdf.save(`${fileName}.pdf`);

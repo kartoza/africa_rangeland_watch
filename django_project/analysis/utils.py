@@ -3,6 +3,8 @@ import json
 import os
 import logging
 import rasterio
+from datetime import date
+from dateutil.relativedelta import relativedelta
 from pydrive2.auth import GoogleAuth
 from pydrive2.drive import GoogleDrive
 from oauth2client.service_account import ServiceAccountCredentials
@@ -145,3 +147,41 @@ def get_cog_bounds(cog_path):
     except Exception as e:
         logger.error(f"Error getting bounds for {cog_path}: {e}")
         return None
+
+
+def get_date_range_for_analysis(temporal_resolution, year, quarter, month):
+    """Get date range for analysis based on temporal resolution."""
+    start_date = date(year, 1, 1)
+    end_date = date(year + 1, 1, 1)
+    resolution = 'year'
+    resolution_step = 1
+    month_filter = None
+    if temporal_resolution == 'Monthly':
+        start_date = start_date.replace(
+            month=month
+        )
+        end_date = start_date + relativedelta(months=1)
+        month_filter = month
+        resolution = 'month'
+    elif temporal_resolution == 'Quarterly':
+        quarter_dict = {
+            1: 1,
+            2: 4,
+            3: 7,
+            4: 10
+        }
+        start_date = start_date.replace(
+            month=quarter_dict[quarter]
+        )
+        end_date = start_date + relativedelta(months=3)
+        resolution_step = 3
+        month_filter = quarter_dict[quarter]
+        resolution = 'month'
+
+    return {
+        'start_date': start_date,
+        'end_date': end_date,
+        'resolution': resolution,
+        'resolution_step': resolution_step,
+        'month_filter': month_filter
+    }
