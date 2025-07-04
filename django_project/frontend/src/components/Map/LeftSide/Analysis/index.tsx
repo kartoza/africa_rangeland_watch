@@ -293,7 +293,6 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
           enableSelection={mapInteraction === MapAnalysisInteraction.LANDSCAPE_SELECTOR && data.landscape !== 'user-defined'}
           featureIds={data.locations?.map((location) => location.communityFeatureId)}
           onSelected={(value) => {
-            // dispatch(setAnalysisLandscapeCommunity(value))
             dispatch(toggleAnalysisLandscapeCommunity(value))
           }
           }
@@ -302,7 +301,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
           ref={geometrySelectorRef}
           isDrawing={mapInteraction === MapAnalysisInteraction.CUSTOM_GEOMETRY_DRAWING}
           onSelected={(geometry, area, selected_id) => {
-            if (area > mapConfig.spatial_reference_layer_max_area) {
+            if (mapConfig.spatial_reference_layer_max_area !== -1 && area > mapConfig.spatial_reference_layer_max_area) {
               console.warn('Area is bigger than configuration', area)
               // reset the geom selector
               setGeomError(true)
