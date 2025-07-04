@@ -229,7 +229,6 @@ const DynamicDashboard: React.FC<{
         config: {},
         analysis_result_id: item.id,
       });
-      console.log(newAnalysis.results.temporal);
       const rasterOutputList = item.raster_output_list || [];
       if (rasterOutputList.length > 0) {
         // add map widget
