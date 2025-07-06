@@ -370,7 +370,8 @@ def fetch_all_global_cropland_zenodo(
 
 def fetch_grassland_stac_layers(
         source: ExternalLayerSource,
-        years=range(2000, 2023)
+        years=range(2023),
+        resolution: str = "30m",
 ):
     """
     Fetches grassland layers (30m) from the STAC collection
@@ -384,13 +385,22 @@ def fetch_grassland_stac_layers(
         The years to ingest (default 2000-2022).
     """
     stac_base = (
-        "https://s3.eu-central-1.wasabisys.com/stac/openlandmap/gpw_ggc-30m/"
+        f"https://s3.eu-central-1.wasabisys.com/"
+        f"stac/openlandmap/gpw_ggc-{resolution}/"
     )
-    item_tpl = "gpw_ggc-30m_{year}0101_{year}1231/item.json"
+    item_tpl = (
+        f"gpw_ggc-{resolution}_{{year}}0101_{{year}}1231/"
+        f"gpw_ggc-{resolution}_{{year}}0101_{{year}}1231.json"
+    )
 
     for year in years:
         item_url = urljoin(stac_base, item_tpl.format(year=year))
-        logger.info("[STAC] Fetching item for %s → %s", year, item_url)
+        logger.info(
+            "[STAC] [%s] Fetching item for %s → %s",
+            resolution,
+            year,
+            item_url
+        )
 
         tmp_path = None
         try:
@@ -398,7 +408,18 @@ def fetch_grassland_stac_layers(
             resp.raise_for_status()
             item = resp.json()
 
-            cog_url = item["assets"]["COG"]["href"]
+            cog_asset = None
+            for key, asset in item["assets"].items():
+                t = asset.get("type", "")
+                # look for cloud-optimized GeoTIFF
+                if "image/tiff" in t and "cloud-optimized" in t:
+                    cog_asset = asset
+                    break
+
+            if cog_asset is None:
+                raise KeyError("No cloud-optimized GeoTIFF asset found")
+
+            cog_url = cog_asset["href"]
             filename = os.path.basename(cog_url)
 
             # Skip if already stored
@@ -444,7 +465,8 @@ def fetch_grassland_stac_layers(
 
 def fetch_short_vegetation_height_layers(
     source: ExternalLayerSource,
-    years=range(2000, 2023),
+    years=range(2023),
+    resolution: str = "30m",
 ):
     """
     Ingest annual 30 m short-vegetation-height layers from EcoDataCube STAC.
@@ -461,7 +483,8 @@ def fetch_short_vegetation_height_layers(
         "short.veg.height_lgb_{year}0101_{year}1231/"
         "short.veg.height_lgb_{year}0101_{year}1231.json"
     )
-    cog_key = "short.veg.height_lgb_m_30m_s"   # asset key that holds the COG
+    # asset key that holds the COG
+    cog_key = f"short.veg.height_lgb_m_{resolution}_s"
 
     for year in years:
         item_url = urljoin(stac_base, item_tpl.format(year=year))
@@ -524,6 +547,7 @@ def fetch_short_vegetation_height_layers(
 def fetch_soil_bare_fraction_layers(
     source: ExternalLayerSource,
     years=range(2000, 2023),
+    resolution: str = "30m",
 ):
     """
     Ingest annual bare-fraction (Europe) rasters from EcoDataCube STAC.
@@ -539,7 +563,7 @@ def fetch_soil_bare_fraction_layers(
     item_tpl = "lcv_ndvi_landsat.glad.ard_{year}0101_{year}1231/item.json"
 
     # Most items expose the main COG under this key
-    cog_key = "lcv_ndvi_landsat.glad.ard_m_30m_s"
+    cog_key = f"lcv_ndvi_landsat.glad.ard_m_{resolution}_s"
 
     for year in years:
         item_url = f"{stac_base}{item_tpl.format(year=year)}"
