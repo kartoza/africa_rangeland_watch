@@ -53,7 +53,8 @@ const ItemSelector = forwardRef(
     hasMore, 
     currentPage, 
     totalItems,
-    searchTerm
+    searchTerm,
+    isInitialized
   } = useSelector((state: RootState) => state.userAnalysisSearch);
   
   const { isOpen, onOpen, onClose } = useDisclosure();
@@ -90,10 +91,10 @@ const ItemSelector = forwardRef(
 
   // Initial data fetch
   useEffect(() => {
-    if (isOpen && items.length === 0 && !loading && error === null && searchTerm === '') {
+    if (isOpen && items.length === 0 && !loading && error === null && searchTerm === '' && !isInitialized) {
       dispatch(fetchItems({ page: 1, limit: 10, search: '' }));
     }
-  }, [isOpen, items.length, loading, searchTerm, dispatch]);
+  }, [isOpen, items.length, loading, searchTerm, dispatch, isInitialized]);
 
   // Prevent body scroll when drawer is open
   useEffect(() => {

@@ -10,6 +10,15 @@ class AnalysisTypes(models.TextChoices):
     TEMPORAL = 'Temporal', 'Temporal'
 
 
+class RunningInterval(models.TextChoices):
+    """Enum for specifying Running Interval."""
+
+    WEEKLY = 'Weekly', 'Weekly'
+    MONTHLY = 'Monthly', 'Monthly'
+    QUARTERLY = 'Quarterly', 'Quarterly'
+    ANNUAL = 'Annual', 'Annual'
+
+
 class Indicator(models.Model):
     """Model to represent an indicator used in analyses and alerts."""
 
@@ -114,6 +123,12 @@ class AlertSetting(models.Model):
         default=dict,
         blank=True,
         null=False
+    )
+    running_interval = models.CharField(
+        choices=RunningInterval.choices,
+        null=False,
+        blank=True,
+        default=RunningInterval.MONTHLY
     )
 
     class Meta:

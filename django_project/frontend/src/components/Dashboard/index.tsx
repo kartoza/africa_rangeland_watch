@@ -138,13 +138,13 @@ const DynamicDashboard: React.FC<{
     }
     // analyisis type
     const analysisType = data.analysisType;
-    if (analysisType === 'Baseline') {
+    if (['Baseline', 'BACI'].includes(analysisType)) {
       const constraints = widgetConstraints['table'];
       // add table widget
       newWidgets.push({
         id: item.id + '-table-new',
         type: 'table',
-        title: item.name || 'Baseline Analysis',
+        title: item.name || `${analysisType} Analysis`,
         size: constraints.minWidth,
         height: constraints.recommendedHeight,
         data: analysisResult,
@@ -364,6 +364,14 @@ const DynamicDashboard: React.FC<{
     setWidgets((prev) =>
       prev.map((widget) =>
         widget.id === id ? { ...widget, title } : widget
+      )
+    );
+  };
+
+  const changeConfigWidget = (id: string, config: any) => {
+    setWidgets((prev) =>
+      prev.map((widget) =>
+        widget.id === id ? { ...widget, config } : widget
       )
     );
   };
@@ -607,6 +615,7 @@ const DynamicDashboard: React.FC<{
                     onHeightChange={changeHeightWidget}
                     onContentChange={changeContentWidget}
                     onTitleChange={changeTitleWidget}
+                    onConfigChange={changeConfigWidget}
                     isEditable={isEditable}
                   />
                 ))}

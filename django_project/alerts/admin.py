@@ -20,7 +20,7 @@ class AlertSettingAdmin(admin.ModelAdmin):
         (None, {
             'fields': (
                 'name', 'indicator', 'enable_alert', 'last_alert',
-                'analysis_type', 'reference_period'
+                'analysis_type', 'reference_period', 'running_interval',
             )
         }),
         ('Location', {

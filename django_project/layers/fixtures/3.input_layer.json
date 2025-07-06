@@ -465,5 +465,246 @@
             "created_at": "2025-05-01T00:00:00Z",
             "updated_at": "2025-05-01T00:00:00Z"
         }
+    },
+    {
+        "model": "layers.inputlayer",
+        "pk": "8217a032-4ff4-49ff-a526-aef91a603a1a",
+        "fields": {
+            "name": "EarthRanger Events",
+            "layer_type": "vector",
+            "data_provider": 3,
+            "url": "",
+            "group": 4,
+            "metadata": {},
+            "created_by": null,
+            "updated_by": null,
+            "created_at": "2025-06-16T09:24:35.587Z",
+            "updated_at": "2025-06-16T11:44:16.832Z"
+        }
+    },
+    {
+        "model": "layers.inputlayer",
+        "pk": "96332ab6-7b07-4a6f-9038-03da1efff2f9",
+        "fields": {
+            "name": "Gridded livestock all species density 2020",
+            "layer_type": "raster",
+            "data_provider": 4,
+            "url": "",
+            "group": 1,
+            "metadata": {
+                "unit": "head/km2",
+                "colors": [
+                    "#fff5d1",
+                    "#ffebd6",
+                    "#edbfa4",
+                    "#e69b65",
+                    "#db6c4d",
+                    "#d43b24",
+                    "#a80000",
+                    "#610000"
+                ],
+                "maxValue": 216,
+                "minValue": 0,
+                "opacity": 0.7,
+                "species": "all"
+            },
+            "created_by": null,
+            "updated_by": null,
+            "created_at": "2025-06-30T16:33:42.946Z",
+            "updated_at": "2025-06-30T16:33:42.946Z"
+        }
+    },
+    {
+        "model": "layers.inputlayer",
+        "pk": "b5db4e0d-382b-4379-9b4b-548b36ee1584",
+        "fields": {
+            "name": "Gridded livestock Buffalo density 2020",
+            "layer_type": "raster",
+            "data_provider": 4,
+            "url": "",
+            "group": 1,
+            "metadata": {
+                "unit": "head/km2",
+                "colors": [
+                    "#fff5d1",
+                    "#ffebd6",
+                    "#edbfa4",
+                    "#e69b65",
+                    "#db6c4d",
+                    "#d43b24",
+                    "#a80000",
+                    "#610000"
+                ],
+                "maxValue": 159,
+                "minValue": 0,
+                "opacity": 0.7,
+                "species": "buffalo"
+            },
+            "created_by": null,
+            "updated_by": null,
+            "created_at": "2025-06-30T16:33:42.946Z",
+            "updated_at": "2025-06-30T16:33:42.946Z"
+        }
+    },
+    {
+        "model": "layers.inputlayer",
+        "pk": "bed883bc-817c-48f7-b02c-d39ccdbc6e39",
+        "fields": {
+            "name": "Gridded livestock Chicken density 2020",
+            "layer_type": "raster",
+            "data_provider": 4,
+            "url": "",
+            "group": 1,
+            "metadata": {
+                "unit": "birds/km2",
+                "colors": [
+                    "#fff5d1",
+                    "#ffff91",
+                    "#ffd37f",
+                    "#f5bf36",
+                    "#dba300",
+                    "#cf7a1f",
+                    "#ad5313",
+                    "#8a2e0a",
+                    "#610000"
+                ],
+                "maxValue": 22904,
+                "minValue": 0,
+                "opacity": 0.7,
+                "species": "chicken"
+            },
+            "created_by": null,
+            "updated_by": null,
+            "created_at": "2025-06-30T16:33:42.946Z",
+            "updated_at": "2025-06-30T16:33:42.946Z"
+        }
+    },
+    {
+        "model": "layers.inputlayer",
+        "pk": "7214e907-ace9-4461-a83d-aae3d3cb4807",
+        "fields": {
+            "name": "Gridded livestock Cattle density 2020",
+            "layer_type": "raster",
+            "data_provider": 4,
+            "url": "",
+            "group": 1,
+            "metadata": {
+                "unit": "head/km2",
+                "colors": [
+                    "#fff5d1",
+                    "#ffebd6",
+                    "#edbfa4",
+                    "#e69b65",
+                    "#db6c4d",
+                    "#d43b24",
+                    "#a80000",
+                    "#610000"
+                ],
+                "maxValue": 242,
+                "minValue": 0,
+                "opacity": 0.7,
+                "species": "cattle"
+            },
+            "created_by": null,
+            "updated_by": null,
+            "created_at": "2025-06-30T16:33:42.946Z",
+            "updated_at": "2025-06-30T16:33:42.946Z"
+        }
+    },
+    {
+        "model": "layers.inputlayer",
+        "pk": "2286fd92-6ddf-4f93-a5e6-7f65723e3577",
+        "fields": {
+            "name": "Gridded livestock Goat density 2020",
+            "layer_type": "raster",
+            "data_provider": 4,
+            "url": "",
+            "group": 1,
+            "metadata": {
+                "unit": "head/km2",
+                "colors": [
+                    "#fff5d1",
+                    "#ffebd6",
+                    "#edbfa4",
+                    "#e69b65",
+                    "#db6c4d",
+                    "#d43b24",
+                    "#a80000",
+                    "#610000"
+                ],
+                "maxValue": 369,
+                "minValue": 0,
+                "opacity": 0.7,
+                "species": "goat"
+            },
+            "created_by": null,
+            "updated_by": null,
+            "created_at": "2025-06-30T16:33:42.946Z",
+            "updated_at": "2025-06-30T16:33:42.946Z"
+        }
+    },
+    {
+        "model": "layers.inputlayer",
+        "pk": "077e92ea-db2f-4b23-979c-b2d4ceb028a5",
+        "fields": {
+            "name": "Gridded livestock Pig density 2020",
+            "layer_type": "raster",
+            "data_provider": 4,
+            "url": "",
+            "group": 1,
+            "metadata": {
+                "unit": "head/km2",
+                "colors": [
+                    "#fff5d1",
+                    "#ffebd6",
+                    "#edbfa4",
+                    "#e69b65",
+                    "#db6c4d",
+                    "#d43b24",
+                    "#a80000",
+                    "#610000"
+                ],
+                "maxValue": 366,
+                "minValue": 0,
+                "opacity": 0.7,
+                "species": "pig"
+            },
+            "created_by": null,
+            "updated_by": null,
+            "created_at": "2025-06-30T16:33:42.946Z",
+            "updated_at": "2025-06-30T16:33:42.946Z"
+        }
+    },
+    {
+        "model": "layers.inputlayer",
+        "pk": "37dbe11e-7792-4cf6-968b-6b9f837c8575",
+        "fields": {
+            "name": "Gridded livestock Sheep density 2020",
+            "layer_type": "raster",
+            "data_provider": 4,
+            "url": "",
+            "group": 1,
+            "metadata": {
+                "unit": "head/km2",
+                "colors": [
+                    "#fff5d1",
+                    "#ffebd6",
+                    "#edbfa4",
+                    "#e69b65",
+                    "#db6c4d",
+                    "#d43b24",
+                    "#a80000",
+                    "#610000"
+                ],
+                "maxValue": 316,
+                "minValue": 0,
+                "opacity": 0.7,
+                "species": "sheep"
+            },
+            "created_by": null,
+            "updated_by": null,
+            "created_at": "2025-06-30T16:33:42.946Z",
+            "updated_at": "2025-06-30T16:33:42.946Z"
+        }
     }
 ]

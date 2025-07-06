@@ -5,7 +5,8 @@ from analysis.analysis import (
     initialize_engine_analysis,
     get_s2_cloud_masked,
     export_image_to_drive,
-    run_analysis
+    run_analysis,
+    calculate_baci
 )
 
 
@@ -253,6 +254,65 @@ class Command(BaseCommand):
         print('\n')
         print('Temporal Output Plot: \n', temporal_output_plot)
 
+    def run_baci_analysis(self):
+        """
+        Run BACI analysis
+        """
+        print("Running BACI analysis")
+        analysis_dict = {
+            'landscape': 'Limpopo NP',
+            'analysisType': 'Spatial',
+            'variable': 'EVI',
+            't_resolution': '',
+
+            'Temporal': {
+                'Annual': {
+                    'ref': '',
+                    'test': ''
+                },
+                'Quarterly': {
+                    'ref': '',
+                    'test': ''
+                }
+            },
+            'Spatial': {
+                'Annual': '',
+                'Quarterly': ''
+            }
+        }
+
+        reference_layer_geojson = {
+            "type": "Polygon",
+            "coordinates": [
+              [
+                [31.77233062504881, -23.242716855208695],
+                [32.01402984379881, -23.15688439753154],
+                [31.73387847661131, -23.101316414030528],
+                [31.77233062504881, -23.242716855208695]
+              ]
+            ]
+          }
+        result = calculate_baci(
+            [{
+                'lon': reference_layer_geojson['coordinates'][0][0][0],
+                'lat': reference_layer_geojson['coordinates'][0][0][1],
+            }],
+            reference_layer_geojson,
+            'Bare Ground',
+            'Annual',
+            {
+                'year': 2022,
+                'quarter': None,
+                'month': None
+            },
+            {
+                'year': 2024,
+                'quarter': None,
+                'month': None
+            }
+        )
+        print(result.getInfo())
+
     def handle(self, *args, **options):
         logging.basicConfig(level=logging.DEBUG)
 
@@ -261,6 +321,7 @@ class Command(BaseCommand):
         # self.export_image()
         # self.run_baseline_analysis()
         # self.run_spatial_analysis()
-        self.run_annual_temporal_analysis()
+        # self.run_annual_temporal_analysis()
         # self.run_quarterly_temporal_analysis()
         # self.run_monthly_temporal_analysis()
+        self.run_baci_analysis()

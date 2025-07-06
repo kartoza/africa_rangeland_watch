@@ -39,6 +39,7 @@ export default function SystemTab() {
     threshold_comparison: 1,
     analysis_type: Types.BASELINE,
     temporal_resolution: TemporalResolution.ANNUAL,
+    running_interval: TemporalResolution.MONTHLY,
     reference_period: {
       year: null,
       quarter: null,
@@ -263,6 +264,20 @@ export default function SystemTab() {
                 }
               </Accordion>
             </Box>
+            {
+              newAlertData.analysis_type === 'Temporal' && 
+              <DropSelect
+                placeholder="Select Running Interval"
+                mb={3}
+                value={newAlertData.running_interval}
+                onChange={(e) => setNewAlertData({ ...newAlertData, running_interval: e.target.value })}
+              >
+                <option value={"Weekly"}>Weekly</option>
+                <option value={TemporalResolution.QUARTERLY}>{TemporalResolution.QUARTERLY}</option>
+                <option value={TemporalResolution.MONTHLY}>{TemporalResolution.MONTHLY}</option>
+                <option value={TemporalResolution.ANNUAL}>{TemporalResolution.ANNUAL}</option>
+              </DropSelect>
+            }
             <DropSelect
               mb={3}
               value={newAlertData.threshold_comparison}
@@ -324,6 +339,7 @@ export default function SystemTab() {
                       ...newAlertData,
                       indicator: selectedIndicator,
                       location: selectedLocation,
+                      running_interval: newAlertData.running_interval,
                       reference_period: {
                         ...newAlertData.reference_period,
                         month: getMonth(newAlertData.reference_period?.month),
@@ -344,6 +360,7 @@ export default function SystemTab() {
                     threshold_value: 0,
                     analysis_type: Types.BASELINE,
                     temporal_resolution: TemporalResolution.ANNUAL,
+                    running_interval:   TemporalResolution.MONTHLY,
                     reference_period: {
                       year: null,
                       quarter: null,

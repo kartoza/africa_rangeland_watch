@@ -109,32 +109,61 @@ export default function Layers({
   /* ---------------- render --------------------------------------------- */
   return (
     <Accordion allowMultiple defaultIndex={[0, 1]}>
-      {/* Baseline -------------------------------------------------------- */}
       <AccordionItem>
         <h2>
           <AccordionButton>
-            <Box flex="1" textAlign="left" fontWeight="bold" fontSize="13px">
+            <Box flex="1" textAlign="left" fontWeight='bold' fontSize='13px'>
               Baseline (Average)
             </Box>
-            <AccordionIcon />
+            <AccordionIcon/>
           </AccordionButton>
         </h2>
-        <AccordionPanel pb={4} fontSize="13px">
-          {layers ? (
-            layers
-              .filter((l) => l.group === GroupName.BaselineGroup)
-              .map((layer) => (
-                <LayerCheckbox
+        <AccordionPanel
+          pb={4}
+          fontSize='13px'
+        >
+          {
+            layers ?
+              layers?.filter(
+                layer => layer.group === GroupName.BaselineGroup
+              ).map(
+                layer => <LayerCheckbox
                   key={layer.id}
                   layer={layer}
-                  onToggle={(checked) =>
-                    checked ? onLayerChecked(layer) : onLayerUnchecked(layer)
-                  }
+                  onToggle={(checked) => checked ? onLayerChecked(layer) : onLayerUnchecked(layer)}
                 />
-              ))
-          ) : (
-            <LeftSideLoading />
-          )}
+              ) :
+              <LeftSideLoading/>
+          }
+        </AccordionPanel>
+      </AccordionItem>
+
+      <AccordionItem>
+        <h2>
+          <AccordionButton>
+            <Box flex="1" textAlign="left" fontWeight='bold' fontSize='13px'>
+              EarthRanger
+            </Box>
+            <AccordionIcon/>
+          </AccordionButton>
+        </h2>
+        <AccordionPanel
+          pb={4}
+          fontSize='13px'
+        >
+          {
+            layers ?
+              layers?.filter(
+                layer => layer.group === GroupName.EarthRangerGroup
+              ).map(
+                layer => <LayerCheckbox
+                  key={layer.id}
+                  layer={layer}
+                  onToggle={(checked) => checked ? onLayerChecked(layer) : onLayerUnchecked(layer)}
+                />
+              ) :
+              <LeftSideLoading/>
+          }
         </AccordionPanel>
       </AccordionItem>
 

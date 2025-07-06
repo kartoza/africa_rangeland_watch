@@ -4,6 +4,7 @@ from layers.generator.grazing_capacity import GrazingCapacityGenerator
 from layers.generator.modis_vegetation import ModisVegetationGenerator
 from layers.generator.soil_organic_carbon import SoilOrganicCarbonGenerator
 from layers.generator.nrt import NearRealTimeGenerator
+from layers.generator.livestock import LiveStockGenerator
 
 
 GENERATOR_CLASSES = [
@@ -12,6 +13,7 @@ GENERATOR_CLASSES = [
     GrazingCapacityGenerator,
     ModisVegetationGenerator,
     SoilOrganicCarbonGenerator,
+    LiveStockGenerator,
     NearRealTimeGenerator
 ]
 
