@@ -9,7 +9,8 @@
         "source": "base",
         "analysis_types": [
             "Temporal",
-            "Spatial"
+            "Spatial",
+            "BACI"
         ],
         "temporal_resolutions": [
             "Annual",
@@ -58,7 +59,8 @@
         "source": "base",
         "analysis_types": [
             "Temporal",
-            "Spatial"
+            "Spatial",
+            "BACI"
         ],
         "temporal_resolutions": [
             "Annual",
@@ -107,7 +109,8 @@
         "source": "base",
         "analysis_types": [
             "Temporal",
-            "Spatial"
+            "Spatial",
+            "BACI"
         ],
         "temporal_resolutions": [
             "Annual",

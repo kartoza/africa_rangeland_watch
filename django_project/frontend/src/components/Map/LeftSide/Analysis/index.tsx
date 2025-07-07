@@ -394,7 +394,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
           data.temporalResolution && [Types.TEMPORAL, Types.BACI].includes(data.analysisType) &&
           <AnalysisVariableSelector
             data={data}
-            analysisType={'Temporal'}
+            analysisType={data.analysisType}
             onSelected={(value) => setData({
               ...data,
               variable: value
