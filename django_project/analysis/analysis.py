@@ -1676,7 +1676,9 @@ def spatial_get_date_filter(analysis_dict):
         ).get('ref')
         end_quarter = analysis_dict['Spatial'].get('Quarterly', {}).get('test')
         try:
-            end_quarter = end_quarter[0] if isinstance(end_quarter, list) else end_quarter
+            end_quarter = end_quarter[0] if isinstance(
+                end_quarter, list
+            ) else end_quarter
         except IndexError:
             end_quarter = ''
 
@@ -1715,7 +1717,9 @@ def spatial_get_date_filter(analysis_dict):
         start_month = analysis_dict['Spatial'].get('Monthly', {}).get('ref')
         end_month = analysis_dict['Spatial'].get('Monthly', {}).get('test')
         try:
-            end_month = end_month[0] if isinstance(end_month, list) else end_month
+            end_month = end_month[0] if isinstance(
+                end_month, list
+            ) else end_month
         except IndexError:
             end_month = ''
 
