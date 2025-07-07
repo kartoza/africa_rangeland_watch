@@ -359,5 +359,123 @@
         "type": "table",
         "metadata": {}
     }
+},
+{
+    "model": "analysis.geeasset",
+    "pk": 35,
+    "fields": {
+        "key": "grassland_dominant_class",
+        "source": "projects/global-pasture-watch/assets/ggc-30m/v1/grassland_c",
+        "type": "image_collection",
+        "metadata": {
+            "start_date": "2000-01-01",
+            "end_date": "2022-12-31",
+            "band_names": [
+                "dominant_class"
+            ]
+        }
+    }
+},
+{
+    "model": "analysis.geeasset",
+    "pk": 36,
+    "fields": {
+        "key": "prob_cultivated_grassland",
+        "source": "projects/global-pasture-watch/assets/ggc-30m/v1/cultiv-grassland_p",
+        "type": "image_collection",
+        "metadata": {
+            "start_date": "2000-01-01",
+            "end_date": "2022-12-31",
+            "band_names": [
+                "probability"
+            ]
+        }
+    }
+},
+{
+    "model": "analysis.geeasset",
+    "pk": 37,
+    "fields": {
+        "key": "prob_natural_semi_grassland",
+        "source": "projects/global-pasture-watch/assets/ggc-30m/v1/nat-semi-grassland_p",
+        "type": "image_collection",
+        "metadata": {
+            "start_date": "2000-01-01",
+            "end_date": "2022-12-31",
+            "band_names": [
+                "probability"
+            ]
+        }
+    }
+},
+{
+    "model": "analysis.geeasset",
+    "pk": 38,
+    "fields": {
+        "key": "livestock_all_2020",
+        "source": "projects/ee-dng/assets/arw/GLW_All",
+        "type": "image",
+        "metadata": {}
+    }
+},
+{
+    "model": "analysis.geeasset",
+    "pk": 39,
+    "fields": {
+        "key": "livestock_buffalo_2020",
+        "source": "projects/ee-dng/assets/arw/GLW_Buffalos",
+        "type": "image",
+        "metadata": {}
+    }
+},
+{
+    "model": "analysis.geeasset",
+    "pk": 40,
+    "fields": {
+        "key": "livestock_cattle_2020",
+        "source": "projects/ee-dng/assets/arw/GLW_Cattles",
+        "type": "image",
+        "metadata": {}
+    }
+},
+{
+    "model": "analysis.geeasset",
+    "pk": 41,
+    "fields": {
+        "key": "livestock_chicken_2020",
+        "source": "projects/ee-dng/assets/arw/GLW_Chickens",
+        "type": "image",
+        "metadata": {}
+    }
+},
+{
+    "model": "analysis.geeasset",
+    "pk": 42,
+    "fields": {
+        "key": "livestock_goat_2020",
+        "source": "projects/ee-dng/assets/arw/GLW_Goats",
+        "type": "image",
+        "metadata": {}
+    }
+},
+{
+    "model": "analysis.geeasset",
+    "pk": 43,
+    "fields": {
+        "key": "livestock_pig_2020",
+        "source": "projects/ee-dng/assets/arw/GLW_Pigs",
+        "type": "image",
+        "metadata": {}
+    }
+},
+{
+    "model": "analysis.geeasset",
+    "pk": 44,
+    "fields": {
+        "key": "livestock_sheep_2020",
+        "source": "projects/ee-dng/assets/arw/GLW_Sheeps",
+        "type": "image",
+        "metadata": {}
+    }
 }
 ]

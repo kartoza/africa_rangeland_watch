@@ -126,6 +126,60 @@ const DynamicDashboard: React.FC<{
     let newWidgets: Widget[] = [];
     const analysisResult = item.analysis_results || {};
     const data = analysisResult.data || {};
+
+    const addTemporalChart = (analysisData: any) => {
+      const chartConstraint = widgetConstraints['chart'];
+      const mapConstraint = widgetConstraints['map'];
+      // add chart widgets
+      newWidgets.push({
+        id: item.id + '-barchart-new',
+        type: 'chart',
+        title: item.name || 'Temporal Analysis',
+        size: chartConstraint.minWidth,
+        height: chartConstraint.recommendedHeight,
+        data: analysisData,
+        content: null,
+        config: {
+          'chartType': 'bar',
+        },
+        analysis_result_id: item.id,
+      });
+      newWidgets.push({
+        id: item.id + '-linechart-new',
+        type: 'chart',
+        title: item.name || 'Temporal Analysis',
+        size: chartConstraint.minWidth,
+        height: chartConstraint.recommendedHeight,
+        data: analysisData,
+        content: null,
+        config: {
+          'chartType': 'line',
+        },
+        analysis_result_id: item.id,
+      });
+      summaryAdded = summaryAdded === '1 widget' ? '3 widgets' : '4 widgets';
+      // add map widget for each raster output
+      const rasterOutputList = item.raster_output_list || [];
+      if (rasterOutputList.length > 0) {
+        rasterOutputList.forEach((raster, index) => {
+          newWidgets.push({
+            id: `${item.id}-map-${index}-new`,
+            type: 'map',
+            title: mapWidgetTitle(raster.name) || `Map ${index + 1}`,
+            size: mapConstraint.minWidth,
+            height: mapConstraint.recommendedHeight,
+            data: raster,
+            content: null,
+            config: {
+              "raster_output_idx": index
+            },
+            analysis_result_id: item.id,
+          });
+        });
+        summaryAdded += ` and ${rasterOutputList.length} map widget${rasterOutputList.length > 1 ? 's' : ''}`;
+      }
+    }
+
     if (!data) {
       toast({
         title: 'No Data Available',
@@ -142,13 +196,13 @@ const DynamicDashboard: React.FC<{
     }
     // analyisis type
     const analysisType = data.analysisType;
-    if (analysisType === 'Baseline') {
+    if (['Baseline', 'BACI'].includes(analysisType)) {
       const constraints = widgetConstraints['table'];
       // add table widget
       newWidgets.push({
         id: item.id + '-table-new',
         type: 'table',
-        title: item.name || 'Baseline Analysis',
+        title: item.name || `${analysisType} Analysis`,
         size: constraints.minWidth,
         height: constraints.recommendedHeight,
         data: analysisResult,
@@ -157,6 +211,14 @@ const DynamicDashboard: React.FC<{
       })
       summaryAdded = '1 table widget';
     } else if (analysisType === 'Spatial') {
+      const newAnalysis = JSON.parse(JSON.stringify(analysisResult));
+      newAnalysis.results.spatial.data = analysisResult.data;
+      newAnalysis.results.temporal.data = analysisResult.data;
+      newAnalysis.results.temporal.data = {
+        ...newAnalysis.results.temporal.data,
+        analysisType: 'Temporal'
+      } 
+
       const chartConstraint = widgetConstraints['chart'];
       const mapConstraint = widgetConstraints['map'];
       // add chart widget
@@ -166,7 +228,7 @@ const DynamicDashboard: React.FC<{
         title: item.name || 'Spatial Analysis',
         size: chartConstraint.minWidth,
         height: chartConstraint.recommendedHeight,
-        data: analysisResult,
+        data: newAnalysis.results.spatial,
         content: null,
         config: {},
         analysis_result_id: item.id,
@@ -191,57 +253,10 @@ const DynamicDashboard: React.FC<{
       } else {
         summaryAdded = '1 widget';
       }
+
+      addTemporalChart(newAnalysis.results.temporal);
     } else if (analysisType === 'Temporal') {
-      const chartConstraint = widgetConstraints['chart'];
-      const mapConstraint = widgetConstraints['map'];
-      // add chart widgets
-      newWidgets.push({
-        id: item.id + '-barchart-new',
-        type: 'chart',
-        title: item.name || 'Temporal Analysis',
-        size: chartConstraint.minWidth,
-        height: chartConstraint.recommendedHeight,
-        data: analysisResult,
-        content: null,
-        config: {
-          'chartType': 'bar',
-        },
-        analysis_result_id: item.id,
-      });
-      newWidgets.push({
-        id: item.id + '-linechart-new',
-        type: 'chart',
-        title: item.name || 'Temporal Analysis',
-        size: chartConstraint.minWidth,
-        height: chartConstraint.recommendedHeight,
-        data: analysisResult,
-        content: null,
-        config: {
-          'chartType': 'line',
-        },
-        analysis_result_id: item.id,
-      });
-      summaryAdded = '2 widgets';
-      // add map widget for each raster output
-      const rasterOutputList = item.raster_output_list || [];
-      if (rasterOutputList.length > 0) {
-        rasterOutputList.forEach((raster, index) => {
-          newWidgets.push({
-            id: `${item.id}-map-${index}-new`,
-            type: 'map',
-            title: mapWidgetTitle(raster.name) || `Map ${index + 1}`,
-            size: mapConstraint.minWidth,
-            height: mapConstraint.recommendedHeight,
-            data: raster,
-            content: null,
-            config: {
-              "raster_output_idx": index
-            },
-            analysis_result_id: item.id,
-          });
-        });
-        summaryAdded += ` and ${rasterOutputList.length} map widget${rasterOutputList.length > 1 ? 's' : ''}`;
-      }
+      addTemporalChart(analysisResult);
     }
 
     setWidgets((prev) => [...prev, ...newWidgets]);

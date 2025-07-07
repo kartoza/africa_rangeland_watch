@@ -14,6 +14,7 @@ from django.dispatch import receiver
 from django.conf import settings
 from django.urls import reverse
 from cloud_native_gis.models import Layer, LayerType
+from django.core.exceptions import ValidationError
 
 
 from core.models import TaskStatus
@@ -502,6 +503,22 @@ class UserAnalysisResults(models.Model):
             })
         )
 
+    def _get_baci_period(self, period):
+        """Get the BACI period string."""
+        year = period.get('year', '')
+        month = period.get('month', '')
+        quarter = period.get('quarter', '')
+        if isinstance(year, list):
+            # get the first item
+            year = year[0] if year else ''
+            month = month[0] if month else ''
+            quarter = quarter[0] if quarter else ''
+        return {
+            'year': year,
+            'month': calendar.month_name[int(month)] if month else '',
+            'quarter': f'Q{quarter}' if quarter else ''
+        }
+
     def _get_description(self, data):
         analysis_type = data.get('analysisType', '')
         if analysis_type == 'Baseline':
@@ -543,6 +560,31 @@ class UserAnalysisResults(models.Model):
                 f'Relative % difference in {variable} between reference area '
                 'and selected camp(s).'
             )
+        elif analysis_type == 'BACI':
+            temporal_res = data.get('temporalResolution', '')
+            before_period = self._get_baci_period(
+                data.get('period', {})
+            )
+            after_period = self._get_baci_period(
+                data.get('comparisonPeriod', {})
+            )
+            if temporal_res == 'Annual':
+                return (
+                    f'Analysis between {before_period["year"]} and '
+                    f'{after_period["year"]}'
+                )
+            elif temporal_res == 'Quarterly':
+                return (
+                    f'Analysis between {before_period["quarter"]} '
+                    f'{before_period["year"]} and '
+                    f'{after_period["quarter"]} {after_period["year"]}'
+                )
+            elif temporal_res == 'Monthly':
+                return (
+                    f'Analysis between {before_period["month"]} '
+                    f'{before_period["year"]} and '
+                    f'{after_period["month"]} {after_period["year"]}'
+                )
         return ' - '
 
     def _get_name(self, data):
@@ -765,3 +807,148 @@ class AnalysisTask(models.Model):
         blank=True,
         help_text='Error message if the task failed.'
     )
+
+
+class IndicatorSource(models.TextChoices):
+    """Choices for the source of an indicator."""
+
+    BASE = 'base', 'Base'
+    # Global Pasteur Watch
+    GPW = 'GPW', 'Global Pasteur Watch'
+    OTHER = 'other', 'Other'
+
+
+class Indicator(models.Model):
+    """Model to represent an indicator used in analysis."""
+
+    ALLOWED_ANALYSIS_TYPES = [
+        'Baseline',
+        'Temporal',
+        'Spatial'
+    ]
+    ALLOWED_TEMPORAL_RESOLUTIONS = [
+        'Annual',
+        'Quarterly',
+        'Monthly'
+    ]
+
+    name = models.CharField(
+        max_length=255,
+        unique=True,
+        help_text="The name of the indicator."
+    )
+
+    description = models.TextField(
+        blank=True,
+        null=True,
+        help_text="Description of the indicator."
+    )
+
+    variable_name = models.CharField(
+        max_length=255,
+        unique=True,
+        help_text="The variable name used in the analysis."
+    )
+
+    source = models.CharField(
+        max_length=50,
+        choices=IndicatorSource.choices,
+        default=IndicatorSource.BASE,
+        help_text="The source of the indicator."
+    )
+
+    analysis_types = models.JSONField(
+        default=list,
+        help_text="List of analysis types this indicator can be used for.",
+        blank=True,
+        null=True
+    )
+
+    temporal_resolutions = models.JSONField(
+        default=list,
+        help_text=(
+            "List of temporal resolutions this indicator can be used for."
+        ),
+        blank=True,
+        null=True
+    )
+
+    metadata = models.JSONField(
+        default=dict,
+        help_text="Additional metadata for the indicator.",
+        blank=True,
+        null=True
+    )
+
+    config = models.JSONField(
+        default=dict,
+        help_text="Additional configuration for the indicator.",
+        blank=True,
+        null=True
+    )
+
+    is_active = models.BooleanField(
+        default=True,
+        help_text="Indicates if the indicator is active."
+    )
+
+    def clean(self):
+        super().clean()
+        invalid_analysis_types = (
+            set(self.analysis_types) - set(self.ALLOWED_ANALYSIS_TYPES)
+        )
+        if invalid_analysis_types:
+            raise ValidationError(
+                f"Invalid analysis types: {', '.join(invalid_analysis_types)}."
+            )
+        invalid_temporal_resolutions = (
+            set(self.temporal_resolutions) -
+            set(self.ALLOWED_TEMPORAL_RESOLUTIONS)
+        )
+        if invalid_temporal_resolutions:
+            raise ValidationError(
+                f"Invalid temporal resolutions: "
+                f"{', '.join(invalid_temporal_resolutions)}."
+            )
+
+    def get_reducer(self):
+        """Get the reducer based on the configuration."""
+        reducer = ee.Reducer.mean()
+
+        reducer_config = self.config.get('reducer', None)
+        if reducer_config:
+            if reducer_config == 'mean':
+                reducer = ee.Reducer.mean()
+            elif reducer_config == 'sum':
+                reducer = ee.Reducer.sum()
+            elif reducer_config == 'median':
+                reducer = ee.Reducer.median()
+            elif reducer_config == 'mode':
+                reducer = ee.Reducer.mode()
+            elif reducer_config == 'min':
+                reducer = ee.Reducer.min()
+            elif reducer_config == 'max':
+                reducer = ee.Reducer.max()
+
+        return reducer
+
+    def get_reducer_name(self):
+        """Get the name of the reducer based on the configuration."""
+        return self.config.get('reducer', 'mean')
+
+    @classmethod
+    def has_statistics(cls, variable_name: str) -> bool:
+        """Check if the indicator has statistics."""
+        try:
+            indicator = cls.objects.get(variable_name=variable_name)
+            return indicator.source == IndicatorSource.BASE
+        except cls.DoesNotExist:
+            return False
+
+    class Meta:
+        verbose_name = "Indicator"
+        verbose_name_plural = "Indicators"
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name

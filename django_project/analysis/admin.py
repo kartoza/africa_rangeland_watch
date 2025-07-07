@@ -14,7 +14,8 @@ from .models import (
     AnalysisResultsCache,
     AnalysisRasterOutput,
     AnalysisTask,
-    Project
+    Project,
+    Indicator
 )
 from analysis.utils import get_gdrive_file
 from analysis.tasks import (
@@ -255,3 +256,27 @@ class AnalysisTaskAdmin(admin.ModelAdmin):
 
     list_display = ('submitted_by', 'status', 'completed_at',)
     list_filter = ('status',)
+
+
+@admin.register(Indicator)
+class IndicatorAdmin(admin.ModelAdmin):
+    """Admin for Indicator model."""
+
+    list_display = (
+        'name', 'source', 'get_analysis_type',
+        'get_temporal_resolutions', 'is_active',
+    )
+    search_fields = ('name',)
+
+    def get_analysis_type(self, obj: Indicator):
+        """Return a comma-separated string of analysis types."""
+        return ', '.join(obj.analysis_types) if obj.analysis_types else '-'
+    get_analysis_type.short_description = 'Analysis Types'
+
+    def get_temporal_resolutions(self, obj: Indicator):
+        """Return a comma-separated string of temporal resolutions."""
+        return (
+            ', '.join(obj.temporal_resolutions) if
+            obj.temporal_resolutions else '-'
+        )
+    get_temporal_resolutions.short_description = 'Temporal Resolutions'

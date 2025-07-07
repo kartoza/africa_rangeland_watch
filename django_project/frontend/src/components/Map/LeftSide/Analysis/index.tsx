@@ -12,8 +12,6 @@ import AnalysisTemporalResolutionSelector
   from "./AnalysisTemporalResolutionSelector";
 import AnalysisVariableSelector from "./AnalysisVariableSelector";
 import AnalysisReferencePeriod from "./AnalysisReferencePeriod";
-import AnalysisVariableBySpatialSelector
-  from "./AnalysisVariableBySpatialSelector";
 import AnalysisLandscapeGeometrySelector
   from "./AnalysisLandscapeGeometrySelector";
 import { AppDispatch, RootState } from "../../../../store";
@@ -125,6 +123,9 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
           ...session.analysisState,
           locations: null
         }))
+      } else if (session.analysisState.analysisType === Types.BACI && session.analysisState.reference_layer) {
+        // draw reference layer for BACI analysis
+        geometrySelectorRef?.current?.drawLayer(session.analysisState.reference_layer, session.analysisState.reference_layer_id);
       }
       // pop stored state
       clearAnalysisState()
@@ -161,7 +162,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
   /** When data changed */
   const triggerAnalysis = () => {
     dispatch(resetAnalysisResult(data.analysisType))
-    if (data.analysisType !== 'Spatial') {
+    if (![Types.SPATIAL, Types.BACI].includes(data.analysisType)) {
       // remove polygon for reference layer diff
       geometrySelectorRef?.current?.removeLayer();
     }
@@ -199,6 +200,13 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
         dispatch(doAnalysis(data))
       } else if (mapInteraction === MapAnalysisInteraction.LANDSCAPE_SELECTOR && !data.reference_layer) {
         setMapInteraction(MapAnalysisInteraction.NO_INTERACTION)
+      }
+      saveSession('/map', { activity: "Visited Analysis Page"}, data);
+    } else if (data.landscape && data.analysisType === Types.BACI) {
+      if (mapInteraction === MapAnalysisInteraction.LANDSCAPE_SELECTOR && !data.reference_layer) {
+        setMapInteraction(MapAnalysisInteraction.NO_INTERACTION)
+      } else if (mapInteraction === MapAnalysisInteraction.NO_INTERACTION && data.reference_layer) {
+        setMapInteraction(MapAnalysisInteraction.LANDSCAPE_SELECTOR)
       }
       saveSession('/map', { activity: "Visited Analysis Page"}, data);
     }
@@ -245,6 +253,18 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
     data.landscape && data.analysisType === Types.SPATIAL && data.variable && data.reference_layer
   ) {
     dataError = false
+  } else if (
+    data.landscape && data.analysisType === Types.BACI && data.variable && data.reference_layer
+  ) {
+    if (data.temporalResolution === TemporalResolution.ANNUAL && data.period?.year && data.comparisonPeriod?.year) {
+      dataError = false
+    } else if (data.temporalResolution === TemporalResolution.QUARTERLY && data.period?.year 
+      && data.period?.quarter && data.comparisonPeriod?.year && data.comparisonPeriod?.quarter) {
+      dataError = false
+    } else if (data.temporalResolution === TemporalResolution.MONTHLY && data.period?.year 
+      && data.period?.month && data.comparisonPeriod?.year && data.comparisonPeriod?.month) {
+      dataError = false
+    }
   }
   let disableSubmit = !!dataError;
   if (!data.locations && !data.custom_geom) {
@@ -273,7 +293,6 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
           enableSelection={mapInteraction === MapAnalysisInteraction.LANDSCAPE_SELECTOR && data.landscape !== 'user-defined'}
           featureIds={data.locations?.map((location) => location.communityFeatureId)}
           onSelected={(value) => {
-            // dispatch(setAnalysisLandscapeCommunity(value))
             dispatch(toggleAnalysisLandscapeCommunity(value))
           }
           }
@@ -282,7 +301,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
           ref={geometrySelectorRef}
           isDrawing={mapInteraction === MapAnalysisInteraction.CUSTOM_GEOMETRY_DRAWING}
           onSelected={(geometry, area, selected_id) => {
-            if (area > mapConfig.spatial_reference_layer_max_area) {
+            if (mapConfig.spatial_reference_layer_max_area !== -1 && area > mapConfig.spatial_reference_layer_max_area) {
               console.warn('Area is bigger than configuration', area)
               // reset the geom selector
               setGeomError(true)
@@ -349,7 +368,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
         }
         {/* 3) Select temporal resolution */}
         {
-          [Types.TEMPORAL, Types.SPATIAL].includes(data.analysisType) &&
+          [Types.TEMPORAL, Types.SPATIAL, Types.BACI].includes(data.analysisType) &&
           <AnalysisTemporalResolutionSelector
             data={data}
             onSelected={(value: string) => setData({
@@ -361,8 +380,9 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
         {/* 3) Select variable for spatial*/}
         {
           data.analysisType === Types.SPATIAL &&
-          <AnalysisVariableBySpatialSelector
+          <AnalysisVariableSelector
             data={data}
+            analysisType={'Spatial'}
             onSelected={(value) => setData({
               ...data,
               variable: value
@@ -371,10 +391,10 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
         }
         {/* 4) Select variable for temporal */}
         {
-          data.temporalResolution && data.analysisType === Types.TEMPORAL &&
+          data.temporalResolution && [Types.TEMPORAL, Types.BACI].includes(data.analysisType) &&
           <AnalysisVariableSelector
             data={data}
-            layers={layers}
+            analysisType={'Temporal'}
             onSelected={(value) => setData({
               ...data,
               variable: value
@@ -383,7 +403,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
         }
         {/* 5) Select temporal resolution */}
         {
-          data.variable && [Types.TEMPORAL, Types.SPATIAL].includes(data.analysisType) &&
+          data.variable && [Types.TEMPORAL, Types.SPATIAL, Types.BACI].includes(data.analysisType) &&
           <AnalysisReferencePeriod
             title='5) Select reference period'
             value={data.period}
@@ -397,14 +417,14 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
                   quarter: data.period?.quarter,
                   month: data.period?.month
                 },
-                ...(data.analysisType === Types.SPATIAL ? {
+                ...([Types.SPATIAL, Types.BACI].includes(data.analysisType) ? {
                   locations: null,
                   custom_geom: null,
                   userDefinedFeatureId: null,
                   userDefinedFeatureName: null
                 } : {})
               });
-              if (data.analysisType === Types.SPATIAL) {
+              if ([Types.SPATIAL, Types.BACI].includes(data.analysisType)) {
                 dispatch(resetAnalysisResult());
                 setMapInteraction(MapAnalysisInteraction.NO_INTERACTION);
               }
@@ -417,14 +437,14 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
                   quarter: value,
                   month: null
                 },
-                ...(data.analysisType === Types.SPATIAL ? {
+                ...([Types.SPATIAL, Types.BACI].includes(data.analysisType) ? {
                   locations: null,
                   custom_geom: null,
                   userDefinedFeatureId: null,
                   userDefinedFeatureName: null
                 } : {})
               });
-              if (data.analysisType === Types.SPATIAL) {
+              if ([Types.SPATIAL, Types.BACI].includes(data.analysisType)) {
                 dispatch(resetAnalysisResult());
                 setMapInteraction(MapAnalysisInteraction.NO_INTERACTION);
               }
@@ -437,14 +457,14 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
                   quarter: null,
                   month: value
                 },
-                ...(data.analysisType === Types.SPATIAL ? {
+                ...([Types.SPATIAL, Types.BACI].includes(data.analysisType) ? {
                   locations: null,
                   custom_geom: null,
                   userDefinedFeatureId: null,
                   userDefinedFeatureName: null
                 } : {})
               });
-              if (data.analysisType === Types.SPATIAL) {
+              if ([Types.SPATIAL, Types.BACI].includes(data.analysisType)) {
                 dispatch(resetAnalysisResult());
                 setMapInteraction(MapAnalysisInteraction.NO_INTERACTION);
               }
@@ -453,7 +473,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
         }
         {/* 6) Select comparison period */}
         {
-          data.variable && [Types.TEMPORAL, Types.SPATIAL].includes(data.analysisType) &&
+          data.variable && [Types.TEMPORAL, Types.SPATIAL, Types.BACI].includes(data.analysisType) &&
           <AnalysisReferencePeriod
             title='6) Select comparison period'
             value={data.comparisonPeriod}
@@ -468,14 +488,14 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
                   quarter: data.comparisonPeriod?.quarter,
                   month: data.comparisonPeriod?.month
                 },
-                ...(data.analysisType === Types.SPATIAL ? {
+                ...([Types.SPATIAL, Types.BACI].includes(data.analysisType) ? {
                   locations: null,
                   custom_geom: null,
                   userDefinedFeatureId: null,
                   userDefinedFeatureName: null
                 } : {})
               });
-              if (data.analysisType === Types.SPATIAL) {
+              if ([Types.SPATIAL, Types.BACI].includes(data.analysisType)) {
                 dispatch(resetAnalysisResult());
                 setMapInteraction(MapAnalysisInteraction.NO_INTERACTION);
               }
@@ -488,14 +508,14 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
                   quarter: value,
                   month: null
                 },
-                ...(data.analysisType === Types.SPATIAL ? {
+                ...([Types.SPATIAL, Types.BACI].includes(data.analysisType) ? {
                   locations: null,
                   custom_geom: null,
                   userDefinedFeatureId: null,
                   userDefinedFeatureName: null
                 } : {})
               });
-              if (data.analysisType === Types.SPATIAL) {
+              if ([Types.SPATIAL, Types.BACI].includes(data.analysisType)) {
                 dispatch(resetAnalysisResult());
                 setMapInteraction(MapAnalysisInteraction.NO_INTERACTION);
               }
@@ -508,14 +528,14 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
                   quarter: null,
                   month: value
                 },
-                ...(data.analysisType === Types.SPATIAL ? {
+                ...([Types.SPATIAL, Types.BACI].includes(data.analysisType) ? {
                   locations: null,
                   custom_geom: null,
                   userDefinedFeatureId: null,
                   userDefinedFeatureName: null
                 } : {})
               });
-              if (data.analysisType === Types.SPATIAL) {
+              if ([Types.SPATIAL, Types.BACI].includes(data.analysisType)) {
                 dispatch(resetAnalysisResult());
                 setMapInteraction(MapAnalysisInteraction.NO_INTERACTION);
               }
@@ -525,7 +545,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
       </Accordion>
             {/* Draw buttons for spatial */}
       {
-        data.analysisType === Types.SPATIAL && data.variable &&
+        [Types.SPATIAL, Types.BACI].includes(data.analysisType) && data.variable &&
         <Box mb={4} color={'green'}>
           Draw a reference area
         </Box>
@@ -539,7 +559,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
         </HStack>
       }
       {
-        data.analysisType === Types.SPATIAL && data.variable && mapInteraction !== MapAnalysisInteraction.CUSTOM_GEOMETRY_DRAWING && (
+        [Types.SPATIAL, Types.BACI].includes(data.analysisType) && data.variable && mapInteraction !== MapAnalysisInteraction.CUSTOM_GEOMETRY_DRAWING && (
           <HStack
             wrap="wrap" gap={8} alignItems='center' justifyContent='center'>
             <Button
@@ -597,7 +617,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
         )
       }
       {
-        data.analysisType === Types.SPATIAL && data.variable && mapInteraction === MapAnalysisInteraction.CUSTOM_GEOMETRY_DRAWING && (
+        [Types.SPATIAL, Types.BACI].includes(data.analysisType) && data.variable && mapInteraction === MapAnalysisInteraction.CUSTOM_GEOMETRY_DRAWING && (
           <HStack
             wrap="wrap" gap={8} alignItems='center' justifyContent='center'>
             <Button

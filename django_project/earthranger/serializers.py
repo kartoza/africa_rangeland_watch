@@ -5,4 +5,4 @@ from .models import EarthRangerEvents
 class EarthRangerEventsSerializer(serializers.ModelSerializer):
     class Meta:
         model = EarthRangerEvents
-        fields = ["name", "data", "last_updated"]
+        fields = ["earth_ranger_uuid", "data", "updated_at"]
