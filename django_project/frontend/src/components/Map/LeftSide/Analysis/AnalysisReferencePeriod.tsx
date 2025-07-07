@@ -7,6 +7,7 @@ import {
   Box,
   Select,
   Button,
+  useBreakpoint,
 } from "@chakra-ui/react";
 import { AnalysisDataPeriod } from "../../DataTypes";
 
@@ -16,6 +17,7 @@ interface Props {
   isQuarter: boolean;
   isMonthly: boolean;
   multiple?: boolean;
+  maxLength?: number;
   onSelectedYear: (year: number | number[]) => void;
   onSelectedQuarter: (quarter: number | number[]) => void;
   onSelectedMonth: (month: number | number[]) => void;
@@ -30,7 +32,7 @@ type DefaultPanel = {
 
 /** Reference period. */
 export default function AnalysisReferencePeriod(
-  { title, value, isQuarter, isMonthly, multiple=false, onSelectedYear, onSelectedQuarter, onSelectedMonth }: Props
+  { title, value, isQuarter, isMonthly, multiple=false, maxLength, onSelectedYear, onSelectedQuarter, onSelectedMonth }: Props
 ) {
   const nowYear = new Date().getFullYear();
   const years: number[] = [];
@@ -43,11 +45,13 @@ export default function AnalysisReferencePeriod(
   
   let defaultPanels: DefaultPanel[] = [];
   if (multiple && Array.isArray(value?.year) && Array.isArray(value?.quarter)) {
-    for (let i = 0; i < value.year.length; i++) {
+    const defaultPanelsLength = maxLength < value.year.length ? maxLength : value.year.length;
+    for (let i = 0; i < defaultPanelsLength; i++) {
       defaultPanels.push({ id: i, year: value.year[i], quarter: value.quarter[i], month: null });
     }
   } else if (multiple && Array.isArray(value?.year) && Array.isArray(value?.month)) {
-    for (let i = 0; i < value.year.length; i++) {
+    const defaultPanelsLength = maxLength < value.year.length ? maxLength : value.year.length;
+    for (let i = 0; i < defaultPanelsLength; i++) {
       defaultPanels.push({ id: i, year: value.year[i], quarter: null, month: value.month[i] });
     }
   } else if (!Array.isArray(value?.year) && !Array.isArray(value?.quarter) && !Array.isArray(value?.month)){
@@ -106,7 +110,7 @@ export default function AnalysisReferencePeriod(
           <AccordionIcon />
         </AccordionButton>
       </h2>
-      {panels.map((panel) => (
+      {panels.slice(0, maxLength).map((panel) => (
         <AccordionPanel key={panel.id} pb={4} pl={8} fontSize='13px'>
           <Select
             fontSize='13px'
@@ -146,7 +150,7 @@ export default function AnalysisReferencePeriod(
             </Select>
           )}
           {
-            panels.length > 1 && <Button
+            panels.length > 1 && panels.length < maxLength && <Button
               size="sm"
               colorScheme="red"
               mt={2}
@@ -156,7 +160,7 @@ export default function AnalysisReferencePeriod(
             </Button>}
         </AccordionPanel>
       ))}
-      {multiple && <AccordionPanel pb={4} pl={8}>
+      {multiple && panels.length < maxLength && <AccordionPanel pb={4} pl={8}>
         <Button
           size="sm"
           colorScheme="blue"
