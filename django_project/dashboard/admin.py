@@ -13,6 +13,7 @@ def generate_thumbnail(modeladmin, request, queryset):
 class DashboardAdmin(admin.ModelAdmin):
     list_display = (
         'uuid',
+        'title',
         'privacy_type',
         'created_at',
         'updated_at',
