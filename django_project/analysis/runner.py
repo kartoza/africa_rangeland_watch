@@ -11,6 +11,7 @@ from datetime import date
 from copy import deepcopy
 
 from core.models import Preferences
+from analysis.models import Indicator, IndicatorSource
 from analysis.analysis import (
     initialize_engine_analysis,
     run_analysis,
@@ -485,6 +486,7 @@ class AnalysisRunner:
     def run_temporal_analysis(self, data, analysis_dict=None):
         """Run the temporal analysis."""
         analysis_dict = analysis_dict or self.get_analysis_dict_temporal(data)
+        variable = data['variable']
         initialize_engine_analysis()
 
         results = run_analysis(
@@ -492,10 +494,14 @@ class AnalysisRunner:
             analysis_dict=analysis_dict,
             custom_geom=data.get('custom_geom', None)
         )
-        results[0]['statistics'] = self.add_statistics(
-            data['comparisonPeriod']['year'],
-            results[1]['features']
-        )
+        if Indicator.has_statistics(variable):
+            results[0]['statistics'] = self.add_statistics(
+                data['comparisonPeriod']['year'],
+                results[1]['features']
+            )
+        else:
+            results[0]['statistics'] = {}
+
         return results
 
     def run_spatial_analysis(self, data):
@@ -555,12 +561,24 @@ class AnalysisRunner:
                 spatial_analysis_dict,
                 reference_layer_geom
             )
-            metadata = {
-                'minValue': -25,
-                'maxValue': 25,
-                'colors': ['#f9837b', '#fffcb9', '#fffcb9', '#32c2c8'],
-                'opacity': 0.7
-            }
+            indicator = Indicator.objects.filter(
+                variable_name=data['variable']
+            ).first()
+            if indicator is None:
+                raise ValueError(
+                    f'Invalid variable {data["variable"]} '
+                    'for spatial analysis!'
+                )
+
+            if indicator.source == IndicatorSource.GPW:
+                metadata = indicator.metadata
+            else:
+                metadata = {
+                    'minValue': -25,
+                    'maxValue': 25,
+                    'colors': ['#f9837b', '#fffcb9', '#fffcb9', '#32c2c8'],
+                    'opacity': 0.7
+                }
             results = {
                 'id': 'spatial_analysis_rel_diff',
                 'uuid': str(uuid.uuid4()),

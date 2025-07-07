@@ -10,8 +10,6 @@ from pydrive2.drive import GoogleDrive
 from oauth2client.service_account import ServiceAccountCredentials
 from rasterio.warp import transform_bounds
 
-from analysis.analysis import SERVICE_ACCOUNT_KEY
-
 
 logger = logging.getLogger(__name__)
 
@@ -21,17 +19,18 @@ def _initialize_gdrive_instance():
     # Authenticate to the Google Drive of the Service Account
     gauth = GoogleAuth()
     scope = ['https://www.googleapis.com/auth/drive']
-    if os.path.exists(SERVICE_ACCOUNT_KEY):
+    service_account_key = os.environ.get('SERVICE_ACCOUNT_KEY', '')
+    if os.path.exists(service_account_key):
         gauth.credentials = (
             ServiceAccountCredentials.from_json_keyfile_name(
-                SERVICE_ACCOUNT_KEY, scopes=scope
+                service_account_key, scopes=scope
             )
         )
     else:
         gauth.credentials = (
             ServiceAccountCredentials.from_json_keyfile_dict(
                 json.loads(
-                    base64.b64decode(SERVICE_ACCOUNT_KEY).decode('utf-8')
+                    base64.b64decode(service_account_key).decode('utf-8')
                 ),
                 scopes=scope
             )
@@ -147,6 +146,23 @@ def get_cog_bounds(cog_path):
     except Exception as e:
         logger.error(f"Error getting bounds for {cog_path}: {e}")
         return None
+
+
+def split_dates_by_year(start_date: date, end_date: date):
+    """Split a date range into yearly intervals."""
+    if start_date > end_date:
+        raise ValueError("start_date must be before or equal to end_date")
+
+    current_year = start_date.year
+    results = []
+
+    while current_year <= end_date.year:
+        year_start = max(start_date, date(current_year, 1, 1))
+        year_end = min(end_date, date(current_year, 12, 31))
+        results.append((year_start, year_end))
+        current_year += 1
+
+    return results
 
 
 def get_date_range_for_analysis(temporal_resolution, year, quarter, month):
