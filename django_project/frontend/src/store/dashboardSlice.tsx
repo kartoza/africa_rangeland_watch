@@ -4,6 +4,7 @@ import { Analysis } from './analysisSlice';
 
 export interface Config {
   dashboardName?: string;
+  dashboardDescription?: string;
   preference?: string;
   chartType?: string | null;
 }

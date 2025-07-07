@@ -16,7 +16,8 @@ import {
   MenuList,
   MenuItem,
   useToast,
-  Input
+  Input,
+  Textarea
 } from '@chakra-ui/react';
 import {
   DndContext,
@@ -60,8 +61,11 @@ const DynamicDashboard: React.FC<{
   const dispatch = useDispatch<AppDispatch>();
   const [isScrolled, setIsScrolled] = useState(false);
   const [dashboardTitle, setDashboardTitle] = useState('Dynamic Dashboard');
+  const [dashboardDescription, setDashboardDescription] = useState('');
   const [isEditingDashboardTitle, setIsEditingDashboardTitle] = useState(false);
+  const [isEditingDashboardDescription, setIsEditingDashboardDescription] = useState(false);
   const [editDashboardTitle, setEditDashboardTitle] = useState(dashboardTitle);
+  const [editDashboardDescription, setEditDashboardDescription] = useState(dashboardDescription);
   const toast = useToast();
   const currentDashboard = useSelector(
     (state: RootState) => state.dashboard.currentDashboard
@@ -412,6 +416,27 @@ const DynamicDashboard: React.FC<{
     }
   };
 
+  // Dashboard descripton editing functions
+  const handleDashboardDescriptionSave = () => {
+    if (editDashboardDescription.trim()) {
+      setDashboardDescription(editDashboardDescription.trim());
+      setIsEditingDashboardDescription(false);
+    }
+  };
+
+  const handleDashboardDescriptionCancel = () => {
+    setEditDashboardDescription(dashboardDescription);
+    setIsEditingDashboardDescription(false);
+  };
+
+  const handleDashboardDescriptionKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleDashboardDescriptionSave();
+    } else if (e.key === 'Escape') {
+      handleDashboardDescriptionCancel();
+    }
+  };
+
   // Load configuration function
   const loadConfiguration = (config: any) => {
     if (!config || !config.widgets || !Array.isArray(config.widgets)) {
@@ -448,6 +473,10 @@ const DynamicDashboard: React.FC<{
     setDashboardTitle(config.title || 'Dashboard');
     setIsEditingDashboardTitle(false);
     setEditDashboardTitle(config.title || 'Dynamic Dashboard');
+
+    setDashboardDescription(config.description || '');
+    setIsEditingDashboardDescription(false);
+    setEditDashboardDescription(config.description || '');
   };
 
   // Save configuration function
@@ -456,6 +485,7 @@ const DynamicDashboard: React.FC<{
       version: '1.0',
       last_updated: new Date().toISOString(),
       title: dashboardTitle,
+      description: dashboardDescription,
       widgets: widgets.map((widget) => ({
         id: widget.id,
         type: widget.type,
@@ -524,7 +554,7 @@ const DynamicDashboard: React.FC<{
         px={6}
       >
         <Flex justify="space-between" align="center" wrap="wrap" gap={4}>
-          <VStack align="start" spacing={1}>
+          <VStack align="start" spacing={1} className={"vstack"} width={"50vw"}>
             {isEditingDashboardTitle ? (
               <HStack spacing={2}>
                 <Input
@@ -567,6 +597,48 @@ const DynamicDashboard: React.FC<{
                   />
                 </EditableWrapper>                
               </HStack>
+            )}
+            {isEditingDashboardDescription ? (
+              <HStack spacing={2}>
+                <Textarea
+                  value={editDashboardDescription}
+                  onChange={(e) => setEditDashboardDescription(e.target.value)}
+                  onKeyDown={handleDashboardDescriptionKeyPress}
+                  autoFocus
+                  minWidth={"50vw"}
+                  resize="both"
+                  // autoresize
+                />
+                <IconButton
+                  icon={<FiCheck size={16} />}
+                  size="sm"
+                  colorScheme="green"
+                  aria-label="Save dashboard description"
+                  onClick={handleDashboardDescriptionSave}
+                />
+                <IconButton
+                  icon={<FiSlash size={16} />}
+                  size="sm"
+                  variant="ghost"
+                  aria-label="Cancel edit"
+                  onClick={handleDashboardDescriptionCancel}
+                />
+              </HStack>
+            ) : (
+                <HStack spacing={2} >
+                  <Text size="lg" color="black">{dashboardDescription}</Text>
+                  <EditableWrapper isEditable={isEditable}>
+                    <IconButton
+                      icon={<FiEdit2 size={16} />}
+                      size="sm"
+                      variant="ghost"
+                      aria-label="Edit dashboard description"
+                      onClick={() => setIsEditingDashboardDescription(true)}
+                      opacity={0.6}
+                      _hover={{ opacity: 1 }}
+                    />
+                  </EditableWrapper>                
+                </HStack>
             )}
           </VStack>
           <HStack spacing={3}>
