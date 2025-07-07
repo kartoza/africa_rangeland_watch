@@ -575,7 +575,8 @@ class DashboardWidgetDetailView(APIView):
                 status=status.HTTP_404_NOT_FOUND
             )
         except Exception as e:
+            logger.error(f"An unexpected error occurred: {str(e)}")
             return Response(
-                {"error": f"An error occurred: {str(e)}"},
+                {"error": "An internal error has occurred."},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
