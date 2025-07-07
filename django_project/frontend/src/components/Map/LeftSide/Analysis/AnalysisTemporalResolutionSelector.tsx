@@ -12,7 +12,6 @@ import React, { useEffect } from 'react';
 import { AnalysisData } from "../../DataTypes";
 import { TemporalResolution } from "../../fixtures/analysis";
 
-
 interface Props {
   data: AnalysisData;
   onSelected: (landscape: string) => void;

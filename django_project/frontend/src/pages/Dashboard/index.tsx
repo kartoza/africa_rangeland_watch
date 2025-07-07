@@ -13,20 +13,22 @@ import {
   CardBody,
   Tag,
   TagLabel,
-  Heading
+  Heading,
+  Image
 } from "@chakra-ui/react";
 import { FaFilter } from "react-icons/fa";
 import { format } from 'date-fns';
 import Header from "../../components/Header";
 import { Helmet } from "react-helmet";
 import Footer from "../../components/Footer";
-import Pagination from "../../components/Pagination";
+import AllDashboardList from "../../components/DashboardList";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "../../store";
 import { fetchDashboards, deleteDashboard } from "../../store/dashboardSlice";
 import DashboardFilters from "../../components/DashboardFilters";
-import ConfirmDeleteDialog from "../../components/ConfirmDeleteDialog";
 import CreateDashboardModal from "../../components/CreateDashboard";
+import Pagination from "../../components/Pagination";
+import ConfirmDeleteDialog from "../../components/ConfirmDeleteDialog";
 import Sidebar from "../../components/SideBar";
 
 
@@ -51,7 +53,7 @@ const DashboardListPage: React.FC<DashboardListProps> = ({allDashboards}) => {
   const error = useSelector((state: any) => state.dashboard.error);
   const [isConfirmDeleteOpen, setIsConfirmDeleteOpen] = useState(false);
   const isEditable = !allDashboards;
-  const itemsPerPage = 4;
+  const itemsPerPage = allDashboards ? 12 : 4;
 
   // SEARCH FUNCTION
   const filteredData = dashboardData.filter((chartConfig: any) =>
@@ -211,95 +213,131 @@ const DashboardListPage: React.FC<DashboardListProps> = ({allDashboards}) => {
             {!loading && !filteredData?.length && <Text>No dashboard available.</Text>}
             {error && <Text>{error}</Text>}
         
-            {/* Main Section */}
-            <Box
-              maxHeight="calc(100vh - 250px)"
-              overflowY="auto"
-              mb={6}
-              display="flex"
-              flexDirection="column"
-              gap={4}
-            >
-              {paginatedData?.length === 0 ? (
-                <Flex justify="center" align="center" height="200px">
-                  <Text fontSize="lg" fontWeight="bold" color="gray.500">
-                    No data available
-                  </Text>
-                </Flex>
-                ) : (
-                  paginatedData?.map((dashboard: any, index: number) => {
-                    return (
-                      <Card key={index} boxShadow="md" borderRadius="md" bg="gray.50" _hover={{ boxShadow: "lg" }} transition="box-shadow 0.2s ease" cursor={"pointer"}>
-                        <CardBody>
-                          <Flex
-                            direction={{ base: "column", md: "row" }}
-                            align="stretch"
-                            gap={4}
-                            justify="space-between"
-                          >
-                            {/* Content */}
-                            <Box
-                                flex="1"
-                                display="flex"
-                                flexDirection="column"
-                                justifyContent="space-between"
-                                onClick={() => handleItemClick(dashboard)}
-                                cursor="pointer"
+            {/* Dashboard List Component */}
+            {
+              allDashboards ? 
+              <AllDashboardList
+                paginatedData={paginatedData}
+                filteredData={filteredData}
+                currentPage={currentPage}
+                totalPages={totalPages}
+                itemsPerPage={itemsPerPage}
+                handlePageChange={handlePageChange}
+                handleItemClick={handleItemClick}
+              /> : 
+                  <Box
+                  maxHeight="calc(100vh - 250px)"
+                  overflowY="auto"
+                  mb={6}
+                  display="flex"
+                  flexDirection="column"
+                  gap={4}
+                >
+                  {paginatedData?.length === 0 ? (
+                    <Flex justify="center" align="center" height="200px">
+                      <Text fontSize="lg" fontWeight="bold" color="gray.500">
+                        No data available
+                      </Text>
+                    </Flex>
+                    ) : (
+                      paginatedData?.map((dashboard: any, index: number) => {
+                        return (
+                          <Card key={index} boxShadow="md" borderRadius="md" bg="gray.50" _hover={{ boxShadow: "lg" }} transition="box-shadow 0.2s ease" cursor={"pointer"}>
+                            <CardBody>
+                              <Flex
+                                direction={{ base: "column", md: "row" }}
+                                align="stretch"
+                                gap={4}
+                                justify="space-between"
                               >
-
-                              <Heading size="md" fontWeight="bold" color="black" mb={2}>
-                                {dashboard.title}
-                              </Heading>
-
-                              <Box mt={4} display="flex" flexWrap="wrap" gap={2}>
-                                <Tag colorScheme="green" mr={2}>
-                                  <TagLabel>
-                                    {format(new Date(dashboard?.updated_at), "MMMM dd, yyyy HH:mm:ss")}
-                                  </TagLabel>
-                                </Tag>
-                                <Tag colorScheme="teal">
-                                  <TagLabel>{dashboard.owner_name}</TagLabel>
-                                </Tag>
-                              </Box>
+                                {/* Thumbnail */}
+                            <Box flexShrink={0}>
+                              <Image
+                                src={dashboard.thumbnail} 
+                                height="120px" 
+                                width="200px" 
+                                objectFit="cover"
+                                borderRadius="md"
+                                fallbackSrc="static/images/sa_map.png"
+                              />
                             </Box>
 
-                            {/* View Button */}
-                            { isEditable && (
-                              <Flex justify="flex-end" mt={{ base: 4, md: 8 }} >
-                                <Button
-                                  colorScheme="red"
-                                  variant="solid"
-                                  backgroundColor="red.500"
-                                  _hover={{ backgroundColor: "light_green.400" }}
-                                  color="white"
-                                  width="auto"
-                                  borderRadius="0px"
-                                  h={10}
-                                  onClick={() => setIsConfirmDeleteOpen(true)}
-                                >
-                                  Delete
-                                </Button>
-                                <ConfirmDeleteDialog 
-                                  isOpen={isConfirmDeleteOpen}
-                                  onClose={() => setIsConfirmDeleteOpen(false)}
-                                  onConfirm={() => handleDelete(dashboard.uuid)}
-                                  title="Delete Dashboard"
-                                  description="Are you sure you want to delete this dashboard?"
-                                />
+                            {/* Content */}
+                                <Box
+                                    flex="1"
+                                    display="flex"
+                                    flexDirection="column"
+                                    justifyContent="space-between"
+                                    onClick={() => handleItemClick(dashboard)}
+                                    cursor="pointer"
+                                    ml={4}
+                              >
+
+                                  <Heading size="md" fontWeight="bold" color="black" mb={2}>
+                                    {dashboard.title}
+                                  </Heading>
+
+                              {/* Description */}
+                              <Text
+                                color="gray.600" 
+                                fontSize="sm" 
+                                mb={3}
+                                noOfLines={2}
+                                flex="1"
+                              >
+                                {dashboard.config?.dashboardDescription || "No description available"}
+                              </Text>
+
+                                  <Box mt={4} display="flex" flexWrap="wrap" gap={2}>
+                                    <Tag colorScheme="green" mr={2}>
+                                      <TagLabel>
+                                        {format(new Date(dashboard?.updated_at), "MMMM dd, yyyy HH:mm:ss")}
+                                      </TagLabel>
+                                    </Tag>
+                                    <Tag colorScheme="teal">
+                                      <TagLabel>{dashboard.owner_name}</TagLabel>
+                                    </Tag>
+                                  </Box>
+                                </Box>
+
+                                {/* View Button */}
+                                { isEditable && (
+                                  <Flex justify="flex-end" mt={{ base: 4, md: 8 }} >
+                                    <Button
+                                      colorScheme="red"
+                                      variant="solid"
+                                      backgroundColor="red.500"
+                                      _hover={{ backgroundColor: "light_green.400" }}
+                                      color="white"
+                                      width="auto"
+                                      borderRadius="0px"
+                                      h={10}
+                                      onClick={() => setIsConfirmDeleteOpen(true)}
+                                    >
+                                      Delete
+                                    </Button>
+                                    <ConfirmDeleteDialog 
+                                      isOpen={isConfirmDeleteOpen}
+                                      onClose={() => setIsConfirmDeleteOpen(false)}
+                                      onConfirm={() => handleDelete(dashboard.uuid)}
+                                      title="Delete Dashboard"
+                                      description="Are you sure you want to delete this dashboard?"
+                                    />
+                                  </Flex>
+                                )}
                               </Flex>
-                            )}
-                          </Flex>
-                        </CardBody>
-                      </Card>
-                    );
-                  }
-                )
-              )
+                            </CardBody>
+                          </Card>
+                        );
+                      }
+                    )
+                  )
+                }
+                {filteredData?.length > itemsPerPage && (
+                  <Pagination currentPage={currentPage} totalPages={totalPages} handlePageChange={handlePageChange} />
+                )}
+                </Box>
             }
-            {paginatedData?.length === 4 && (
-              <Pagination currentPage={currentPage} totalPages={totalPages} handlePageChange={handlePageChange} />
-            )}
-            </Box>
 
             {/* Filter Panel (Drawer) */}
             <DashboardFilters 

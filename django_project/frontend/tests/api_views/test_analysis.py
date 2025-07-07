@@ -23,6 +23,7 @@ class AnalysisAPITest(BaseAPIViewTest):
     fixtures = [
         '1.project.json',
         '2.landscape.json',
+        '4.indicator.json',
     ]
 
     @patch('analysis.runner.run_analysis')
@@ -140,8 +141,11 @@ class AnalysisAPITest(BaseAPIViewTest):
     @patch('uuid.uuid4')
     @patch.object(InputLayer, 'get_countries')
     @patch.object(InputLayer, 'get_spatial_layer_dict')
-    def test_spatial_analysis(self, mock_get_spatial_layer_dict, mock_get_countries, mock_uuid4, mock_get_rel_diff, mock_init_gee):
-        """Test spatial analysis list."""
+    @patch('analysis.runner.spatial_get_date_filter')
+    @patch('analysis.runner.validate_spatial_date_range_filter')
+    @patch('core.models.Preferences.load')
+    def test_spatial_analysis_without_locations(self, mock_preferences_load, mock_validate_filter, mock_date_filter, mock_get_spatial_layer_dict, mock_get_countries, mock_uuid4, mock_get_rel_diff, mock_init_gee):
+        """Test spatial analysis without locations (returns raster layer)."""
         # Create a mock object for getMapId return value
         mocked_uuid = uuid.UUID("12345678-1234-5678-1234-567812345678")
         mock_uuid4.return_value = mocked_uuid
@@ -151,48 +155,52 @@ class AnalysisAPITest(BaseAPIViewTest):
             'tile_fetcher': MagicMock(url_format='http://fake-map-url')
         }
 
-        # Set the return value of get_rel_diff()
+        # Set up mocks
         mock_get_rel_diff.return_value = mock_get_map_id
         mock_init_gee.return_value = None
+        mock_date_filter.return_value = ('2018-01-01', '2021-12-31')
+        mock_validate_filter.return_value = (True, '2015-01-01', '2023-12-31')
+        
+        # Mock preferences
+        mock_preferences = MagicMock()
+        mock_preferences.result_cache_ttl = 3600
+        mock_preferences_load.return_value = mock_preferences
 
         payload = {
-            "period": {
-                "year":2015,
-                "quarter":1
-            },
-            'locations': [],
-            "variable": "EVI",
-            "community": None,
-            "landscape": "Bahine NP",
+            "period": {"year": 2018},
+            "variable": "NDVI",
+            "landscape": "Namakwa",
+            "locations": None,
+            "custom_geom": None,
             "analysisType": "Spatial",
-            "communityName": None,
+            "baselineEndDate": None,
             "reference_layer": {
                 "type": "FeatureCollection",
                 "features": [
                     {
-                        "type": "feature",
+                        "id": "NjN19eVvFKfnputCj6zS57CacXr9WzCQ",
+                        "type": "Feature",
                         "geometry": {
-                            "type": "MultiPolygon", 
+                            "type": "Polygon",
                             "coordinates": [
                                 [
-                                    [
-                                        [33.130976011125426,-22.754645737587296], 
-                                        [33.13474680471998,-22.75802902557068],
-                                        [33.12944731101908,-22.757465150059744], 
-                                        [33.130976011125426,-22.754645737587296]
-                                    ]
+                                    [18.14324631337908, -30.075535138916138],
+                                    [18.30333280891375, -30.089002740044222],
+                                    [18.185491360811454, -30.14477754456029],
+                                    [18.14324631337908, -30.075535138916138]
                                 ]
                             ]
-                        }
+                        },
+                        "properties": {"id": "NjN19eVvFKfnputCj6zS57CacXr9WzCQ"}
                     }
                 ]
             },
-            "comparisonPeriod": {
-                "year": [],
-                "quarter": []
-            },
-            "communityFeatureId": None,
-            "temporalResolution": "Annual"
+            "comparisonPeriod": {"year": 2021},
+            "baselineStartDate": None,
+            "reference_layer_id": "NjN19eVvFKfnputCj6zS57CacXr9WzCQ",
+            "temporalResolution": "Annual",
+            "userDefinedFeatureId": None,
+            "userDefinedFeatureName": None
         }
 
         # Check no cache before
@@ -210,19 +218,151 @@ class AnalysisAPITest(BaseAPIViewTest):
                 "minValue": -25,
                 "opacity": 0.7,
             },
-            "name": "% difference in EVI",
+            "name": "% difference in NDVI",
             "style": None,
             "type": "raster",
             "url": "http://fake-map-url",
             "uuid": "12345678-1234-5678-1234-567812345678",
         }
-        self.assertEqual(
-            results,
-            expected_results
-        )
+        
+        # The actual result should be wrapped in spatial/temporal structure
+        self.assertEqual(results['spatial']['results'], expected_results)
+        self.assertEqual(results['temporal']['results'], {})
 
-        # Check cache
+        # Check cache was created
         self.assertTrue(AnalysisResultsCache.objects.exists())
+
+    @patch('analysis.runner.initialize_engine_analysis')
+    @patch('analysis.runner.run_analysis')
+    @patch('analysis.runner.spatial_get_date_filter')
+    @patch('analysis.runner.validate_spatial_date_range_filter')
+    def test_spatial_analysis_with_locations(self, mock_validate_filter, mock_date_filter, mock_run_analysis, mock_init_gee):
+        """Test spatial analysis with locations (returns spatial and temporal results)."""
+        # Set up mocks
+        mock_init_gee.return_value = None
+        mock_date_filter.return_value = ('2018-01-01', '2021-12-31')
+        mock_validate_filter.return_value = (True, '2015-01-01', '2023-12-31')
+        
+        # Mock spatial analysis results
+        mock_spatial_results = {
+            "type": "FeatureCollection",
+            "features": [
+                {
+                    "type": "Feature",
+                    "geometry": None,
+                    "properties": {
+                        "Bare ground": 45.2,
+                        "EVI": 0.35,
+                        "NDVI": 0.42,
+                        "Name": "Rooifontein",
+                        "year": 2018
+                    }
+                }
+            ]
+        }
+        
+        # Mock temporal analysis results
+        mock_temporal_results = [
+            {
+                "type": "FeatureCollection",
+                "features": [
+                    {
+                        "type": "Feature",
+                        "geometry": None,
+                        "properties": {
+                            "Bare ground": 45.2,
+                            "EVI": 0.35,
+                            "NDVI": 0.42,
+                            "Name": "Rooifontein",
+                            "year": 2018
+                        }
+                    }
+                ],
+                "statistics": {
+                    2018: {
+                        "Rooifontein": {
+                            "Bare ground": {"min": 45.2, "max": 45.2, "mean": 45.2},
+                            "EVI": {"min": 0.35, "max": 0.35, "mean": 0.35},
+                            "NDVI": {"min": 0.42, "max": 0.42, "mean": 0.42}
+                        }
+                    }
+                }
+            }
+        ]
+        
+        mock_run_analysis.return_value = mock_spatial_results
+
+        payload = {
+            "period": {"year": 2018},
+            "variable": "NDVI",
+            "landscape": "Namakwa",
+            "locations": [
+                {
+                    "lat": -30.117855709037052,
+                    "lon": 18.13657604273186,
+                    "community": "00000000000000000065",
+                    "communityName": "Rooifontein",
+                    "communityFeatureId": 473
+                },
+                {
+                    "lat": -30.26007360780943,
+                    "lon": 18.161033701771657,
+                    "community": "0000000000000000005c",
+                    "communityName": "Nourivier",
+                    "communityFeatureId": 464
+                }
+            ],
+            "custom_geom": None,
+            "analysisType": "Spatial",
+            "baselineEndDate": None,
+            "reference_layer": {
+                "type": "FeatureCollection",
+                "features": [
+                    {
+                        "id": "NjN19eVvFKfnputCj6zS57CacXr9WzCQ",
+                        "type": "Feature",
+                        "geometry": {
+                            "type": "Polygon",
+                            "coordinates": [
+                                [
+                                    [18.14324631337908, -30.075535138916138],
+                                    [18.30333280891375, -30.089002740044222],
+                                    [18.185491360811454, -30.14477754456029],
+                                    [18.14324631337908, -30.075535138916138]
+                                ]
+                            ]
+                        },
+                        "properties": {"id": "NjN19eVvFKfnputCj6zS57CacXr9WzCQ"}
+                    }
+                ]
+            },
+            "comparisonPeriod": {"year": 2021, "month": None, "quarter": None},
+            "baselineStartDate": None,
+            "reference_layer_id": "NjN19eVvFKfnputCj6zS57CacXr9WzCQ",
+            "temporalResolution": "Annual",
+            "userDefinedFeatureId": None,
+            "userDefinedFeatureName": None
+        }
+
+        # Mock the temporal analysis method
+        with patch.object(AnalysisRunner, 'run_temporal_analysis', return_value=mock_temporal_results):
+            runner = AnalysisRunner()
+            results = runner.run(payload)
+
+            # Verify the structure of results
+            self.assertIn('spatial', results)
+            self.assertIn('temporal', results)
+            self.assertIn('results', results['spatial'])
+            self.assertIn('results', results['temporal'])
+            
+            # Verify spatial results
+            self.assertEqual(results['spatial']['results'], mock_spatial_results)
+            
+            # Verify temporal results
+            self.assertEqual(results['temporal']['results'], mock_temporal_results)
+            
+            # Verify that run_analysis was called twice (once for spatial, once for temporal via ThreadPoolExecutor)
+            self.assertEqual(mock_run_analysis.call_count, 1)
 
     @patch('analysis.runner.AnalysisRunner.get_reference_layer_geom')
     def test_get_reference_layer_geom_none(self, mock_get_reference_layer_geom):
@@ -363,6 +503,42 @@ class AnalysisAPITest(BaseAPIViewTest):
             "variable": "NDVI",
             "temporalResolution": "Annual",
             "period": {"year": "2015", "quarter": "1"},
+            "reference_layer": {},  # Invalid reference layer
+        }
+
+        view = AnalysisAPI.as_view()
+        request = self.factory.post(
+            reverse("frontend-api:analysis"),
+            payload,
+            format="json"
+        )
+        request.user = self.superuser
+
+        response = view(request)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("Invalid reference_layer with id", response.data["error"])
+        mock_create_task.assert_not_called()
+        mock_run_task.assert_not_called()
+
+    @patch("analysis.tasks.run_analysis_task.delay")
+    @patch("analysis.models.AnalysisTask.objects.create")
+    def test_post_baci_analysis_validation(self, mock_create_task, mock_run_task):
+        """Test POST method with BACI analysis validation failure."""
+        mock_create_task.return_value = MagicMock(
+            id=1,
+            created_at=timezone.now(),
+            save=MagicMock()
+        )
+
+        payload = {
+            'locations': [],
+            "analysisType": "BACI",
+            "landscape": "1",
+            "variable": "NDVI",
+            "temporalResolution": "Annual",
+            "period": {"year": "2015"},
+            "comparisonPeriod": {"year": [2019]},
             "reference_layer": {},  # Invalid reference layer
         }
 

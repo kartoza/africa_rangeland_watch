@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {useState, useRef, useEffect} from 'react';
 import {
   Box,
   GridItem,
@@ -11,27 +11,26 @@ import {
   CardHeader,
   CardBody,
   Heading,
-  Badge,
   Flex,
   Menu,
   MenuButton,
   MenuList,
   MenuItem,
-  Input
+  Input,
+  Checkbox,
+  Spinner,
 } from '@chakra-ui/react';
 import {
   useSortable,
 } from '@dnd-kit/sortable';
+import axios from 'axios';
 import { CSS } from '@dnd-kit/utilities';
-import { FiSettings, FiX, FiInfo, FiEdit2, FiSlash, FiCheck } from 'react-icons/fi';
+import { FiSettings, FiX, FiInfo, FiEdit2, FiSlash, FiCheck, FiDownload, FiAlertCircle } from 'react-icons/fi';
 import {DragHandleIcon} from '@chakra-ui/icons';
 import ChartWidget from './ChartWidget';
 import TableWidget from './TableWidget';
 import MapWidget from './MapWidget';
 import TextWidget from './TextWidget';
-import {
-  widgetDescriptions
- } from './types';
 import {
     Widget,
     GridSize,
@@ -40,6 +39,9 @@ import {
     widgetConstraints
  } from '../../store/dashboardSlice';
  import EditableWrapper from '../EditableWrapper';
+ import AnalysisInfo from './AnalysisInfo';
+ import { downloadPDF } from '../../utils/downloadPDF';
+import { downloadCog } from '../../utils/api';
 
 
 // Sortable Widget Item Component
@@ -50,8 +52,10 @@ const SortableWidgetItem: React.FC<{
   onHeightChange: (id: string, height: WidgetHeight) => void;
   onContentChange: (id: string, content: string) => void;
   onTitleChange: (id: string, title: string) => void;
+  onConfigChange: (id: string, config: any) => void;
   isEditable?: boolean;
-}> = ({ widget, onRemove, onSizeChange, onHeightChange, onContentChange, onTitleChange, isEditable }) => {
+}> = ({ widget, onRemove, onSizeChange, onHeightChange, 
+  onContentChange, onTitleChange, onConfigChange, isEditable }) => {
   const {
     attributes,
     listeners,
@@ -60,8 +64,11 @@ const SortableWidgetItem: React.FC<{
     transition,
     isDragging,
   } = useSortable({ id: widget.id });
+  const [updatedWidget, setUpdatedWidget] = useState(widget);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editTitle, setEditTitle] = useState(widget.title);
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
+  const isMountedRef = useRef(true);
   const style = {
     transform: CSS.Transform.toString(transform),
     transition,
@@ -72,6 +79,78 @@ const SortableWidgetItem: React.FC<{
   const borderColor = useColorModeValue('gray.200', 'gray.600');
   const config = heightConfig[widget.height];
   const constraints = widgetConstraints[widget.type];
+  const [downloadLoading, setDownloadLoading] = useState(false);
+  const cardRef = React.useRef<HTMLDivElement>(null);
+
+
+  // Periodic fetch function
+  const fetchWidgetStatus = async () => {
+    try {
+      const response = await axios.get(`/dashboards/widgets/${updatedWidget.id}/`);
+      
+      if (isMountedRef.current) {
+        const newWidgetData = response.data;
+        setUpdatedWidget(newWidgetData);
+        
+        // Check if status is no longer RUNNING
+        if (newWidgetData.data?.status !== 'RUNNING') {
+          stopPeriodicFetch();
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching widget status:', error);
+    }
+  };
+
+  // Start periodic fetch
+  const startPeriodicFetch = () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+    }
+    
+    // Fetch immediately
+    fetchWidgetStatus();
+    
+    // Then set up periodic fetching every 5 seconds
+    intervalRef.current = setInterval(fetchWidgetStatus, 5000);
+  };
+
+  // Stop periodic fetch
+  const stopPeriodicFetch = () => {
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+  };
+
+  // Effect to handle periodic fetching based on status
+  useEffect(() => {
+    if (updatedWidget.data?.status === 'RUNNING') {
+      startPeriodicFetch();
+    } else {
+      stopPeriodicFetch();
+    }
+
+    // Cleanup on unmount
+    return () => {
+      stopPeriodicFetch();
+    };
+  }, [updatedWidget.data?.status]);
+
+  // Update widget when prop changes
+  useEffect(() => {
+    setUpdatedWidget(widget);
+  }, [widget]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    isMountedRef.current = true;
+    
+    return () => {
+      isMountedRef.current = false;
+      stopPeriodicFetch();
+    };
+  }, []);
 
   const handleTitleSave = () => {
     if (editTitle.trim()) {
@@ -96,11 +175,11 @@ const SortableWidgetItem: React.FC<{
   const renderWidgetContent = () => {
     switch (widget.type) {
       case 'chart':
-        return <ChartWidget data={widget.data} height={widget.height} config={widget.config} />;
+        return <ChartWidget widgetId={widget.id} data={updatedWidget.data} height={widget.height} config={widget.config} />;
       case 'table':
-        return <TableWidget data={widget.data} height={widget.height} />;
+        return <TableWidget widgetId={widget.id} data={updatedWidget.data} height={widget.height} />;
       case 'map':
-        return <MapWidget widgetId={widget.id} data={widget.data} height={widget.height} config={widget.config} />;
+        return <MapWidget widgetId={widget.id} data={updatedWidget.data} height={widget.height} config={widget.config} />;
       case 'text':
         return (
           <TextWidget 
@@ -143,6 +222,7 @@ const SortableWidgetItem: React.FC<{
         transition="all 0.2s"
         overflow="visible"
         position="relative"
+        ref={cardRef}
       >
         <CardHeader pb={2}>
           <Flex justify="space-between" align="center">
@@ -193,7 +273,7 @@ const SortableWidgetItem: React.FC<{
                   </HStack>
                 ) : (
                   <HStack spacing={1}>
-                    <Heading size="sm" color="black">{widget.title}</Heading>
+                    <Heading size="sm" color="black" minH={'40px'} display={'flex'} alignItems={'center'}>{widget.title}</Heading>
                     <EditableWrapper isEditable={isEditable}>
                       <IconButton
                         icon={<FiEdit2 size={12} />}
@@ -209,7 +289,44 @@ const SortableWidgetItem: React.FC<{
                 )}
               </VStack>
             </HStack>
-            <HStack spacing={1}>
+            <HStack spacing={1} id="widget-actions">
+              {widget.type === 'map' && (
+                <>
+                  {updatedWidget.data.status === 'RUNNING' && (
+                    <Box 
+                      bg="blue.100" 
+                      p={2} 
+                      borderRadius="md" 
+                      display="flex" 
+                      alignItems="center" 
+                      gap={2}
+                      mb={2}
+                    >
+                      <Spinner size="sm" color="blue.500" />
+                      <Text fontSize="sm" color="blue.700">
+                        Generating TIFF
+                      </Text>
+                    </Box>
+                  )}
+                  {updatedWidget.data.status === 'FAILED' && (
+                    <Box 
+                      bg="red.100" 
+                      p={2} 
+                      borderRadius="md" 
+                      display="flex" 
+                      alignItems="center" 
+                      gap={2}
+                      mb={2}
+                    >
+                      <FiAlertCircle/>
+                      <Text fontSize="sm" color="green.700">
+                        Failed to generate TIFF
+                      </Text>
+                    </Box>
+                  )}
+                </>
+              )}
+
               { widget.type !== 'text' ? <Menu>
                 <MenuButton
                   as={IconButton}
@@ -227,62 +344,40 @@ const SortableWidgetItem: React.FC<{
                   borderColor="gray.200"
                   bg="white"
                 >
-                  <Box p={4}>
-                    <VStack align="start" spacing={3}>
-                      <Box>
-                        <Text fontWeight="bold" fontSize="sm" color="green.600">
-                          {widgetDescriptions[widget.type].title}
-                        </Text>
-                        <Text fontSize="xs" color="gray.600" mt={1}>
-                          {widgetDescriptions[widget.type].description}
-                        </Text>
-                      </Box>
-                      
-                      <Box>
-                        <Text fontWeight="semibold" fontSize="xs" color="gray.700" mb={1}>
-                          Features:
-                        </Text>
-                        <VStack align="start" spacing={1}>
-                          {widgetDescriptions[widget.type].features.map((feature, index) => (
-                            <Text key={index} fontSize="xs" color="gray.600">
-                              • {feature}
-                            </Text>
-                          ))}
-                        </VStack>
-                      </Box>
-                      
-                      <Box>
-                        <Text fontWeight="semibold" fontSize="xs" color="gray.700" mb={1}>
-                          Data Source:
-                        </Text>
-                        <Text fontSize="xs" color="gray.600">
-                          {widgetDescriptions[widget.type].dataSource}
-                        </Text>
-                      </Box>
-                      
-                      <Box>
-                        <Text fontWeight="semibold" fontSize="xs" color="gray.700" mb={1}>
-                          Last Updated:
-                        </Text>
-                        <Text fontSize="xs" color="gray.600">
-                          {widgetDescriptions[widget.type].lastUpdated}
-                        </Text>
-                      </Box>
-                      
-                      <Box pt={2} borderTop="1px solid" borderColor="gray.200" w="full">
-                        <HStack justify="space-between">
-                          <Text fontSize="xs" color="gray.500">
-                            Widget ID: {widget.id}
-                          </Text>
-                          <Badge size="sm" colorScheme="green" variant="subtle">
-                            {widget.size} col × {widget.height}
-                          </Badge>
-                        </HStack>
-                      </Box>
-                    </VStack>
-                  </Box>
+                  <AnalysisInfo data={updatedWidget.data} />
                 </MenuList>
               </Menu> : null}
+              { widget.type !== 'text' && !isEditable && (
+                <IconButton
+                  icon={<FiDownload size={12} />}
+                  size="xs"
+                  variant="ghost"
+                  aria-label="Download"
+                  onClick={() => {
+                    const analysisData = updatedWidget.data.data || updatedWidget.data.analysis;
+                    if (widget.type === 'map') {
+                      setDownloadLoading(true);
+                      downloadCog(updatedWidget.data.id)
+                        .then(() => setDownloadLoading(false))
+                        .catch(() => setDownloadLoading(false));
+                      return;
+                    }
+
+                    setDownloadLoading(true);
+                    const exportAnalysis = {
+                      analysisType: analysisData?.analysisType,
+                      temporalResolution: analysisData?.temporalResolution,
+                      variable: analysisData?.variable,
+                    };
+                    downloadPDF(cardRef, exportAnalysis, 'BaselineTableContainer', ['widget-actions'])
+                      .then(() => setDownloadLoading(false))
+                      .catch(() => setDownloadLoading(false));
+                  }}
+                  opacity={0.6}
+                  _hover={{ opacity: 1 }}
+                  disabled={downloadLoading}
+                />
+              )}              
               <EditableWrapper isEditable={isEditable}>
                 <Menu>
                   <MenuButton
@@ -319,6 +414,22 @@ const SortableWidgetItem: React.FC<{
                         {height.charAt(0).toUpperCase() + height.slice(1)} ({heightConfig[height].minH})
                       </MenuItem>
                     ))}
+                    <Text px={3} py={2} pt={4} fontSize="xs" fontWeight="bold" color="gray.500" textTransform="uppercase">
+                      Layers
+                    </Text>
+                      <MenuItem 
+                        key={'earth-ranger'} 
+                        closeOnSelect={false}
+                      >
+                        <Checkbox
+                          isChecked={widget.config?.earth_ranger === true}
+                          onChange={(e) => {
+                            onConfigChange(widget.id, { ...widget.config, earth_ranger: e.target.checked });
+                          }}
+                        >
+                          Earth Ranger
+                        </Checkbox>
+                      </MenuItem>
                   </MenuList>
                 </Menu>
                 <IconButton

@@ -1,0 +1,390 @@
+[
+{
+    "model": "analysis.indicator",
+    "pk": 1,
+    "fields": {
+        "name": "EVI",
+        "description": "",
+        "variable_name": "EVI",
+        "source": "base",
+        "analysis_types": [
+            "Temporal",
+            "Spatial",
+            "BACI"
+        ],
+        "temporal_resolutions": [
+            "Annual",
+            "Quarterly",
+            "Monthly"
+        ],
+        "metadata": {
+            "colors": [
+                "#FFFFFF",
+                "#CE7E45",
+                "#DF923D",
+                "#F1B555",
+                "#FCD163",
+                "#99B718",
+                "#74A901",
+                "#66A000",
+                "#529400",
+                "#3E8601",
+                "#207401",
+                "#056201",
+                "#004C00",
+                "#023B01",
+                "#012E01",
+                "#011D01",
+                "#011301"
+            ],
+            "opacity": 0.7,
+            "maxValue": 1,
+            "minValue": 0
+        },
+        "config": {
+            "asset_keys": [
+                "modis_vegetation"
+            ]
+        },
+        "is_active": true
+    }
+},
+{
+    "model": "analysis.indicator",
+    "pk": 2,
+    "fields": {
+        "name": "NDVI",
+        "description": "",
+        "variable_name": "NDVI",
+        "source": "base",
+        "analysis_types": [
+            "Temporal",
+            "Spatial",
+            "BACI"
+        ],
+        "temporal_resolutions": [
+            "Annual",
+            "Quarterly",
+            "Monthly"
+        ],
+        "metadata": {
+            "colors": [
+                "#FFFFFF",
+                "#CE7E45",
+                "#DF923D",
+                "#F1B555",
+                "#FCD163",
+                "#99B718",
+                "#74A901",
+                "#66A000",
+                "#529400",
+                "#3E8601",
+                "#207401",
+                "#056201",
+                "#004C00",
+                "#023B01",
+                "#012E01",
+                "#011D01",
+                "#011301"
+            ],
+            "opacity": 0.7,
+            "maxValue": 1,
+            "minValue": 0
+        },
+        "config": {
+            "asset_keys": [
+                "modis_vegetation"
+            ]
+        },
+        "is_active": true
+    }
+},
+{
+    "model": "analysis.indicator",
+    "pk": 3,
+    "fields": {
+        "name": "Bare ground",
+        "description": "",
+        "variable_name": "Bare ground",
+        "source": "base",
+        "analysis_types": [
+            "Temporal",
+            "Spatial",
+            "BACI"
+        ],
+        "temporal_resolutions": [
+            "Annual",
+            "Quarterly",
+            "Monthly"
+        ],
+        "metadata": {
+            "colors": [
+                "#FFFFCC",
+                "#FFEDA0",
+                "#FED976",
+                "#FEB24C",
+                "#FD8D3C",
+                "#FC4E2A",
+                "#E31A1C",
+                "#B10026"
+            ],
+            "opacity": 0.7,
+            "maxValue": 100,
+            "minValue": 0
+        },
+        "config": {
+            "asset_keys": [
+                "cgls_ground_cover"
+            ]
+        },
+        "is_active": true
+    }
+},
+{
+    "model": "analysis.indicator",
+    "pk": 4,
+    "fields": {
+        "name": "Woody cover",
+        "description": "",
+        "variable_name": "Woody cover",
+        "source": "base",
+        "analysis_types": [
+            "Spatial"
+        ],
+        "temporal_resolutions": [],
+        "metadata": {
+            "colors": [
+                "#f9837b",
+                "#fffcb9",
+                "#fffcb9",
+                "#32c2c8"
+            ],
+            "opacity": 0.7,
+            "maxValue": 25,
+            "minValue": -25
+        },
+        "config": {
+            "asset_keys": [
+                "cgls_ground_cover"
+            ]
+        },
+        "is_active": true
+    }
+},
+{
+    "model": "analysis.indicator",
+    "pk": 5,
+    "fields": {
+        "name": "Grass cover",
+        "description": "",
+        "variable_name": "Grass cover",
+        "source": "base",
+        "analysis_types": [
+            "Spatial"
+        ],
+        "temporal_resolutions": [],
+        "metadata": {
+            "colors": [
+                "#f9837b",
+                "#fffcb9",
+                "#fffcb9",
+                "#32c2c8"
+            ],
+            "opacity": 0.7,
+            "maxValue": 25,
+            "minValue": -25
+        },
+        "config": {
+            "asset_keys": [
+                "cgls_ground_cover"
+            ]
+        },
+        "is_active": true
+    }
+},
+{
+    "model": "analysis.indicator",
+    "pk": 6,
+    "fields": {
+        "name": "Grazing capacity",
+        "description": "",
+        "variable_name": "Grazing capacity",
+        "source": "base",
+        "analysis_types": [
+            "Spatial"
+        ],
+        "temporal_resolutions": [],
+        "metadata": {
+            "colors": [
+                "#f9837b",
+                "#fffcb9",
+                "#fffcb9",
+                "#32c2c8"
+            ],
+            "opacity": 0.7,
+            "maxValue": 25,
+            "minValue": -25
+        },
+        "config": {},
+        "is_active": true
+    }
+},
+{
+    "model": "analysis.indicator",
+    "pk": 7,
+    "fields": {
+        "name": "Soil carbon",
+        "description": "",
+        "variable_name": "Soil carbon",
+        "source": "base",
+        "analysis_types": [
+            "Spatial"
+        ],
+        "temporal_resolutions": [],
+        "metadata": {
+            "colors": [
+                "#f9837b",
+                "#fffcb9",
+                "#fffcb9",
+                "#32c2c8"
+            ],
+            "opacity": 0.7,
+            "maxValue": 25,
+            "minValue": -25
+        },
+        "config": {},
+        "is_active": true
+    }
+},
+{
+    "model": "analysis.indicator",
+    "pk": 8,
+    "fields": {
+        "name": "Soil carbon change",
+        "description": "",
+        "variable_name": "Soil carbon change",
+        "source": "base",
+        "analysis_types": [
+            "Spatial"
+        ],
+        "temporal_resolutions": [],
+        "metadata": {
+            "colors": [
+                "#f9837b",
+                "#fffcb9",
+                "#fffcb9",
+                "#32c2c8"
+            ],
+            "opacity": 0.7,
+            "maxValue": 25,
+            "minValue": -25
+        },
+        "config": {
+            "asset_keys": [
+                "soil_carbon"
+            ]
+        },
+        "is_active": true
+    }
+},
+{
+    "model": "analysis.indicator",
+    "pk": 9,
+    "fields": {
+        "name": "Grassland dominant class",
+        "description": "",
+        "variable_name": "Grassland dominant class",
+        "source": "GPW",
+        "analysis_types": [
+            "Temporal"
+        ],
+        "temporal_resolutions": [
+            "Annual"
+        ],
+        "metadata": {
+            "colors": [
+                "#ff9916",
+                "#ffcd73"
+            ],
+            "opacity": 0.7,
+            "maxValue": 2,
+            "minValue": 1
+        },
+        "config": {
+            "reducer": "mode",
+            "asset_keys": [
+                "grassland_dominant_class"
+            ]
+        },
+        "is_active": true
+    }
+},
+{
+    "model": "analysis.indicator",
+    "pk": 10,
+    "fields": {
+        "name": "Probabilities of Cultivated Grasslands",
+        "description": "",
+        "variable_name": "Probabilities of Cultivated Grasslands",
+        "source": "GPW",
+        "analysis_types": [
+            "Temporal",
+            "Spatial"
+        ],
+        "temporal_resolutions": [
+            "Annual"
+        ],
+        "metadata": {
+            "colors": [
+                "#f5f5f5",
+                "#fdaf27",
+                "#ae7947",
+                "#3a2200"
+            ],
+            "opacity": 0.7,
+            "maxValue": 85,
+            "minValue": 15
+        },
+        "config": {
+            "asset_keys": [
+                "prob_cultivated_grassland"
+            ]
+        },
+        "is_active": true
+    }
+},
+{
+    "model": "analysis.indicator",
+    "pk": 11,
+    "fields": {
+        "name": "Probabilities of Natural/Semi-Natural Grasslands",
+        "description": "",
+        "variable_name": "Probabilities of Natural/Semi-Natural Grasslands",
+        "source": "GPW",
+        "analysis_types": [
+            "Temporal",
+            "Spatial"
+        ],
+        "temporal_resolutions": [
+            "Annual"
+        ],
+        "metadata": {
+            "colors": [
+                "#f7f1e5",
+                "#af8260",
+                "#803d3b",
+                "#322c2b"
+            ],
+            "opacity": 0.7,
+            "maxValue": 85,
+            "minValue": 15
+        },
+        "config": {
+            "asset_keys": [
+                "prob_natural_semi_grassland"
+            ]
+        },
+        "is_active": true
+    }
+}
+]

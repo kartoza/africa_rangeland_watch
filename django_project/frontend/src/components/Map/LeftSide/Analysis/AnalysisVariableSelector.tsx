@@ -7,21 +7,32 @@ import {
   Box,
   Select
 } from "@chakra-ui/react";
-import { Layer } from '../../../../store/layerSlice';
-import { AnalysisData, GroupName } from "../../DataTypes";
+import { useSelector } from "react-redux";
+import { RootState } from "../../../../store";
+import { AnalysisData } from "../../DataTypes";
 
 
 interface Props {
   data: AnalysisData;
-  layers?: Layer[];
+  analysisType: string;
   onSelected: (value: string) => void;
 }
 
 /** Variable selector. */
 export default function AnalysisVariableSelector(
-  { data, layers, onSelected }: Props
+  { data, analysisType, onSelected }: Props
 ) {
+  const { indicators } = useSelector((state: RootState) => state.analysis);
 
+  const filteredIndicators = indicators.filter(
+      indicator => {
+        if (analysisType === 'Temporal') {
+          return indicator.analysis_types.includes(analysisType) && indicator.temporal_resolutions.includes(data.temporalResolution)
+        }
+
+        return indicator.analysis_types.includes(analysisType)
+      }
+  )
   return (
     <AccordionItem>
       <h2>
@@ -47,12 +58,12 @@ export default function AnalysisVariableSelector(
           }
         >
           {
-            layers.filter(layer => layer.group === GroupName.NearRealtimeGroup).map(layer => {
+            filteredIndicators.map(indicator => {
               return <option
-                key={layer.id}
-                value={layer.name}
+                key={indicator.variable}
+                value={indicator.variable}
               >
-                {layer.name}
+                {indicator.name}
               </option>
             })
           }

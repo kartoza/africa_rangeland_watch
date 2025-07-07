@@ -1,11 +1,19 @@
 from django.contrib import admin
 from .models import Dashboard, DashboardWidget
+from dashboard.tasks import generate_dashboard_thumbnails
+
+
+def generate_thumbnail(modeladmin, request, queryset):
+    """Generate thumbnails for selected dashboards."""
+    dashboard_ids = queryset.values_list('uuid', flat=True)
+    generate_dashboard_thumbnails.delay(list(dashboard_ids))
 
 
 @admin.register(Dashboard)
 class DashboardAdmin(admin.ModelAdmin):
     list_display = (
         'uuid',
+        'title',
         'privacy_type',
         'created_at',
         'updated_at',
@@ -23,7 +31,7 @@ class DashboardAdmin(admin.ModelAdmin):
 
     fieldsets = (
         (None, {
-            'fields': ('privacy_type', 'title')
+            'fields': ('privacy_type', 'title', 'thumbnail')
         }),
         ('Associations', {
             'fields': (
@@ -40,6 +48,8 @@ class DashboardAdmin(admin.ModelAdmin):
             'fields': ('created_at', 'updated_at')
         }),
     )
+
+    actions = [generate_thumbnail]
 
     def linked_analysis_results(self, obj):
         """

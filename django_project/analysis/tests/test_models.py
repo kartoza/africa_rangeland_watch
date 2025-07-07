@@ -22,6 +22,32 @@ class UserAnalysisResultsTest(TestCase):
             'path/to/raster/output'
         )
 
+    def test_get_baci_description(self):
+        """Test that the BACI period is correctly formatted."""
+        analysis_result = UserAnalysisResults.objects.create(
+            created_by=self.user,
+            analysis_results={
+                "result": "test",
+                "data": {
+                    "analysisType": "BACI",
+                    "temporalResolution": "Quarterly",
+                    "period": {
+                        "year": 2020,
+                        "quarter": 1
+                    },
+                    "comparisonPeriod": {
+                        "year": [2022],
+                        "quarter": [2]
+                    }
+                }
+            },
+            raster_output_path='path/to/raster/output'
+        )
+        self.assertEqual(
+            analysis_result.description,
+            "Analysis between Q1 2020 and Q2 2022"
+        )
+
 
 class GEEAssetTest(TestCase):
 

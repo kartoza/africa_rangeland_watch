@@ -16,7 +16,8 @@ import {
   MenuList,
   MenuItem,
   useToast,
-  Input
+  Input,
+  Textarea
 } from '@chakra-ui/react';
 import {
   DndContext,
@@ -60,8 +61,11 @@ const DynamicDashboard: React.FC<{
   const dispatch = useDispatch<AppDispatch>();
   const [isScrolled, setIsScrolled] = useState(false);
   const [dashboardTitle, setDashboardTitle] = useState('Dynamic Dashboard');
+  const [dashboardDescription, setDashboardDescription] = useState('');
   const [isEditingDashboardTitle, setIsEditingDashboardTitle] = useState(false);
+  const [isEditingDashboardDescription, setIsEditingDashboardDescription] = useState(false);
   const [editDashboardTitle, setEditDashboardTitle] = useState(dashboardTitle);
+  const [editDashboardDescription, setEditDashboardDescription] = useState(dashboardDescription);
   const toast = useToast();
   const currentDashboard = useSelector(
     (state: RootState) => state.dashboard.currentDashboard
@@ -122,6 +126,60 @@ const DynamicDashboard: React.FC<{
     let newWidgets: Widget[] = [];
     const analysisResult = item.analysis_results || {};
     const data = analysisResult.data || {};
+
+    const addTemporalChart = (analysisData: any) => {
+      const chartConstraint = widgetConstraints['chart'];
+      const mapConstraint = widgetConstraints['map'];
+      // add chart widgets
+      newWidgets.push({
+        id: item.id + '-barchart-new',
+        type: 'chart',
+        title: item.name || 'Temporal Analysis',
+        size: chartConstraint.minWidth,
+        height: chartConstraint.recommendedHeight,
+        data: analysisData,
+        content: null,
+        config: {
+          'chartType': 'bar',
+        },
+        analysis_result_id: item.id,
+      });
+      newWidgets.push({
+        id: item.id + '-linechart-new',
+        type: 'chart',
+        title: item.name || 'Temporal Analysis',
+        size: chartConstraint.minWidth,
+        height: chartConstraint.recommendedHeight,
+        data: analysisData,
+        content: null,
+        config: {
+          'chartType': 'line',
+        },
+        analysis_result_id: item.id,
+      });
+      summaryAdded = summaryAdded === '1 widget' ? '3 widgets' : '4 widgets';
+      // add map widget for each raster output
+      const rasterOutputList = item.raster_output_list || [];
+      if (rasterOutputList.length > 0) {
+        rasterOutputList.forEach((raster, index) => {
+          newWidgets.push({
+            id: `${item.id}-map-${index}-new`,
+            type: 'map',
+            title: mapWidgetTitle(raster.name) || `Map ${index + 1}`,
+            size: mapConstraint.minWidth,
+            height: mapConstraint.recommendedHeight,
+            data: raster,
+            content: null,
+            config: {
+              "raster_output_idx": index
+            },
+            analysis_result_id: item.id,
+          });
+        });
+        summaryAdded += ` and ${rasterOutputList.length} map widget${rasterOutputList.length > 1 ? 's' : ''}`;
+      }
+    }
+
     if (!data) {
       toast({
         title: 'No Data Available',
@@ -138,13 +196,13 @@ const DynamicDashboard: React.FC<{
     }
     // analyisis type
     const analysisType = data.analysisType;
-    if (analysisType === 'Baseline') {
+    if (['Baseline', 'BACI'].includes(analysisType)) {
       const constraints = widgetConstraints['table'];
       // add table widget
       newWidgets.push({
         id: item.id + '-table-new',
         type: 'table',
-        title: item.name || 'Baseline Analysis',
+        title: item.name || `${analysisType} Analysis`,
         size: constraints.minWidth,
         height: constraints.recommendedHeight,
         data: analysisResult,
@@ -153,6 +211,14 @@ const DynamicDashboard: React.FC<{
       })
       summaryAdded = '1 table widget';
     } else if (analysisType === 'Spatial') {
+      const newAnalysis = JSON.parse(JSON.stringify(analysisResult));
+      newAnalysis.results.spatial.data = analysisResult.data;
+      newAnalysis.results.temporal.data = analysisResult.data;
+      newAnalysis.results.temporal.data = {
+        ...newAnalysis.results.temporal.data,
+        analysisType: 'Temporal'
+      } 
+
       const chartConstraint = widgetConstraints['chart'];
       const mapConstraint = widgetConstraints['map'];
       // add chart widget
@@ -162,7 +228,7 @@ const DynamicDashboard: React.FC<{
         title: item.name || 'Spatial Analysis',
         size: chartConstraint.minWidth,
         height: chartConstraint.recommendedHeight,
-        data: analysisResult,
+        data: newAnalysis.results.spatial,
         content: null,
         config: {},
         analysis_result_id: item.id,
@@ -187,57 +253,10 @@ const DynamicDashboard: React.FC<{
       } else {
         summaryAdded = '1 widget';
       }
+
+      addTemporalChart(newAnalysis.results.temporal);
     } else if (analysisType === 'Temporal') {
-      const chartConstraint = widgetConstraints['chart'];
-      const mapConstraint = widgetConstraints['map'];
-      // add chart widgets
-      newWidgets.push({
-        id: item.id + '-barchart-new',
-        type: 'chart',
-        title: item.name || 'Temporal Analysis',
-        size: chartConstraint.minWidth,
-        height: chartConstraint.recommendedHeight,
-        data: analysisResult,
-        content: null,
-        config: {
-          'chartType': 'bar',
-        },
-        analysis_result_id: item.id,
-      });
-      newWidgets.push({
-        id: item.id + '-linechart-new',
-        type: 'chart',
-        title: item.name || 'Temporal Analysis',
-        size: chartConstraint.minWidth,
-        height: chartConstraint.recommendedHeight,
-        data: analysisResult,
-        content: null,
-        config: {
-          'chartType': 'line',
-        },
-        analysis_result_id: item.id,
-      });
-      summaryAdded = '2 widgets';
-      // add map widget for each raster output
-      const rasterOutputList = item.raster_output_list || [];
-      if (rasterOutputList.length > 0) {
-        rasterOutputList.forEach((raster, index) => {
-          newWidgets.push({
-            id: `${item.id}-map-${index}-new`,
-            type: 'map',
-            title: mapWidgetTitle(raster.name) || `Map ${index + 1}`,
-            size: mapConstraint.minWidth,
-            height: mapConstraint.recommendedHeight,
-            data: raster,
-            content: null,
-            config: {
-              "raster_output_idx": index
-            },
-            analysis_result_id: item.id,
-          });
-        });
-        summaryAdded += ` and ${rasterOutputList.length} map widget${rasterOutputList.length > 1 ? 's' : ''}`;
-      }
+      addTemporalChart(analysisResult);
     }
 
     setWidgets((prev) => [...prev, ...newWidgets]);
@@ -368,6 +387,14 @@ const DynamicDashboard: React.FC<{
     );
   };
 
+  const changeConfigWidget = (id: string, config: any) => {
+    setWidgets((prev) =>
+      prev.map((widget) =>
+        widget.id === id ? { ...widget, config } : widget
+      )
+    );
+  };
+
   // Dashboard title editing functions
   const handleDashboardTitleSave = () => {
     if (editDashboardTitle.trim()) {
@@ -386,6 +413,27 @@ const DynamicDashboard: React.FC<{
       handleDashboardTitleSave();
     } else if (e.key === 'Escape') {
       handleDashboardTitleCancel();
+    }
+  };
+
+  // Dashboard descripton editing functions
+  const handleDashboardDescriptionSave = () => {
+    if (editDashboardDescription.trim()) {
+      setDashboardDescription(editDashboardDescription.trim());
+      setIsEditingDashboardDescription(false);
+    }
+  };
+
+  const handleDashboardDescriptionCancel = () => {
+    setEditDashboardDescription(dashboardDescription);
+    setIsEditingDashboardDescription(false);
+  };
+
+  const handleDashboardDescriptionKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleDashboardDescriptionSave();
+    } else if (e.key === 'Escape') {
+      handleDashboardDescriptionCancel();
     }
   };
 
@@ -425,6 +473,10 @@ const DynamicDashboard: React.FC<{
     setDashboardTitle(config.title || 'Dashboard');
     setIsEditingDashboardTitle(false);
     setEditDashboardTitle(config.title || 'Dynamic Dashboard');
+
+    setDashboardDescription(config.description || '');
+    setIsEditingDashboardDescription(false);
+    setEditDashboardDescription(config.description || '');
   };
 
   // Save configuration function
@@ -433,6 +485,7 @@ const DynamicDashboard: React.FC<{
       version: '1.0',
       last_updated: new Date().toISOString(),
       title: dashboardTitle,
+      description: dashboardDescription,
       widgets: widgets.map((widget) => ({
         id: widget.id,
         type: widget.type,
@@ -501,7 +554,7 @@ const DynamicDashboard: React.FC<{
         px={6}
       >
         <Flex justify="space-between" align="center" wrap="wrap" gap={4}>
-          <VStack align="start" spacing={1}>
+          <VStack align="start" spacing={1} className={"vstack"} width={"50vw"}>
             {isEditingDashboardTitle ? (
               <HStack spacing={2}>
                 <Input
@@ -544,6 +597,48 @@ const DynamicDashboard: React.FC<{
                   />
                 </EditableWrapper>                
               </HStack>
+            )}
+            {isEditingDashboardDescription ? (
+              <HStack spacing={2}>
+                <Textarea
+                  value={editDashboardDescription}
+                  onChange={(e) => setEditDashboardDescription(e.target.value)}
+                  onKeyDown={handleDashboardDescriptionKeyPress}
+                  autoFocus
+                  minWidth={"50vw"}
+                  resize="both"
+                  // autoresize
+                />
+                <IconButton
+                  icon={<FiCheck size={16} />}
+                  size="sm"
+                  colorScheme="green"
+                  aria-label="Save dashboard description"
+                  onClick={handleDashboardDescriptionSave}
+                />
+                <IconButton
+                  icon={<FiSlash size={16} />}
+                  size="sm"
+                  variant="ghost"
+                  aria-label="Cancel edit"
+                  onClick={handleDashboardDescriptionCancel}
+                />
+              </HStack>
+            ) : (
+                <HStack spacing={2} >
+                  <Text size="lg" color="black">{dashboardDescription}</Text>
+                  <EditableWrapper isEditable={isEditable}>
+                    <IconButton
+                      icon={<FiEdit2 size={16} />}
+                      size="sm"
+                      variant="ghost"
+                      aria-label="Edit dashboard description"
+                      onClick={() => setIsEditingDashboardDescription(true)}
+                      opacity={0.6}
+                      _hover={{ opacity: 1 }}
+                    />
+                  </EditableWrapper>                
+                </HStack>
             )}
           </VStack>
           <HStack spacing={3}>
@@ -607,6 +702,7 @@ const DynamicDashboard: React.FC<{
                     onHeightChange={changeHeightWidget}
                     onContentChange={changeContentWidget}
                     onTitleChange={changeTitleWidget}
+                    onConfigChange={changeConfigWidget}
                     isEditable={isEditable}
                   />
                 ))}

@@ -57,6 +57,7 @@ const MapWidget: React.FC<{ widgetId: string, data: any, height: WidgetHeight, c
             initialBound={rasterLayer?.bounds} layer={layer} selectedCommmunityIds={featuresIds}
             referenceLayer={rasterLayer?.analysis.reference_layer}
             referenceLayerId={rasterLayer?.analysis.reference_layer_id}
+            config={config}
           />
         </Box>
         

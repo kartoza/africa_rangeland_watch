@@ -68,6 +68,14 @@ class AnalysisAPI(APIView):
         elif data['analysisType'] == 'Baseline':
             analysis_dict = AnalysisRunner.get_analysis_dict_baseline(data)
             kwargs['custom_geom'] = data.get('custom_geom', None)
+        elif data['analysisType'] == 'BACI':
+            reference_layer_geom = (
+                AnalysisRunner.get_reference_layer_geom(data)
+            )
+            analysis_dict = AnalysisRunner.get_analysis_dict_baci(data)
+            kwargs = {
+                'reference_layer': reference_layer_geom
+            }
 
         analysis_cache = AnalysisResultsCacheUtils({
             'locations': locations,
@@ -87,9 +95,12 @@ class AnalysisAPI(APIView):
                 f'{data.get('reference_layer_id')}!'
             )
 
-        analysis_dict = AnalysisRunner.get_analysis_dict_spatial(data)
+        (
+            spatial_analysis_dict,
+            temporal_analysis_dict
+        ) = AnalysisRunner.get_analysis_dict_spatial(data)
         filter_start_date, filter_end_date = spatial_get_date_filter(
-            analysis_dict
+            spatial_analysis_dict
         )
 
         valid_filters, start_meta, end_meta = (
@@ -105,13 +116,23 @@ class AnalysisAPI(APIView):
                 f'{date.fromisoformat(end_meta).year}'
             )
 
+
+    def validate_baci_analysis(self, data):
+        """Validate BACI analysis inputs."""
+        reference_layer_geom = AnalysisRunner.get_reference_layer_geom(data)
+        if reference_layer_geom is None:
+            raise ValueError(
+                'Invalid reference_layer with id '
+                f'{data.get('reference_layer_id')}!'
+            )
+
     def post(self, request, *args, **kwargs):
         """Fetch list of Landscape."""
         data = request.data
         try:
             if (
                 data['analysisType'] not in
-                ['Baseline', 'Temporal', 'Spatial']
+                ['Baseline', 'Temporal', 'Spatial', 'BACI']
             ):
                 raise ValueError('Invalid analysis type')
 
@@ -134,6 +155,8 @@ class AnalysisAPI(APIView):
             # validate spatial analysis
             if data['analysisType'] == 'Spatial':
                 self.validate_spatial_analysis(data)
+            elif data['analysisType'] == 'BACI':
+                self.validate_baci_analysis(data)
 
             # Create task object
             analysis_task = AnalysisTask.objects.create(
