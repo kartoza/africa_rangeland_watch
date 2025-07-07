@@ -9,15 +9,15 @@ import {
   useDisclosure,
   useToast,
   Divider,
-  Heading,
   Card,
   CardBody,
   Tag,
   TagLabel,
+  Heading,
   Image
 } from "@chakra-ui/react";
-import { format } from 'date-fns';
 import { FaFilter } from "react-icons/fa";
+import { format } from 'date-fns';
 import Header from "../../components/Header";
 import { Helmet } from "react-helmet";
 import Footer from "../../components/Footer";
@@ -29,6 +29,7 @@ import DashboardFilters from "../../components/DashboardFilters";
 import CreateDashboardModal from "../../components/CreateDashboard";
 import Pagination from "../../components/Pagination";
 import ConfirmDeleteDialog from "../../components/ConfirmDeleteDialog";
+
 
 interface DashboardListProps {
   allDashboards: boolean;

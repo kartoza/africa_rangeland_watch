@@ -22,6 +22,14 @@ export interface Analysis {
   results: any;
 }
 
+export interface Indicator {
+  name: string;
+  variable: string;
+  source: string;
+  analysis_types: string[];
+  temporal_resolutions: string[];
+}
+
 export interface CustomGeomSelection {
   reference_layer: object;
   reference_layer_id: string | number;
@@ -45,6 +53,7 @@ interface AnalysisState extends DataState {
   analysisTaskId?: number | null;
   analysisTaskStatus?: string;
   analysisTaskStartTime?: number | null;
+  indicators: Indicator[]; // this is from API response
 }
 
 const initialAnalysisState: AnalysisState = {
@@ -56,7 +65,8 @@ const initialAnalysisState: AnalysisState = {
   analysisData: { analysisType: Types.BASELINE },
   analysisTaskId: null,
   analysisTaskStatus: null,
-  analysisTaskStartTime: null
+  analysisTaskStartTime: null,
+  indicators: []
 };
 
 
@@ -106,6 +116,14 @@ export const fetchAnalysisStatus = createAsyncThunk(
       }
     }
   }
+);
+
+export const fetchAnalysisIndicator = createAsyncThunk(
+  'analysis/indicator',
+  async () => {
+      const response = await axios.get('/frontend-api/indicator/');
+      return response.data;
+    }
 );
 
 // try to parse the error
@@ -265,6 +283,16 @@ export const analysisSlice = createSlice({
         state.analysis = null;
         state.referenceLayerDiff = null;
         state.analysisTaskStartTime = null;
+      })
+      .addCase(fetchAnalysisIndicator.pending, (state) => {
+        state.error = null;
+      })
+      .addCase(fetchAnalysisIndicator.fulfilled, (state, action: PayloadAction<Indicator[]>) => {
+        state.indicators = action.payload;
+      })
+      .addCase(fetchAnalysisIndicator.rejected, (state, action) => {
+        state.error = parseError(action);
+        state.indicators = null;
       });
   }
 });

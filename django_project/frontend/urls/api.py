@@ -23,6 +23,7 @@ from frontend.api_views.layers import (
     ExportLayerRequestStatus,
     DownloadLayerExportedFile
 )
+from frontend.api_views.indicator import IndicatorAPI
 
 router = DefaultRouter()
 router.register(r'landscapes', LandscapeViewSet, basename='landscapes')
@@ -80,7 +81,17 @@ layers_urls = [
     )
 ]
 
-urlpatterns = base_map_urls + layers_urls + router.urls + [
+# Indicator APIs
+indicator_urls = [
+    path(
+        'indicator/',
+        IndicatorAPI.as_view(),
+        name='indicator'
+    )
+]
+
+
+urlpatterns = base_map_urls + layers_urls + indicator_urls + router.urls + [
     # Custom route for vector tiles
     path(
         'landscapes/vector_tile/<int:z>/<int:x>/<int:y>/',
