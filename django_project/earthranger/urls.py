@@ -1,9 +1,13 @@
 from django.urls import path, re_path
-from .views import list_events, fetch_event_details, EarthRangerImageProxyView
+from .views import (
+    ListEventsView,
+    fetch_event_details,
+    EarthRangerImageProxyView
+)
 
 
 urlpatterns = [
-    path("earthranger/events/", list_events, name="list_events"),
+    path("earthranger/events/", ListEventsView.as_view(), name="list_events"),
     path(
         "earthranger/events/<str:event_id>/",
         fetch_event_details,
