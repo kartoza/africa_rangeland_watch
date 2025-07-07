@@ -1652,7 +1652,10 @@ def spatial_get_date_filter(analysis_dict):
     # Get reference values based on temporal resolution
     start_year = analysis_dict['Spatial'].get('Annual', {}).get('ref')
     end_year = analysis_dict['Spatial'].get('Annual', {}).get('test')
-    end_year = end_year[0] if isinstance(end_year, list) else end_year
+    try:
+        end_year = end_year[0] if isinstance(end_year, list) else end_year
+    except IndexError:
+        end_year = ''
 
     if t_resolution == 'Annual':
 
@@ -1672,7 +1675,10 @@ def spatial_get_date_filter(analysis_dict):
             'Quarterly', {}
         ).get('ref')
         end_quarter = analysis_dict['Spatial'].get('Quarterly', {}).get('test')
-        end_quarter = end_quarter[0] if isinstance(end_quarter, list) else end_quarter
+        try:
+            end_quarter = end_quarter[0] if isinstance(end_quarter, list) else end_quarter
+        except IndexError:
+            end_quarter = ''
 
         if start_quarter and start_year:
             # Convert quarter to month (Q1=1, Q2=4, Q3=7, Q4=10)
@@ -1708,7 +1714,10 @@ def spatial_get_date_filter(analysis_dict):
     elif t_resolution == 'Monthly':
         start_month = analysis_dict['Spatial'].get('Monthly', {}).get('ref')
         end_month = analysis_dict['Spatial'].get('Monthly', {}).get('test')
-        end_month = end_month[0] if isinstance(end_month, list) else end_month
+        try:
+            end_month = end_month[0] if isinstance(end_month, list) else end_month
+        except IndexError:
+            end_month = ''
 
         if start_month and start_year:
             filter_start_date = datetime.date(

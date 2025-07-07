@@ -31,7 +31,7 @@ class TestSpatialDateFilter(TestCase):
             'Spatial': {
                 'Annual': {
                     'ref': 2020,
-                    'test': 2021
+                    'test': [2021]
                 },
                 'Quarterly': {
                     'ref': '',
@@ -75,11 +75,11 @@ class TestSpatialDateFilter(TestCase):
             'Spatial': {
                 'Annual': {
                     'ref': 2020,
-                    'test': 2021
+                    'test': [2021]
                 },
                 'Quarterly': {
                     'ref': '2',
-                    'test': '3'
+                    'test': ['3']
                 },
                 'Monthly': {
                     'ref': '',
@@ -119,7 +119,7 @@ class TestSpatialDateFilter(TestCase):
             'Spatial': {
                 'Annual': {
                     'ref': 2020,
-                    'test': 2021
+                    'test': [2021]
                 },
                 'Quarterly': {
                     'ref': '',
@@ -127,7 +127,7 @@ class TestSpatialDateFilter(TestCase):
                 },
                 'Monthly': {
                     'ref': '4',
-                    'test': '6'
+                    'test': ['6']
                 }
             }
         }
@@ -187,7 +187,7 @@ class TestSpatialDateFilter(TestCase):
             'Spatial': {
                 'Annual': {
                     'ref': 2020,
-                    'test': ''
+                    'test': []
                 },
                 'Quarterly': {
                     'ref': '',
@@ -227,7 +227,7 @@ class TestSpatialDateFilter(TestCase):
             'Spatial': {
                 'Annual': {
                     'ref': '',
-                    'test': '2021'
+                    'test': ['2021']
                 },
                 'Quarterly': {
                     'ref': '',
