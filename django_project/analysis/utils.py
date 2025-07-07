@@ -3,7 +3,8 @@ import json
 import os
 import logging
 import rasterio
-import datetime
+from datetime import date
+from dateutil.relativedelta import relativedelta
 from pydrive2.auth import GoogleAuth
 from pydrive2.drive import GoogleDrive
 from oauth2client.service_account import ServiceAccountCredentials
@@ -147,7 +148,7 @@ def get_cog_bounds(cog_path):
         return None
 
 
-def split_dates_by_year(start_date: datetime.date, end_date: datetime.date):
+def split_dates_by_year(start_date: date, end_date: date):
     """Split a date range into yearly intervals."""
     if start_date > end_date:
         raise ValueError("start_date must be before or equal to end_date")
@@ -156,9 +157,47 @@ def split_dates_by_year(start_date: datetime.date, end_date: datetime.date):
     results = []
 
     while current_year <= end_date.year:
-        year_start = max(start_date, datetime.date(current_year, 1, 1))
-        year_end = min(end_date, datetime.date(current_year, 12, 31))
+        year_start = max(start_date, date(current_year, 1, 1))
+        year_end = min(end_date, date(current_year, 12, 31))
         results.append((year_start, year_end))
         current_year += 1
 
     return results
+
+
+def get_date_range_for_analysis(temporal_resolution, year, quarter, month):
+    """Get date range for analysis based on temporal resolution."""
+    start_date = date(year, 1, 1)
+    end_date = date(year + 1, 1, 1)
+    resolution = 'year'
+    resolution_step = 1
+    month_filter = None
+    if temporal_resolution == 'Monthly':
+        start_date = start_date.replace(
+            month=month
+        )
+        end_date = start_date + relativedelta(months=1)
+        month_filter = month
+        resolution = 'month'
+    elif temporal_resolution == 'Quarterly':
+        quarter_dict = {
+            1: 1,
+            2: 4,
+            3: 7,
+            4: 10
+        }
+        start_date = start_date.replace(
+            month=quarter_dict[quarter]
+        )
+        end_date = start_date + relativedelta(months=3)
+        resolution_step = 3
+        month_filter = quarter_dict[quarter]
+        resolution = 'month'
+
+    return {
+        'start_date': start_date,
+        'end_date': end_date,
+        'resolution': resolution,
+        'resolution_step': resolution_step,
+        'month_filter': month_filter
+    }

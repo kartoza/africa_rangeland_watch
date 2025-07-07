@@ -521,6 +521,42 @@ class AnalysisAPITest(BaseAPIViewTest):
         mock_create_task.assert_not_called()
         mock_run_task.assert_not_called()
 
+    @patch("analysis.tasks.run_analysis_task.delay")
+    @patch("analysis.models.AnalysisTask.objects.create")
+    def test_post_baci_analysis_validation(self, mock_create_task, mock_run_task):
+        """Test POST method with BACI analysis validation failure."""
+        mock_create_task.return_value = MagicMock(
+            id=1,
+            created_at=timezone.now(),
+            save=MagicMock()
+        )
+
+        payload = {
+            'locations': [],
+            "analysisType": "BACI",
+            "landscape": "1",
+            "variable": "NDVI",
+            "temporalResolution": "Annual",
+            "period": {"year": "2015"},
+            "comparisonPeriod": {"year": [2019]},
+            "reference_layer": {},  # Invalid reference layer
+        }
+
+        view = AnalysisAPI.as_view()
+        request = self.factory.post(
+            reverse("frontend-api:analysis"),
+            payload,
+            format="json"
+        )
+        request.user = self.superuser
+
+        response = view(request)
+
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("Invalid reference_layer with id", response.data["error"])
+        mock_create_task.assert_not_called()
+        mock_run_task.assert_not_called()
+
 
 class FetchAnalysisTaskAPITest(BaseAPIViewTest):
     """FetchAnalysisTaskAPI test case."""

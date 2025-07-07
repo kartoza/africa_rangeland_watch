@@ -180,6 +180,42 @@ class AnalysisRunner:
         return spatial_analysis_dict, temporal_analysis_dict
 
     @staticmethod
+    def get_analysis_dict_baci(data):
+        """Get analysis dictionary for BACI."""
+        analysis_dict = {
+            'landscape': data['landscape'],
+            'analysisType': 'BACI',
+            'variable': data['variable'],
+            't_resolution': data['temporalResolution'],
+            'Temporal': {
+                'Annual': {
+                    'ref': data.get('period', {}).get('year', ''),
+                    'test': [data.get('comparisonPeriod', {}).get('year', '')]
+                },
+                'Quarterly': {
+                    'ref': data.get('period', {}).get('quarter', '')
+                    if data['temporalResolution'] == 'Quarterly' else '',
+                    'test': [
+                        data.get('comparisonPeriod', {}).get('quarter', '')
+                    ]
+                    if data['temporalResolution'] == 'Quarterly' else ''
+                },
+                'Monthly': {
+                    'ref': data.get('period', {}).get('month', '')
+                    if data['temporalResolution'] == 'Monthly' else '',
+                    'test': [data.get('comparisonPeriod', {}).get('month', '')]
+                    if data['temporalResolution'] == 'Monthly' else ''
+                }
+            },
+            'Spatial': {
+                'Annual': '',
+                'Quarterly': ''
+            }
+        }
+
+        return analysis_dict
+
+    @staticmethod
     def get_reference_layer_geom(data):
         """Retrieve selected reference layer and return its geom."""
         layers = data['reference_layer']
@@ -615,6 +651,34 @@ class AnalysisRunner:
             'temporal': {'results': results_temporal}
         }
 
+    def run_baci_analysis(self, data):
+        reference_layer_geom = self.get_reference_layer_geom(data)
+        if reference_layer_geom is None:
+            raise ValueError(
+                'Invalid reference_layer with id '
+                f'{data.get('reference_layer_id')}!'
+            )
+
+        analysis_dict = self.get_analysis_dict_baci(data)
+        analysis_cache = AnalysisResultsCacheUtils({
+            'locations': data.get('locations', []),
+            'analysis_dict': analysis_dict,
+            'args': [],
+            'kwargs': {
+                'reference_layer': reference_layer_geom
+            }
+        })
+        output = analysis_cache.get_analysis_cache()
+        if output:
+            return output
+
+        initialize_engine_analysis()
+        return run_analysis(
+            locations=data.get('locations', []) or [],
+            analysis_dict=analysis_dict,
+            reference_layer=reference_layer_geom
+        )
+
     def run(self, data):
         """Run the analysis."""
         if data['analysisType'] == 'Baseline':
@@ -623,5 +687,7 @@ class AnalysisRunner:
             return self.run_temporal_analysis(data)
         elif data['analysisType'] == 'Spatial':
             return self.run_spatial_analysis(data)
+        elif data['analysisType'] == 'BACI':
+            return self.run_baci_analysis(data)
         else:
             raise ValueError('Invalid analysis type!')

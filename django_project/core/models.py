@@ -51,7 +51,7 @@ class Preferences(SingletonModel):
         help_text="Map initial bound"
     )
 
-    spatial_reference_layer_max_area = models.IntegerField(
+    spatial_reference_layer_max_area = models.BigIntegerField(
         default=500000000,
         help_text=(
             "The maximum area in square meters for spatial reference layer."

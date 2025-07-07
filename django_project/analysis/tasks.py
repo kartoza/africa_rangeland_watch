@@ -12,8 +12,6 @@ import tempfile
 import shutil
 import time
 import subprocess
-from datetime import date
-from dateutil.relativedelta import relativedelta
 from django.utils import timezone
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -29,11 +27,16 @@ from analysis.models import (
 from analysis.analysis import (
     export_image_to_drive,
     initialize_engine_analysis, InputLayer,
-    get_rel_diff, calculate_temporal_to_img,
+    get_rel_diff, calculate_temporal_modis_veg,
     spatial_get_date_filter
 )
 from analysis.runner import AnalysisRunner
-from analysis.utils import get_gdrive_file, delete_gdrive_file, get_cog_bounds
+from analysis.utils import (
+    get_gdrive_file,
+    delete_gdrive_file,
+    get_cog_bounds,
+    get_date_range_for_analysis
+)
 from layers.models import InputLayer as InputLayerFixture
 from layers.utils import upload_file
 
@@ -250,32 +253,17 @@ def generate_temporal_analysis_raster_output(raster_output_id):
     initialize_engine_analysis()
 
     # get date filter
-    start_date = date(raster_output.analysis.get('year'), 1, 1)
-    end_date = date(raster_output.analysis.get('year') + 1, 1, 1)
-    resolution = 'year'
-    resolution_step = 1
-    month_filter = None
-    if temporal_resolution == 'Monthly':
-        start_date = start_date.replace(
-            month=raster_output.analysis.get('month')
-        )
-        end_date = start_date + relativedelta(months=1)
-        month_filter = raster_output.analysis.get('month')
-        resolution = 'month'
-    elif temporal_resolution == 'Quarterly':
-        quarter_dict = {
-            1: 1,
-            2: 4,
-            3: 7,
-            4: 10
-        }
-        start_date = start_date.replace(
-            month=quarter_dict[raster_output.analysis.get('quarter')]
-        )
-        end_date = start_date + relativedelta(months=3)
-        resolution_step = 3
-        month_filter = quarter_dict[raster_output.analysis.get('quarter')]
-        resolution = 'month'
+    date_range_result = get_date_range_for_analysis(
+        temporal_resolution,
+        raster_output.analysis.get('year'),
+        raster_output.analysis.get('quarter'),
+        raster_output.analysis.get('month')
+    )
+    start_date = date_range_result['start_date']
+    end_date = date_range_result['end_date']
+    resolution = date_range_result['resolution']
+    resolution_step = date_range_result['resolution_step']
+    month_filter = date_range_result['month_filter']
 
     logger.info(
         f'Generating img {resolution} ({resolution_step}) '
@@ -283,6 +271,8 @@ def generate_temporal_analysis_raster_output(raster_output_id):
     )
     # get aoi
     aoi = _get_bounds(raster_output)
+    input_layer = InputLayer()
+    selected_area = input_layer.get_selected_area(aoi, False)
 
     # find input layer for get the vis param config
     input_layer_fixture = InputLayerFixture.objects.get(
@@ -290,11 +280,10 @@ def generate_temporal_analysis_raster_output(raster_output_id):
     )
 
     # generate the image
-    img = calculate_temporal_to_img(
-        aoi, start_date.isoformat(), end_date.isoformat(),
+    img = calculate_temporal_modis_veg(
+        selected_area, start_date.isoformat(), end_date.isoformat(),
         resolution, resolution_step,
-        'bare' if raster_output.analysis.get('variable') == 'Bare ground' else
-        raster_output.analysis.get('variable').lower()
+        raster_output.analysis.get('variable')
     )
     if temporal_resolution == 'Annual':
         img = img.filter(
