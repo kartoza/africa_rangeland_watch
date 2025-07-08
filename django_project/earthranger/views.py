@@ -10,7 +10,10 @@ from django.http import Http404, HttpResponse
 from django.views.decorators.cache import cache_page
 from django.utils.decorators import method_decorator
 from rest_framework.views import APIView
-from earthranger.serializers import EarthRangerEventsSerializer
+from earthranger.serializers import (
+    EarthRangerEventsSerializer,
+    EarthRangerEventsSimpleSerializer
+)
 from earthranger.models import EarthRangerEvents
 from core.pagination import Pagination
 
@@ -40,7 +43,11 @@ class ListEventsView(ListAPIView):
         if event_type:
             queryset = queryset.filter(data__event_type=event_type)
         if event_category:
-            queryset = queryset.filter(data__event_category=event_category)
+            queryset = queryset.filter(
+                data__event_category=event_category
+            )
+
+        queryset = queryset.order_by("-data__time")
 
         return queryset
 
@@ -53,34 +60,14 @@ class ListEventsView(ListAPIView):
         page = self.paginate_queryset(queryset)
         if page is not None:
             # Extract data field from each event
-            event_data = [event.data for event in page]
             simple = request.GET.get(
                 "simple", "false"
             ).lower() in ["true", "1", "yes"]
+            event_data = [event.data for event in page]
             if simple:
-                pass
-                event_data = [
-                    {
-                        "id": event.get("id"),
-                        "event_type": event.get("event_type", "Unknown"),
-                        "time": event.get("time", "Unknown"),
-                        "reported_by": event.get(
-                            "reported_by", {}
-                        ).get("name", "Unknown"),
-                        "location": event.get("location", {}),
-                        "priority_label": event.get(
-                            "priority_label", "Unknown"
-                        ),
-                        "event_details": {
-                            "Comment": event.get(
-                                "event_details", {}
-                            ).get("Comment", "Unknown"),
-                            "Auc_vill_name": event.get(
-                                "event_details", {}
-                            ).get("Auc_vill_name", "Unknown")
-                        },
-                    } for event in event_data
-                ]
+                event_data = EarthRangerEventsSimpleSerializer(
+                    page, many=True
+                ).data
             return self.get_paginated_response(event_data)
 
         # If pagination is not applied

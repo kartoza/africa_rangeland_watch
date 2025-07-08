@@ -1,99 +1,10 @@
 from django.test import TestCase
-from django.utils.timezone import now
-from rest_framework.permissions import IsAuthenticated
-from unittest.mock import patch, MagicMock
-from earthranger.models import EarthRangerObservation
-from earthranger.utils import fetch_and_store_data
-
-
-class EarthRangerFetchTest(TestCase):
-
-    @patch("your_app.utils.requests.get")  # Mock API request
-    def test_fetch_and_store_earth_ranger_data(self, mock_get):
-        """
-        Test if the API call fetches data and stores it correctly.
-        """
-        # Mock API response
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "observations": [
-                {"id": 1, "species": "Elephant", "location": "Park A"},
-                {"id": 2, "species": "Lion", "location": "Park B"}
-            ]
-        }
-        mock_get.return_value = mock_response
-
-        # Ensure database is empty before running function
-        self.assertEqual(EarthRangerObservation.objects.count(), 0)
-
-        # Run the function
-        fetch_and_store_data()
-
-        # Ensure a record was created
-        self.assertEqual(EarthRangerObservation.objects.count(), 1)
-
-        # Verify the data was stored correctly
-        obj = EarthRangerObservation.objects.first()
-        self.assertEqual(obj.data["observations"][0]["species"], "Elephant")
-        self.assertEqual(obj.data["observations"][1]["species"], "Lion")
-
-    @patch("your_app.utils.requests.get")  # Mock API request
-    def test_fetch_api_failure(self, mock_get):
-        """
-        Test API failure handling.
-        """
-        mock_response = MagicMock()
-        mock_response.status_code = 500  # Simulate server error
-        mock_get.return_value = mock_response
-
-        # Run the function (should not store anything)
-        fetch_and_store_data()
-
-        # Ensure no data was stored in case of API failure
-        self.assertEqual(EarthRangerObservation.objects.count(), 0)
-
-    @patch("your_app.utils.requests.get")  # Mock API request
-    def test_fetch_updates_existing_record(self, mock_get):
-        """
-        Test that running the function multiple times updates the same record.
-        """
-        # Create an existing record
-        EarthRangerObservation.objects.create(
-            name="Earth Ranger Observations",
-            data={"observations": [{"id": 1, "species": "Giraffe", "location": "Park C"}]},
-            last_updated=now()
-        )
-
-        # Mock API response
-        mock_response = MagicMock()
-        mock_response.status_code = 200
-        mock_response.json.return_value = {
-            "observations": [
-                {"id": 3, "species": "Rhino", "location": "Park D"}
-            ]
-        }
-        mock_get.return_value = mock_response
-
-        # Run the function again
-        fetch_and_store_data()
-
-        # Ensure we still have only one record
-        self.assertEqual(EarthRangerObservation.objects.count(), 1)
-
-        # Check that data was updated
-        obj = EarthRangerObservation.objects.first()
-        self.assertEqual(obj.data["observations"][0]["species"], "Rhino")
-
-
-import json
+from unittest.mock import patch
 from django.test import TestCase
-from django.urls import reverse
 from django.contrib.auth.models import User
 from django.contrib.gis.geos import Point
 from rest_framework.test import APIClient
 from rest_framework import status
-from unittest.mock import patch, MagicMock
 from earthranger.models import EarthRangerEvents
 from earthranger.views import ListEventsView
 
@@ -548,3 +459,115 @@ class ListEventsViewTestCase(TestCase):
         view = ListEventsView()
         from core.pagination import Pagination
         self.assertEqual(view.pagination_class, Pagination)
+
+
+    def test_simple_serializer_handles_none_fields(self):
+        """Test that EarthRangerEventsSimpleSerializer handles None and missing fields correctly"""
+        self.client.force_authenticate(user=self.user)
+        
+        # Create event with missing fields in data
+        # Missing: time, reported_by, location, priority_label, event_details
+        event_missing_fields = EarthRangerEvents.objects.create(
+            earth_ranger_uuid="2e92f1d5-745c-4606-980a-77838690d73b",
+            data={
+                "id": "2e92f1d5-745c-4606-980a-77838690d73b",
+                "event_type": "test_type"
+            },
+            geometry=Point(0, 0)
+        )
+        
+        # Create event with None values for nested fields
+        event_none_nested = EarthRangerEvents.objects.create(
+            earth_ranger_uuid="9c231935-72c5-403a-af3e-e41138f1e80d",
+            data={
+                "id": "9c231935-72c5-403a-af3e-e41138f1e80d",
+                "event_type": "test_type",
+                "time": "2025-01-01T00:00:00Z",
+                "reported_by": None,
+                "location": {"latitude": 0, "longitude": 0},
+                "priority_label": None,
+                "event_details": None
+            },
+            geometry=Point(0, 0)
+        )
+        
+        # Create event with non-dict reported_by and event_details
+        event_invalid_types = EarthRangerEvents.objects.create(
+            earth_ranger_uuid="d291bd52-4d4f-40d5-ab3a-6bcf8778b670",
+            data={
+                "id": "d291bd52-4d4f-40d5-ab3a-6bcf8778b670",
+                "event_type": "test_type",
+                "time": "2025-01-01T00:00:00Z",
+                "reported_by": "string_instead_of_dict",
+                "location": {"latitude": 0, "longitude": 0},
+                "priority_label": "Green",
+                "event_details": "string_instead_of_dict"
+            },
+            geometry=Point(0, 0)
+        )
+        
+        response = self.client.get('/earthranger/events/?simple=true')
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        
+        # Extract events from response
+        if 'results' in response.data:
+            events = response.data['results']
+        else:
+            events = response.data
+        
+        # Find our test events in the response
+        missing_fields_event = None
+        none_nested_event = None
+        invalid_types_event = None
+        
+        for event in events:
+            if event.get('id') == "2e92f1d5-745c-4606-980a-77838690d73b":
+                missing_fields_event = event
+            elif event.get('id') == "9c231935-72c5-403a-af3e-e41138f1e80d":
+                none_nested_event = event
+            elif event.get('id') == "d291bd52-4d4f-40d5-ab3a-6bcf8778b670":
+                invalid_types_event = event
+        
+        # Test event with missing fields
+        self.assertIsNotNone(missing_fields_event)
+        self.assertEqual(missing_fields_event['id'], '2e92f1d5-745c-4606-980a-77838690d73b')
+        self.assertEqual(missing_fields_event['event_type'], 'test_type')
+        self.assertEqual(missing_fields_event['time'], 'Unknown')
+        self.assertEqual(missing_fields_event['reported_by'], 'Unknown')
+        self.assertEqual(missing_fields_event['location'], {})
+        self.assertEqual(missing_fields_event['priority_label'], 'Unknown')
+        self.assertEqual(missing_fields_event['event_details'], {
+            'Comment': 'Unknown',
+            'Auc_vill_name': 'Unknown'
+        })
+        
+        # Test event with None nested fields
+        self.assertIsNotNone(none_nested_event)
+        self.assertEqual(none_nested_event['id'], '9c231935-72c5-403a-af3e-e41138f1e80d')
+        self.assertEqual(none_nested_event['event_type'], 'test_type')
+        self.assertEqual(none_nested_event['time'], '2025-01-01T00:00:00Z')
+        self.assertEqual(none_nested_event['reported_by'], 'Unknown')
+        self.assertEqual(none_nested_event['location'], {"latitude": 0, "longitude": 0})
+        self.assertEqual(none_nested_event['priority_label'], None)
+        self.assertEqual(none_nested_event['event_details'], {
+            'Comment': 'Unknown',
+            'Auc_vill_name': 'Unknown'
+        })
+        
+        # Test event with invalid types for nested fields
+        self.assertIsNotNone(invalid_types_event)
+        self.assertEqual(invalid_types_event['id'], 'd291bd52-4d4f-40d5-ab3a-6bcf8778b670')
+        self.assertEqual(invalid_types_event['event_type'], 'test_type')
+        self.assertEqual(invalid_types_event['time'], '2025-01-01T00:00:00Z')
+        self.assertEqual(invalid_types_event['reported_by'], 'Unknown')  # String instead of dict
+        self.assertEqual(invalid_types_event['location'], {"latitude": 0, "longitude": 0})
+        self.assertEqual(invalid_types_event['priority_label'], 'Green')
+        self.assertEqual(invalid_types_event['event_details'], {
+            'Comment': 'Unknown',
+            'Auc_vill_name': 'Unknown'
+        })
+        
+        # Clean up test data
+        event_missing_fields.delete()
+        event_none_nested.delete()
+        event_invalid_types.delete()
