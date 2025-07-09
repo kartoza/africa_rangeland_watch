@@ -66,6 +66,11 @@ app.conf.beat_schedule = {
         # Run every week on Monday at 00:00 UTC
         'schedule': crontab(minute='00', hour='00', day_of_week='1'),
     },
+    'fetch_external_layers_task': {
+        'task': 'fetch_external_layers_task',
+        # Run every week on Monday at 00:00 UTC
+        'schedule': crontab(minute='00', hour='00', day_of_week='1'),
+    },
     'fetch-earth-rangers': {
         'task': 'earthranger.tasks.scheduled_fetch',
         # Run every week on Monday at 01:00 UTC

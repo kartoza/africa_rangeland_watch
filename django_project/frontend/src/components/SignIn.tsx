@@ -341,7 +341,6 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
                           h="40px"
                           w="40px" />
                       </a>
-                      <Image src="static/images/apple_icon.svg" alt="Apple Icon" h="40px" w="40px" />
                     </Flex>
                   </>
                 )}

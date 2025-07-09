@@ -15,4 +15,4 @@ class BaseMapSerializer(serializers.ModelSerializer):
 
     class Meta:  # noqa
         model = BaseMap
-        fields = ['id', 'name', 'url']
+        fields = ['id', 'name', 'url', 'thumbnail']
