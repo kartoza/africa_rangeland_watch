@@ -20,6 +20,7 @@ const DashboardDetailPage = React.lazy(() => import("./pages/Dashboard/Dashboard
 const MapPage  = React.lazy(() => import("./pages/Map"));
 const LearnMorePage  = React.lazy(() => import("./pages/About/LearnMore"));
 const EarthRangersPage = React.lazy(() => import("./pages/EarthRangers"));
+const EarthRangersEventsPage = React.lazy(() => import("./pages/EarthRangers/EarthRangerEvents"));
 
 
 const ProjectRoutes = () => {
@@ -75,6 +76,10 @@ const ProjectRoutes = () => {
     {
       path: "/earthranger/events",
       element: <PrivateRoute Component={EarthRangersPage} />,
+    },
+      {
+      path: "/earthranger/events/view",
+      element: <PrivateRoute Component={EarthRangersEventsPage} />,
     },
     {
       path: "/notifications",

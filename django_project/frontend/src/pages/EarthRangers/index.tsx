@@ -109,7 +109,8 @@ const EarthRangerSettingsPage: React.FC = () => {
 
   const handleView = (setting: EarthRangerSetting) => {
     // TODO: Navigate to EarthRanger data view page
-    navigate(`/earthranger/view/${setting.id}`);
+    // navigate(`/earthranger/view/${setting.id}`);
+    navigate(`/earthranger/events/view`);
   };
 
   const handleEdit = (setting: EarthRangerSetting) => {
@@ -148,10 +149,6 @@ const EarthRangerSettingsPage: React.FC = () => {
     if (!selectedSetting) return;
     
     try {
-      // TODO: Replace with actual API call
-      // await fetch(`/api/earthranger-settings/${selectedSetting.id}/`, {
-      //   method: 'DELETE'
-      // });
       axios.delete(`/earthranger/settings/${selectedSetting.id}/`);
       
       setSettings(prev => prev.filter(s => s.id !== selectedSetting.id));
@@ -186,12 +183,6 @@ const EarthRangerSettingsPage: React.FC = () => {
   const handleSubmit = async () => {
     try {
       if (isEditMode && selectedSetting) {
-        // TODO: Replace with actual API call
-        // await fetch(`/api/earthranger-settings/${selectedSetting.id}/`, {
-        //   method: 'PUT',
-        //   headers: { 'Content-Type': 'application/json' },
-        //   body: JSON.stringify(formData)
-        // });
         axios.put(`/earthranger/settings/${selectedSetting.id}/`, formData);
         
         setSettings(prev => prev.map(s => 
@@ -213,12 +204,6 @@ const EarthRangerSettingsPage: React.FC = () => {
           },
         });
       } else {
-        // TODO: Replace with actual API call
-        // const response = await fetch('/api/earthranger-settings/', {
-        //   method: 'POST',
-        //   headers: { 'Content-Type': 'application/json' },
-        //   body: JSON.stringify(formData)
-        // });
         const response = await axios.post('/earthranger/settings/', formData);
         
         const newSetting: EarthRangerSetting = {

@@ -80,6 +80,20 @@ class EarthRangerSetting(models.Model):
     is_active = models.BooleanField(default=True)
 
 
+class EarthRangerEvents(models.Model):
+    earth_ranger_configuration = models.ForeignKey(
+        EarthRangerSetting,
+        on_delete=models.CASCADE,
+        related_name="events",
+        null=True
+    )
+    earth_ranger_uuid = models.UUIDField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    data = models.JSONField(default=dict)
+    geometry = models.GeometryField(null=True, blank=True)
+
+
 class EarthRangerObservation(models.Model):
     name = models.CharField(
         max_length=255,
@@ -109,17 +123,3 @@ class EarthRangerMapping(models.Model):
     name = models.CharField(max_length=255, unique=True, default="Mapping")
     data = models.JSONField(default=dict)
     last_updated = models.DateTimeField(auto_now=True)
-
-
-class EarthRangerEvents(models.Model):
-    earth_ranger_configuration = models.ForeignKey(
-        EarthRangerSetting,
-        on_delete=models.CASCADE,
-        related_name="events",
-        null=True
-    )
-    earth_ranger_uuid = models.UUIDField(null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    data = models.JSONField(default=dict)
-    geometry = models.GeometryField(null=True, blank=True)
