@@ -68,3 +68,59 @@ class EarthRangerEventsSimpleSerializer(serializers.ModelSerializer):
             "Comment": "Unknown",
             "Auc_vill_name": "Unknown"
         }
+
+
+from rest_framework import serializers
+from .models import EarthRangerSetting
+
+
+class EarthRangerSettingSerializer(serializers.ModelSerializer):
+    owner_name = serializers.CharField(source='user.get_full_name', read_only=True)
+    
+    class Meta:
+        model = EarthRangerSetting
+        fields = [
+            'id',
+            'name',
+            'url',
+            'token',
+            'privacy',
+            'is_active',
+            'created_at',
+            'updated_at',
+            'owner_name'
+        ]
+        read_only_fields = ['id', 'created_at', 'updated_at', 'owner_name']
+        # extra_kwargs = {
+        #     'token': {'write_only': True}  # Don't expose token in responses
+        # }
+
+    def create(self, validated_data):
+        # Set the user to the current authenticated user
+        validated_data['user'] = self.context['request'].user
+        return super().create(validated_data)
+
+    def to_representation(self, instance):
+        """Customize the output representation"""
+        data = super().to_representation(instance)
+        # Mask the token in responses (show only first 10 characters)
+        # if hasattr(instance, 'token') and instance.token:
+        #     data['token'] = '*' * 10
+        return data
+
+
+class EarthRangerSettingListSerializer(EarthRangerSettingSerializer):
+    """Serializer for list view - excludes sensitive data"""
+    
+    class Meta(EarthRangerSettingSerializer.Meta):
+        fields = [
+            'id',
+            'name',
+            'url',
+            'privacy',
+            'is_active',
+            'created_at',
+            'updated_at',
+            'owner_name',
+            'token'
+        ]

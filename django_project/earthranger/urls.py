@@ -2,7 +2,10 @@ from django.urls import path, re_path
 from .views import (
     ListEventsView,
     fetch_event_details,
-    EarthRangerImageProxyView
+    EarthRangerImageProxyView,
+    EarthRangerSettingListCreateView,
+    EarthRangerSettingDetailView,
+    EarthRangerSettingToggleActiveView
 )
 
 
@@ -18,4 +21,19 @@ urlpatterns = [
         EarthRangerImageProxyView.as_view(),
         name='earth_ranger_image_proxy'
     ),
+    path(
+        'earthranger/settings/',
+        EarthRangerSettingListCreateView.as_view(),
+        name='setting-list-create'
+    ),
+    path(
+        'earthranger/settings/<int:pk>/',
+        EarthRangerSettingDetailView.as_view(),
+        name='setting-detail'
+    ),
+    path(
+        'earthranger/settings/<int:pk>/toggle-active/',
+        EarthRangerSettingToggleActiveView.as_view(),
+        name='setting-toggle-active'
+    )
 ]

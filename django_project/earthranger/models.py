@@ -1,10 +1,12 @@
 from django.contrib.gis.db import models
+from django.contrib.auth.models import User
 
 
 class APISchedule(models.Model):
     SCHEDULE_CHOICES = [
         (5, "Every 5 minutes"),
         (1440, "Every day"),
+        (10080, "Every week"),
         (43200, "Every month"),
         (0, "Stop Scheduling"),
     ]
@@ -52,6 +54,30 @@ class APISchedule(models.Model):
             self.run_every_minutes
             if self.run_every_minutes else self.custom_interval
         )
+    
+
+class EarthRangerSetting(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="earthranger_configurations",
+        null=True,
+        blank=True,
+    )
+    name = models.CharField(max_length=255, unique=True)
+    url = models.URLField(max_length=255)
+    token = models.CharField(max_length=255)
+    privacy = models.CharField(
+        max_length=10,
+        choices=[
+            ("public", "Public"),
+            ("private", "Private")
+        ],
+        default="public",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True)
 
 
 class EarthRangerObservation(models.Model):
@@ -86,6 +112,12 @@ class EarthRangerMapping(models.Model):
 
 
 class EarthRangerEvents(models.Model):
+    earth_ranger_configuration = models.ForeignKey(
+        EarthRangerSetting,
+        on_delete=models.CASCADE,
+        related_name="events",
+        null=True
+    )
     earth_ranger_uuid = models.UUIDField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

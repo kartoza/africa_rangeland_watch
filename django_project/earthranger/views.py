@@ -204,3 +204,90 @@ class EarthRangerImageProxyView(APIView):
                 {"error": "Internal server error"},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
+from rest_framework import generics, permissions, status
+from rest_framework.response import Response
+from rest_framework.pagination import PageNumberPagination
+from django.db.models import Q
+from .models import EarthRangerSetting
+from .serializers import EarthRangerSettingSerializer, EarthRangerSettingListSerializer
+
+
+class EarthRangerSettingPagination(PageNumberPagination):
+    page_size = 10
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
+
+class EarthRangerSettingListCreateView(generics.ListCreateAPIView):
+    """
+    List all EarthRanger settings or create a new one.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+    pagination_class = EarthRangerSettingPagination
+    
+    def get_queryset(self):
+        queryset = EarthRangerSetting.objects.select_related('user').order_by('-updated_at')
+        
+        # Filter by current user's settings only
+        queryset = queryset.filter(user=self.request.user)
+        
+        # Search functionality
+        search = self.request.query_params.get('search', None)
+        if search:
+            queryset = queryset.filter(
+                Q(name__icontains=search) |
+                Q(earth_ranger_url__icontains=search)
+            )
+        
+        # Filter by privacy type
+        privacy_type = self.request.query_params.get('privacy_type', None)
+        if privacy_type:
+            queryset = queryset.filter(privacy_type=privacy_type)
+        
+        # Filter by active status
+        is_active = self.request.query_params.get('is_active', None)
+        if is_active is not None:
+            queryset = queryset.filter(is_active=is_active.lower() == 'true')
+        
+        return queryset
+    
+    def get_serializer_class(self):
+        if self.request.method == 'GET':
+            return EarthRangerSettingListSerializer
+        return EarthRangerSettingSerializer
+
+
+class EarthRangerSettingDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """
+    Retrieve, update or delete an EarthRanger setting.
+    """
+    serializer_class = EarthRangerSettingSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_queryset(self):
+        # Users can only access their own settings
+        return EarthRangerSetting.objects.filter(user=self.request.user)
+    
+    def perform_update(self, serializer):
+        # Ensure the user remains the same during updates
+        serializer.save(user=self.request.user)
+
+
+class EarthRangerSettingToggleActiveView(generics.UpdateAPIView):
+    """
+    Toggle the active status of an EarthRanger setting.
+    """
+    permission_classes = [permissions.IsAuthenticated]
+    
+    def get_queryset(self):
+        return EarthRangerSetting.objects.filter(user=self.request.user)
+    
+    def patch(self, request, *args, **kwargs):
+        setting = self.get_object()
+        setting.is_active = not setting.is_active
+        setting.save()
+        
+        serializer = EarthRangerSettingSerializer(setting, context={'request': request})
+        return Response(serializer.data)
