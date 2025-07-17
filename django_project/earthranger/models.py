@@ -81,7 +81,7 @@ class EarthRangerSetting(models.Model):
 
 
 class EarthRangerEvents(models.Model):
-    earth_ranger_configuration = models.ForeignKey(
+    earth_ranger_setting = models.ForeignKey(
         EarthRangerSetting,
         on_delete=models.CASCADE,
         related_name="events",

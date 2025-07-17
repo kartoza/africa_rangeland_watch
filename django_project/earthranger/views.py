@@ -24,6 +24,7 @@ logger = logging.getLogger(__name__)
 class ListEventsView(ListAPIView):
     """
     List all stored events with optional filtering and pagination.
+    If settings_id is provided, filter events by that specific setting and related settings.
     """
     serializer_class = EarthRangerEventsSerializer
     permission_classes = [IsAuthenticated]
@@ -33,7 +34,33 @@ class ListEventsView(ListAPIView):
         """
         Get queryset with optional filtering.
         """
-        queryset = EarthRangerEvents.objects.all()
+        settings_id = self.kwargs.get('settings_id')
+        
+        if settings_id:
+            # Get the specific setting and verify ownership
+            try:
+                setting = EarthRangerSetting.objects.get(id=settings_id, user=self.request.user)
+            except EarthRangerSetting.DoesNotExist:
+                # Return empty queryset if setting doesn't exist or user doesn't own it
+                return EarthRangerEvents.objects.none()
+            
+            # Find all settings with same URL and token (belonging to the user)
+            matching_settings = EarthRangerSetting.objects.filter(
+                user=self.request.user,
+                url=setting.url,
+                token=setting.token
+            )
+            
+            # Get events for all matching settings
+            queryset = EarthRangerEvents.objects.filter(
+                earth_ranger_setting__in=matching_settings
+            )
+        else:
+            # Original behavior - get all events for the user
+            user_settings = EarthRangerSetting.objects.filter(user=self.request.user)
+            queryset = EarthRangerEvents.objects.filter(
+                earth_ranger_setting__in=user_settings
+            )
 
         # Extract optional filters from query parameters
         event_type = self.request.GET.get("event_type")
@@ -56,6 +83,13 @@ class ListEventsView(ListAPIView):
         Override list method to customize response format.
         """
         queryset = self.filter_queryset(self.get_queryset())
+
+        # # Check if queryset is empty due to permission issues
+        # if not queryset.exists() and self.kwargs.get('settings_id'):
+        #     return Response(
+        #         {"error": "Setting not found or access denied"}, 
+        #         status=status.HTTP_404_NOT_FOUND
+        #     )
 
         page = self.paginate_queryset(queryset)
         if page is not None:

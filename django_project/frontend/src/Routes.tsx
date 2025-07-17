@@ -74,11 +74,11 @@ const ProjectRoutes = () => {
       element: <PrivateRoute Component={AnalysisResults} />,
     },
     {
-      path: "/earthranger/events",
+      path: "/earthranger/settings",
       element: <PrivateRoute Component={EarthRangersPage} />,
     },
-      {
-      path: "/earthranger/events/view",
+    {
+      path: "/earthranger/settings/:settingsId/events/",
       element: <PrivateRoute Component={EarthRangersEventsPage} />,
     },
     {

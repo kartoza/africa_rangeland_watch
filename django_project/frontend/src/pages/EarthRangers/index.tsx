@@ -110,7 +110,7 @@ const EarthRangerSettingsPage: React.FC = () => {
   const handleView = (setting: EarthRangerSetting) => {
     // TODO: Navigate to EarthRanger data view page
     // navigate(`/earthranger/view/${setting.id}`);
-    navigate(`/earthranger/events/view`);
+    navigate(`/earthranger/settings/${setting.id}/events/`);
   };
 
   const handleEdit = (setting: EarthRangerSetting) => {
