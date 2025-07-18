@@ -44,22 +44,21 @@ class ListEventsView(ListAPIView):
                 # Return empty queryset if setting doesn't exist or user doesn't own it
                 return EarthRangerEvents.objects.none()
             
-            # Find all settings with same URL and token (belonging to the user)
+            # Find all settings with same URL and token
             matching_settings = EarthRangerSetting.objects.filter(
-                user=self.request.user,
                 url=setting.url,
                 token=setting.token
             )
             
             # Get events for all matching settings
             queryset = EarthRangerEvents.objects.filter(
-                earth_ranger_setting__in=matching_settings
+                earth_ranger_settings__in=matching_settings
             )
         else:
             # Original behavior - get all events for the user
             user_settings = EarthRangerSetting.objects.filter(user=self.request.user)
             queryset = EarthRangerEvents.objects.filter(
-                earth_ranger_setting__in=user_settings
+                earth_ranger_settings__in=user_settings
             )
 
         # Extract optional filters from query parameters

@@ -60,7 +60,7 @@ class EarthRangerSetting(models.Model):
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name="earthranger_configurations",
+        related_name="earthranger_settings",
         null=True,
         blank=True,
     )
@@ -79,11 +79,33 @@ class EarthRangerSetting(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
 
+    def __str__(self):
+        return self.name
+
+    def save(self, *args, **kwargs):
+        from earthranger.tasks import fetch_earth_ranger_events
+        is_new = not self.pk
+        super().save(*args, **kwargs)
+
+        # when adding new setting, assign existing events to new setting
+        # based on similar URL and token. If not, fetch events
+        if is_new:
+            events = EarthRangerEvents.objects.filter(
+                earth_ranger_settings__url=self.url,
+                earth_ranger_settings__token=self.token,
+            ).exclude(
+                earth_ranger_settings=self
+            ).distinct()
+            if events.exists():
+                for event in events:
+                    event.earth_ranger_settings.add(self)
+            else:
+                fetch_earth_ranger_events.delay([self.pk])
+
 
 class EarthRangerEvents(models.Model):
-    earth_ranger_setting = models.ForeignKey(
+    earth_ranger_settings = models.ManyToManyField(
         EarthRangerSetting,
-        on_delete=models.CASCADE,
         related_name="events",
         null=True
     )
