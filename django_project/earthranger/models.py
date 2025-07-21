@@ -54,13 +54,13 @@ class APISchedule(models.Model):
             self.run_every_minutes
             if self.run_every_minutes else self.custom_interval
         )
-    
+
 
 class EarthRangerSetting(models.Model):
     user = models.ForeignKey(
         User,
         on_delete=models.CASCADE,
-        related_name="earthranger_configurations",
+        related_name="earthranger_settings",
         null=True,
         blank=True,
     )
@@ -78,6 +78,55 @@ class EarthRangerSetting(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.name
+
+    def check_token(self):
+        import requests
+        try:
+            response = requests.get(
+                f"{self.url.rstrip('/')}/activity/events/count/",
+                headers={"Authorization": f"Bearer {self.token}"},
+                timeout=10
+            )
+            response.raise_for_status()
+            return True
+        except requests.exceptions.RequestException:
+            return False
+
+    def save(self, *args, **kwargs):
+        from earthranger.tasks import fetch_earth_ranger_events
+
+        is_new = not self.pk
+        super().save(*args, **kwargs)
+
+        # when adding new setting, assign existing events to new setting
+        # based on similar URL and token. If not, fetch events
+        if is_new:
+            events = EarthRangerEvents.objects.filter(
+                earth_ranger_settings__url=self.url,
+                earth_ranger_settings__token=self.token,
+            ).exclude(
+                earth_ranger_settings=self
+            ).distinct()
+            if events.exists():
+                for event in events:
+                    event.earth_ranger_settings.add(self)
+            else:
+                fetch_earth_ranger_events.delay([self.pk])
+
+
+class EarthRangerEvents(models.Model):
+    earth_ranger_settings = models.ManyToManyField(
+        EarthRangerSetting,
+        related_name="events"
+    )
+    earth_ranger_uuid = models.UUIDField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    data = models.JSONField(default=dict)
+    geometry = models.GeometryField(null=True, blank=True)
 
 
 class EarthRangerObservation(models.Model):
@@ -109,17 +158,3 @@ class EarthRangerMapping(models.Model):
     name = models.CharField(max_length=255, unique=True, default="Mapping")
     data = models.JSONField(default=dict)
     last_updated = models.DateTimeField(auto_now=True)
-
-
-class EarthRangerEvents(models.Model):
-    earth_ranger_configuration = models.ForeignKey(
-        EarthRangerSetting,
-        on_delete=models.CASCADE,
-        related_name="events",
-        null=True
-    )
-    earth_ranger_uuid = models.UUIDField(null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    data = models.JSONField(default=dict)
-    geometry = models.GeometryField(null=True, blank=True)

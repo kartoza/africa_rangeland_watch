@@ -153,5 +153,5 @@ RESEND_API_KEY = os.environ.get(
 )
 
 EARTH_RANGER_API_URL = os.environ.get("EARTH_RANGER_API_URL", "https://csah4h.pamdas.org/api/v1.0/")
-EARTH_RANGER_AUTH_TOKEN = os.environ.get("EARTH_RANGER_AUTH_TOKEN", "b13cW8gQSIYhBuCIyBkutf7VXtXjTX")
+EARTH_RANGER_AUTH_TOKEN = os.environ.get("EARTH_RANGER_AUTH_TOKEN", "")
 EARTH_RANGER_CSRF_TOKEN = os.environ.get("EARTH_RANGER_CSRF_TOKEN", "")

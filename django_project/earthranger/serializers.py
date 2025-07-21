@@ -1,5 +1,7 @@
+import requests
 from rest_framework import serializers
-from .models import EarthRangerEvents
+from rest_framework.exceptions import ValidationError
+from earthranger.models import EarthRangerEvents, EarthRangerSetting
 
 
 class EarthRangerEventsSerializer(serializers.ModelSerializer):
@@ -70,57 +72,61 @@ class EarthRangerEventsSimpleSerializer(serializers.ModelSerializer):
         }
 
 
-from rest_framework import serializers
-from .models import EarthRangerSetting
-
-
 class EarthRangerSettingSerializer(serializers.ModelSerializer):
-    owner_name = serializers.CharField(source='user.get_full_name', read_only=True)
-    
     class Meta:
         model = EarthRangerSetting
         fields = [
-            'id',
-            'name',
-            'url',
-            'token',
-            'privacy',
-            'is_active',
-            'created_at',
-            'updated_at',
-            'owner_name'
+            'id', 'name', 'url', 'token',
+            'privacy', 'is_active', 'created_at',
+            'updated_at'
         ]
-        read_only_fields = ['id', 'created_at', 'updated_at', 'owner_name']
-        # extra_kwargs = {
-        #     'token': {'write_only': True}  # Don't expose token in responses
-        # }
+        read_only_fields = ['created_at', 'updated_at']
 
-    def create(self, validated_data):
-        # Set the user to the current authenticated user
-        validated_data['user'] = self.context['request'].user
-        return super().create(validated_data)
+    def validate(self, attrs):
+        """
+        Validate the token with the provided URL
+        """
+        url = attrs.get('url')
+        token = attrs.get('token')
 
-    def to_representation(self, instance):
-        """Customize the output representation"""
-        data = super().to_representation(instance)
-        # Mask the token in responses (show only first 10 characters)
-        # if hasattr(instance, 'token') and instance.token:
-        #     data['token'] = '*' * 10
-        return data
+        # If this is an update, get existing values if not provided
+        if self.instance:
+            url = url or self.instance.url
+            token = token or self.instance.token
+
+        if url and token:
+            if not self._check_token(url, token):
+                raise ValidationError({
+                    'token': (
+                        'Invalid EarthRanger token/URL combination. '
+                        'Please verify your credentials.'
+                    )
+                })
+
+        return attrs
+
+    def _check_token(self, url, token):
+        """
+        Check if the token is valid for the given URL
+        """
+        try:
+            response = requests.get(
+                f"{url.rstrip('/')}/activity/events/count/",
+                headers={"Authorization": f"Bearer {token}"},
+                timeout=10
+            )
+            response.raise_for_status()
+            return True
+        except requests.exceptions.RequestException:
+            return False
 
 
-class EarthRangerSettingListSerializer(EarthRangerSettingSerializer):
-    """Serializer for list view - excludes sensitive data"""
-    
-    class Meta(EarthRangerSettingSerializer.Meta):
+class EarthRangerSettingListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EarthRangerSetting
         fields = [
-            'id',
-            'name',
-            'url',
-            'privacy',
-            'is_active',
-            'created_at',
-            'updated_at',
-            'owner_name',
-            'token'
+            'id', 'name', 'url',
+            'privacy', 'is_active', 'created_at',
+            'updated_at', 'token'
         ]
+        read_only_fields = ['created_at', 'updated_at']

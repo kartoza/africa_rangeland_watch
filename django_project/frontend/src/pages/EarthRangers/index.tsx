@@ -109,7 +109,8 @@ const EarthRangerSettingsPage: React.FC = () => {
 
   const handleView = (setting: EarthRangerSetting) => {
     // TODO: Navigate to EarthRanger data view page
-    navigate(`/earthranger/view/${setting.id}`);
+    // navigate(`/earthranger/view/${setting.id}`);
+    navigate(`/earthranger/settings/${setting.id}/events/`);
   };
 
   const handleEdit = (setting: EarthRangerSetting) => {
@@ -148,10 +149,6 @@ const EarthRangerSettingsPage: React.FC = () => {
     if (!selectedSetting) return;
     
     try {
-      // TODO: Replace with actual API call
-      // await fetch(`/api/earthranger-settings/${selectedSetting.id}/`, {
-      //   method: 'DELETE'
-      // });
       axios.delete(`/earthranger/settings/${selectedSetting.id}/`);
       
       setSettings(prev => prev.filter(s => s.id !== selectedSetting.id));
@@ -186,13 +183,7 @@ const EarthRangerSettingsPage: React.FC = () => {
   const handleSubmit = async () => {
     try {
       if (isEditMode && selectedSetting) {
-        // TODO: Replace with actual API call
-        // await fetch(`/api/earthranger-settings/${selectedSetting.id}/`, {
-        //   method: 'PUT',
-        //   headers: { 'Content-Type': 'application/json' },
-        //   body: JSON.stringify(formData)
-        // });
-        axios.put(`/earthranger/settings/${selectedSetting.id}/`, formData);
+        const response = await axios.put(`/earthranger/settings/${selectedSetting.id}/`, formData);
         
         setSettings(prev => prev.map(s => 
           s.id === selectedSetting.id 
@@ -213,12 +204,6 @@ const EarthRangerSettingsPage: React.FC = () => {
           },
         });
       } else {
-        // TODO: Replace with actual API call
-        // const response = await fetch('/api/earthranger-settings/', {
-        //   method: 'POST',
-        //   headers: { 'Content-Type': 'application/json' },
-        //   body: JSON.stringify(formData)
-        // });
         const response = await axios.post('/earthranger/settings/', formData);
         
         const newSetting: EarthRangerSetting = {
@@ -247,11 +232,47 @@ const EarthRangerSettingsPage: React.FC = () => {
       
       onCreateEditClose();
     } catch (err) {
+      // Extract and format error messages
+      let errorMessage = `Failed to ${isEditMode ? 'update' : 'create'} EarthRanger setting`;
+      
+      if (err.response?.data) {
+        const errors = err.response.data;
+        const errorMessages: string[] = [];
+        
+        // Handle field-specific errors
+        Object.keys(errors).forEach(field => {
+          const fieldErrors = errors[field];
+          if (Array.isArray(fieldErrors)) {
+            fieldErrors.forEach(error => {
+              errorMessages.push(`${field}: ${error}`);
+            });
+          } else if (typeof fieldErrors === 'string') {
+            errorMessages.push(`${field}: ${fieldErrors}`);
+          }
+        });
+        
+        // Handle non_field_errors
+        if (errors.non_field_errors && Array.isArray(errors.non_field_errors)) {
+          errors.non_field_errors.forEach((error: string) => {
+            errorMessages.push(error);
+          });
+        }
+        
+        // Handle detail error (common in DRF)
+        if (errors.detail && typeof errors.detail === 'string') {
+          errorMessages.push(errors.detail);
+        }
+        
+        if (errorMessages.length > 0) {
+          errorMessage = errorMessages.join('; ');
+        }
+      }
+      
       toast({
         title: 'Error',
-        description: `Failed to ${isEditMode ? 'update' : 'create'} EarthRanger setting`,
+        description: errorMessage,
         status: 'error',
-        duration: 3000,
+        duration: 5000, // Longer duration for error messages
         isClosable: true,
         position: "top-right",
       });
