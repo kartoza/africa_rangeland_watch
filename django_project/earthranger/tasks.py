@@ -18,7 +18,9 @@ def fetch_earth_ranger_events(setting_ids=None):
     if setting_ids:
         logger.info(f"Fetching EarthRanger events for settings: {setting_ids}")
     else:
-        logger.info("Fetching EarthRanger events for default EarthRanger settings")
+        logger.info(
+            "Fetching EarthRanger events for default EarthRanger settings"
+        )
     events_url = (
         'activity/events?include_notes=true&include_related_events=true&state=active&state='  # noqa: E501
         'new&filter={"text":"","sort":["down",{"value":"updated_at","key":"updatedAtLabel"}]}&'  # noqa: E501
