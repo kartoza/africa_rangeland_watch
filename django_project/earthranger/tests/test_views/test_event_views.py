@@ -1,9 +1,7 @@
-from requests.exceptions import RequestException
 from django.test import TestCase
-from unittest.mock import patch, Mock
+from unittest.mock import patch
 from django.test import TestCase
 from django.shortcuts import reverse
-from django.contrib.auth.models import User
 from django.contrib.gis.geos import Point
 from rest_framework.test import APIClient
 from rest_framework import status

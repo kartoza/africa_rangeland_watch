@@ -393,11 +393,6 @@ const EarthRangerSettingsPage: React.FC = () => {
                             <strong>URL:</strong> {setting.url}
                           </Text>
 
-                          {/* Token (masked) */}
-                          <Text color="gray.600" fontSize="sm" mb={3}>
-                            <strong>Token:</strong> {setting.token.substring(0, 10)}...
-                          </Text>
-
                           <Box mt={4} display="flex" flexWrap="wrap" gap={2} alignItems="center">
                             <Tag colorScheme="green" mr={2}>
                               <TagLabel>

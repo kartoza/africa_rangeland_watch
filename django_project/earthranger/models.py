@@ -1,5 +1,7 @@
 from django.contrib.gis.db import models
 from django.contrib.auth.models import User
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
 
 
 class APISchedule(models.Model):
@@ -158,3 +160,25 @@ class EarthRangerMapping(models.Model):
     name = models.CharField(max_length=255, unique=True, default="Mapping")
     data = models.JSONField(default=dict)
     last_updated = models.DateTimeField(auto_now=True)
+
+
+# Signal to clean up orphaned events when a setting is deleted
+@receiver(post_delete, sender=EarthRangerSetting)
+def cleanup_orphaned_events(sender, instance, **kwargs):
+    """
+    Delete EarthRangerEvents that have no associated EarthRangerSettings
+    after a setting is deleted.
+    """
+    # Find events that have no associated settings (orphaned events)
+    orphaned_events = EarthRangerEvents.objects.filter(
+        earth_ranger_settings__isnull=True
+    )
+
+    # Delete orphaned events
+    if orphaned_events.exists():
+        orphaned_count = orphaned_events.count()
+        orphaned_events.delete()
+        print(
+            f"Deleted {orphaned_count} orphaned EarthRanger"
+            f" events after deleting setting: {instance.name}"
+        )
