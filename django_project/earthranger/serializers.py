@@ -1,7 +1,7 @@
-import requests
 from rest_framework import serializers
 from rest_framework.exceptions import ValidationError
 from earthranger.models import EarthRangerEvents, EarthRangerSetting
+from earthranger.utils import check_token
 
 
 class EarthRangerEventsSerializer(serializers.ModelSerializer):
@@ -95,7 +95,7 @@ class EarthRangerSettingSerializer(serializers.ModelSerializer):
             token = token or self.instance.token
 
         if url and token:
-            if not self._check_token(url, token):
+            if not check_token(url, token):
                 raise ValidationError({
                     'token': (
                         'Invalid EarthRanger token/URL combination. '
@@ -104,21 +104,6 @@ class EarthRangerSettingSerializer(serializers.ModelSerializer):
                 })
 
         return attrs
-
-    def _check_token(self, url, token):
-        """
-        Check if the token is valid for the given URL
-        """
-        try:
-            response = requests.get(
-                f"{url.rstrip('/')}/activity/events/count/",
-                headers={"Authorization": f"Bearer {token}"},
-                timeout=10
-            )
-            response.raise_for_status()
-            return True
-        except requests.exceptions.RequestException:
-            return False
 
 
 class EarthRangerSettingListSerializer(serializers.ModelSerializer):

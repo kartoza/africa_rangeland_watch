@@ -85,17 +85,8 @@ class EarthRangerSetting(models.Model):
         return self.name
 
     def check_token(self):
-        import requests
-        try:
-            response = requests.get(
-                f"{self.url.rstrip('/')}/activity/events/count/",
-                headers={"Authorization": f"Bearer {self.token}"},
-                timeout=10
-            )
-            response.raise_for_status()
-            return True
-        except requests.exceptions.RequestException:
-            return False
+        from earthranger.utils import check_token
+        return check_token(self.url, self.token)
 
     def save(self, *args, **kwargs):
         from earthranger.tasks import fetch_earth_ranger_events

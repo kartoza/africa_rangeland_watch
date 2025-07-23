@@ -6,7 +6,6 @@ from django.utils.timezone import now
 from django.contrib.gis.gdal.error import GDALException
 from django.contrib.gis.geos import GEOSGeometry
 from earthranger.models import (
-    APISchedule,
     EarthRangerEvents,
     EarthRangerSetting
 )
@@ -184,24 +183,17 @@ def get_grouped_settings():
     return dict(groups)
 
 
-# Function to fetch all Earth Ranger data
-def fetch_all_earth_ranger_data():
-    from earthranger.tasks import fetch_earth_ranger_events
-
-    # then fetch for user's EarthRangers
-    groups = get_grouped_settings()
-    for (url, token), group_settings in groups.items():
-        fetch_earth_ranger_events.delay(group_settings)
-
-    # Get or create the schedule object
-    schedule, _ = APISchedule.objects.get_or_create(
-        name="Earth Ranger Fetch Job",
-        defaults={
-            "last_run_at": now()
-        }
-    )
-
-    # Always update last_run_at regardless of whether
-    # it was created or already existed
-    schedule.last_run_at = now()
-    schedule.save()
+def check_token(url, token):
+    """
+    Check if the token is valid for the given URL
+    """
+    try:
+        response = requests.get(
+            f"{url.rstrip('/')}/activity/events/count/",
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=10
+        )
+        response.raise_for_status()
+        return True
+    except requests.exceptions.RequestException:
+        return False
