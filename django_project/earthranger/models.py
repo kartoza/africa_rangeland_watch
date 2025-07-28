@@ -1,10 +1,14 @@
 from django.contrib.gis.db import models
+from django.contrib.auth.models import User
+from django.db.models.signals import post_delete
+from django.dispatch import receiver
 
 
 class APISchedule(models.Model):
     SCHEDULE_CHOICES = [
         (5, "Every 5 minutes"),
         (1440, "Every day"),
+        (10080, "Every week"),
         (43200, "Every month"),
         (0, "Stop Scheduling"),
     ]
@@ -54,6 +58,70 @@ class APISchedule(models.Model):
         )
 
 
+class EarthRangerSetting(models.Model):
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name="earthranger_settings",
+        null=True,
+        blank=True,
+    )
+    name = models.CharField(max_length=255, unique=True)
+    url = models.URLField(max_length=255)
+    token = models.CharField(max_length=255)
+    privacy = models.CharField(
+        max_length=10,
+        choices=[
+            ("public", "Public"),
+            ("private", "Private")
+        ],
+        default="public",
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    is_active = models.BooleanField(default=True)
+
+    def __str__(self):
+        return self.name
+
+    def check_token(self):
+        from earthranger.utils import check_token
+        return check_token(self.url, self.token)
+
+    def save(self, *args, **kwargs):
+        from earthranger.tasks import fetch_earth_ranger_events
+
+        is_new = not self.pk
+        super().save(*args, **kwargs)
+
+        # when adding new setting, assign existing events to new setting
+        # based on similar URL and token. If not, fetch events
+        if is_new:
+            events = EarthRangerEvents.objects.filter(
+                earth_ranger_settings__url=self.url,
+                earth_ranger_settings__token=self.token,
+            ).exclude(
+                earth_ranger_settings=self
+            ).distinct()
+            if events.exists():
+                for event in events:
+                    event.earth_ranger_settings.add(self)
+            else:
+                fetch_earth_ranger_events.delay([self.pk])
+
+
+class EarthRangerEvents(models.Model):
+    earth_ranger_settings = models.ManyToManyField(
+        EarthRangerSetting,
+        related_name="events"
+    )
+    earth_ranger_uuid = models.UUIDField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    data = models.JSONField(default=dict)
+    geometry = models.GeometryField(null=True, blank=True)
+
+
 class EarthRangerObservation(models.Model):
     name = models.CharField(
         max_length=255,
@@ -85,9 +153,23 @@ class EarthRangerMapping(models.Model):
     last_updated = models.DateTimeField(auto_now=True)
 
 
-class EarthRangerEvents(models.Model):
-    earth_ranger_uuid = models.UUIDField(null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-    data = models.JSONField(default=dict)
-    geometry = models.GeometryField(null=True, blank=True)
+# Signal to clean up orphaned events when a setting is deleted
+@receiver(post_delete, sender=EarthRangerSetting)
+def cleanup_orphaned_events(sender, instance, **kwargs):
+    """
+    Delete EarthRangerEvents that have no associated EarthRangerSettings
+    after a setting is deleted.
+    """
+    # Find events that have no associated settings (orphaned events)
+    orphaned_events = EarthRangerEvents.objects.filter(
+        earth_ranger_settings__isnull=True
+    )
+
+    # Delete orphaned events
+    if orphaned_events.exists():
+        orphaned_count = orphaned_events.count()
+        orphaned_events.delete()
+        print(
+            f"Deleted {orphaned_count} orphaned EarthRanger"
+            f" events after deleting setting: {instance.name}"
+        )

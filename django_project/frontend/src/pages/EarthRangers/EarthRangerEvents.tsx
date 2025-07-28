@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { useParams } from 'react-router-dom';
 import {
   Box,
   Flex,
@@ -44,6 +45,7 @@ interface EarthRangerResponse {
 }
 
 export default function EarthRangerEventsPage() {
+  const { settingsId } = useParams();
   const [eventsData, setEventsData] = useState<EarthRangerResponse | null>(null);
   const [selectedEventId, setSelectedEventId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -53,7 +55,7 @@ export default function EarthRangerEventsPage() {
   const fetchEvents = async (page: number) => {
     setLoading(true);
     try {
-      const response = await fetch(`/earthranger/events/?page=${page}&page_size=${pageSize}&simple=true`);
+      const response = await fetch(`/earthranger/settings/${settingsId}/events/?page=${page}&page_size=${pageSize}&simple=true`);
       const data: EarthRangerResponse = await response.json();
       setEventsData(data);
       setCurrentPage(data.page);

@@ -1,5 +1,7 @@
 from rest_framework import serializers
-from .models import EarthRangerEvents
+from rest_framework.exceptions import ValidationError
+from earthranger.models import EarthRangerEvents, EarthRangerSetting
+from earthranger.utils import check_token
 
 
 class EarthRangerEventsSerializer(serializers.ModelSerializer):
@@ -68,3 +70,48 @@ class EarthRangerEventsSimpleSerializer(serializers.ModelSerializer):
             "Comment": "Unknown",
             "Auc_vill_name": "Unknown"
         }
+
+
+class EarthRangerSettingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EarthRangerSetting
+        fields = [
+            'id', 'name', 'url', 'token',
+            'privacy', 'is_active', 'created_at',
+            'updated_at'
+        ]
+        read_only_fields = ['created_at', 'updated_at']
+
+    def validate(self, attrs):
+        """
+        Validate the token with the provided URL
+        """
+        url = attrs.get('url')
+        token = attrs.get('token')
+
+        # If this is an update, get existing values if not provided
+        if self.instance:
+            url = url or self.instance.url
+            token = token or self.instance.token
+
+        if url and token:
+            if not check_token(url, token):
+                raise ValidationError({
+                    'token': (
+                        'Invalid EarthRanger token/URL combination. '
+                        'Please verify your credentials.'
+                    )
+                })
+
+        return attrs
+
+
+class EarthRangerSettingListSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = EarthRangerSetting
+        fields = [
+            'id', 'name', 'url',
+            'privacy', 'is_active', 'created_at',
+            'updated_at', 'token'
+        ]
+        read_only_fields = ['created_at', 'updated_at']

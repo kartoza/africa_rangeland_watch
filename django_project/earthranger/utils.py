@@ -5,21 +5,32 @@ import json
 from django.utils.timezone import now
 from django.contrib.gis.gdal.error import GDALException
 from django.contrib.gis.geos import GEOSGeometry
-from .models import (
-    APISchedule,
-    EarthRangerEvents
+from earthranger.models import (
+    EarthRangerEvents,
+    EarthRangerSetting
 )
-from django.conf import settings
+from django.conf import settings as django_settings
 
 
 def fetch_and_store_data(
-        endpoint, model_class, name,
-        max_retries: int = 3, retry_delay: float = 1.0):
-    api_url = f"{settings.EARTH_RANGER_API_URL}{endpoint}/"
+        endpoint, model_class, setting_ids=None,
+        max_retries: int = 3, retry_delay: float = 1.0
+):
+    api_url = f"{django_settings.EARTH_RANGER_API_URL}{endpoint}/"
     headers = {
         "accept": "application/json",
-        "Authorization": f"Bearer {settings.EARTH_RANGER_AUTH_TOKEN}"
+        "Authorization": f"Bearer {django_settings.EARTH_RANGER_AUTH_TOKEN}"
     }
+    if setting_ids:
+        setting = EarthRangerSetting.objects.filter(id__in=setting_ids).first()
+        if not setting:
+            logging.error(f"No setting found with ID: {setting_ids}")
+            return
+        api_url = f"{setting.url}{endpoint}/"
+        headers = {
+            "accept": "application/json",
+            "Authorization": f"Bearer {setting.token}"
+        }
     fetch_data = True
     retry_count = 0
 
@@ -37,7 +48,7 @@ def fetch_and_store_data(
                             geom = GEOSGeometry(
                                 json.dumps(feature['geojson']['geometry'])
                             )
-                            model_class.objects.update_or_create(
+                            event, created = model_class.objects.update_or_create(  # noqa
                                 earth_ranger_uuid=feature['id'],
                                 defaults={
                                     "data": feature,
@@ -45,13 +56,14 @@ def fetch_and_store_data(
                                     "geometry": geom
                                 }
                             )
+                            if setting_ids:
+                                event.earth_ranger_settings.add(*setting_ids)
                         except (GDALException, TypeError) as e:
                             logging.warning(
                                 f"Failed to process feature"
                                 f"{feature.get('id', 'unknown')}: {e}"
                             )
                             pass
-
                     if data['data']['next']:
                         api_url = data['data']['next']
                         retry_count = 0  # Reset retry count for next page
@@ -73,7 +85,7 @@ def fetch_and_store_data(
                     time.sleep(wait_time)
                 else:
                     logging.error(
-                        f"Failed to fetch {name} data "
+                        f"Failed to fetch {model_class} data "
                         f"after {max_retries} retries: "
                         f"{response.status_code} - {response.text}"
                     )
@@ -81,7 +93,7 @@ def fetch_and_store_data(
             else:
                 # Don't retry on client errors (4xx except 429)
                 logging.error(
-                    f"Failed to fetch {name} data: "
+                    f"Failed to fetch {model_class} data: "
                     f"{response.status_code} - {response.text}"
                 )
                 fetch_data = False
@@ -97,7 +109,7 @@ def fetch_and_store_data(
                 time.sleep(wait_time)
             else:
                 logging.error(
-                    f"Failed to fetch {name} data after "
+                    f"Failed to fetch {model_class} data after "
                     f"{max_retries} timeout retries"
                 )
                 fetch_data = False
@@ -113,7 +125,7 @@ def fetch_and_store_data(
                 time.sleep(wait_time)
             else:
                 logging.error(
-                    f"Failed to fetch {name} data after "
+                    f"Failed to fetch {model_class} data after "
                     f"{max_retries} connection retries"
                 )
                 fetch_data = False
@@ -130,41 +142,58 @@ def fetch_and_store_data(
                 time.sleep(wait_time)
             else:
                 logging.error(
-                    f"Failed to fetch {name} data after "
+                    f"Failed to fetch {model_class} data after "
                     f"{max_retries} retries due to: {e}"
                 )
                 fetch_data = False
 
         except Exception as e:
-            logging.error(f"Unexpected error while fetching {name} data: {e}")
+            logging.error(
+                f"Unexpected error while fetching {model_class} data: {e}"
+            )
             fetch_data = False
 
 
-# Function to fetch all Earth Ranger data
-def fetch_all_earth_ranger_data():
-    # fetch_and_store_data(
-    #     "observations",
-    #     EarthRangerObservation, "Observations"
-    # )
-    # fetch_and_store_data("features", EarthRangerFeature, "Features")
-    # fetch_and_store_data("layers", EarthRangerLayer, "Layers")
-    # fetch_and_store_data("mapping", EarthRangerMapping, "Mapping")
-    events_url = (
-        'activity/events?include_notes=true&include_related_events=true&state=active&state='  # noqa: E501
-        'new&filter={"text":"","sort":["down",{"value":"updated_at","key":"updatedAtLabel"}]}&'  # noqa: E501
-        'include_updates=false&sort_by=-updated_at'
-    )
-    fetch_and_store_data(events_url, EarthRangerEvents, "Events")
+def get_grouped_settings():
+    """
+    Group EarthRanger settings by same URL and token.
+    Returns dict with (url, token) as key and list of settings as value.
+    """
+    from collections import defaultdict
+    from earthranger.models import EarthRangerSetting
 
-    # Get or create the schedule object
-    schedule, _ = APISchedule.objects.get_or_create(
-        name="Earth Ranger Fetch Job",
-        defaults={
-            "last_run_at": now()
-        }
-    )
+    # Get all active settings
+    settings = EarthRangerSetting.objects.\
+        filter(is_active=True).select_related('user')
 
-    # Always update last_run_at regardless of whether
-    # it was created or already existed
-    schedule.last_run_at = now()
-    schedule.save()
+    # Group by (url, token)
+    groups = defaultdict(list)
+    for setting in settings:
+        key = (setting.url, setting.token)
+        groups[key].append(setting.id)
+
+    # Add default key if not present, for default EarthRanger settings
+    default_key = (
+        django_settings.EARTH_RANGER_API_URL,
+        django_settings.EARTH_RANGER_AUTH_TOKEN
+    )
+    if default_key not in groups:
+        groups[default_key] = []
+
+    return dict(groups)
+
+
+def check_token(url, token):
+    """
+    Check if the token is valid for the given URL
+    """
+    try:
+        response = requests.get(
+            f"{url.rstrip('/')}/activity/events/count/",
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=10
+        )
+        response.raise_for_status()
+        return True
+    except requests.exceptions.RequestException:
+        return False

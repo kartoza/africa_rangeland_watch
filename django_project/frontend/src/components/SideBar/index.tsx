@@ -151,11 +151,11 @@ export default function Sidebar(props: Props) {
           </MenuItem>
           <MenuItem
             style={{
-              backgroundColor: isActive("/earthranger/events")
+              backgroundColor: isActive("/earthranger/settings")
                 ? "#a8d159"
                 : "transparent",
             }}
-            onClick={() => navigate("/earthranger/events")}
+            onClick={() => navigate("/earthranger/settings")}
           >
             Earthranger Events
           </MenuItem>
