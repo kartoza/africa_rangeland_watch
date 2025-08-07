@@ -642,14 +642,9 @@ class GEEAssetType:
         )
 
 
-class GEEAsset(models.Model):
-    """Model to store the GEE Asset that is used in the analysis."""
+class BaseGEEAsset(models.Model):
+    """Base model to store the GEE Asset that is used in the analysis."""
 
-    key = models.CharField(
-        unique=True,
-        max_length=50,
-        help_text='Key to the asset.'
-    )
     source = models.CharField(
         max_length=512,
         help_text='Source path to the asset.'
@@ -737,6 +732,19 @@ class GEEAsset(models.Model):
         return (True, start_date, end_date,)
 
     class Meta:
+        abstract = True
+
+
+class GEEAsset(BaseGEEAsset):
+    """Model to store the GEE Asset that is used in the analysis."""
+
+    key = models.CharField(
+        unique=True,
+        max_length=50,
+        help_text='Key to the asset.'
+    )
+
+    class Meta:
         verbose_name_plural = 'GEE Assets'
         db_table = 'analysis_gee_asset'
 
@@ -818,7 +826,7 @@ class IndicatorSource(models.TextChoices):
     OTHER = 'other', 'Other'
 
 
-class Indicator(models.Model):
+class BaseIndicator(models.Model):
     """Model to represent an indicator used in analysis."""
 
     ALLOWED_ANALYSIS_TYPES = [
@@ -831,12 +839,6 @@ class Indicator(models.Model):
         'Quarterly',
         'Monthly'
     ]
-
-    name = models.CharField(
-        max_length=255,
-        unique=True,
-        help_text="The name of the indicator."
-    )
 
     description = models.TextField(
         blank=True,
@@ -946,9 +948,69 @@ class Indicator(models.Model):
             return False
 
     class Meta:
+        abstract = True
+
+    def __str__(self):
+        return self.name
+
+
+class Indicator(BaseIndicator):
+    """Model to represent an indicator used in analysis."""
+
+    name = models.CharField(
+        max_length=255,
+        unique=True,
+        help_text="The name of the indicator."
+    )
+
+    class Meta:
         verbose_name = "Indicator"
         verbose_name_plural = "Indicators"
         ordering = ['name']
 
-    def __str__(self):
-        return self.name
+
+# class UserIndicator(BaseIndicator):
+#     gee_asset_source = models.CharField(max_length=255, blank=True, null=False)
+#     band_name = models.CharField(max_length=25, blank=True)
+#     visualisation_parameters = models.JSONField(default=dict, blank=True)
+#     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="created_indicators")
+#     created_at = models.DateTimeField(auto_now_add=True)
+#     updated_at = models.DateTimeField(auto_now=True)
+
+class UserGEEAsset(BaseGEEAsset):
+    key = models.CharField(
+        max_length=50,
+        help_text='Key to the asset.'
+    )
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="gee_assets")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name_plural = 'User GEE Assets'
+        db_table = 'analysis_user_gee_asset'
+        unique_together = ('key', 'created_by')
+
+
+class UserIndicator(BaseIndicator):
+    name = models.CharField(
+        max_length=255,
+        help_text="The name of the indicator."
+    )
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="indicators")
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def clean(self):
+        super().clean()
+
+        # check for name in Indicator
+        indicator = Indicator.objects.filter(name=self.name)
+        if indicator.exists():
+            raise ValidationError(
+                f"Invalid name: '{self.name}' already exists!"
+            )
+
+    class Meta:
+        unique_together = ('name', 'created_by')
+

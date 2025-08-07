@@ -4,6 +4,7 @@ Africa Rangeland Watch (ARW).
 
 .. note:: Analysis Runner Class
 """
+import typing
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from collections import OrderedDict
@@ -11,7 +12,7 @@ from datetime import date
 from copy import deepcopy
 
 from core.models import Preferences
-from analysis.models import Indicator, IndicatorSource
+from analysis.models import Indicator, IndicatorSource, AnalysisTask
 from analysis.analysis import (
     initialize_engine_analysis,
     run_analysis,
@@ -32,6 +33,9 @@ def _temporal_analysis(locations, analysis_dict, custom_geom):
 
 
 class AnalysisRunner:
+
+    def __init__(self, analysis_task: typing.Optional[AnalysisTask] = None):
+        self.analysis_task: typing.Optional[AnalysisTask] = analysis_task
 
     @staticmethod
     def get_analysis_dict_baseline(data):
@@ -492,7 +496,8 @@ class AnalysisRunner:
         results = run_analysis(
             locations=data.get('locations', []) or [],
             analysis_dict=analysis_dict,
-            custom_geom=data.get('custom_geom', None)
+            custom_geom=data.get('custom_geom', None),
+            analysis_task_id=self.analysis_task.id
         )
         if Indicator.has_statistics(variable):
             results[0]['statistics'] = self.add_statistics(
@@ -679,7 +684,7 @@ class AnalysisRunner:
             reference_layer=reference_layer_geom
         )
 
-    def run(self, data):
+    def run(self, data, analysis_task=None):
         """Run the analysis."""
         if data['analysisType'] == 'Baseline':
             return self.run_baseline_analysis(data)

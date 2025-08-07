@@ -8,15 +8,20 @@ import os
 from functools import reduce, partial
 
 from analysis.models import (
+    AnalysisTask,
     AnalysisResultsCache,
     GEEAsset,
     Indicator,
+    UserIndicator,
     IndicatorSource
 )
 from analysis.utils import split_dates_by_year
 from analysis.external.gpw import (
     gpw_annual_temporal_analysis,
     gpw_spatial_analysis_dict
+)
+from analysis.external.user_raster import (
+    temporal_analysis
 )
 
 SERVICE_ACCOUNT_KEY = os.environ.get('SERVICE_ACCOUNT_KEY', '')
@@ -540,7 +545,7 @@ class InputLayer:
         selected_area = None
         if is_custom_geom:
             selected_area = ee.FeatureCollection([
-                ee.Feature(aoi, {'name': 'Custom Area'})
+                ee.Feature(aoi, {'Name': 'Custom Area'})
             ])
             selected_area = selected_area.map(lambda feature: feature.set(
                 'area', feature.geometry().area().divide(10000)
@@ -836,7 +841,16 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
             variable_name=variable
         ).first()
         if not indicator:
-            raise ValueError(f"Indicator for variable {variable} not found")
+            analysis_task = AnalysisTask.objects.filter(id=kwargs.get('analysis_task_id')).first()
+            if analysis_task:
+                indicator = UserIndicator.objects.filter(
+                    variable_name=variable,
+                    created_by=analysis_task.submitted_by
+                ).first()
+                if not indicator:
+                    raise ValueError(f"Indicator for variable {variable} not found")
+            else:
+                raise ValueError(f"Indicator for variable {variable} not found")
 
         if indicator.source == IndicatorSource.GPW:
             baseline_dt = datetime.date(
@@ -854,6 +868,26 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
                 test_years,
                 select_geo,
                 analysis_cache
+            )
+        
+        elif isinstance(indicator, UserIndicator) and indicator.source == IndicatorSource.OTHER:
+            baseline_dt = datetime.date(
+                baseline_yr, 1, 1
+            )
+            select_geo = input_layers.get_selected_area(
+                custom_geom if custom_geom else selected_geos,
+                True if custom_geom else False
+            )
+
+            # Run analysis for GPW datasets
+            return temporal_analysis(
+                variable=variable,
+                user=indicator.created_by,
+                start_date=start_date,
+                test_dates=test_dates,
+                resolution=res,
+                select_geo=select_geo,
+                analysis_cache=analysis_cache
             )
 
         temporal_table, temporal_table_yr = input_layers.get_temporal_table()
@@ -1392,9 +1426,15 @@ def quarterly_medians(
     else:
         end_date = ee.Date.parse('YYYY-MM-dd', date_end)
 
-    date_ranges = ee.List.sequence(
-        0, end_date.difference(
-            start_date, unit).round().subtract(1))
+    if unit == "year" and end_date.difference(start_date, "year").lt(1):
+        # force one year interval
+        date_ranges = ee.List([0])
+    else:
+        date_ranges = ee.List.sequence(
+            0, end_date.difference(
+                start_date, unit
+            ).round().subtract(1)
+        )
 
     def make_time_slice(num):
         """

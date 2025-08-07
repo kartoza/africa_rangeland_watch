@@ -354,7 +354,7 @@ def run_analysis_task(analysis_task_id: int):
     analysis_task.save()
 
     try:
-        runner = AnalysisRunner()
+        runner = AnalysisRunner(analysis_task=analysis_task)
         results = runner.run(analysis_task.analysis_inputs)
         analysis_task.result = results
         analysis_task.status = TaskStatus.COMPLETED

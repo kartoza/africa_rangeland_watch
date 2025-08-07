@@ -15,7 +15,9 @@ from .models import (
     AnalysisRasterOutput,
     AnalysisTask,
     Project,
-    Indicator
+    Indicator,
+    UserIndicator,
+    UserGEEAsset
 )
 from analysis.utils import get_gdrive_file
 from analysis.tasks import (
@@ -280,3 +282,15 @@ class IndicatorAdmin(admin.ModelAdmin):
             obj.temporal_resolutions else '-'
         )
     get_temporal_resolutions.short_description = 'Temporal Resolutions'
+
+
+@admin.register(UserIndicator)
+class UserIndicatorAdmin(IndicatorAdmin):
+    list_display = (
+        'name', 'created_by', 'source', 'get_analysis_type',
+        'get_temporal_resolutions', 'is_active',
+    )
+
+@admin.register(UserGEEAsset)
+class UserGEEAssetAdmin(GEEAssetAdmin):
+    list_display = ('key', 'created_by', 'type', 'source',)
