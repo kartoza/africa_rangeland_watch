@@ -3,6 +3,7 @@ import json
 import os
 import logging
 import rasterio
+import calendar
 from datetime import date, timedelta
 from dateutil.relativedelta import relativedelta
 from pydrive2.auth import GoogleAuth
@@ -261,3 +262,61 @@ def get_date_range_for_analysis(temporal_resolution, year, quarter, month):
         'resolution_step': resolution_step,
         'month_filter': month_filter
     }
+
+
+def convert_temporal_to_dates(data: dict):
+    def end_of_month(year: int, month: int) -> date:
+        last_day = calendar.monthrange(year, month)[1]
+        return date(year, month, last_day)
+
+    def end_of_quarter(year: int, quarter: int) -> date:
+        month = quarter * 3
+        return end_of_month(year, month)
+
+    result = {
+        "period_date": None,
+        "comparison_dates": []
+    }
+
+    temporal = data.get("Temporal", {})
+    resolution = data.get("t_resolution", "").lower()
+
+    if resolution == "annual":
+        annual = temporal.get("Annual", {})
+        ref = annual.get("ref")
+        test = annual.get("test", [])
+        if ref:
+            result["period_date"] = date(ref, 1, 1)
+        result["comparison_dates"] = [date(y, 12, 31) for y in test]
+
+    elif resolution == "quarterly":
+        annual = temporal.get("Annual", {})
+        ref_year = annual.get("ref")
+        quarterly = temporal.get("Quarterly", {})
+        ref = quarterly.get("ref")
+        test = quarterly.get("test", [])
+        test_years = annual.get("test", [])
+
+        if ref and ref_year:
+            start_month = (ref - 1) * 3 + 1
+            result["period_date"] = date(ref_year, start_month, 1)
+
+        if test and test_years:
+            result["comparison_dates"] = [end_of_quarter(test_years[i], q) for i, q in enumerate(test)]
+
+    elif resolution == "monthly":
+        annual = temporal.get("Annual", {})
+        ref_year = annual.get("ref")
+        monthly = temporal.get("Monthly", {})
+        ref = monthly.get("ref")
+        test = monthly.get("test", [])
+        test_years = annual.get("test", [])
+
+        if ref and ref_year:
+            result["period_date"] = date(ref_year, ref, 1)
+
+        if test and test_years:
+            print(test, test_years)
+            result["comparison_dates"] = [end_of_month(test_years[i], q) for i, q in enumerate(test)]
+
+    return result

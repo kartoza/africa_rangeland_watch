@@ -2,6 +2,7 @@ import datetime
 import time
 import base64
 from dateutil.relativedelta import relativedelta
+from django.contrib.auth.models import User
 
 import ee
 import os
@@ -15,13 +16,14 @@ from analysis.models import (
     UserIndicator,
     IndicatorSource
 )
-from analysis.utils import split_dates_by_year
+from analysis.utils import split_dates_by_year, convert_temporal_to_dates
 from analysis.external.gpw import (
     gpw_annual_temporal_analysis,
     gpw_spatial_analysis_dict
 )
 from analysis.external.user_raster import (
-    temporal_analysis
+    user_temporal_analysis,
+    user_spatial_analysis_dict
 )
 
 SERVICE_ACCOUNT_KEY = os.environ.get('SERVICE_ACCOUNT_KEY', '')
@@ -363,7 +365,8 @@ class InputLayer:
         return soc_lt_trend
 
     def get_spatial_layer_dict(
-        self, start_date: datetime.date = None, end_date: datetime.date = None
+        self, start_date: datetime.date = None, end_date: datetime.date = None,
+        user: User = None
     ):
         """
         Get spatial layer dictionary.
@@ -441,6 +444,12 @@ class InputLayer:
             self.countries, start_date, end_date
         )
         spatial_layer_dict.update(gpw_dict)
+
+        user_layer_dict = user_spatial_analysis_dict(
+            self.countries, user,
+            start_date, end_date
+        )
+        spatial_layer_dict.update(user_layer_dict)
         return spatial_layer_dict
 
     def get_landscape_dict(self):
@@ -727,6 +736,22 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
     communities = input_layers.get_communities()
     baseline_table = input_layers.get_baseline_table()
 
+    variable = analysis_dict['variable']
+    indicator = Indicator.objects.filter(
+        variable_name=variable
+    ).first()
+    if not indicator:
+        analysis_task = AnalysisTask.objects.filter(id=kwargs.get('analysis_task_id')).first()
+        if analysis_task:
+            indicator = UserIndicator.objects.filter(
+                variable_name=variable,
+                created_by=analysis_task.submitted_by
+            ).first()
+            if not indicator:
+                raise ValueError(f"Indicator for variable {variable} not found")
+        else:
+            raise ValueError(f"Indicator for variable {variable} not found")
+
     features_geo = []
     for location in locations:
         geo = ee.Geometry.Point(
@@ -762,9 +787,10 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
         filter_start_date, filter_end_date = spatial_get_date_filter(
             analysis_dict
         )
+        user = indicator.created_by if isinstance(indicator, UserIndicator) else None
         rel_diff = get_rel_diff(
             input_layers.get_spatial_layer_dict(
-                filter_start_date, filter_end_date
+                filter_start_date, filter_end_date, user
             ),
             analysis_dict,
             reference_layer
@@ -831,26 +857,11 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
         return analysis_cache.create_analysis_cache(select.getInfo())
 
     if analysis_dict['analysisType'] == "Temporal":
-        variable = analysis_dict['variable']
         res = analysis_dict['t_resolution']
         baseline_yr = int(analysis_dict['Temporal']['Annual']['ref'])
         test_years = [
             int(year) for year in analysis_dict['Temporal']['Annual']['test']
         ]
-        indicator = Indicator.objects.filter(
-            variable_name=variable
-        ).first()
-        if not indicator:
-            analysis_task = AnalysisTask.objects.filter(id=kwargs.get('analysis_task_id')).first()
-            if analysis_task:
-                indicator = UserIndicator.objects.filter(
-                    variable_name=variable,
-                    created_by=analysis_task.submitted_by
-                ).first()
-                if not indicator:
-                    raise ValueError(f"Indicator for variable {variable} not found")
-            else:
-                raise ValueError(f"Indicator for variable {variable} not found")
 
         if indicator.source == IndicatorSource.GPW:
             baseline_dt = datetime.date(
@@ -871,16 +882,15 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
             )
         
         elif isinstance(indicator, UserIndicator) and indicator.source == IndicatorSource.OTHER:
-            baseline_dt = datetime.date(
-                baseline_yr, 1, 1
-            )
             select_geo = input_layers.get_selected_area(
                 custom_geom if custom_geom else selected_geos,
                 True if custom_geom else False
             )
 
+            start_date, test_dates = convert_temporal_to_dates(analysis_dict).values()
+
             # Run analysis for GPW datasets
-            return temporal_analysis(
+            result = user_temporal_analysis(
                 variable=variable,
                 user=indicator.created_by,
                 start_date=start_date,
@@ -889,6 +899,8 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
                 select_geo=select_geo,
                 analysis_cache=analysis_cache
             )
+            print(result)
+            return result
 
         temporal_table, temporal_table_yr = input_layers.get_temporal_table()
 
@@ -1425,8 +1437,8 @@ def quarterly_medians(
             .update(None, None, None, 23, 59, 59)
     else:
         end_date = ee.Date.parse('YYYY-MM-dd', date_end)
-
-    if unit == "year" and end_date.difference(start_date, "year").lt(1):
+    
+    if unit == "year" and end_date.difference(start_date, "year").lt(1).getInfo():
         # force one year interval
         date_ranges = ee.List([0])
     else:

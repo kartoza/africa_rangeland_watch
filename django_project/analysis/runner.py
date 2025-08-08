@@ -20,7 +20,8 @@ from analysis.analysis import (
     InputLayer,
     AnalysisResultsCacheUtils,
     spatial_get_date_filter,
-    validate_spatial_date_range_filter
+    validate_spatial_date_range_filter,
+    UserIndicator
 )
 
 
@@ -561,19 +562,24 @@ class AnalysisRunner:
             rel_diff = get_rel_diff(
                 input_layers.get_spatial_layer_dict(
                     filter_start_date,
-                    filter_end_date
+                    filter_end_date,
+                    self.analysis_task.submitted_by
                 ),
                 spatial_analysis_dict,
                 reference_layer_geom
             )
+            
+            variable = data["variable"]
             indicator = Indicator.objects.filter(
-                variable_name=data['variable']
+                variable_name=variable
             ).first()
-            if indicator is None:
-                raise ValueError(
-                    f'Invalid variable {data["variable"]} '
-                    'for spatial analysis!'
-                )
+            if not indicator:
+                indicator = UserIndicator.objects.filter(
+                    variable_name=variable,
+                    created_by=self.analysis_task.submitted_by
+                ).first()
+                if not indicator:
+                    raise ValueError(f"Indicator for variable {variable} not found")
 
             if indicator.source == IndicatorSource.GPW:
                 metadata = indicator.metadata
@@ -614,13 +620,14 @@ class AnalysisRunner:
                 locations=locations,
                 analysis_dict=spatial_analysis_dict,
                 reference_layer=reference_layer_geom,
-                custom_geom=data.get('custom_geom', None)
+                custom_geom=data.get('custom_geom', None),
+                analysis_task_id=self.analysis_task.id
             )
 
             temporal_future = executor.submit(
                 self.run_temporal_analysis,
-                data,
-                temporal_analysis_dict
+                data=data,
+                analysis_dict=temporal_analysis_dict
             )
 
             try:

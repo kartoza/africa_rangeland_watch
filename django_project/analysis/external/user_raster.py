@@ -14,7 +14,7 @@ from analysis.models import UserIndicator, UserGEEAsset, GEEAssetType
 from analysis.utils import split_dates
 
 
-def temporal_analysis(
+def user_temporal_analysis(
     variable, user, start_date, test_dates, resolution,
     select_geo, analysis_cache
 ):
@@ -200,20 +200,20 @@ def temporal_analysis(
 
     to_plot = to_plot_ts.filter(ee.Filter.inList('date', date_list_ee))
 
-    # return analysis_cache.create_analysis_cache(
-    #     (
-    #         to_plot.getInfo(),
-    #         to_plot_ts.getInfo()
-    #     )
-    # )
+    return analysis_cache.create_analysis_cache(
+        (
+            to_plot.getInfo(),
+            to_plot_ts.getInfo()
+        )
+    )
 
 
-def gpw_spatial_analysis_dict(
-    countries,
+def user_spatial_analysis_dict(
+    countries, user,
     start_date: datetime.date = None, end_date: datetime.date = None
 ):
     """
-    Create a dictionary for GPW spatial analysis.
+    Create a dictionary for User spatial analysis.
 
     :param start_date: Start date for the analysis.
     :param end_date: End date for the analysis.
@@ -224,24 +224,50 @@ def gpw_spatial_analysis_dict(
     if not end_date:
         end_date = datetime.date.today()
 
-    # Probabilities of Cultivated Grassland
-    prob_cultivated_grassland = ee.ImageCollection(
-        UserGEEAsset.fetch_asset_source('prob_cultivated_grassland')
-    ).filterDate(
-        start_date.isoformat(), end_date.isoformat()
-    ).select('probability').filterBounds(countries)
-    prob_cultivated_grassland = prob_cultivated_grassland.mean()
-
-    prob_natural_semi_grassland = ee.ImageCollection(
-        UserGEEAsset.fetch_asset_source('prob_natural_semi_grassland')
-    ).filterDate(
-        start_date.isoformat(), end_date.isoformat()
-    ).select('probability').filterBounds(countries)
-    prob_natural_semi_grassland = prob_natural_semi_grassland.mean()
-
-    return {
-        'Probabilities of Cultivated Grasslands': prob_cultivated_grassland,
-        'Probabilities of Natural/Semi-Natural Grasslands': (
-            prob_natural_semi_grassland
+    user_indicators = UserIndicator.objects.filter(
+        created_by=user
+    )
+    asset_dict = {}
+    for indicator in user_indicators:
+        asset_keys = indicator.config.get(
+            'asset_keys', []
         )
-    }
+        if not asset_keys:
+            continue
+        # Use the first asset key
+        asset_key = asset_keys[0]
+
+        gee_asset: UserGEEAsset = UserGEEAsset.objects.filter(
+            key=asset_key, created_by=user
+        ).first()
+        if not gee_asset:
+            continue
+
+        print(gee_asset)
+
+        var_names = gee_asset.metadata.get(
+            'band_names', [indicator.variable_name]
+        )
+        var_name = var_names[0]
+
+        if 'Spatial' not in indicator.ALLOWED_ANALYSIS_TYPES:
+            continue
+
+        if gee_asset.type not in [GEEAssetType.IMAGE, GEEAssetType.IMAGE_COLLECTION]:
+            continue 
+
+        if gee_asset.type == GEEAssetType.IMAGE_COLLECTION:
+            gee_asset_obj = ee.ImageCollection(
+                gee_asset.source
+            ).filterDate(
+                start_date.isoformat(), end_date.isoformat()
+            ).select(var_name).filterBounds(countries)
+            gee_asset_obj = gee_asset_obj.mean()
+        else:
+            gee_asset_obj = ee.Image(
+                gee_asset.source
+            ).select(var_name).filterBounds(countries)
+
+        asset_dict[indicator.variable_name] = gee_asset_obj
+
+    return asset_dict
