@@ -26,7 +26,11 @@ def fetch_and_store_data(
         if not setting:
             logging.error(f"No setting found with ID: {setting_ids}")
             return
-        api_url = f"{setting.url}{endpoint}/"
+        if setting.url.endswith("/api/v1.0/"):
+            url = setting.url
+        else:
+            url = f"{setting.url.rstrip('/')}/api/v1.0/"
+        api_url = f"{url}{endpoint}/"
         headers = {
             "accept": "application/json",
             "Authorization": f"Bearer {setting.token}"
@@ -187,6 +191,13 @@ def check_token(url, token):
     """
     Check if the token is valid for the given URL
     """
+
+    
+    if url.endswith("/api/v1.0/"):
+        url = url
+    else:
+        url = f"{url.rstrip('/')}/api/v1.0/"
+
     try:
         response = requests.get(
             f"{url.rstrip('/')}/activity/events/count/",
