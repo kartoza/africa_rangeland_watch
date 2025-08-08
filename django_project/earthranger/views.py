@@ -1,5 +1,6 @@
 import logging
 import requests
+import urllib.parse
 
 from django.conf import settings
 from django.db.models import Q
@@ -154,14 +155,36 @@ class EarthRangerImageProxyView(APIView):
         Fetch and return image from EarthRanger with proper authentication
         """
         try:
-            # Construct the full URL
-            headers = {
-                "accept": "application/json",
-                "Authorization": f"Bearer {settings.EARTH_RANGER_AUTH_TOKEN}"
-            }
+            event_uuid = image_path.split('/')[2]
+            er_event = EarthRangerEvents.objects.filter(earth_ranger_uuid=event_uuid).first()
+
+            er_setting = None
+            if er_event:
+                er_setting = er_event.earth_ranger_settings.all().first()
+                if not er_setting:
+                    if not er_event:
+                        return Response(
+                            {"error": "Event does not exist!"},
+                            status=status.HTTP_404_NOT_FOUND
+                        )
+
             # Clean and construct the full URL
             image_path = image_path.lstrip('/')
-            full_url = f"{settings.EARTH_RANGER_API_URL}{image_path}"
+            base_url = er_setting.url if er_setting else settings.EARTH_RANGER_API_URL
+
+            if base_url.endswith("/api/v1.0/"):
+                base_url = base_url
+            else:
+                base_url = f"{base_url.rstrip('/')}/api/v1.0/"
+
+            full_url = urllib.parse.urljoin(base_url, image_path)
+            token = er_setting.token if er_setting else settings.EARTH_RANGER_AUTH_TOKEN
+
+            # Construct header
+            headers = {
+                "accept": "application/json",
+                "Authorization": f"Bearer {token}"
+            }
 
             # Fetch the image with timeout
             response = requests.get(
