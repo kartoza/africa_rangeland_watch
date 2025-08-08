@@ -1,3 +1,4 @@
+import typing
 import json
 import uuid
 
@@ -640,6 +641,27 @@ class GEEAssetType:
             (cls.FEATURE_VIEW, cls.FEATURE_VIEW),
             (cls.FOLDER, cls.FOLDER),
         )
+    
+    @classmethod
+    def get_ee_asset_class(cls, gee_asset):
+        if gee_asset.type == GEEAssetType.IMAGE_COLLECTION:
+            return ee.ImageCollection
+        elif gee_asset.type == GEEAssetType.IMAGE:
+            return ee.Image
+        elif gee_asset.type == GEEAssetType.TABLE:
+            return ee.FeatureCollection
+        elif gee_asset.type == GEEAssetType.CLASSIFIER:
+            return ee.Classifier
+        elif gee_asset.type == GEEAssetType.FEATURE_VIEW:
+            return ee.FeatureView
+        elif gee_asset.type == GEEAssetType.FOLDER:
+            raise ValueError(
+                f"Cannot load GEE folder '{gee_asset.source}' directly as an asset."
+            )
+        else:
+            raise ValueError(
+                f"Unsupported GEE asset type: {gee_asset.type}"
+            )
 
 
 class BaseGEEAsset(models.Model):
@@ -680,7 +702,7 @@ class BaseGEEAsset(models.Model):
     @classmethod
     def fetch_asset_source(cls, asset_key: str) -> str:
         """Fetch asset source by its key."""
-        asset = GEEAsset.objects.filter(key=asset_key).first()
+        asset = cls.objects.filter(key=asset_key).first()
         if asset is None:
             raise KeyError(f'Asset with key {asset_key} not found!')
         return asset.source
@@ -688,7 +710,7 @@ class BaseGEEAsset(models.Model):
     @classmethod
     def fetch_asset_metadata(cls, asset_key: str) -> str:
         """Fetch asset metadata by its key."""
-        asset = GEEAsset.objects.filter(key=asset_key).first()
+        asset = cls.objects.filter(key=asset_key).first()
         if asset is None:
             raise KeyError(f'Asset with key {asset_key} not found!')
         return asset.metadata
@@ -969,14 +991,6 @@ class Indicator(BaseIndicator):
         ordering = ['name']
 
 
-# class UserIndicator(BaseIndicator):
-#     gee_asset_source = models.CharField(max_length=255, blank=True, null=False)
-#     band_name = models.CharField(max_length=25, blank=True)
-#     visualisation_parameters = models.JSONField(default=dict, blank=True)
-#     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="created_indicators")
-#     created_at = models.DateTimeField(auto_now_add=True)
-#     updated_at = models.DateTimeField(auto_now=True)
-
 class UserGEEAsset(BaseGEEAsset):
     key = models.CharField(
         max_length=50,
@@ -985,6 +999,62 @@ class UserGEEAsset(BaseGEEAsset):
     created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="gee_assets")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    @classmethod
+    def fetch_asset_source(cls, asset_key: str, user: User) -> str:
+        """Fetch asset source by its key and user."""
+        asset = cls.objects.filter(key=asset_key, created_by=user).first()
+        if asset is None:
+            raise KeyError(f'Asset with key {asset_key} not found!')
+        return asset.source
+
+    @classmethod
+    def fetch_asset_metadata(cls, asset_key: str, user: User) -> str:
+        """Fetch asset metadata by its key."""
+        asset = cls.objects.filter(key=asset_key, created_by=user).first()
+        if asset is None:
+            raise KeyError(f'Asset with key {asset_key} not found!')
+        return asset.metadata
+
+    @classmethod
+    def is_date_within_asset_period(cls, asset_key: str, date: str, user: User) -> bool:
+        """Check if the given date is within the asset's start and end date."""
+        breakpoint()
+        asset = cls.objects.filter(key=asset_key, created_by=user).first()
+        if asset is None:
+            raise KeyError(f'Asset with key {asset_key} not found!')
+
+        start_date = asset.start_date
+        end_date = asset.end_date
+
+        if not start_date or not end_date:
+            raise ValueError(
+                'Asset metadata must contain start_date and end_date.'
+            )
+        # compare only the year
+        return int(start_date[:4]) <= int(date[:4]) <= int(end_date[:4])
+
+    @classmethod
+    def get_dates_within_asset_period(
+        cls, asset_key: str, start_date: str, end_date: str, user: User
+    ) -> Tuple[bool, str, str]:
+        """Check and get given dates within asset's start and end date."""
+        valid_start_date = cls.is_date_within_asset_period(
+            asset_key,
+            start_date,
+            user
+        )
+        valid_end_date = cls.is_date_within_asset_period(asset_key, end_date, user)
+        if not valid_start_date and not valid_end_date:
+            return (False, None, None,)
+        elif valid_start_date and not valid_end_date:
+            asset = cls.objects.filter(key=asset_key, created_by=user).first()
+            return (True, start_date, asset.end_date)
+        elif not valid_start_date and valid_end_date:
+            asset = cls.objects.filter(key=asset_key, created_by=user).first()
+            return (True, asset.start_date, end_date)
+
+        return (True, start_date, end_date,)
 
     class Meta:
         verbose_name_plural = 'User GEE Assets'
@@ -1010,6 +1080,78 @@ class UserIndicator(BaseIndicator):
             raise ValidationError(
                 f"Invalid name: '{self.name}' already exists!"
             )
+        
+    @classmethod
+    def map_user_indicator_to_user_gee_asset(
+        cls, user: User, asset_types:list = None, analysis_types:list = None
+    ):
+        """
+        Map User's indicator in User Indicator to
+        their respective GEE Asset
+        """
+
+        if not analysis_types:
+            analysis_types = cls.ALLOWED_ANALYSIS_TYPES
+
+        usis = UserIndicator.objects.all()
+        user_indicators = UserIndicator.objects.filter(
+            created_by=user
+        )
+        asset_dict = {}
+        for indicator in user_indicators:
+            asset_keys = indicator.config.get(
+                'asset_keys', []
+            )
+            if not asset_keys:
+                continue
+            # Use the first asset key
+            asset_key = asset_keys[0]
+
+            gee_asset: UserGEEAsset = UserGEEAsset.objects.filter(
+                key=asset_key, created_by=user
+            ).first()
+            if not gee_asset:
+                continue
+
+            invalid_analysis_types = (
+                set(analysis_types) - set(indicator.ALLOWED_ANALYSIS_TYPES)
+            )
+            if invalid_analysis_types:
+                continue
+            
+            if asset_types and gee_asset.type not in asset_types:
+                continue 
+            
+            asset_dict[indicator] = gee_asset
+
+        return asset_dict
+        
+    @classmethod
+    def map_user_indicator_to_gee_object(
+        cls, user: User, asset_types:list = None
+    ):
+        """
+        Map User's indicator in User Indicator to
+        their respective GEE Asset
+        """
+        asset_dict = cls.map_user_indicator_to_user_gee_asset(
+            user, 
+            asset_types
+        )
+        for indicator, gee_asset in asset_dict.items():
+            var_names = gee_asset.metadata.get(
+                'band_names', [indicator.variable_name]
+            )
+            var_name = var_names[0]
+
+            gee_asset_class = GEEAssetType.get_ee_asset_class(gee_asset)
+            gee_asset_obj = gee_asset_class(
+                gee_asset.source
+            ).select(var_name)
+            
+            asset_dict[indicator] = gee_asset_obj
+
+        return asset_dict
 
     class Meta:
         unique_together = ('name', 'created_by')

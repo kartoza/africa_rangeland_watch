@@ -242,7 +242,8 @@ class AnalysisRunner:
         return run_analysis(
             locations=data.get('locations', []),
             analysis_dict=analysis_dict,
-            custom_geom=data.get('custom_geom', None)
+            custom_geom=data.get('custom_geom', None),
+            analysis_task_id=self.analysis_task.id
         )
 
     @staticmethod

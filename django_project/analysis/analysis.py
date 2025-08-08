@@ -14,7 +14,9 @@ from analysis.models import (
     GEEAsset,
     Indicator,
     UserIndicator,
-    IndicatorSource
+    IndicatorSource,
+    UserGEEAsset,
+    GEEAssetType
 )
 from analysis.utils import split_dates_by_year, convert_temporal_to_dates
 from analysis.external.gpw import (
@@ -729,28 +731,34 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
         'kwargs': kwargs
     })
     output = analysis_cache.get_analysis_cache()
-    if output:
-        return output
+    # if output:
+    #     return output
     input_layers = InputLayer()
     selected_geos = input_layers.get_selected_geos()
     communities = input_layers.get_communities()
     baseline_table = input_layers.get_baseline_table()
 
-    variable = analysis_dict['variable']
-    indicator = Indicator.objects.filter(
-        variable_name=variable
-    ).first()
-    if not indicator:
-        analysis_task = AnalysisTask.objects.filter(id=kwargs.get('analysis_task_id')).first()
-        if analysis_task:
-            indicator = UserIndicator.objects.filter(
-                variable_name=variable,
-                created_by=analysis_task.submitted_by
-            ).first()
-            if not indicator:
+    indicator = None
+    if analysis_dict['analysisType'] != "Baseline":
+        variable = analysis_dict['variable']
+        indicator = Indicator.objects.filter(
+            variable_name=variable
+        ).first()
+        if not indicator:
+            analysis_task = AnalysisTask.objects.filter(id=kwargs.get('analysis_task_id')).first()
+            if analysis_task:
+                indicator = UserIndicator.objects.filter(
+                    variable_name=variable,
+                    created_by=analysis_task.submitted_by
+                ).first()
+                if not indicator:
+                    raise ValueError(f"Indicator for variable {variable} not found")
+            else:
                 raise ValueError(f"Indicator for variable {variable} not found")
-        else:
-            raise ValueError(f"Indicator for variable {variable} not found")
+
+    analysis_task = None
+    if kwargs.get('analysis_task_id', None):
+        analysis_task = AnalysisTask.objects.filter(id=kwargs.get('analysis_task_id')).first()
 
     features_geo = []
     for location in locations:
@@ -819,14 +827,16 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
                     ee.Geometry.MultiPolygon(custom_geom['coordinates']),
                     analysis_dict['Baseline']['startDate'],
                     analysis_dict['Baseline']['endDate'],
-                    is_custom_geom=True
+                    is_custom_geom=True,
+                    user=analysis_task.submitted_by
                 )
             else:
                 select = calculate_baseline(
                     selected_geos,
                     analysis_dict['Baseline']['startDate'],
                     analysis_dict['Baseline']['endDate'],
-                    is_custom_geom=False
+                    is_custom_geom=False,
+                    user=analysis_task.submitted_by
                 )
         else:
             if custom_geom:
@@ -881,7 +891,7 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
                 analysis_cache
             )
         
-        elif isinstance(indicator, UserIndicator) and indicator.source == IndicatorSource.OTHER:
+        elif isinstance(indicator, UserIndicator):
             select_geo = input_layers.get_selected_area(
                 custom_geom if custom_geom else selected_geos,
                 True if custom_geom else False
@@ -899,7 +909,6 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
                 select_geo=select_geo,
                 analysis_cache=analysis_cache
             )
-            print(result)
             return result
 
         temporal_table, temporal_table_yr = input_layers.get_temporal_table()
@@ -2115,7 +2124,7 @@ def calculate_firefreq(aoi, start_date, end_date):
     return ba_count.rename('fireFreq')
 
 
-def calculate_baseline(aoi, start_date, end_date, is_custom_geom=False):
+def calculate_baseline(aoi, start_date, end_date, is_custom_geom=False, *args, **kwargs):
     """
     Calculate baseline statistics.
 
@@ -2142,142 +2151,169 @@ def calculate_baseline(aoi, start_date, end_date, is_custom_geom=False):
     input_layer = InputLayer()
     selected_area = input_layer.get_selected_area(aoi, is_custom_geom)
 
-    # Get MODIS vegetation data
-    valid, start_dt, end_dt = GEEAsset.get_dates_within_asset_period(
-        'modis_vegetation_061', start_date, end_date
+    # # Get MODIS vegetation data
+    # valid, start_dt, end_dt = GEEAsset.get_dates_within_asset_period(
+    #     'modis_vegetation_061', start_date, end_date
+    # )
+    # if valid:
+    #     modis_veg = (ee.ImageCollection(
+    #                     GEEAsset.fetch_asset_source('modis_vegetation_061')
+    #                 )
+    #                 .filterDate(start_dt, end_dt)
+    #                 .filterBounds(selected_area)
+    #                 .select(['NDVI', 'EVI'])
+    #                 .map(lambda i: i.divide(10000)))
+    #     evi_baseline = modis_veg.select('EVI').median()
+    #     ndvi_baseline = modis_veg.select('NDVI').median()
+    #     image_list.append({
+    #         'asset': evi_baseline,
+    #         'attribute': 'EVI',
+    #         'label': 'EVI'
+    #     })
+    #     image_list.append({
+    #         'asset': ndvi_baseline,
+    #         'attribute': 'NDVI',
+    #         'label': 'NDVI'
+    #     })
+
+    # # Get CGLS Ground Cover data
+    # valid, start_dt, end_dt = GEEAsset.get_dates_within_asset_period(
+    #     'cgls_ground_cover', start_date, end_date
+    # )
+    # if valid:
+    #     cgls = (ee.ImageCollection(
+    #                 GEEAsset.fetch_asset_source('cgls_ground_cover')
+    #             )
+    #             .filterDate(start_dt, end_dt)
+    #             .filterBounds(selected_area)
+    #             .select(
+    #                 [
+    #                     'bare-coverfraction', 'crops-coverfraction',
+    #                     'urban-coverfraction', 'shrub-coverfraction',
+    #                     'grass-coverfraction', 'tree-coverfraction'
+    #                 ]
+    #             ))
+    #     cgls = cgls.median()
+
+    #     # Additional calculations for land cover fractions and grazing capacity
+    #     bg = cgls.select('bare-coverfraction').add(
+    #         cgls.select('urban-coverfraction')
+    #     )
+    #     t = cgls.select('tree-coverfraction').add(
+    #         cgls.select('shrub-coverfraction')
+    #     )
+    #     g = cgls.select('grass-coverfraction')
+    #     image_list.append({
+    #         'asset': bg,
+    #         'attribute': 'bare-coverfraction',
+    #         'label': 'Bare ground %'
+    #     })
+    #     image_list.append({
+    #         'asset': t,
+    #         'attribute': 'tree-coverfraction',
+    #         'label': 'Woody cover %'
+    #     })
+    #     image_list.append({
+    #         'asset': g,
+    #         'attribute': 'grass-coverfraction',
+    #         'label': 'Grass cover %'
+    #     })
+
+    # # TODO: add grazing capacity
+
+    # # fire freq
+    # valid, start_dt, end_dt = GEEAsset.get_dates_within_asset_period(
+    #     'fire_cci', start_date, end_date
+    # )
+    # if valid:
+    #     fire_freq = calculate_firefreq(
+    #         selected_area,
+    #         start_dt,
+    #         end_dt
+    #     ).divide(18)
+    #     fire_freq = fire_freq.unmask(0)
+    #     image_list.append({
+    #         'asset': fire_freq,
+    #         'attribute': 'fireFreq',
+    #         'label': 'Fires/yr'
+    #     })
+
+    # # SOCltMean and SOCltTrend
+    # valid, start_dt, end_dt = GEEAsset.get_dates_within_asset_period(
+    #     'soil_carbon', start_date, end_date
+    # )
+    # if valid:
+    #     soc_lt_mean = input_layer.get_soil_carbon(
+    #         datetime.date.fromisoformat(start_dt),
+    #         datetime.date.fromisoformat(end_dt),
+    #         False,
+    #         selected_area
+    #     )
+    #     soc_lt_mean = soc_lt_mean.rename('SOCltMean')
+    #     image_list.append({
+    #         'asset': soc_lt_mean,
+    #         'attribute': 'SOCltMean',
+    #         'label': 'SOC kg/m2'
+    #     })
+
+    #     # SOCltTrend
+    #     soil_start_dt = datetime.date.fromisoformat(start_dt)
+    #     if soil_start_dt.year == datetime.date.fromisoformat(end_dt).year:
+    #         # soild_carbon_change needs 2 years of data
+    #         soil_start_dt = datetime.date(
+    #             soil_start_dt.year - 1, soil_start_dt.month, soil_start_dt.day
+    #         )
+    #         start_dt = soil_start_dt.isoformat()
+    #     soc_lt_trend = input_layer.get_soil_carbon_change(
+    #         datetime.date.fromisoformat(start_dt),
+    #         datetime.date.fromisoformat(end_dt),
+    #         False,
+    #         selected_area
+    #     )
+    #     soc_lt_trend = soc_lt_trend.rename('SOCltTrend')
+    #     image_list.append({
+    #         'asset': soc_lt_trend,
+    #         'attribute': 'SOCltTrend',
+    #         'label': 'SOC change kg/m2'
+    #     })
+
+    # # Add livestock all species
+    # livestock_map = ee.Image(
+    #     GEEAsset.fetch_asset_source('livestock_all_2020')
+    # ).clip(selected_area)
+    # livestock_map = livestock_map.select('b1').rename('LivestockDensity')
+    # image_list.append({
+    #     'asset': livestock_map,
+    #     'attribute': 'LivestockDensity',
+    #     'label': 'Livestock Density 2020 head/km2'
+    # })
+
+    # Add User GEE Asset
+    user = kwargs.get('user')
+    indicator_asset_dicts = UserIndicator.map_user_indicator_to_user_gee_asset(
+        user=user,
+        asset_types=[GEEAssetType.IMAGE_COLLECTION],
+        analysis_types=['Baseline']
     )
-    if valid:
-        modis_veg = (ee.ImageCollection(
-                        GEEAsset.fetch_asset_source('modis_vegetation_061')
-                    )
-                    .filterDate(start_dt, end_dt)
-                    .filterBounds(selected_area)
-                    .select(['NDVI', 'EVI'])
-                    .map(lambda i: i.divide(10000)))
-        evi_baseline = modis_veg.select('EVI').median()
-        ndvi_baseline = modis_veg.select('NDVI').median()
-        image_list.append({
-            'asset': evi_baseline,
-            'attribute': 'EVI',
-            'label': 'EVI'
-        })
-        image_list.append({
-            'asset': ndvi_baseline,
-            'attribute': 'NDVI',
-            'label': 'NDVI'
-        })
-
-    # Get CGLS Ground Cover data
-    valid, start_dt, end_dt = GEEAsset.get_dates_within_asset_period(
-        'cgls_ground_cover', start_date, end_date
-    )
-    if valid:
-        cgls = (ee.ImageCollection(
-                    GEEAsset.fetch_asset_source('cgls_ground_cover')
-                )
-                .filterDate(start_dt, end_dt)
-                .filterBounds(selected_area)
-                .select(
-                    [
-                        'bare-coverfraction', 'crops-coverfraction',
-                        'urban-coverfraction', 'shrub-coverfraction',
-                        'grass-coverfraction', 'tree-coverfraction'
-                    ]
-                ))
-        cgls = cgls.median()
-
-        # Additional calculations for land cover fractions and grazing capacity
-        bg = cgls.select('bare-coverfraction').add(
-            cgls.select('urban-coverfraction')
+    
+    for indicator, user_gee_asset in indicator_asset_dicts.items():
+        valid, start_dt, end_dt = UserGEEAsset.get_dates_within_asset_period(
+            user_gee_asset.key, start_date, end_date, user
         )
-        t = cgls.select('tree-coverfraction').add(
-            cgls.select('shrub-coverfraction')
-        )
-        g = cgls.select('grass-coverfraction')
-        image_list.append({
-            'asset': bg,
-            'attribute': 'bare-coverfraction',
-            'label': 'Bare ground %'
-        })
-        image_list.append({
-            'asset': t,
-            'attribute': 'tree-coverfraction',
-            'label': 'Woody cover %'
-        })
-        image_list.append({
-            'asset': g,
-            'attribute': 'grass-coverfraction',
-            'label': 'Grass cover %'
-        })
-
-    # TODO: add grazing capacity
-
-    # fire freq
-    valid, start_dt, end_dt = GEEAsset.get_dates_within_asset_period(
-        'fire_cci', start_date, end_date
-    )
-    if valid:
-        fire_freq = calculate_firefreq(
-            selected_area,
-            start_dt,
-            end_dt
-        ).divide(18)
-        fire_freq = fire_freq.unmask(0)
-        image_list.append({
-            'asset': fire_freq,
-            'attribute': 'fireFreq',
-            'label': 'Fires/yr'
-        })
-
-    # SOCltMean and SOCltTrend
-    valid, start_dt, end_dt = GEEAsset.get_dates_within_asset_period(
-        'soil_carbon', start_date, end_date
-    )
-    if valid:
-        soc_lt_mean = input_layer.get_soil_carbon(
-            datetime.date.fromisoformat(start_dt),
-            datetime.date.fromisoformat(end_dt),
-            False,
-            selected_area
-        )
-        soc_lt_mean = soc_lt_mean.rename('SOCltMean')
-        image_list.append({
-            'asset': soc_lt_mean,
-            'attribute': 'SOCltMean',
-            'label': 'SOC kg/m2'
-        })
-
-        # SOCltTrend
-        soil_start_dt = datetime.date.fromisoformat(start_dt)
-        if soil_start_dt.year == datetime.date.fromisoformat(end_dt).year:
-            # soild_carbon_change needs 2 years of data
-            soil_start_dt = datetime.date(
-                soil_start_dt.year - 1, soil_start_dt.month, soil_start_dt.day
-            )
-            start_dt = soil_start_dt.isoformat()
-        soc_lt_trend = input_layer.get_soil_carbon_change(
-            datetime.date.fromisoformat(start_dt),
-            datetime.date.fromisoformat(end_dt),
-            False,
-            selected_area
-        )
-        soc_lt_trend = soc_lt_trend.rename('SOCltTrend')
-        image_list.append({
-            'asset': soc_lt_trend,
-            'attribute': 'SOCltTrend',
-            'label': 'SOC change kg/m2'
-        })
-
-    # Add livestock all species
-    livestock_map = ee.Image(
-        GEEAsset.fetch_asset_source('livestock_all_2020')
-    ).clip(selected_area)
-    livestock_map = livestock_map.select('b1').rename('LivestockDensity')
-    image_list.append({
-        'asset': livestock_map,
-        'attribute': 'LivestockDensity',
-        'label': 'Livestock Density 2020 head/km2'
-    })
+        if valid:
+            gee_asset_class = GEEAssetType.get_ee_asset_class(user_gee_asset)
+            gee_asset_obj = gee_asset_class(
+                user_gee_asset.source
+            ).select(indicator.variable_name).filterDate(
+                start_dt.isoformat(), end_dt.isoformat()
+            ).filterBounds(selected_area)
+            gee_asset_obj = gee_asset_obj.reduce(indicator.get_reducer())
+            gee_asset_obj = gee_asset_obj.rename(indicator.variable_name)
+            image_list.append({
+                'asset': gee_asset_obj,
+                'attribute': indicator.variable_name,
+                'label': indicator.variable_name
+            })
 
     if len(image_list) == 0:
         raise ValueError('No baseline in the input date ranges.')

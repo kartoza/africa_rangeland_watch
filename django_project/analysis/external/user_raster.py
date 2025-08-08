@@ -224,50 +224,26 @@ def user_spatial_analysis_dict(
     if not end_date:
         end_date = datetime.date.today()
 
-    user_indicators = UserIndicator.objects.filter(
-        created_by=user
+    # TODO: should it be image collection only, or image as well?
+    indicator_asset_dicts = UserIndicator.map_user_indicator_to_gee_object(
+        user=user,
+        asset_types=[GEEAssetType.IMAGE_COLLECTION] 
     )
-    asset_dict = {}
-    for indicator in user_indicators:
-        asset_keys = indicator.config.get(
-            'asset_keys', []
-        )
-        if not asset_keys:
-            continue
-        # Use the first asset key
-        asset_key = asset_keys[0]
-
-        gee_asset: UserGEEAsset = UserGEEAsset.objects.filter(
-            key=asset_key, created_by=user
-        ).first()
-        if not gee_asset:
-            continue
-
-        print(gee_asset)
-
-        var_names = gee_asset.metadata.get(
+    variable_asset_dict = {}
+    for indicator, user_gee_asset in indicator_asset_dicts.items():
+        var_names = user_gee_asset.metadata.get(
             'band_names', [indicator.variable_name]
         )
         var_name = var_names[0]
 
-        if 'Spatial' not in indicator.ALLOWED_ANALYSIS_TYPES:
-            continue
+        gee_asset_class = GEEAssetType.get_ee_asset_class(user_gee_asset)
+        gee_asset_obj = gee_asset_class(
+            user_gee_asset.source
+        ).select(var_name).filterDate(
+            start_date.isoformat(), end_date.isoformat()
+        ).filterBounds(countries)
+        
+        gee_asset_obj = gee_asset_obj.reduce(indicator.get_reducer())
+        variable_asset_dict[indicator.variable_name] = gee_asset_obj
 
-        if gee_asset.type not in [GEEAssetType.IMAGE, GEEAssetType.IMAGE_COLLECTION]:
-            continue 
-
-        if gee_asset.type == GEEAssetType.IMAGE_COLLECTION:
-            gee_asset_obj = ee.ImageCollection(
-                gee_asset.source
-            ).filterDate(
-                start_date.isoformat(), end_date.isoformat()
-            ).select(var_name).filterBounds(countries)
-            gee_asset_obj = gee_asset_obj.mean()
-        else:
-            gee_asset_obj = ee.Image(
-                gee_asset.source
-            ).select(var_name).filterBounds(countries)
-
-        asset_dict[indicator.variable_name] = gee_asset_obj
-
-    return asset_dict
+    return variable_asset_dict
