@@ -24,6 +24,7 @@ from earthranger.serializers import (
     EarthRangerSettingListSerializer,
     EarthRangerSettingSerializer,
 )
+from earthranger.utils import get_base_api_url
 
 
 logger = logging.getLogger(__name__)
@@ -156,7 +157,9 @@ class EarthRangerImageProxyView(APIView):
         """
         try:
             event_uuid = image_path.split('/')[2]
-            er_event = EarthRangerEvents.objects.filter(earth_ranger_uuid=event_uuid).first()
+            er_event = EarthRangerEvents.objects.filter(
+                earth_ranger_uuid=event_uuid
+            ).first()
 
             er_setting = None
             if er_event:
@@ -170,15 +173,16 @@ class EarthRangerImageProxyView(APIView):
 
             # Clean and construct the full URL
             image_path = image_path.lstrip('/')
-            base_url = er_setting.url if er_setting else settings.EARTH_RANGER_API_URL
-
-            if base_url.endswith("/api/v1.0/"):
-                base_url = base_url
-            else:
-                base_url = f"{base_url.rstrip('/')}/api/v1.0/"
-
-            full_url = urllib.parse.urljoin(base_url, image_path)
-            token = er_setting.token if er_setting else settings.EARTH_RANGER_AUTH_TOKEN
+            base_url = (
+                er_setting.url if er_setting else
+                settings.EARTH_RANGER_API_URL
+            )
+            base_api_url = get_base_api_url(base_url)
+            full_url = urllib.parse.urljoin(base_api_url, image_path)
+            token = (
+                er_setting.token if er_setting else
+                settings.EARTH_RANGER_AUTH_TOKEN
+            )
 
             # Construct header
             headers = {
