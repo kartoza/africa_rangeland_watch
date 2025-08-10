@@ -4,7 +4,7 @@ import urllib.parse
 
 from django.conf import settings
 from django.db.models import Q
-from django.http import Http404, HttpResponse
+from django.http import HttpResponse
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 
@@ -244,7 +244,10 @@ class EarthRangerImageProxyView(APIView):
                 )
             )
             if e.response.status_code == 404:
-                raise Http404("Image not found")
+                return Response(
+                    {"error": "Image not found"},
+                    status=status.HTTP_404_NOT_FOUND
+                )
             elif e.response.status_code == 403:
                 return Response(
                     {"error": "Access denied to image"},
