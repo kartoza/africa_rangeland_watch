@@ -1003,6 +1003,14 @@ class UserGEEAsset(BaseGEEAsset):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    def clean(self):
+        super().clean()
+
+        if "band_names" not in self.metadata:
+            raise ValidationError(
+                "Attribute 'band_names' is needed in metadata."
+            )
+
     @classmethod
     def fetch_asset_source(cls, asset_key: str, user: User) -> str:
         """Fetch asset source by its key and user."""
