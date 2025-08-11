@@ -1105,7 +1105,6 @@ class UserIndicator(BaseIndicator):
         Map User's indicator in User Indicator to
         their respective GEE Asset
         """
-
         if not analysis_types:
             analysis_types = cls.ALLOWED_ANALYSIS_TYPES
 
@@ -1113,7 +1112,6 @@ class UserIndicator(BaseIndicator):
             created_by=user
         )
         asset_dict = {}
-        print(user_indicators)
         for indicator in user_indicators:
             asset_keys = indicator.config.get(
                 'asset_keys', []
@@ -1130,7 +1128,7 @@ class UserIndicator(BaseIndicator):
                 continue
 
             invalid_analysis_types = (
-                set(analysis_types) - set(indicator.analysis_types)
+                set(indicator.analysis_types) - set(analysis_types)
             )
             if invalid_analysis_types:
                 continue
