@@ -13,6 +13,55 @@ context_id:
 
 # Earthranger events
 
+## 0. Creating an EarthRanger Access Token
+
+Before adding EarthRanger settings in Africa Rangeland Watch, you will need an **access token** from the EarthRanger Administration panel.
+
+### Step 1 – Log into EarthRanger Administration
+1. Go to your EarthRanger Admin URL in a browser.  
+2. Enter your **Username** (1️⃣) and **Password** (2️⃣), then click **Log in**.  
+
+[![Login to EarthRanger](./img/guide-earthranger-events-img-14.png)](./img/guide-earthranger-events-img-14.png)
+
+---
+
+[![Access DAS Tokens](./img/guide-earthranger-events-img-15.png)](./img/guide-earthranger-events-img-15.png)
+
+---
+
+### Step 2 – Open DAS Access Tokens
+1. In the dashboard, scroll to the **DAS Configuration** section.  
+2. Click **Change** next to **DAS Access Tokens**.  
+
+[![Access DAS Tokens](./img/guide-earthranger-events-img-16.png)](./img/guide-earthranger-events-img-16.png)
+
+---
+
+### Step 3 – Add a New Token
+1. On the DAS Access Token page, click **Add DAS Access Token** in the top right corner.
+
+[![Add DAS token](./img/guide-earthranger-events-img-17.png)](./img/guide-earthranger-events-img-17.png)
+
+---
+
+### Step 4 – Fill in Token Details
+On the **Add DAS Access Token** page, fill out:
+1. **Token** (1️⃣) – Your generated token string.  
+2. **Expires in** (2️⃣) – Set the expiry date and time.  
+3. **Scope** (3️⃣) – Define access permissions (e.g., `read write`).  
+4. **User** (4️⃣) – Select the associated user.  
+5. **Application** (5️⃣) – Choose the application this token is for (e.g., `DAS Web`).  
+6. Click **Save** (6️⃣) to store the token.
+
+[![Create Token](./img/guide-earthranger-events-img-18.png)](./img/guide-earthranger-events-img-18.png)
+
+---
+
+### Step 5 – Verify Token Creation
+Once saved, you should see the new token listed in the **DAS Access Tokens** table.
+
+You can now copy this token and use it when creating a new EarthRanger setting in Africa Rangeland Watch.
+
 ## 1. Creating a New EarthRanger Setting
 
 1. In the left-hand menu, click on **1️⃣ `EarthRanger Events`**.  
