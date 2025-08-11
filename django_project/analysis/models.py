@@ -1019,7 +1019,6 @@ class UserGEEAsset(BaseGEEAsset):
     @classmethod
     def is_date_within_asset_period(cls, asset_key: str, date: str, user: User) -> bool:
         """Check if the given date is within the asset's start and end date."""
-        breakpoint()
         asset = cls.objects.filter(key=asset_key, created_by=user).first()
         if asset is None:
             raise KeyError(f'Asset with key {asset_key} not found!')
