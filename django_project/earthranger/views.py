@@ -160,16 +160,15 @@ class EarthRangerImageProxyView(APIView):
             er_event = EarthRangerEvents.objects.filter(
                 earth_ranger_uuid=event_uuid
             ).first()
+            if not er_event:
+                return Response(
+                    {"error": "Event does not exist!"},
+                    status=status.HTTP_404_NOT_FOUND
+                )
 
             er_setting = None
             if er_event:
                 er_setting = er_event.earth_ranger_settings.all().first()
-                if not er_setting:
-                    if not er_event:
-                        return Response(
-                            {"error": "Event does not exist!"},
-                            status=status.HTTP_404_NOT_FOUND
-                        )
 
             # Clean and construct the full URL
             image_path = image_path.lstrip('/')

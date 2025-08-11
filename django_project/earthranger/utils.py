@@ -214,10 +214,7 @@ def check_token(url, token):
     Check if the token is valid for the given URL
     """
 
-    if url.endswith("/api/v1.0/"):
-        url = url
-    else:
-        url = f"{url.rstrip('/')}/api/v1.0/"
+    url = get_base_api_url(url)
 
     try:
         response = requests.get(
