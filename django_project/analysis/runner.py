@@ -569,7 +569,7 @@ class AnalysisRunner:
                 spatial_analysis_dict,
                 reference_layer_geom
             )
-            
+
             variable = data["variable"]
             indicator = Indicator.objects.filter(
                 variable_name=variable
@@ -580,7 +580,9 @@ class AnalysisRunner:
                     created_by=self.analysis_task.submitted_by
                 ).first()
                 if not indicator:
-                    raise ValueError(f"Indicator for variable {variable} not found")
+                    raise ValueError(
+                        f"Indicator for variable {variable} not found"
+                    )
 
             if indicator.source == IndicatorSource.GPW:
                 metadata = indicator.metadata

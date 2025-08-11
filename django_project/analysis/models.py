@@ -1,4 +1,3 @@
-import typing
 import json
 import uuid
 
@@ -641,7 +640,7 @@ class GEEAssetType:
             (cls.FEATURE_VIEW, cls.FEATURE_VIEW),
             (cls.FOLDER, cls.FOLDER),
         )
-    
+
     @classmethod
     def get_ee_asset_class(cls, gee_asset):
         if gee_asset.type == GEEAssetType.IMAGE_COLLECTION:
@@ -656,7 +655,8 @@ class GEEAssetType:
             return ee.FeatureView
         elif gee_asset.type == GEEAssetType.FOLDER:
             raise ValueError(
-                f"Cannot load GEE folder '{gee_asset.source}' directly as an asset."
+                f"Cannot load GEE folder '{gee_asset.source}' "
+                f"directly as an asset."
             )
         else:
             raise ValueError(
@@ -996,7 +996,10 @@ class UserGEEAsset(BaseGEEAsset):
         max_length=50,
         help_text='Key to the asset.'
     )
-    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="gee_assets")
+    created_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL,
+        null=True, related_name="gee_assets"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -1017,7 +1020,8 @@ class UserGEEAsset(BaseGEEAsset):
         return asset.metadata
 
     @classmethod
-    def is_date_within_asset_period(cls, asset_key: str, date: str, user: User) -> bool:
+    def is_date_within_asset_period(cls, asset_key: str,
+                                    date: str, user: User) -> bool:
         """Check if the given date is within the asset's start and end date."""
         asset = cls.objects.filter(key=asset_key, created_by=user).first()
         if asset is None:
@@ -1043,7 +1047,9 @@ class UserGEEAsset(BaseGEEAsset):
             start_date,
             user
         )
-        valid_end_date = cls.is_date_within_asset_period(asset_key, end_date, user)
+        valid_end_date = cls.is_date_within_asset_period(
+            asset_key, end_date, user
+        )
         if not valid_start_date and not valid_end_date:
             return (False, None, None,)
         elif valid_start_date and not valid_end_date:
@@ -1066,7 +1072,10 @@ class UserIndicator(BaseIndicator):
         max_length=255,
         help_text="The name of the indicator."
     )
-    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name="indicators")
+    created_by = models.ForeignKey(
+        User, on_delete=models.SET_NULL,
+        null=True, related_name="indicators"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -1079,10 +1088,10 @@ class UserIndicator(BaseIndicator):
             raise ValidationError(
                 f"Invalid name: '{self.name}' already exists!"
             )
-        
+
     @classmethod
     def map_user_indicator_to_user_gee_asset(
-        cls, user: User, asset_types:list = None, analysis_types:list = None
+        cls, user: User, asset_types: list = None, analysis_types: list = None
     ):
         """
         Map User's indicator in User Indicator to
@@ -1092,7 +1101,6 @@ class UserIndicator(BaseIndicator):
         if not analysis_types:
             analysis_types = cls.ALLOWED_ANALYSIS_TYPES
 
-        usis = UserIndicator.objects.all()
         user_indicators = UserIndicator.objects.filter(
             created_by=user
         )
@@ -1117,24 +1125,24 @@ class UserIndicator(BaseIndicator):
             )
             if invalid_analysis_types:
                 continue
-            
+
             if asset_types and gee_asset.type not in asset_types:
-                continue 
-            
+                continue
+
             asset_dict[indicator] = gee_asset
 
         return asset_dict
-        
+
     @classmethod
     def map_user_indicator_to_gee_object(
-        cls, user: User, asset_types:list = None
+        cls, user: User, asset_types: list = None
     ):
         """
         Map User's indicator in User Indicator to
         their respective GEE Asset
         """
         asset_dict = cls.map_user_indicator_to_user_gee_asset(
-            user, 
+            user,
             asset_types
         )
         for indicator, gee_asset in asset_dict.items():
@@ -1147,11 +1155,10 @@ class UserIndicator(BaseIndicator):
             gee_asset_obj = gee_asset_class(
                 gee_asset.source
             ).select(var_name)
-            
+
             asset_dict[indicator] = gee_asset_obj
 
         return asset_dict
 
     class Meta:
         unique_together = ('name', 'created_by')
-

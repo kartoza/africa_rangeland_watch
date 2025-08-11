@@ -10,7 +10,10 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from analysis.models import Indicator, UserIndicator
-from frontend.serializers.indicator import IndicatorSerializer, UserIndicatorSerializer
+from frontend.serializers.indicator import (
+    IndicatorSerializer,
+    UserIndicatorSerializer
+)
 
 
 class IndicatorAPI(APIView):
@@ -27,9 +30,13 @@ class IndicatorAPI(APIView):
 
         # If user is authenticated, fetch user-specific indicators
         if request.user.is_authenticated:
-            user_indicators = UserIndicator.objects.filter(created_by=request.user)
-            user_serializer = UserIndicatorSerializer(user_indicators, many=True)   
-            response += user_serializer.data    
+            user_indicators = UserIndicator.objects.filter(
+                created_by=request.user
+            )
+            user_serializer = UserIndicatorSerializer(
+                user_indicators, many=True
+            )
+            response += user_serializer.data
 
         return Response(
             status=200,

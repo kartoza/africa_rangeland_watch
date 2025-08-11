@@ -291,6 +291,7 @@ class UserIndicatorAdmin(IndicatorAdmin):
         'get_temporal_resolutions', 'is_active',
     )
 
+
 @admin.register(UserGEEAsset)
 class UserGEEAssetAdmin(GEEAssetAdmin):
     list_display = ('key', 'created_by', 'type', 'source',)

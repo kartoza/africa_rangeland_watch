@@ -7,7 +7,6 @@ Africa Rangeland Watch (ARW).
 
 import datetime
 import ee
-from functools import reduce
 from dateutil.relativedelta import relativedelta
 
 from analysis.models import UserIndicator, UserGEEAsset, GEEAssetType
@@ -66,23 +65,27 @@ def user_temporal_analysis(
 
     var_rename = indicator.name
 
-    if gee_asset.type not in [GEEAssetType.IMAGE_COLLECTION, GEEAssetType.TABLE]:
+    if gee_asset.type not in [
+        GEEAssetType.IMAGE_COLLECTION,
+        GEEAssetType.TABLE
+    ]:
         raise ValueError(
-            f'Only ImageCollection and Table are supported in temporal analysis'
+            'Only ImageCollection and Table '
+            'are supported in temporal analysis'
         )
 
     image_col = ee.ImageCollection(
         gee_asset.source
     )
-    
+
     if resolution not in indicator.temporal_resolutions:
         raise ValueError(
             f"Indicator does not support {resolution} analysis."
         )
-    
+
     if 'Temporal' not in indicator.ALLOWED_ANALYSIS_TYPES:
         raise ValueError(
-            f"Indicator does not support temporal analysis."
+            "Indicator does not support temporal analysis."
         )
 
     split_date_mode = 'year'
@@ -124,7 +127,6 @@ def user_temporal_analysis(
 
     if target_band not in band_names:
         raise ValueError(f"Band {target_band} does NOT exist.")
-
 
     # Map function to create a 'date' property
     def add_date(ft):
@@ -173,8 +175,9 @@ def user_temporal_analysis(
         )
 
         # Filter out features with null values and add time attributes
-        reduced = reduced.filter(ee.Filter.notNull([var_name])) \
-                        .map(lambda ft: ft.set('year', year, 'month', month))
+        reduced = reduced.filter(ee.Filter.notNull([var_name])).map(
+            lambda ft: ft.set('year', year, 'month', month)
+        )
 
         return reduced
 
@@ -227,7 +230,7 @@ def user_spatial_analysis_dict(
     # TODO: should it be image collection only, or image as well?
     indicator_asset_dicts = UserIndicator.map_user_indicator_to_gee_object(
         user=user,
-        asset_types=[GEEAssetType.IMAGE_COLLECTION] 
+        asset_types=[GEEAssetType.IMAGE_COLLECTION]
     )
     variable_asset_dict = {}
     for indicator, user_gee_asset in indicator_asset_dicts.items():
@@ -242,7 +245,7 @@ def user_spatial_analysis_dict(
         ).select(var_name).filterDate(
             start_date.isoformat(), end_date.isoformat()
         ).filterBounds(countries)
-        
+
         gee_asset_obj = gee_asset_obj.reduce(indicator.get_reducer())
         variable_asset_dict[indicator.variable_name] = gee_asset_obj
 

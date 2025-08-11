@@ -732,8 +732,8 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
         'kwargs': kwargs
     })
     output = analysis_cache.get_analysis_cache()
-    # if output:
-    #     return output
+    if output:
+        return output
     input_layers = InputLayer()
     selected_geos = input_layers.get_selected_geos()
     communities = input_layers.get_communities()
@@ -746,20 +746,28 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
             variable_name=variable
         ).first()
         if not indicator:
-            analysis_task = AnalysisTask.objects.filter(id=kwargs.get('analysis_task_id')).first()
+            analysis_task = AnalysisTask.objects.filter(
+                id=kwargs.get('analysis_task_id')
+            ).first()
             if analysis_task:
                 indicator = UserIndicator.objects.filter(
                     variable_name=variable,
                     created_by=analysis_task.submitted_by
                 ).first()
                 if not indicator:
-                    raise ValueError(f"Indicator for variable {variable} not found")
+                    raise ValueError(
+                        f"Indicator for variable {variable} not found"
+                    )
             else:
-                raise ValueError(f"Indicator for variable {variable} not found")
+                raise ValueError(
+                    f"Indicator for variable {variable} not found"
+                )
 
     analysis_task = None
     if kwargs.get('analysis_task_id', None):
-        analysis_task = AnalysisTask.objects.filter(id=kwargs.get('analysis_task_id')).first()
+        analysis_task = AnalysisTask.objects.filter(
+            id=kwargs.get('analysis_task_id')
+        ).first()
 
     features_geo = []
     for location in locations:
@@ -796,7 +804,9 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
         filter_start_date, filter_end_date = spatial_get_date_filter(
             analysis_dict
         )
-        user = indicator.created_by if isinstance(indicator, UserIndicator) else None
+        user = indicator.created_by if isinstance(
+            indicator, UserIndicator
+        ) else None
         rel_diff = get_rel_diff(
             input_layers.get_spatial_layer_dict(
                 filter_start_date, filter_end_date, user
@@ -891,14 +901,16 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
                 select_geo,
                 analysis_cache
             )
-        
+
         elif isinstance(indicator, UserIndicator):
             select_geo = input_layers.get_selected_area(
                 custom_geom if custom_geom else selected_geos,
                 True if custom_geom else False
             )
 
-            start_date, test_dates = convert_temporal_to_dates(analysis_dict).values()
+            start_date, test_dates = convert_temporal_to_dates(
+                analysis_dict
+            ).values()
 
             # Run analysis for GPW datasets
             result = user_temporal_analysis(
@@ -1447,8 +1459,10 @@ def quarterly_medians(
             .update(None, None, None, 23, 59, 59)
     else:
         end_date = ee.Date.parse('YYYY-MM-dd', date_end)
-    
-    if unit == "year" and end_date.difference(start_date, "year").lt(1).getInfo():
+
+    if unit == "year" and end_date.difference(
+        start_date, "year"
+    ).lt(1).getInfo():
         # force one year interval
         date_ranges = ee.List([0])
     else:
@@ -2125,7 +2139,8 @@ def calculate_firefreq(aoi, start_date, end_date):
     return ba_count.rename('fireFreq')
 
 
-def calculate_baseline(aoi, start_date, end_date, is_custom_geom=False, *args, **kwargs):
+def calculate_baseline(aoi: ee.Geometry, start_date: str, end_date: str,
+                       is_custom_geom: bool = False, *args, **kwargs):
     """
     Calculate baseline statistics.
 
@@ -2296,7 +2311,7 @@ def calculate_baseline(aoi, start_date, end_date, is_custom_geom=False, *args, *
         asset_types=[GEEAssetType.IMAGE_COLLECTION],
         analysis_types=['Baseline']
     )
-    
+
     for indicator, user_gee_asset in indicator_asset_dicts.items():
         valid, start_dt, end_dt = UserGEEAsset.get_dates_within_asset_period(
             user_gee_asset.key, start_date, end_date, user

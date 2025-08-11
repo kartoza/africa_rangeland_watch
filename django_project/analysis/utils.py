@@ -165,18 +165,16 @@ def split_dates_by_year(start_date: date, end_date: date):
     return results
 
 
-from datetime import date, timedelta
-import calendar
-
-def split_dates(start_date: date, end_date: date, mode: str = "year", last_date_of_month: bool = False):
+def split_dates(start_date: date, end_date: date,
+                mode: str = "year", last_date_of_month: bool = False):
     """
     Split a date range into intervals based on mode.
-    
+
     mode:
       - "year": yearly intervals
       - "month": monthly intervals
       - "quarter": quarterly intervals
-    
+
     If last_date_of_month is True, the last returned interval end date
     will be extended to the last day of its month.
     """
@@ -216,8 +214,12 @@ def split_dates(start_date: date, end_date: date, mode: str = "year", last_date_
         # --- handle last_date_of_month for the final segment ---
         if last_date_of_month and interval_end == end_date:
             # extend to last day of that month
-            _, last_day = calendar.monthrange(interval_end.year, interval_end.month)
-            interval_end = date(interval_end.year, interval_end.month, last_day)
+            _, last_day = calendar.monthrange(
+                interval_end.year, interval_end.month
+            )
+            interval_end = date(
+                interval_end.year, interval_end.month, last_day
+            )
 
         results.append((interval_start, interval_end))
         current = next_start
@@ -302,7 +304,9 @@ def convert_temporal_to_dates(data: dict):
             result["period_date"] = date(ref_year, start_month, 1)
 
         if test and test_years:
-            result["comparison_dates"] = [end_of_quarter(test_years[i], q) for i, q in enumerate(test)]
+            result["comparison_dates"] = [
+                end_of_quarter(test_years[i], q) for i, q in enumerate(test)
+            ]
 
     elif resolution == "monthly":
         annual = temporal.get("Annual", {})
@@ -317,6 +321,8 @@ def convert_temporal_to_dates(data: dict):
 
         if test and test_years:
             print(test, test_years)
-            result["comparison_dates"] = [end_of_month(test_years[i], q) for i, q in enumerate(test)]
+            result["comparison_dates"] = [
+                end_of_month(test_years[i], q) for i, q in enumerate(test)
+            ]
 
     return result
