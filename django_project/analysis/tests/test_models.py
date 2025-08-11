@@ -118,3 +118,60 @@ class UserIndicatorTest(TestCase):
         with self.assertRaises(IntegrityError):
             # Second indicator with same name and user should fail
             ind = UserIndicatorF.create(name="dup-name", created_by=user)
+
+
+class GEEAssetTypeTest(TestCase):
+
+    def test_choices_contains_all_asset_types(self):
+        choices = dict(GEEAssetType.choices())
+        self.assertIn(GEEAssetType.IMAGE, choices)
+        self.assertIn(GEEAssetType.IMAGE_COLLECTION, choices)
+        self.assertIn(GEEAssetType.TABLE, choices)
+        self.assertIn(GEEAssetType.CLASSIFIER, choices)
+        self.assertIn(GEEAssetType.FEATURE_VIEW, choices)
+        self.assertIn(GEEAssetType.FOLDER, choices)
+
+    @patch("analysis.models.ee.ImageCollection")
+    @patch("analysis.models.ee.Image")
+    @patch("analysis.models.ee.FeatureCollection")
+    @patch("analysis.models.ee.Classifier")
+    @patch("analysis.models.ee.FeatureView", create=True)  # <- create=True makes it work
+    def test_get_ee_asset_class_returns_correct_class(
+        self,
+        mock_feature_view,
+        mock_classifier,
+        mock_feature_collection,
+        mock_image,
+        mock_image_collection
+    ):
+        asset = MagicMock()
+
+        asset.type = GEEAssetType.IMAGE_COLLECTION
+        self.assertIs(GEEAssetType.get_ee_asset_class(asset), mock_image_collection)
+
+        asset.type = GEEAssetType.IMAGE
+        self.assertIs(GEEAssetType.get_ee_asset_class(asset), mock_image)
+
+        asset.type = GEEAssetType.TABLE
+        self.assertIs(GEEAssetType.get_ee_asset_class(asset), mock_feature_collection)
+
+        asset.type = GEEAssetType.CLASSIFIER
+        self.assertIs(GEEAssetType.get_ee_asset_class(asset), mock_classifier)
+
+        asset.type = GEEAssetType.FEATURE_VIEW
+        self.assertIs(GEEAssetType.get_ee_asset_class(asset), mock_feature_view)
+
+    def test_get_ee_asset_class_raises_for_folder(self):
+        asset = MagicMock()
+        asset.type = GEEAssetType.FOLDER
+        asset.source = "projects/sample/folder"
+        with self.assertRaises(ValueError) as ctx:
+            GEEAssetType.get_ee_asset_class(asset)
+        self.assertIn("Cannot load GEE folder", str(ctx.exception))
+
+    def test_get_ee_asset_class_raises_for_unsupported_type(self):
+        asset = MagicMock()
+        asset.type = "non_existing_type"
+        with self.assertRaises(ValueError) as ctx:
+            GEEAssetType.get_ee_asset_class(asset)
+        self.assertIn("Unsupported GEE asset type", str(ctx.exception))

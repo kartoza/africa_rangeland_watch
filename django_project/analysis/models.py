@@ -652,7 +652,10 @@ class GEEAssetType:
         elif gee_asset.type == GEEAssetType.CLASSIFIER:
             return ee.Classifier
         elif gee_asset.type == GEEAssetType.FEATURE_VIEW:
-            return ee.FeatureView
+            try:
+                return ee.FeatureView
+            except AttributeError:
+                raise ValueError("FeatureView is not supported in this Earth Engine version.")
         elif gee_asset.type == GEEAssetType.FOLDER:
             raise ValueError(
                 f"Cannot load GEE folder '{gee_asset.source}' "
