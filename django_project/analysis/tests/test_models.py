@@ -21,7 +21,6 @@ class UserIndicatorTest(TestCase):
 
         # Create indicator for user2 (should not appear in user1's results)
         ind2 = UserIndicatorF(created_by=user2)
-        breakpoint()
         asset2 = UserGEEAsset.objects.get(key=ind2.config.get('asset_keys', [None])[0])
         asset2.type = GEEAssetType.IMAGE_COLLECTION
         asset2.save()

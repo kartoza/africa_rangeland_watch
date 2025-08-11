@@ -1,5 +1,10 @@
 import factory
-from analysis.models import UserIndicator, UserGEEAsset, IndicatorSource, GEEAssetType
+from analysis.models import (
+    UserIndicator,
+    UserGEEAsset,
+    IndicatorSource,
+    GEEAssetType
+)
 from core.factories import UserF
 
 

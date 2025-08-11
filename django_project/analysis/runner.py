@@ -499,7 +499,10 @@ class AnalysisRunner:
             locations=data.get('locations', []) or [],
             analysis_dict=analysis_dict,
             custom_geom=data.get('custom_geom', None),
-            analysis_task_id=self.analysis_task.id
+            analysis_task_id=(
+                self.analysis_task.id if
+                self.analysis_task else None
+            )
         )
         if Indicator.has_statistics(variable):
             results[0]['statistics'] = self.add_statistics(
@@ -564,7 +567,10 @@ class AnalysisRunner:
                 input_layers.get_spatial_layer_dict(
                     filter_start_date,
                     filter_end_date,
-                    self.analysis_task.submitted_by
+                    (
+                        self.analysis_task.submitted_by if
+                        self.analysis_task else None
+                    )
                 ),
                 spatial_analysis_dict,
                 reference_layer_geom
@@ -624,7 +630,9 @@ class AnalysisRunner:
                 analysis_dict=spatial_analysis_dict,
                 reference_layer=reference_layer_geom,
                 custom_geom=data.get('custom_geom', None),
-                analysis_task_id=self.analysis_task.id
+                analysis_task_id=(
+                    self.analysis_task.id if self.analysis_task else None
+                )
             )
 
             temporal_future = executor.submit(
