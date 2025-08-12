@@ -87,7 +87,7 @@ const EarthRangerCreateUpdateModal: React.FC<EarthRangerCreateUpdateModalProps> 
             <FormControl isRequired isInvalid={!!urlError}>
             <FormLabel>EarthRanger URL</FormLabel>
             <Input
-                placeholder="https://your-earthranger-instance.com"
+                placeholder="https://<your_domain>.pamdas.org"
                 value={formData.url}
                 onChange={(e) => {
                 const value = e.target.value;

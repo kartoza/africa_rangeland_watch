@@ -12,6 +12,30 @@ from earthranger.models import (
 from django.conf import settings as django_settings
 
 
+def get_base_api_url(url: str):
+    """Get EarthRanger base API URL from the specified URL.
+    Since we already check URL validity when creating
+    EarthRanger settings, the URL is already correct. It's
+    just the URL could be base URL e.g. https://<your_domain>.pamdas.org
+    or base API URL https://<your_domain>.pamdas.org/api/v1.0/.
+
+    Hence, this function only checks if the URL is API URL. If not,
+    it will assume the URL is base URL and append '/api/v1.0/' to
+    make it into API URL.
+
+    Args:
+        url (str): EarthRanger URL
+    """
+
+    api_url = ""
+    if url.endswith("/api/v1.0/"):
+        api_url = url
+    else:
+        api_url = f"{url.rstrip('/')}/api/v1.0/"
+
+    return api_url
+
+
 def fetch_and_store_data(
         endpoint, model_class, setting_ids=None,
         max_retries: int = 3, retry_delay: float = 1.0
@@ -26,7 +50,9 @@ def fetch_and_store_data(
         if not setting:
             logging.error(f"No setting found with ID: {setting_ids}")
             return
-        api_url = f"{setting.url}{endpoint}/"
+
+        base_api_url = get_base_api_url(setting.url)
+        api_url = f"{base_api_url}{endpoint}/"
         headers = {
             "accept": "application/json",
             "Authorization": f"Bearer {setting.token}"
@@ -187,6 +213,9 @@ def check_token(url, token):
     """
     Check if the token is valid for the given URL
     """
+
+    url = get_base_api_url(url)
+
     try:
         response = requests.get(
             f"{url.rstrip('/')}/activity/events/count/",

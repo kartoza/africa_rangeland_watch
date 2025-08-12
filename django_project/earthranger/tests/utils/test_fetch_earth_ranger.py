@@ -1,6 +1,6 @@
 import json
 import pytest
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, patch, call
 from django.test import TestCase, override_settings
 from django.utils.timezone import now
 from django.contrib.gis.geos import GEOSGeometry
@@ -8,7 +8,8 @@ from django.contrib.gis.gdal.error import GDALException
 from django.conf import settings
 
 from core.factories import UserF as UserFactory
-from earthranger.utils import fetch_and_store_data, fetch_all_earth_ranger_data
+from earthranger.utils import fetch_and_store_data
+from earthranger.tasks import fetch_all_earth_ranger_data
 from earthranger.models import EarthRangerEvents
 from earthranger.factories import EarthRangerSettingFactory
 
@@ -84,6 +85,13 @@ class TestFetchAndStoreData(TestCase):
         event = EarthRangerEvents.objects.get(earth_ranger_uuid='0b2711a4-ee4b-4e93-8f03-a97072c4783a')
         self.assertEqual(event.data, self.mock_feature)
         self.assertIsInstance(event.geometry, GEOSGeometry)
+
+        # Update EarthRangerSettings base URL
+        self.setting.url = 'https://test.earthranger.com/api/v1.0/'
+        fetch_and_store_data('events', EarthRangerEvents)
+        last_call = mock_get.call_args_list[-1]
+        self.assertEqual(len(mock_get.call_args_list), 2)
+        self.assertEqual(last_call, call(expected_url, headers=expected_headers, timeout=30))
 
     @patch('earthranger.utils.requests.get')
     @patch('earthranger.utils.now')

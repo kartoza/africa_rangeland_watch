@@ -1,9 +1,10 @@
 import logging
 import requests
+import urllib.parse
 
 from django.conf import settings
 from django.db.models import Q
-from django.http import Http404, HttpResponse
+from django.http import HttpResponse
 from django.utils.decorators import method_decorator
 from django.views.decorators.cache import cache_page
 
@@ -23,6 +24,7 @@ from earthranger.serializers import (
     EarthRangerSettingListSerializer,
     EarthRangerSettingSerializer,
 )
+from earthranger.utils import get_base_api_url
 
 
 logger = logging.getLogger(__name__)
@@ -154,14 +156,38 @@ class EarthRangerImageProxyView(APIView):
         Fetch and return image from EarthRanger with proper authentication
         """
         try:
-            # Construct the full URL
-            headers = {
-                "accept": "application/json",
-                "Authorization": f"Bearer {settings.EARTH_RANGER_AUTH_TOKEN}"
-            }
+            event_uuid = image_path.split('/')[2]
+            er_event = EarthRangerEvents.objects.filter(
+                earth_ranger_uuid=event_uuid
+            ).first()
+            if not er_event:
+                return Response(
+                    {"error": "Event does not exist!"},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+
+            er_setting = None
+            if er_event:
+                er_setting = er_event.earth_ranger_settings.all().first()
+
             # Clean and construct the full URL
             image_path = image_path.lstrip('/')
-            full_url = f"{settings.EARTH_RANGER_API_URL}{image_path}"
+            base_url = (
+                er_setting.url if er_setting else
+                settings.EARTH_RANGER_API_URL
+            )
+            base_api_url = get_base_api_url(base_url)
+            full_url = urllib.parse.urljoin(base_api_url, image_path)
+            token = (
+                er_setting.token if er_setting else
+                settings.EARTH_RANGER_AUTH_TOKEN
+            )
+
+            # Construct header
+            headers = {
+                "accept": "application/json",
+                "Authorization": f"Bearer {token}"
+            }
 
             # Fetch the image with timeout
             response = requests.get(
@@ -217,7 +243,10 @@ class EarthRangerImageProxyView(APIView):
                 )
             )
             if e.response.status_code == 404:
-                raise Http404("Image not found")
+                return Response(
+                    {"error": "Image not found"},
+                    status=status.HTTP_404_NOT_FOUND
+                )
             elif e.response.status_code == 403:
                 return Response(
                     {"error": "Access denied to image"},
