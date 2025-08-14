@@ -3,7 +3,8 @@ import json
 import os
 import logging
 import rasterio
-from datetime import date
+import calendar
+from datetime import date, timedelta
 from dateutil.relativedelta import relativedelta
 from pydrive2.auth import GoogleAuth
 from pydrive2.drive import GoogleDrive
@@ -161,8 +162,70 @@ def split_dates_by_year(start_date: date, end_date: date):
         year_end = min(end_date, date(current_year, 12, 31))
         results.append((year_start, year_end))
         current_year += 1
+    return results
+
+
+def split_dates(start_date: date, end_date: date,
+                mode: str = "year", last_date_of_month: bool = False):
+    """
+    Split a date range into intervals based on mode.
+
+    mode:
+      - "year": yearly intervals
+      - "month": monthly intervals
+      - "quarter": quarterly intervals
+
+    If last_date_of_month is True, the last returned interval end date
+    will be extended to the last day of its month.
+    """
+    if start_date > end_date:
+        raise ValueError("start_date must be before or equal to end_date")
+    if mode not in {"year", "month", "quarter"}:
+        raise ValueError("mode must be 'year', 'month', or 'quarter'")
+
+    results = []
+
+    # --- determine initial current date based on mode ---
+    if mode == "year":
+        current = date(start_date.year, 1, 1)
+    elif mode == "month":
+        current = date(start_date.year, start_date.month, 1)
+    else:  # quarter
+        quarter = ((start_date.month - 1) // 3) + 1
+        current = date(start_date.year, 3 * (quarter - 1) + 1, 1)
+
+    while current <= end_date:
+        # --- determine end of current interval ---
+        if mode == "year":
+            next_start = date(current.year + 1, 1, 1)
+        elif mode == "month":
+            year_inc = current.year + (current.month // 12)
+            month_inc = (current.month % 12) + 1
+            next_start = date(year_inc, month_inc, 1)
+        else:  # quarter
+            if current.month > 9:  # Q4 -> next year Q1
+                next_start = date(current.year + 1, 1, 1)
+            else:
+                next_start = date(current.year, current.month + 3, 1)
+
+        interval_start = max(start_date, current)
+        interval_end = min(end_date, next_start - timedelta(days=1))
+
+        # --- handle last_date_of_month for the final segment ---
+        if last_date_of_month and interval_end == end_date:
+            # extend to last day of that month
+            _, last_day = calendar.monthrange(
+                interval_end.year, interval_end.month
+            )
+            interval_end = date(
+                interval_end.year, interval_end.month, last_day
+            )
+
+        results.append((interval_start, interval_end))
+        current = next_start
 
     return results
+
 
 
 def get_date_range_for_analysis(temporal_resolution, year, quarter, month):
@@ -201,3 +264,65 @@ def get_date_range_for_analysis(temporal_resolution, year, quarter, month):
         'resolution_step': resolution_step,
         'month_filter': month_filter
     }
+
+
+def convert_temporal_to_dates(data: dict):
+    def end_of_month(year: int, month: int) -> date:
+        last_day = calendar.monthrange(year, month)[1]
+        return date(year, month, last_day)
+
+    def end_of_quarter(year: int, quarter: int) -> date:
+        month = quarter * 3
+        return end_of_month(year, month)
+
+    result = {
+        "period_date": None,
+        "comparison_dates": []
+    }
+
+    temporal = data.get("Temporal", {})
+    resolution = data.get("t_resolution", "").lower()
+
+    if resolution == "annual":
+        annual = temporal.get("Annual", {})
+        ref = annual.get("ref")
+        test = annual.get("test", [])
+        if ref:
+            result["period_date"] = date(ref, 1, 1)
+        result["comparison_dates"] = [date(y, 12, 31) for y in test]
+
+    elif resolution == "quarterly":
+        annual = temporal.get("Annual", {})
+        ref_year = annual.get("ref")
+        quarterly = temporal.get("Quarterly", {})
+        ref = quarterly.get("ref")
+        test = quarterly.get("test", [])
+        test_years = annual.get("test", [])
+
+        if ref and ref_year:
+            start_month = (ref - 1) * 3 + 1
+            result["period_date"] = date(ref_year, start_month, 1)
+
+        if test and test_years:
+            result["comparison_dates"] = [
+                end_of_quarter(test_years[i], q) for i, q in enumerate(test)
+            ]
+
+    elif resolution == "monthly":
+        annual = temporal.get("Annual", {})
+        ref_year = annual.get("ref")
+        monthly = temporal.get("Monthly", {})
+        ref = monthly.get("ref")
+        test = monthly.get("test", [])
+        test_years = annual.get("test", [])
+
+        if ref and ref_year:
+            result["period_date"] = date(ref_year, ref, 1)
+
+        if test and test_years:
+            print(test, test_years)
+            result["comparison_dates"] = [
+                end_of_month(test_years[i], q) for i, q in enumerate(test)
+            ]
+
+    return result
