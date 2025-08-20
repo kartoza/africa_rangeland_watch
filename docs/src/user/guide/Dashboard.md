@@ -35,17 +35,23 @@ To search for a dashboard, use the 1️⃣ `Search` field. You can filter the da
 
 ## How to Add New Analysis to Dashboard?
 
-To add a new analysis to the dashboard page, click on the 1️⃣ `New` button. This will redirect you to the analysis page from where you can select analysis.
+1. **Click New** on the Dashboard page.  
+   [![New](./img/guide-dashboard-img-5.png)](./img/guide-dashboard-img-5.png)
 
-[![New](./img/guide-dashboard-img-5.png)](./img/guide-dashboard-img-5.png)
+2. **Fill in the details** — Dashboard Name, Description (optional), and Access Level — then **Save**.  
+   [![Fill in the details](./img/guide-dashboard-img-6.png)](./img/guide-dashboard-img-6.png)
 
-To add the analysis to the dashboard first select the analysis then click on the 1️⃣ `Create Dashboard` button.
+3. Use **Add Widget → From Analysis Result** to insert the analysis as a widget (and add more if needed).
+   [![Add widget](./img/guide-dashboard-img-7.png)](./img/guide-dashboard-img-7.png)
+   [![Add widget from analysis result](./img/guide-dashboard-img-12.png)](./img/guide-dashboard-img-12.png)
 
-[![Analysis Page](./img/guide-dashboard-img-6.png)](./img/guide-dashboard-img-6.png)
+4. The **Choose an Analysis Result** panel appears. **Select** the saved analysis result and confirm.
+   [![Choose an Analysis Result](./img/guide-dashboard-img-13.png)](./img/guide-dashboard-img-13.png)
 
-Fill in the 1️⃣ `Dashboard Name`, select the 2️⃣ `Preference`, choose the 3️⃣ `Access Level`, and click on the 4️⃣ `Save` button to complete the dashboard creation. After this analysis will be added to the dashboard page.
+5. The new dashboard is created.  
+   [![Toast](./img/guide-dashboard-img-14.png)](./img/guide-dashboard-img-14.png)
 
-[![Dashboard Form](./img/guide-dashboard-img-7.png)](./img/guide-dashboard-img-7.png)
+> Tip: If you don’t see your analysis in Step 4, run it on **MAP → Analysis** and click **Save Results** first.
 
 ## How to Delete Dashboard?
 

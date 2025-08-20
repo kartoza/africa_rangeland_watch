@@ -68,6 +68,17 @@ license: This program is free software; you can redistribute it and/or modify it
 
 ## Change Associated Email
 
+Use this when you want ARW to send all notifications and sign-in links to a different email address.
+
+[![Change Associated Email](./img/profile-img-22.png)](./img/profile-img-22.png)
+
+### Steps
+1️⃣ **Open Profile** Click **Change Associated Email**.  
+2️⃣ **Enter new email.** In the **Email Address** field, type the new address you want to use.  
+3️⃣ **Submit.** Click **Update Info**. You’ll see a confirmation message that a verification email was sent.  
+4️⃣ **Verify the new address.** Open the email titled **“Verify your ARW email”** and follow the link to confirm.  
+5️⃣ **Sign in with the new email.** After verification, your ARW account uses the new address for login and notifications.
+
 ## Change Password
 
 [![Change Password](./img/profile-img-16.png)](./img/profile-img-16.png)
