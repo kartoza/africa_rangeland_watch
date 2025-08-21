@@ -1,6 +1,6 @@
 import { colors, shadows, fonts } from "./foundations";
 import { extendTheme } from "@chakra-ui/react";
-import { Text, Heading, Button } from "./components";
+import { Text, Heading, Button, Radio, Checkbox } from "./components";
 
 const theme = extendTheme({
   breakpoints: {
@@ -11,7 +11,7 @@ const theme = extendTheme({
   colors,
   shadows,
   fonts,
-  components: { Text, Heading, Button },
+  components: { Text, Heading, Button, Radio, Checkbox },
 });
 
 export default theme;

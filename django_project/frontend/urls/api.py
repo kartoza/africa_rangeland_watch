@@ -23,7 +23,10 @@ from frontend.api_views.layers import (
     ExportLayerRequestStatus,
     DownloadLayerExportedFile
 )
-from frontend.api_views.indicator import IndicatorAPI
+from frontend.api_views.indicator import (
+    IndicatorAPI,
+    FetchBandAPI
+)
 
 router = DefaultRouter()
 router.register(r'landscapes', LandscapeViewSet, basename='landscapes')
@@ -84,10 +87,15 @@ layers_urls = [
 # Indicator APIs
 indicator_urls = [
     path(
+        'indicator/fetch-bands/',
+        FetchBandAPI.as_view(),
+        name='fetch-bands'
+    ),
+    path(
         'indicator/',
         IndicatorAPI.as_view(),
         name='indicator'
-    )
+    ),
 ]
 
 

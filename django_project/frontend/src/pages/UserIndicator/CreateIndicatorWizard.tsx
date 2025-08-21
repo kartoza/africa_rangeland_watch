@@ -1,0 +1,249 @@
+import React, { useEffect, useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  Box,
+  Button,
+  FormControl,
+  FormLabel,
+  Input,
+  VStack,
+  HStack,
+  Progress,
+  Heading,
+  Text,
+  Select,
+  Checkbox,
+  Textarea,
+  useToast,
+  Card,
+  CardBody,
+  CardHeader,
+  Stepper,
+  Step,
+  StepIndicator,
+  StepStatus,
+  StepIcon,
+  StepNumber,
+  StepTitle,
+  StepSeparator,
+  useSteps,
+  Flex
+} from '@chakra-ui/react';
+import Helmet from "react-helmet";
+import Header from "../../components/Header";
+import Sidebar from "../../components/SideBar";
+import "../../styles/index.css";
+import { AppDispatch, RootState } from "../../store";
+import {UserIndicatorFormData} from '../../store/userIndicatorSlice';
+import RenderStep1 from "./Step1";
+import RenderStep2 from "./Step2";
+import RenderStep3 from "./Step3";
+
+const CreateIndicatorWizard: React.FC = () => {
+  const toast = useToast();
+  const dispatch = useDispatch<AppDispatch>();
+  const { formData, loading, error } = useSelector((state: any) => state.userIndicator);
+
+  const validateStep1 = () => {
+    return true;
+  }
+
+  const validateStep2 = () => {
+    return true;
+  }
+
+  const validateStep3 = () => {
+    return true;
+  }
+
+  const steps = [
+    { title: 'Detail', description: 'Indicator Detail', validateFn: validateStep1 },
+    { title: 'Choose Asset', description: 'Choose or Upload asset files', validateFn: validateStep2 },
+    { title: 'Configuration', description: 'Configure the indicator', validateFn: validateStep3 }
+  ];
+
+  const { activeStep, setActiveStep } = useSteps({
+    index: 0,
+    count: steps.length,
+  });
+
+  const handleNext = () => {
+    if (activeStep < steps.length - 1) {
+      setActiveStep(activeStep + 1);
+    }
+  };
+
+  const handlePrevious = () => {
+    if (activeStep > 0) {
+      setActiveStep(activeStep - 1);
+    }
+  };
+
+  const handleSubmit = () => {
+    if (!steps[activeStep].validateFn()) {
+      toast({
+        title: 'Validation Error',
+        description: `Please complete the step ${activeStep + 1} before submitting.`,
+        status: 'error',
+        duration: 3000,
+        isClosable: true,
+      });
+      return;
+    }
+    toast({
+      title: 'Form Submitted!',
+      description: 'Your information has been saved successfully.',
+      status: 'success',
+      duration: 3000,
+      isClosable: false,
+      
+    });
+    console.log('Submitted data:', formData);
+  };
+
+  const renderCurrentStep = () => {
+    switch (activeStep) {
+      case 0:
+        return <RenderStep1 />;
+      case 1:
+        return <RenderStep2 />;
+      case 2:
+        return <RenderStep3 />;
+      default:
+        return <RenderStep1 />;
+    }
+  };
+
+  return (
+    <>
+        <Helmet>
+            <title>Create a new indicator</title>
+            <meta name="description" content="Create a new user indicator." />
+        </Helmet>
+        
+        <Header />
+        <Box bg="white" w="100%">
+            <Flex direction={{ base: "column", md: "row" }} gap="30px" alignItems="start">
+                {/* Sidebar */}
+                <Sidebar display={{ base: "none", md: "flex" }} />
+            
+                {/* Main Content */}
+                <Box bg="white" flex="1" width={{ base: "auto", md: "auto" }} overflow={"hidden"} p={6}>
+                    <Heading size="lg" color="black">
+                        Create a new indicator
+                    </Heading>
+                    <Card>
+                        <CardHeader>
+                            <VStack spacing={4}>
+                                <Text color="gray.600" textAlign="center">
+                                    Complete the following steps to create a new indicator
+                                </Text>
+                                
+                                {/* Progress Bar */}
+                                <Box w="100%">
+                                    <Progress 
+                                        value={(activeStep + 1) * (100 / steps.length)}
+                                        colorScheme="dark_green"
+                                        size="lg" 
+                                        borderRadius="md"
+                                    />
+                                <Text fontSize="sm" color="gray.500" mt={2} textAlign="center">
+                                    Step {activeStep + 1} of {steps.length}
+                                </Text>
+                                </Box>
+
+                                {/* Stepper */}
+                                <Stepper size="md" index={activeStep} w="100%" colorScheme="dark_green">
+                                    {steps.map((step, index) => (
+                                        <Step key={index}>
+                                            <StepIndicator>
+                                                <StepStatus
+                                                    complete={<StepIcon />}
+                                                    incomplete={<StepNumber />}
+                                                    active={<StepNumber />}
+                                                />
+                                            </StepIndicator>
+
+                                            <Box flexShrink="0">
+                                                <StepTitle>{step.title}</StepTitle>
+                                            </Box>
+
+                                            <StepSeparator />
+                                        </Step>
+                                    ))}
+                                </Stepper>
+                            </VStack>
+                        </CardHeader>
+
+                        <CardBody>
+                            <Box minH="400px">
+                                {renderCurrentStep()}
+                            </Box>
+
+                            {/* Navigation Buttons */}
+                            <HStack justify="space-between" mt={8}>
+                                <Button
+                                    onClick={handlePrevious}
+                                    isDisabled={activeStep === 0 || loading}
+                                    variant="outline"
+                                    colorScheme="green"
+                                    _hover={{ backgroundColor: "dark_green.800", color: "white" }}
+                                    fontWeight={700}
+                                    w={{ base: "100%", md: "auto" }}
+                                    h={10}
+                                    borderRadius="5px"
+                                    transition="all 0.3s ease-in-out"
+                                >
+                                    Previous
+                                </Button>
+
+                                <HStack>
+                                {activeStep < steps.length - 1 ? (
+                                    <Button
+                                        onClick={handleNext}
+                                        disabled={loading}
+                                        variant="solid"
+                                        colorScheme="green"
+                                        backgroundColor="dark_green.800"
+                                        _hover={{ backgroundColor: "light_green.400" }}
+                                        fontWeight={700}
+                                        w={{ base: "100%", md: "auto" }}
+                                        h={10}
+                                        color="white"
+                                        borderRadius="5px"
+                                        transition="all 0.3s ease-in-out"
+                                    >
+                                        Next
+                                    </Button>
+                                ) : (
+                                    <Button
+                                        onClick={handleSubmit}
+                                        disabled={loading}
+                                        variant="solid"
+                                        colorScheme="green"
+                                        backgroundColor="dark_green.800"
+                                        _hover={{ backgroundColor: "light_green.400" }}
+                                        fontWeight={700}
+                                        w={{ base: "100%", md: "auto" }}
+                                        h={10}
+                                        color="white"
+                                        borderRadius="5px"
+                                        transition="all 0.3s ease-in-out"
+                                    >
+                                        Submit
+                                    </Button>
+                                )}
+                                </HStack>
+                            </HStack>
+                        </CardBody>
+                    </Card>
+                </Box>
+            </Flex>
+        </Box>
+        
+        
+    </>
+  );
+};
+
+export default CreateIndicatorWizard;

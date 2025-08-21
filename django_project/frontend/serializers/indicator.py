@@ -35,8 +35,34 @@ class UserIndicatorSerializer(serializers.ModelSerializer):
         model = UserIndicator
         fields = [
             'name',
+            'description',
             'variable',
             'analysis_types',
             'temporal_resolutions',
-            'source'
+            'source',
+            'config',
+            'metadata'
         ]
+
+
+class UserIndicatorDetailSerializer(serializers.ModelSerializer):
+    """Serializer for detailed User Indicator model."""
+
+    variable = serializers.CharField(source='variable_name')
+    layer = serializers.SerializerMethodField()
+
+    def get_layer(self, obj: UserIndicator):
+        """Return the layer associated with the User Indicator."""
+        return {}
+
+    class Meta:  # noqa
+        model = UserIndicator
+        fields = [
+            'name',
+            'variable',
+            'analysis_types',
+            'temporal_resolutions',
+            'source',
+            'layer'
+        ]
+
