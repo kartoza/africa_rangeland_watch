@@ -25,7 +25,8 @@ from frontend.api_views.layers import (
 )
 from frontend.api_views.indicator import (
     IndicatorAPI,
-    FetchBandAPI
+    FetchBandAPI,
+    UserIndicatorAPI
 )
 
 router = DefaultRouter()
@@ -95,6 +96,11 @@ indicator_urls = [
         'indicator/',
         IndicatorAPI.as_view(),
         name='indicator'
+    ),
+    path(
+        'user-indicator/',
+        UserIndicatorAPI.as_view(),
+        name='user-indicator'
     ),
 ]
 

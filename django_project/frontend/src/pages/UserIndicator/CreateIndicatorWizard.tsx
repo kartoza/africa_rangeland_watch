@@ -1,19 +1,13 @@
-import React, { useEffect, useState } from "react";
+import React, {  } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Box,
   Button,
-  FormControl,
-  FormLabel,
-  Input,
   VStack,
   HStack,
   Progress,
   Heading,
   Text,
-  Select,
-  Checkbox,
-  Textarea,
   useToast,
   Card,
   CardBody,
@@ -30,25 +24,44 @@ import {
   Flex
 } from '@chakra-ui/react';
 import Helmet from "react-helmet";
+import axios from 'axios';
 import Header from "../../components/Header";
 import Sidebar from "../../components/SideBar";
 import "../../styles/index.css";
-import { AppDispatch, RootState } from "../../store";
-import {UserIndicatorFormData} from '../../store/userIndicatorSlice';
+import { AppDispatch } from "../../store";
 import RenderStep1 from "./Step1";
 import RenderStep2 from "./Step2";
 import RenderStep3 from "./Step3";
+import { resetForm, setLoading } from "../../store/userIndicatorSlice";
+import { useNavigate } from "react-router-dom";
 
 const CreateIndicatorWizard: React.FC = () => {
+  const navigate = useNavigate();
   const toast = useToast();
   const dispatch = useDispatch<AppDispatch>();
   const { formData, loading, error } = useSelector((state: any) => state.userIndicator);
 
   const validateStep1 = () => {
-    return true;
+    // required fields
+    const requiredFields = [
+      'name',
+      'analysisTypes'
+    ]
+    let isValid = true;
+    requiredFields.forEach(element => {
+      console.log(element + ' ' + formData[element])
+      if (!formData[element] || formData[element].length === 0) {
+        isValid = false;
+      }
+    });
+    return isValid;
   }
 
   const validateStep2 = () => {
+    if (!formData.geeAssetID && !formData.uploadedInputLayerName) {
+      return false;
+    }
+    // TODO: add validation to new uploaded asset
     return true;
   }
 
@@ -69,6 +82,20 @@ const CreateIndicatorWizard: React.FC = () => {
 
   const handleNext = () => {
     if (activeStep < steps.length - 1) {
+      if (!steps[activeStep].validateFn()) {
+        toast({
+          title: 'Validation Error',
+          description: `Please complete the step ${activeStep + 1}.`,
+          status: 'error',
+          duration: 3000,
+          isClosable: true,
+          position: 'top-right',
+          containerStyle: {
+            color: "white",
+          },
+        });
+        return;
+      }
       setActiveStep(activeStep + 1);
     }
   };
@@ -87,18 +114,70 @@ const CreateIndicatorWizard: React.FC = () => {
         status: 'error',
         duration: 3000,
         isClosable: true,
+        position: 'top-right',
+        containerStyle: {
+          color: "white",
+        },
       });
       return;
     }
-    toast({
-      title: 'Form Submitted!',
-      description: 'Your information has been saved successfully.',
-      status: 'success',
-      duration: 3000,
-      isClosable: false,
-      
+
+    dispatch(setLoading(true));
+    const axiosPromise = axios.post('/frontend-api/user-indicator/', formData);
+
+    toast.promise(axiosPromise, {
+        'success': {
+            'title': 'A new indicator created successfully',
+            'description': 'The new indicator has been created successfully.',
+            'position': 'top-right',
+            'containerStyle': {
+                'color': "white",
+            },
+        },
+        'error': {
+            'title': 'Error creating indicator',
+            'description': 'There was an error creating the new indicator.',
+            'position': 'top-right',
+            'containerStyle': {
+                'color': "white",
+            },
+        },
+        'loading': {
+            'title': 'Submitting forms...',
+            'description': 'Please wait while we create the new indicator.',
+            'position': 'top-right',
+            'containerStyle': {
+                'color': "white",
+            },
+        }
     });
-    console.log('Submitted data:', formData);
+
+    axiosPromise.then((response) => {
+        console.log('Indicator created:', response.data);
+        dispatch(resetForm());
+        // redirect back to list
+        navigate('/user-indicator');
+    }).catch((error) => {
+        console.error('Error submitting data:', error);
+        if (error.response && error.response.data && error.response.data.error) {
+            let errorMsg = error.response.data.error;
+            setTimeout(() => {
+                toast({
+                    title: 'Error creating indicator',
+                    description: errorMsg,
+                    status: 'error',
+                    position: 'top-right',
+                    duration: 9000,
+                    isClosable: true,
+                    containerStyle: {
+                        color: "white",
+                    },
+                });
+            }, 1500);                
+        }
+    }).finally(() => {
+        dispatch(setLoading(false));
+    });
   };
 
   const renderCurrentStep = () => {

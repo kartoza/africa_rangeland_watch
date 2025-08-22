@@ -7,12 +7,13 @@ import {
   Select,
   useToast,
   HStack,
-  Input
+  Input,
+  FormHelperText
 } from '@chakra-ui/react';
 import axios from 'axios';
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "../../store";
-import { UserIndicatorFormData, setFormField, UpdateFieldPayload, setLoading } from "../../store/userIndicatorSlice";
+import { UserIndicatorFormData, setFormField, UpdateFieldPayload, setLoading, setBandsData, REDUCER_VALUE_LIST } from "../../store/userIndicatorSlice";
 
 
 interface RenderStep3Props {
@@ -22,7 +23,7 @@ const RenderStep3: React.FC<RenderStep3Props> = () => {
     const { formData, loading } = useSelector((state: any) => state.userIndicator);
     const dispatch = useDispatch<AppDispatch>();
     const toast = useToast();
-    const handleInputChange = (field: keyof UserIndicatorFormData, value: string | boolean | string[], isCheckbox?: boolean, isChecked?: boolean) => {
+    const handleInputChange = (field: keyof UserIndicatorFormData, value: string | boolean | string[] | number, isCheckbox?: boolean, isChecked?: boolean) => {
         const updateValue: UpdateFieldPayload = {
             field: field,
             value: value,
@@ -33,7 +34,6 @@ const RenderStep3: React.FC<RenderStep3Props> = () => {
     };
     
     const fetchBands = () => {
-        console.log('fetch bands');
         dispatch(setLoading(true));
         const axiosPromise = axios.post('/frontend-api/indicator/fetch-bands/', {
             gee_asset_id: formData.geeAssetID
@@ -42,22 +42,55 @@ const RenderStep3: React.FC<RenderStep3Props> = () => {
         toast.promise(axiosPromise, {
             'success': {
                 'title': 'Bands fetched successfully',
-                'description': 'Bands have been successfully fetched from the GEE asset.',
+                'description': 'Bands have been successfully fetched from the asset.',
+                'position': 'top-right',
+                'containerStyle': {
+                    'color': "white",
+                },
             },
             'error': {
                 'title': 'Error fetching bands',
-                'description': 'There was an error fetching bands from the GEE asset.',
+                'description': 'There was an error fetching bands from the asset.',
+                'position': 'top-right',
+                'containerStyle': {
+                    'color': "white",
+                },
             },
             'loading': {
                 'title': 'Fetching bands...',
-                'description': 'Please wait while we fetch bands from the GEE asset.',
+                'description': 'Please wait while we fetch bands from the asset.',
+                'position': 'top-right',
+                'containerStyle': {
+                    'color': "white",
+                },
             }
         });
 
         axiosPromise.then((response) => {
-            handleInputChange('bands', response.data.bands);
+            dispatch(setBandsData({
+                bands: response.data.bands,
+                geeAssetType: response.data.geeAssetType,
+                startDate: response.data.startDate,
+                endDate: response.data.endDate
+            }));
         }).catch((error) => {
             console.error('Error fetching bands:', error);
+            if (error.response && error.response.data && error.response.data.error) {
+                let errorMsg = error.response.data.error;
+                setTimeout(() => {
+                    toast({
+                        title: 'Error fetching bands',
+                        description: errorMsg,
+                        status: 'error',
+                        position: 'top-right',
+                        duration: 9000,
+                        isClosable: true,
+                        containerStyle: {
+                            color: "white",
+                        },
+                    });
+                }, 1500);                
+            }
         }).finally(() => {
             dispatch(setLoading(false));
         });
@@ -91,22 +124,24 @@ const RenderStep3: React.FC<RenderStep3Props> = () => {
                     value={formData.reducer}
                     onChange={(e) => handleInputChange('reducer', e.target.value)}
                 >
-                    <option value="mean">Mean</option>
-                    <option value="sum">Sum</option>
-                    <option value="median">Median</option>
-                    <option value="mode">Mode</option>
-                    <option value="min">Min</option>
-                    <option value="max">Max</option>
+                    {REDUCER_VALUE_LIST.map((reducer) => (
+                        <option key={reducer} value={reducer}>
+                            {reducer.charAt(0).toUpperCase() + reducer.slice(1)}
+                        </option>
+                    ))}
                 </Select>
             </FormControl>
-            <FormLabel>Visualisation parameters</FormLabel>
+            <FormControl>
+                <FormLabel>Visualisation parameters</FormLabel>
+                <FormHelperText>Set the parameters for visualising the indicator.</FormHelperText>
+            </FormControl>
             <FormControl isDisabled={loading}>
                 <HStack spacing={4}>
                     <FormLabel width={{ base: "100px" }}>Min Value</FormLabel>
                     <Input
                         type="number"
                         value={formData.minValue}
-                        onChange={(e) => handleInputChange('minValue', e.target.value)}
+                        onChange={(e) => handleInputChange('minValue', parseFloat(e.target.value))}
                         width={{ base: "120px" }}
                     />
                 </HStack>
@@ -117,7 +152,7 @@ const RenderStep3: React.FC<RenderStep3Props> = () => {
                     <Input
                         type="number"
                         value={formData.maxValue}
-                        onChange={(e) => handleInputChange('maxValue', e.target.value)}
+                        onChange={(e) => handleInputChange('maxValue', parseFloat(e.target.value))}
                         width={{ base: "120px" }}
                     />
                 </HStack>
@@ -139,7 +174,7 @@ const RenderStep3: React.FC<RenderStep3Props> = () => {
                     <Input
                         type="number"
                         value={formData.opacity}
-                        onChange={(e) => handleInputChange('opacity', e.target.value)}
+                        onChange={(e) => handleInputChange('opacity', parseFloat(e.target.value))}
                         width={{ base: "120px" }}
                     />
                 </HStack>

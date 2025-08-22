@@ -39,7 +39,11 @@ const RenderStep1: React.FC<RenderStep1Props> = () => {
                     value={formData.name}
                     onChange={(e) => handleInputChange('name', e.target.value)}
                     placeholder="Enter indicator name"
+                    maxLength={50}
                 />
+                <FormHelperText>
+                    A unique identifier for this indicator. Use only letters, numbers, spaces, and underscores.
+                </FormHelperText>
             </FormControl>
             <FormControl>
                 <FormLabel>Description</FormLabel>
@@ -48,17 +52,6 @@ const RenderStep1: React.FC<RenderStep1Props> = () => {
                     onChange={(e) => handleInputChange('description', e.target.value)}
                     placeholder="Enter indicator description"                
                 />
-            </FormControl>
-            <FormControl isRequired>
-                <FormLabel>Variable Name</FormLabel>
-                <Input
-                    value={formData.variableName}
-                    onChange={(e) => handleInputChange('variableName', e.target.value)}
-                    placeholder="Enter unique variable name"
-                />
-                <FormHelperText>
-                    A unique identifier for this variable. Use only letters, numbers, and underscores.
-                </FormHelperText>
             </FormControl>
             <FormControl isRequired>
                 <FormLabel>Select Analysis Types</FormLabel>
@@ -89,7 +82,7 @@ const RenderStep1: React.FC<RenderStep1Props> = () => {
                     </Checkbox> */}
                 </VStack>
             </FormControl>
-            <FormControl isRequired>
+            <FormControl>
                 <FormLabel>Select Temporal Resolutions</FormLabel>
                 <VStack align="start" spacing={3} pl={2}>
                     <Checkbox
