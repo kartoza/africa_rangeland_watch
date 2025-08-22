@@ -844,6 +844,21 @@ class AnalysisTask(models.Model):
         help_text='Error message if the task failed.'
     )
 
+    def get_indicator(self):
+        variable = self.analysis_inputs['variable']
+        indicator = Indicator.objects.filter(
+            variable_name=variable
+        ).first()
+        if not indicator:
+            indicator = UserIndicator.objects.filter(
+                variable_name=variable,
+                created_by=self.submitted_by
+            ).first()
+            if not indicator:
+                raise ValueError(
+                    f"Indicator for variable {variable} not found"
+                )
+
 
 class IndicatorSource(models.TextChoices):
     """Choices for the source of an indicator."""

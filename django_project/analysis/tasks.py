@@ -22,7 +22,8 @@ from core.models import TaskStatus, Preferences
 from analysis.models import (
     AnalysisResultsCache,
     AnalysisRasterOutput,
-    AnalysisTask
+    AnalysisTask,
+    UserAnalysisResults
 )
 from analysis.analysis import (
     export_image_to_drive,
@@ -44,8 +45,9 @@ logger = logging.getLogger(__name__)
 User = get_user_model()
 
 
-def _run_spatial_analysis(data):
+def _run_spatial_analysis(analysis_raster_output: AnalysisRasterOutput):
     """Run spatial analysis to get difference of relative layer."""
+    data = analysis_raster_output.analysis
     input_layers = InputLayer()
     reference_layer_geom = AnalysisRunner.get_reference_layer_geom(data)
     (
@@ -55,12 +57,23 @@ def _run_spatial_analysis(data):
     filter_start_date, filter_end_date = spatial_get_date_filter(
         spatial_analysis_dict
     )
+
+    user_analysis_result = UserAnalysisResults.objects.filter(
+        raster_outputs=analysis_raster_output
+    ).first()
+
+    analysis_task: AnalysisTask = AnalysisTask.objects.filter(
+        analysis_inputs=user_analysis_result.analysis_results['data']
+    )
+    indicator = analysis_task.get_indicator()
+
     rel_diff = get_rel_diff(
         input_layers.get_spatial_layer_dict(
             filter_start_date, filter_end_date
         ),
         spatial_analysis_dict,
-        reference_layer_geom
+        reference_layer_geom,
+        indicator
     )
     return rel_diff
 
@@ -105,7 +118,7 @@ def store_spatial_analysis_raster_output(raster_output_id: int):
         'palette': ['#f9837b', '#fffcb9', '#fffcb9', '#32c2c8'],
         'opacity': 0.7
     }
-    image = _run_spatial_analysis(raster_output.analysis)
+    image = _run_spatial_analysis(raster_output)
 
     status = export_image_to_drive(
         image=image,
