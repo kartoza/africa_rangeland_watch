@@ -233,7 +233,7 @@ class AnalysisAPITest(BaseAPIViewTest):
         self.assertTrue(AnalysisResultsCache.objects.exists())
 
         # check reducer used in get_rel_diff
-        self.assertIsNone(mock_get_rel_diff.call_args_list[0][0])
+        self.assertIsNone(mock_get_rel_diff.call_args[0][-1])
 
     @patch('analysis.runner.initialize_engine_analysis')
     @patch('analysis.runner.run_analysis')
