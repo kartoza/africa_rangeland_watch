@@ -232,6 +232,9 @@ class AnalysisAPITest(BaseAPIViewTest):
         # Check cache was created
         self.assertTrue(AnalysisResultsCache.objects.exists())
 
+        # check reducer used in get_rel_diff
+        self.assertIsNone(mock_get_rel_diff.call_args_list[0][0])
+
     @patch('analysis.runner.initialize_engine_analysis')
     @patch('analysis.runner.run_analysis')
     @patch('analysis.runner.spatial_get_date_filter')

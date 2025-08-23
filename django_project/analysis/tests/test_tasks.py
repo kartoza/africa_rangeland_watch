@@ -1,3 +1,4 @@
+import datetime
 from django.test import TestCase
 from unittest.mock import patch, ANY, MagicMock
 from django.contrib.auth.models import User
@@ -6,11 +7,20 @@ from analysis.tasks import (
     store_spatial_analysis_raster_output,
     generate_temporal_analysis_raster_output
 )
-from analysis.models import UserAnalysisResults
+from core.factories import UserF
 from django.test import TestCase
 from unittest.mock import patch, ANY
 from django.contrib.auth.models import User
-from analysis.models import UserAnalysisResults, AnalysisRasterOutput
+from analysis.models import (
+    UserAnalysisResults, 
+    AnalysisRasterOutput, 
+    UserIndicator,
+    AnalysisTask,
+    GEEAssetType,
+    IndicatorSource
+)
+from analysis.factories import UserGEEAssetF, UserIndicatorF
+from analysis.runner import AnalysisRunner
 
 
 def do_nothing(uuid, name, gdrive_file, metadata):
@@ -77,8 +87,126 @@ class TestStoreAnalysisRasterOutput(TestCase):
         mock_initialize_engine_analysis.assert_called_once()
         mock_get_bounds.assert_called_once()
         mock_run_spatial_analysis.assert_called_once_with(
-            mock_raster_output.analysis
+            mock_raster_output
         )
+        mock_export_image_to_drive.assert_called_once()
+        mock_raster_output.refresh_from_db()
+        self.assertEqual(mock_raster_output.status, 'COMPLETED')
+        self.assertEqual(mock_raster_output.size, 100)
+
+    @patch('analysis.tasks.store_cog_as_layer')
+    @patch('analysis.tasks.ee')
+    @patch('analysis.tasks.export_image_to_drive')
+    @patch('analysis.tasks.get_rel_diff')
+    @patch('analysis.tasks._get_bounds')
+    @patch('analysis.tasks.delete_gdrive_file')
+    @patch('analysis.tasks.get_gdrive_file')
+    @patch('analysis.tasks.initialize_engine_analysis')
+    @patch('analysis.tasks.InputLayer')
+    @patch('analysis.tasks.spatial_get_date_filter')
+    @patch.object(UserIndicator, 'get_reducer')
+    @patch.object(AnalysisRunner, 'get_analysis_dict_spatial')
+    def test_store_spatial_analysis_raster_output_custom_reducer(
+        self, mock_get_analysis_dict_spatial, mock_get_reducer,  mock_spatial_get_date_filter,
+        mock_input_layer, mock_initialize_engine_analysis,
+        mock_get_gdrive_file, mock_delete_gdrive_file,
+        mock_get_bounds,
+        mock_get_rel_diff, mock_export_image_to_drive,
+        mock_ee, mock_store_cog_as_layer
+    ):
+        # Mock data
+        user = UserF.create()
+
+        mock_get_analysis_dict_spatial.return_value = ({}, {})
+        mock_spatial_get_date_filter.return_value = (
+            datetime.date(2020, 1, 1),
+            datetime.date(2021, 1, 1)
+        )
+        mock_raster_output = AnalysisRasterOutput.objects.create(
+            analysis={
+                'analysisType': 'Spatial',
+                'temporalResolution': '',
+                'year': None,
+                'locations': [
+                    {
+                        'lat': -23.035376296859013,
+                        'lon': 32.192377992891466,
+                        'community': '00000000000000000161',
+                        'communityName': 'LNP-BNP corridor',
+                        'communityFeatureId': 430
+                    }
+                ],
+                'variable': 'EVI',
+                'reference_layer': {},
+                'variable': 'Custom Temperature'
+            },
+            name='mock_filename',
+            status='PENDING'
+        )
+
+        user_analysis_result = UserAnalysisResults.objects.create(
+            created_by=user,
+            analysis_results={
+                'data': mock_raster_output.analysis,
+                'results': []
+            }
+        )
+        user_analysis_result.raster_outputs.add(mock_raster_output)
+        analysis_task = AnalysisTask.objects.create(
+            analysis_inputs=mock_raster_output.analysis,
+            submitted_by=user
+        )
+
+        gee_asset = UserGEEAssetF(
+            key="temperature-asset",
+            created_by=user,
+            type=GEEAssetType.IMAGE_COLLECTION,
+            source="projects/sample/temperature",
+            metadata={
+                "end_date": "2025-08-11",
+                "start_date": "2002-01-01",
+                "band_names": ["tmax", "tmin"]
+            }
+        )
+        
+        # Create UserIndicator for Custom Temperature
+        user_indicator = UserIndicatorF(
+            name="Custom Temperature",
+            variable_name="Custom Temperature",
+            created_by=user,
+            source=IndicatorSource.OTHER,
+            analysis_types=["Baseline", "Temporal", "Spatial"],
+            temporal_resolutions=["Annual", "Monthly", "Quarterly"],
+            metadata={
+                "max": 50,
+                "min": -40,
+                "palette": ["#ADD8E6", "#008000", "#FFFF00", "#FFA500", "#FF0000", "#800080"]
+            },
+            config={"asset_keys": ["temperature-asset"], 'reducer': 'median'}
+        )
+
+        rel_diff = MagicMock()
+        # Mock getMapId return value
+        rel_diff.getMapId.return_value = {
+            "tile_fetcher": MagicMock(url_format="http://mocked-url/{z}/{x}/{y}.png")
+        }
+        mock_get_rel_diff.return_value = rel_diff
+        mock_get_reducer.return_value = user_indicator.get_reducer_name()
+
+        # Mock return values
+        # mock_get_bounds.return_value = {'coordinates': [34.0, -1.0]}
+        mock_ee.return_value = MagicMock()
+        mock_export_image_to_drive.return_value = {'state': 'COMPLETED'}
+        gdrive_file = MagicMock()
+        gdrive_file.get.return_value = 100
+        mock_get_gdrive_file.return_value = gdrive_file
+        mock_store_cog_as_layer.side_effect = do_nothing
+
+        store_spatial_analysis_raster_output(mock_raster_output.uuid)
+        
+        # Assertions
+        mock_initialize_engine_analysis.assert_called_once()
+        mock_get_bounds.assert_called_once()
         mock_export_image_to_drive.assert_called_once()
         mock_raster_output.refresh_from_db()
         self.assertEqual(mock_raster_output.status, 'COMPLETED')
