@@ -563,12 +563,12 @@ class AnalysisRunner:
         if locations is None or len(locations) == 0:
             # return the relative different layer
             indicator = Indicator.objects.filter(
-                variable_name=variable
+                variable_name=data['variable']
             ).first()
             if not indicator:
                 indicator = self.analysis_task.get_indicator()
 
-            # reducer = None will use ee.Reducer.mean() in get_rel_diff 
+            # reducer = None will use ee.Reducer.mean() in get_rel_diff
             reducer = indicator.get_reducer() if isinstance(
                 indicator, UserIndicator
             ) else None
@@ -586,8 +586,6 @@ class AnalysisRunner:
                 reference_layer_geom,
                 reducer
             )
-
-            variable = data["variable"]
 
             if indicator.source == IndicatorSource.GPW:
                 metadata = indicator.metadata

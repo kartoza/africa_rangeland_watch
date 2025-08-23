@@ -64,7 +64,7 @@ def _run_spatial_analysis(analysis_raster_output: AnalysisRasterOutput):
 
     analysis_task: AnalysisTask = AnalysisTask.objects.filter(
         analysis_inputs=user_analysis_result.analysis_results['data']
-    )
+    ).first()
     indicator = analysis_task.get_indicator()
 
     rel_diff = get_rel_diff(
@@ -73,7 +73,7 @@ def _run_spatial_analysis(analysis_raster_output: AnalysisRasterOutput):
         ),
         spatial_analysis_dict,
         reference_layer_geom,
-        indicator
+        indicator.get_reducer()
     )
     return rel_diff
 
