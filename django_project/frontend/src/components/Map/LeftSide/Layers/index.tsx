@@ -31,6 +31,11 @@ export interface Props extends LayerCheckboxProps {
   layers?: Layer[];
 }
 
+export enum ToastStatus {
+  Success = "success",
+  Error = "error",
+}
+
 /* ---------- component --------------------------------------------------- */
 export default function Layers({
   landscapes,
@@ -60,7 +65,7 @@ export default function Layers({
   const showToast = (
     title: string,
     body: string,
-    status: "success" | "error"
+    status: ToastStatus
   ) =>
     toast({
       position: "top-right",
@@ -71,7 +76,7 @@ export default function Layers({
           color="white"
           p={3}
           borderRadius="md"
-          bg={status === "success" ? "#00634b" : "#c53030"}
+          bg={status === ToastStatus.Success ? "#00634b" : "#c53030"}
           boxShadow="md"
         >
           <strong>{title}</strong>
@@ -96,12 +101,12 @@ export default function Layers({
       const { task_id } = await res.json();
       setExportTasks((prev) => ({ ...prev, [layer.id]: task_id }));
 
-      showToast("Export started!", "COG export task has been queued.", "success");
+      showToast("Export started!", "COG export task has been queued.", ToastStatus.Success);
     } catch (err) {
       showToast(
         "Export failed",
         "Unable to start COG export task.",
-        "error"
+        ToastStatus.Error
       );
     }
   };
