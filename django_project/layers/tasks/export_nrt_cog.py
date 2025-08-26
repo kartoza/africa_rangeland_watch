@@ -4,11 +4,8 @@ ARW: Task to export Earth Engine image to Google Drive as COG and download it.
 """
 
 import logging
-from itertools import islice
 from celery import shared_task
-from core.celery import app
 from layers.models import InputLayer, ExportedCog
-from analysis.models import Landscape
 from analysis.analysis import export_image_to_drive, initialize_engine_analysis
 from analysis.utils import get_gdrive_file
 from layers.utils import get_nrt_image
@@ -105,27 +102,3 @@ def export_ee_image_to_cog_task(
     Celery task to export EE image to COG.
     """
     export_ee_image_to_cog(input_layer_id, landscape_id, export_folder)
-
-
-@app.task(name="export_all_nrt_cogs")
-def export_all_nrt_cogs():
-    """
-    Trigger export for all NRT InputLayers across all landscapes.
-    """
-    nrt_layers = InputLayer.objects.filter(group__name="near-real-time")
-
-    def chunked(iterable, size):
-        """Yield successive chunks of specified size."""
-        it = iter(iterable)
-        return iter(lambda: list(islice(it, size)), [])
-
-    for landscape in Landscape.objects.all():
-        for layer_chunk in chunked(nrt_layers, CHUNK_SIZE):
-            for layer in layer_chunk:
-                export_ee_image_to_cog_task.delay(
-                    str(layer.uuid), landscape.id
-                )
-            logger.info(
-                f"Queued chunk of {len(layer_chunk)} layers for landscape "
-                f"{landscape.name}"
-            )
