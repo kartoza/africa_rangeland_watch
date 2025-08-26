@@ -6,11 +6,17 @@ from .views import (
     DashboardRetrieveUpdateDestroyView,
     DashboardShareView,
     UpdateDashboardView,
-    DashboardDetailView
+    DashboardDetailView,
+    DashboardWidgetDetailView
 )
 
 
 urlpatterns = [
+    path(
+        'dashboards/widgets/<int:pk>/',
+        DashboardWidgetDetailView.as_view(),
+        name='dashboard-widget-detail'
+    ),
     path(
         'dashboards/',
         DashboardListCreateView.as_view(),

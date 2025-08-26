@@ -1,13 +1,33 @@
 import datetime
 import time
 import base64
+from dateutil.parser import parse
 from dateutil.relativedelta import relativedelta
+from django.contrib.auth.models import User
 
 import ee
 import os
 from functools import reduce, partial
 
-from analysis.models import AnalysisResultsCache, GEEAsset
+from analysis.models import (
+    AnalysisTask,
+    AnalysisResultsCache,
+    GEEAsset,
+    Indicator,
+    UserIndicator,
+    IndicatorSource,
+    UserGEEAsset,
+    GEEAssetType
+)
+from analysis.utils import split_dates_by_year, convert_temporal_to_dates
+from analysis.external.gpw import (
+    gpw_annual_temporal_analysis,
+    gpw_spatial_analysis_dict
+)
+from analysis.external.user_raster import (
+    user_temporal_analysis,
+    user_spatial_analysis_dict
+)
 
 SERVICE_ACCOUNT_KEY = os.environ.get('SERVICE_ACCOUNT_KEY', '')
 SERVICE_ACCOUNT = os.environ.get('SERVICE_ACCOUNT', '')
@@ -348,7 +368,8 @@ class InputLayer:
         return soc_lt_trend
 
     def get_spatial_layer_dict(
-        self, start_date: datetime.date = None, end_date: datetime.date = None
+        self, start_date: datetime.date = None, end_date: datetime.date = None,
+        user: User = None
     ):
         """
         Get spatial layer dictionary.
@@ -422,6 +443,16 @@ class InputLayer:
             'Soil carbon': soc_lt_mean,
             'Soil carbon change': soc_lt_trend
         }
+        gpw_dict = gpw_spatial_analysis_dict(
+            self.countries, start_date, end_date
+        )
+        spatial_layer_dict.update(gpw_dict)
+
+        user_layer_dict = user_spatial_analysis_dict(
+            self.countries, user,
+            start_date, end_date
+        )
+        spatial_layer_dict.update(user_layer_dict)
         return spatial_layer_dict
 
     def get_landscape_dict(self):
@@ -526,7 +557,7 @@ class InputLayer:
         selected_area = None
         if is_custom_geom:
             selected_area = ee.FeatureCollection([
-                ee.Feature(aoi, {'name': 'Custom Area'})
+                ee.Feature(aoi, {'Name': 'Custom Area'})
             ])
             selected_area = selected_area.map(lambda feature: feature.set(
                 'area', feature.geometry().area().divide(10000)
@@ -618,7 +649,7 @@ def run_monthly_analysis(
     end_date = max(dates)
 
     # use start date of 2015-01-01
-    date_ranges = _split_dates_by_year(
+    date_ranges = split_dates_by_year(
         datetime.date(2015, 1, 1),
         end_date
     )
@@ -708,6 +739,36 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
     communities = input_layers.get_communities()
     baseline_table = input_layers.get_baseline_table()
 
+    indicator = None
+    if analysis_dict['analysisType'] != "Baseline":
+        variable = analysis_dict['variable']
+        indicator = Indicator.objects.filter(
+            variable_name=variable
+        ).first()
+        if not indicator:
+            analysis_task = AnalysisTask.objects.filter(
+                id=kwargs.get('analysis_task_id')
+            ).first()
+            if analysis_task:
+                indicator = UserIndicator.objects.filter(
+                    variable_name=variable,
+                    created_by=analysis_task.submitted_by
+                ).first()
+                if not indicator:
+                    raise ValueError(
+                        f"Indicator for variable {variable} not found"
+                    )
+            else:
+                raise ValueError(
+                    f"Indicator for variable {variable} not found"
+                )
+
+    analysis_task = None
+    if kwargs.get('analysis_task_id', None):
+        analysis_task = AnalysisTask.objects.filter(
+            id=kwargs.get('analysis_task_id')
+        ).first()
+
     features_geo = []
     for location in locations:
         geo = ee.Geometry.Point(
@@ -743,9 +804,12 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
         filter_start_date, filter_end_date = spatial_get_date_filter(
             analysis_dict
         )
+        user = indicator.created_by if isinstance(
+            indicator, UserIndicator
+        ) else None
         rel_diff = get_rel_diff(
             input_layers.get_spatial_layer_dict(
-                filter_start_date, filter_end_date
+                filter_start_date, filter_end_date, user
             ),
             analysis_dict,
             reference_layer
@@ -774,14 +838,16 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
                     ee.Geometry.MultiPolygon(custom_geom['coordinates']),
                     analysis_dict['Baseline']['startDate'],
                     analysis_dict['Baseline']['endDate'],
-                    is_custom_geom=True
+                    is_custom_geom=True,
+                    user=analysis_task.submitted_by
                 )
             else:
                 select = calculate_baseline(
                     selected_geos,
                     analysis_dict['Baseline']['startDate'],
                     analysis_dict['Baseline']['endDate'],
-                    is_custom_geom=False
+                    is_custom_geom=False,
+                    user=analysis_task.submitted_by
                 )
         else:
             if custom_geom:
@@ -817,6 +883,47 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
         test_years = [
             int(year) for year in analysis_dict['Temporal']['Annual']['test']
         ]
+
+        if indicator.source == IndicatorSource.GPW:
+            baseline_dt = datetime.date(
+                baseline_yr, 1, 1
+            )
+            select_geo = input_layers.get_selected_area(
+                custom_geom if custom_geom else selected_geos,
+                True if custom_geom else False
+            )
+
+            # Run analysis for GPW datasets
+            return gpw_annual_temporal_analysis(
+                variable,
+                baseline_dt,
+                test_years,
+                select_geo,
+                analysis_cache
+            )
+
+        elif isinstance(indicator, UserIndicator):
+            select_geo = input_layers.get_selected_area(
+                custom_geom if custom_geom else selected_geos,
+                True if custom_geom else False
+            )
+
+            start_date, test_dates = convert_temporal_to_dates(
+                analysis_dict
+            ).values()
+
+            # Run analysis for GPW datasets
+            result = user_temporal_analysis(
+                variable=variable,
+                user=indicator.created_by,
+                start_date=start_date,
+                test_dates=test_dates,
+                resolution=res,
+                select_geo=select_geo,
+                analysis_cache=analysis_cache
+            )
+            return result
+
         temporal_table, temporal_table_yr = input_layers.get_temporal_table()
 
         if res == "Quarterly":
@@ -1357,9 +1464,17 @@ def quarterly_medians(
     else:
         end_date = ee.Date.parse('YYYY-MM-dd', date_end)
 
-    date_ranges = ee.List.sequence(
-        0, end_date.difference(
-            start_date, unit).round().subtract(1))
+    if unit == "year" and end_date.difference(
+        start_date, "year"
+    ).lt(1).getInfo():
+        # force one year interval
+        date_ranges = ee.List([0])
+    else:
+        date_ranges = ee.List.sequence(
+            0, end_date.difference(
+                start_date, unit
+            ).round().subtract(1)
+        )
 
     def make_time_slice(num):
         """
@@ -2028,7 +2143,8 @@ def calculate_firefreq(aoi, start_date, end_date):
     return ba_count.rename('fireFreq')
 
 
-def calculate_baseline(aoi, start_date, end_date, is_custom_geom=False):
+def calculate_baseline(aoi: ee.Geometry, start_date: str, end_date: str,
+                       is_custom_geom: bool = False, *args, **kwargs):
     """
     Calculate baseline statistics.
 
@@ -2191,6 +2307,37 @@ def calculate_baseline(aoi, start_date, end_date, is_custom_geom=False):
         'attribute': 'LivestockDensity',
         'label': 'Livestock Density 2020 head/km2'
     })
+
+    # Add User GEE Asset
+    user = kwargs.get('user')
+    indicator_asset_dicts = UserIndicator.map_user_indicator_to_user_gee_asset(
+        user=user,
+        asset_types=[GEEAssetType.IMAGE_COLLECTION],
+        analysis_types=['Baseline']
+    )
+
+    for indicator, user_gee_asset in indicator_asset_dicts.items():
+        valid, start_dt, end_dt = UserGEEAsset.get_dates_within_asset_period(
+            user_gee_asset.key, start_date, end_date, user
+        )
+        if valid:
+            gee_asset_class = GEEAssetType.get_ee_asset_class(user_gee_asset)
+            var_names = user_gee_asset.metadata.get('band_names', None)
+            if not var_names:
+                continue
+            var_name = var_names[0]
+            gee_asset_obj = gee_asset_class(
+                user_gee_asset.source
+            ).select(var_name).filterDate(
+                parse(start_dt).isoformat(), parse(end_dt).isoformat()
+            ).filterBounds(selected_area)
+            gee_asset_obj = gee_asset_obj.reduce(indicator.get_reducer())
+            gee_asset_obj = gee_asset_obj.rename(indicator.variable_name)
+            image_list.append({
+                'asset': gee_asset_obj,
+                'attribute': indicator.variable_name,
+                'label': indicator.variable_name
+            })
 
     if len(image_list) == 0:
         raise ValueError('No baseline in the input date ranges.')
@@ -2370,22 +2517,6 @@ def calculate_temporal_modis_veg(
 
     col = col.select(band)
     return col
-
-
-def _split_dates_by_year(start_date: datetime.date, end_date: datetime.date):
-    if start_date > end_date:
-        raise ValueError("start_date must be before or equal to end_date")
-
-    current_year = start_date.year
-    results = []
-
-    while current_year <= end_date.year:
-        year_start = max(start_date, datetime.date(current_year, 1, 1))
-        year_end = min(end_date, datetime.date(current_year, 12, 31))
-        results.append((year_start, year_end))
-        current_year += 1
-
-    return results
 
 
 def calculate_baci(

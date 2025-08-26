@@ -4,6 +4,7 @@ Africa Rangeland Watch (ARW).
 
 .. note:: Analysis Runner Class
 """
+import typing
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from collections import OrderedDict
@@ -11,6 +12,7 @@ from datetime import date
 from copy import deepcopy
 
 from core.models import Preferences
+from analysis.models import Indicator, IndicatorSource, AnalysisTask
 from analysis.analysis import (
     initialize_engine_analysis,
     run_analysis,
@@ -18,7 +20,8 @@ from analysis.analysis import (
     InputLayer,
     AnalysisResultsCacheUtils,
     spatial_get_date_filter,
-    validate_spatial_date_range_filter
+    validate_spatial_date_range_filter,
+    UserIndicator
 )
 
 
@@ -31,6 +34,9 @@ def _temporal_analysis(locations, analysis_dict, custom_geom):
 
 
 class AnalysisRunner:
+
+    def __init__(self, analysis_task: typing.Optional[AnalysisTask] = None):
+        self.analysis_task: typing.Optional[AnalysisTask] = analysis_task
 
     @staticmethod
     def get_analysis_dict_baseline(data):
@@ -236,7 +242,8 @@ class AnalysisRunner:
         return run_analysis(
             locations=data.get('locations', []),
             analysis_dict=analysis_dict,
-            custom_geom=data.get('custom_geom', None)
+            custom_geom=data.get('custom_geom', None),
+            analysis_task_id=self.analysis_task.id
         )
 
     @staticmethod
@@ -485,17 +492,26 @@ class AnalysisRunner:
     def run_temporal_analysis(self, data, analysis_dict=None):
         """Run the temporal analysis."""
         analysis_dict = analysis_dict or self.get_analysis_dict_temporal(data)
+        variable = data['variable']
         initialize_engine_analysis()
 
         results = run_analysis(
             locations=data.get('locations', []) or [],
             analysis_dict=analysis_dict,
-            custom_geom=data.get('custom_geom', None)
+            custom_geom=data.get('custom_geom', None),
+            analysis_task_id=(
+                self.analysis_task.id if
+                self.analysis_task else None
+            )
         )
-        results[0]['statistics'] = self.add_statistics(
-            data['comparisonPeriod']['year'],
-            results[1]['features']
-        )
+        if Indicator.has_statistics(variable):
+            results[0]['statistics'] = self.add_statistics(
+                data['comparisonPeriod']['year'],
+                results[1]['features']
+            )
+        else:
+            results[0]['statistics'] = {}
+
         return results
 
     def run_spatial_analysis(self, data):
@@ -550,17 +566,39 @@ class AnalysisRunner:
             rel_diff = get_rel_diff(
                 input_layers.get_spatial_layer_dict(
                     filter_start_date,
-                    filter_end_date
+                    filter_end_date,
+                    (
+                        self.analysis_task.submitted_by if
+                        self.analysis_task else None
+                    )
                 ),
                 spatial_analysis_dict,
                 reference_layer_geom
             )
-            metadata = {
-                'minValue': -25,
-                'maxValue': 25,
-                'colors': ['#f9837b', '#fffcb9', '#fffcb9', '#32c2c8'],
-                'opacity': 0.7
-            }
+
+            variable = data["variable"]
+            indicator = Indicator.objects.filter(
+                variable_name=variable
+            ).first()
+            if not indicator:
+                indicator = UserIndicator.objects.filter(
+                    variable_name=variable,
+                    created_by=self.analysis_task.submitted_by
+                ).first()
+                if not indicator:
+                    raise ValueError(
+                        f"Indicator for variable {variable} not found"
+                    )
+
+            if indicator.source == IndicatorSource.GPW:
+                metadata = indicator.metadata
+            else:
+                metadata = {
+                    'minValue': -25,
+                    'maxValue': 25,
+                    'colors': ['#f9837b', '#fffcb9', '#fffcb9', '#32c2c8'],
+                    'opacity': 0.7
+                }
             results = {
                 'id': 'spatial_analysis_rel_diff',
                 'uuid': str(uuid.uuid4()),
@@ -591,13 +629,16 @@ class AnalysisRunner:
                 locations=locations,
                 analysis_dict=spatial_analysis_dict,
                 reference_layer=reference_layer_geom,
-                custom_geom=data.get('custom_geom', None)
+                custom_geom=data.get('custom_geom', None),
+                analysis_task_id=(
+                    self.analysis_task.id if self.analysis_task else None
+                )
             )
 
             temporal_future = executor.submit(
                 self.run_temporal_analysis,
-                data,
-                temporal_analysis_dict
+                data=data,
+                analysis_dict=temporal_analysis_dict
             )
 
             try:
@@ -661,7 +702,7 @@ class AnalysisRunner:
             reference_layer=reference_layer_geom
         )
 
-    def run(self, data):
+    def run(self, data, analysis_task=None):
         """Run the analysis."""
         if data['analysisType'] == 'Baseline':
             return self.run_baseline_analysis(data)

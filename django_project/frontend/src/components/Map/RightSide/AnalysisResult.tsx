@@ -137,6 +137,10 @@ export function StatisticTable({analysis, decimalPlaces}: Props) {
     return rows;
   };
 
+  if (Object.keys(statistics).length === 0) {
+    return null;
+  }
+
   return (
     <Box>
       <table id="Temporal-Statistics-Table" border={1} cellPadding={8}>
@@ -557,7 +561,7 @@ export default function AnalysisResult() {
       </Flex>
       {header && (
         <Box id="analysis-header" marginTop={2} marginBottom={2}>
-          <Text fontSize="1.0rem" fontWeight={600} color='green.600'>
+          <Text fontSize="1.0rem" fontWeight={600} color='green.600' maxW={400} wordBreak={"break-word"}>
             {header}
           </Text>
         </Box>

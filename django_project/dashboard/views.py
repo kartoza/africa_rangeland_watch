@@ -11,11 +11,14 @@ from rest_framework import generics, status, permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from django.utils import timezone
-
 from base.models import Organisation, UserOrganisations
 from analysis.models import UserAnalysisResults
-from .models import Dashboard, DashboardWidget
-from .serializers import DashboardSerializer, DashboardDetailSerializer
+from dashboard.models import Dashboard, DashboardWidget
+from dashboard.serializers import (
+    DashboardSerializer,
+    DashboardDetailSerializer,
+    DashboardWidgetSerializer
+)
 
 
 logger = logging.getLogger(__name__)
@@ -132,6 +135,9 @@ class DashboardCreateView(APIView):
             # Extract data from the request
             data = request.data
             dashboard_name = data.get("config", {}).get("dashboardName")
+            dashboard_description = data.get(
+                "config", {}
+            ).get("dashboardDescription")
             preference = data.get("config", {}).get("preference")
             chart_type = data.get("config", {}).get("chartType")
             privacy_type = data.get("privacy_type")
@@ -142,6 +148,7 @@ class DashboardCreateView(APIView):
                 title=dashboard_name,
                 config={
                     "dashboardName": dashboard_name,
+                    "dashboardDescription": dashboard_description,
                     "preference": preference,
                     "chartType": chart_type,
                 },
@@ -422,12 +429,16 @@ class DashboardDetailView(APIView):
 
         # save dashboard title and metadata
         dashboard.title = request.data.get("title", dashboard.title)
-        dashboard.config = {
+        dashboard.config.update({
             'version': request.data.get(
                 "version",
                 dashboard.config.get('version', '1.0')
+            ),
+            'dashboardDescription': request.data.get(
+                "description",
+                dashboard.config.get('dashboardDescription', '')
             )
-        }
+        })
         dashboard.metadata = request.data.get(
             "metadata", dashboard.metadata
         )
@@ -511,3 +522,69 @@ class DashboardDetailView(APIView):
             dashboard.widgets.filter(id__in=widgets_to_remove).delete()
 
         return Response(status=status.HTTP_200_OK)
+
+
+class DashboardWidgetDetailView(APIView):
+    """
+    Retrieve a specific dashboard widget by ID.
+    """
+
+    def get(self, request, pk):
+        """
+        Get dashboard widget details by primary key.
+        """
+        try:
+            widget = get_object_or_404(
+                DashboardWidget.objects.select_related(
+                    'analysis_result', 'dashboard'
+                ),
+                pk=pk
+            )
+
+            dashboard = widget.dashboard
+            user = request.user
+
+            # Check if user can access the dashboard (and thus the widget)
+            if dashboard.privacy_type == 'private' and\
+                dashboard.created_by != user:
+                return Response(
+                    {"error": "You do not have permission to view this widget."},  # noqa
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            elif dashboard.privacy_type == 'organisation':
+                if not user.profile.organisations.filter(
+                    id__in=dashboard.organisations.all()
+                ).exists():
+                    return Response(
+                        {"error": "You do not have permission to view this widget."},  # noqa
+                        status=status.HTTP_403_FORBIDDEN
+                    )
+            elif dashboard.privacy_type == 'restricted':
+                if dashboard.created_by != user:
+                    return Response(
+                        {"error": "You do not have permission to view this widget."},  # noqa
+                        status=status.HTTP_403_FORBIDDEN
+                    )
+                elif not dashboard.users.filter(id=user.id).exists():
+                    return Response(
+                        {"error": "You do not have permission to view this widget."},  # noqa
+                        status=status.HTTP_403_FORBIDDEN
+                    )
+
+            serializer = DashboardWidgetSerializer(
+                widget,
+                context={'request': request}
+            )
+            return Response(serializer.data, status=status.HTTP_200_OK)
+
+        except DashboardWidget.DoesNotExist:
+            return Response(
+                {"error": "Widget not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            logger.error(f"An unexpected error occurred: {str(e)}")
+            return Response(
+                {"error": "An internal error has occurred."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
