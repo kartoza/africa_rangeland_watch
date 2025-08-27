@@ -890,12 +890,6 @@ class BaseIndicator(models.Model):
         help_text="Description of the indicator."
     )
 
-    variable_name = models.CharField(
-        max_length=255,
-        unique=True,
-        help_text="The variable name used in the analysis."
-    )
-
     source = models.CharField(
         max_length=50,
         choices=IndicatorSource.choices,
@@ -1007,6 +1001,12 @@ class Indicator(BaseIndicator):
         help_text="The name of the indicator."
     )
 
+    variable_name = models.CharField(
+        max_length=255,
+        unique=True,
+        help_text="The variable name used in the analysis."
+    )
+
     class Meta:
         verbose_name = "Indicator"
         verbose_name_plural = "Indicators"
@@ -1102,6 +1102,10 @@ class UserIndicator(BaseIndicator):
         max_length=255,
         help_text="The name of the indicator."
     )
+    variable_name = models.CharField(
+        max_length=255,
+        help_text="The variable name used in the analysis."
+    )
     created_by = models.ForeignKey(
         User, on_delete=models.SET_NULL,
         null=True, related_name="indicators"
@@ -1117,6 +1121,13 @@ class UserIndicator(BaseIndicator):
         if indicator.exists():
             raise ValidationError(
                 f"Invalid name: '{self.name}' already exists!"
+            )
+
+        # check for variable in Indicator
+        indicator = Indicator.objects.filter(variable_name=self.name)
+        if indicator.exists():
+            raise ValidationError(
+                f"Invalid variable name: '{self.name}' already exists!"
             )
 
     @classmethod
@@ -1190,4 +1201,10 @@ class UserIndicator(BaseIndicator):
         return asset_dict
 
     class Meta:
-        unique_together = ('name', 'created_by')
+        # unique_together = ('name', 'variable_name', 'created_by')
+        constraints = [
+            models.UniqueConstraint(
+                fields=['name', 'variable_name', 'created_by'],
+                name='unique_user_indicator'
+            )
+        ]
