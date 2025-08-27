@@ -653,7 +653,7 @@ const DynamicDashboard: React.FC<{
               colorScheme="green"
               onClick={() => {
                 setDownloadLoading(true);
-                downloadDashboardPDF(cardRef, dashboardTitle)
+                downloadDashboardPDF(cardRef, dashboardTitle, widgets)
                   .then(() => setDownloadLoading(false))
                   .catch(() => setDownloadLoading(false));
               }}
@@ -709,7 +709,7 @@ const DynamicDashboard: React.FC<{
             onDragEnd={handleDragEnd}
           >
             <SortableContext items={widgets.map(w => w.id)} strategy={rectSortingStrategy} disabled={!isEditable}>
-              <Grid templateColumns="repeat(4, 1fr)" gap={4} w="full" id="dashoard-chart-grids">
+              <Grid templateColumns="repeat(4, 1fr)" gap={4} w="full">
                 {widgets.map((widget) => (
                   <SortableWidgetItem
                     key={widget.id}

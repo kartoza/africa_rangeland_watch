@@ -42,6 +42,7 @@ import EditableWrapper from '../EditableWrapper';
 import AnalysisInfo from './AnalysisInfo';
 import { downloadAnalysisPDF } from '../../utils/downloadPDF';
 import { downloadCog } from '../../utils/api';
+import { ids } from 'webpack';
 
 
 // Sortable Widget Item Component
@@ -209,7 +210,7 @@ const SortableWidgetItem: React.FC<{
   };
 
   return (
-    <GridItem colSpan={widget.size} ref={setNodeRef} style={style}>
+    <GridItem colSpan={widget.size} ref={setNodeRef} style={style} className='sortable-widget' id={'widget-'+widget.id}>
       <Card
         bg={bgColor}
         borderColor={borderColor}

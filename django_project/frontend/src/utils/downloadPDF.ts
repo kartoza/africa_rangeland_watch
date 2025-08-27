@@ -1,6 +1,11 @@
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 
+import {
+    Widget,
+    heightConfig
+} from '../store/dashboardSlice';
+
 // Export Settings
 const EXPORT_SCALE = 5.0; // scale to 500% of original size
 const EXPORT_BASELINE_RATIO = 1.0; // no reduction
@@ -105,10 +110,10 @@ function pxToMm(px: number): number {
   return px * 0.264583; // mm
 }
 
-
 export const downloadDashboardPDF = async (
   containerRef: React.MutableRefObject<HTMLDivElement>,
   dashboardName: string,
+  widgets: Widget[] = [],
   elementToHideIds: string[] = []
 ) => {
   if (!containerRef.current) return;
@@ -131,13 +136,13 @@ export const downloadDashboardPDF = async (
 
   // fix sticky header
   const header = clone.querySelector("#dashboard-header") as HTMLDivElement;
+  let headerHeightMm = 0;
   if (header) {
     header.style.position = "static";
     header.style.top = "0";
     header.style.background = "white";
-
-    const headerHeightMm = pxToMm(header.offsetHeight);
-    // console.log("Header height:", pxToMm(headerHeight));
+    const headerPx = header.offsetHeight;
+    headerHeightMm = (headerPx + 30) * 0.264583; // px → mm
   }
 
   // copy charts
@@ -150,7 +155,7 @@ export const downloadDashboardPDF = async (
 
   const fullCanvas = await html2canvas(clone, {
     backgroundColor: "white",
-    scale: EXPORT_SCALE,
+    // scale: EXPORT_SCALE,
     scrollY: 0,
   });
 
@@ -172,10 +177,12 @@ export const downloadDashboardPDF = async (
 
   // Slice properly using scaled height
   const pageContentHeight = pageHeight;
-  let renderedHeightMm = 0;
+  // let renderedHeightMm = 0;
 
   console.log('imgWidthMm: ', imgWidthMm);
   console.log('imgHeightMm: ', imgHeightMm);
+  console.log('fullCanvas.width: ', fullCanvas.width);
+  console.log('fullCanvas.height: ', fullCanvas.height);
 
   console.log('scale: ', scale);
   console.log('finalImgWidth mm: ', finalImgWidth);
@@ -183,54 +190,122 @@ export const downloadDashboardPDF = async (
   console.log('pageContentHeight mm: ', pageContentHeight);
   console.log('-----------------------------')
 
-  while (renderedHeightMm < finalImgHeight) {
-    // slice in px equivalent of the current PDF window
-    const sliceHeightPx = Math.floor(
-      (pageContentHeight / finalImgHeight) * fullCanvas.height
-    );
+  // while (renderedHeightMm < finalImgHeight) {
+  //   // slice in px equivalent of the current PDF window
+  //   const sliceHeightPx = Math.floor(
+  //     (pageContentHeight / finalImgHeight) * fullCanvas.height
+  //   );
 
-    const sliceCanvas = document.createElement("canvas");
-    sliceCanvas.width = fullCanvas.width;
-    sliceCanvas.height = sliceHeightPx;
-    const sliceCtx = sliceCanvas.getContext("2d");
+  //   const sliceCanvas = document.createElement("canvas");
+  //   sliceCanvas.width = fullCanvas.width;
+  //   sliceCanvas.height = sliceHeightPx;
+  //   const sliceCtx = sliceCanvas.getContext("2d");
 
-    const sourceY = Math.floor(
-      (renderedHeightMm / finalImgHeight) * fullCanvas.height
-    );
+  //   const sourceY = Math.floor(
+  //     (renderedHeightMm / finalImgHeight) * fullCanvas.height
+  //   );
 
-    sliceCtx?.drawImage(
-      fullCanvas,
-      0,
-      sourceY,
-      fullCanvas.width,
-      sliceHeightPx,
-      0,
-      0,
-      fullCanvas.width,
-      sliceHeightPx
-    );
+  //   sliceCtx?.drawImage(
+  //     fullCanvas,
+  //     0,
+  //     sourceY,
+  //     fullCanvas.width,
+  //     sliceHeightPx,
+  //     0,
+  //     0,
+  //     fullCanvas.width,
+  //     sliceHeightPx
+  //   );
 
-    const sliceData = sliceCanvas.toDataURL("image/jpeg", 1.0);
+  //   const sliceData = sliceCanvas.toDataURL("image/jpeg", 1.0);
 
-    const sliceHeightMm =
-      (sliceHeightPx / fullCanvas.height) * finalImgHeight;
+  //   const sliceHeightMm =
+  //     (sliceHeightPx / fullCanvas.height) * finalImgHeight;
 
-    pdf.addImage(
-      sliceData,
-      "JPEG",
-      0,
-      0,
-      finalImgWidth,
-      sliceHeightMm
-    );
+  //   pdf.addImage(
+  //     sliceData,
+  //     "JPEG",
+  //     0,
+  //     0,
+  //     finalImgWidth,
+  //     sliceHeightMm
+  //   );
 
-    renderedHeightMm += pageContentHeight;
-    console.log('sliceHeightMm: ', sliceHeightMm);
-    console.log('renderedHeightMm :', renderedHeightMm);
-    if (renderedHeightMm < finalImgHeight) {
-      pdf.addPage("a4", "landscape");
+  //   renderedHeightMm += pageContentHeight;
+  //   console.log('sliceHeightMm: ', sliceHeightMm);
+  //   console.log('renderedHeightMm :', renderedHeightMm);
+  //   if (renderedHeightMm < finalImgHeight) {
+  //     pdf.addPage("a4", "landscape");
+  //   }
+  //   console.log('-----------------------------')
+  // }
+
+  // Loop over charts
+  const charts = widgets
+  let renderedHeightMm = headerHeightMm;
+  let yOffsetPx = 0;
+
+  console.log(widgets);
+
+  for (let i = 0; i < charts.length; ) {
+    let newRenderedHeightMm = renderedHeightMm;
+
+    const chart = charts[i];
+    const widthCols = parseInt(chart.config.size); // assume chart stores width in cols
+    const chartPxHeight: number = parseInt(heightConfig[chart.height].minH.replace('px', ''));
+    const chartMmHeight: number = (chartPxHeight + 30) * 0.264583;
+
+    if (widthCols > 2) {
+      newRenderedHeightMm += chartMmHeight;
+    } else {
+      const nextChart = charts[i + 1];
+      if (nextChart) {
+        const nextWidth = parseInt(chart.config.size);
+        if (nextWidth === 2) {
+          const nextPxHeight: number = parseInt(heightConfig[nextChart.height].minH.replace('px', ''));
+          const nextMmHeight = (nextPxHeight + 30) * 0.264583;
+          newRenderedHeightMm += Math.max(chartMmHeight, nextMmHeight);
+          i++; // skip next since paired
+        } else {
+          newRenderedHeightMm += chartMmHeight;
+        }
+      } else {
+        newRenderedHeightMm += chartMmHeight;
+      }
     }
-    console.log('-----------------------------')
+
+    console.log(renderedHeightMm, newRenderedHeightMm)
+
+    if (newRenderedHeightMm > pageHeight) {
+      const sliceHeightPx = (renderedHeightMm / finalImgHeight) * fullCanvas.height;
+      const pageCanvas = document.createElement("canvas");
+      pageCanvas.width = fullCanvas.width;
+      pageCanvas.height = sliceHeightPx;
+      const ctx = pageCanvas.getContext("2d")!;
+      ctx.drawImage(fullCanvas, 0, yOffsetPx, fullCanvas.width, sliceHeightPx, 0, 0, fullCanvas.width, sliceHeightPx);
+
+      console.log('(sliceHeightPx * pageWidth) / fullCanvas.width', (sliceHeightPx * pageWidth) / fullCanvas.width)
+
+      const sliceHeightMm = (sliceHeightPx / fullCanvas.height) * finalImgHeight;
+
+      pdf.addImage(
+        pageCanvas.toDataURL("image/png"),
+        "PNG",
+        0,
+        0,
+        finalImgWidth,
+        // pxToMm(sliceHeightPx)
+        // (sliceHeightPx * pageWidth) / fullCanvas.width
+        sliceHeightMm
+      );
+      pdf.addPage();
+      renderedHeightMm = 0;
+      yOffsetPx += sliceHeightPx;
+    } else {
+      renderedHeightMm = newRenderedHeightMm;
+      i++;
+    }
+
   }
 
   pdf.save(`${dashboardName}.pdf`);
