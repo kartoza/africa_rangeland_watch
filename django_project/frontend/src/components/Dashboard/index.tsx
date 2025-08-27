@@ -50,6 +50,7 @@ import SortableWidgetItem from './SortableWidgetItem';
 import { Item } from '../../store/userAnalysisSearchSlice';
 import ItemSelector from './ItemSelector';
 import EditableWrapper from '../EditableWrapper';
+import { downloadDashboardPDF } from '../../utils/downloadPDF';
 
 // Main Dashboard Component
 const DynamicDashboard: React.FC<{
@@ -73,6 +74,8 @@ const DynamicDashboard: React.FC<{
   const dashboardLoading = useSelector(
     (state: RootState) => state.dashboard.loading
   );
+  const [downloadLoading, setDownloadLoading] = useState(false);
+  const cardRef = React.useRef<HTMLDivElement>(null);
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -538,9 +541,10 @@ const DynamicDashboard: React.FC<{
   widgets.reduce((sum, widget) => sum + heightConfig[widget.height].rows, 0) / widgets.length : 0;
 
   return (
-    <Box minH="100vh" bg="gray.50" position="relative">
+    <Box minH="100vh" bg="gray.50" position="relative" ref={cardRef}>
       {/* Sticky Header */}
       <Box
+        id="dashboard-header"
         position="sticky"
         top={0}
         zIndex={10}
@@ -642,6 +646,19 @@ const DynamicDashboard: React.FC<{
             )}
           </VStack>
           <HStack spacing={3}>
+            <Button
+              size="sm"
+              leftIcon={<FiSave size={16} />}
+              variant="outline"
+              colorScheme="green"
+              onClick={() => {
+                setDownloadLoading(true);
+                downloadDashboardPDF(cardRef, dashboardTitle)
+                  .then(() => setDownloadLoading(false))
+                  .catch(() => setDownloadLoading(false));
+              }}
+              disabled={downloadLoading}
+            >Download Dashboard</Button>
             <EditableWrapper isEditable={isEditable}>
               <Button
                 size="sm"
@@ -684,7 +701,7 @@ const DynamicDashboard: React.FC<{
       </Box>
 
       {/* Main Content */}
-      <Box px={6} pb={6}>
+      <Box px={6} pb={6} id="dashboard-charts">
         <VStack spacing={6} align="stretch">
           <DndContext
             sensors={sensors}

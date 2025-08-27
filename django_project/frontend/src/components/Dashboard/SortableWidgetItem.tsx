@@ -32,15 +32,15 @@ import TableWidget from './TableWidget';
 import MapWidget from './MapWidget';
 import TextWidget from './TextWidget';
 import {
-    Widget,
-    GridSize,
-    WidgetHeight,
-    heightConfig,
-    widgetConstraints
- } from '../../store/dashboardSlice';
- import EditableWrapper from '../EditableWrapper';
- import AnalysisInfo from './AnalysisInfo';
- import { downloadPDF } from '../../utils/downloadPDF';
+  Widget,
+  GridSize,
+  WidgetHeight,
+  heightConfig,
+  widgetConstraints
+} from '../../store/dashboardSlice';
+import EditableWrapper from '../EditableWrapper';
+import AnalysisInfo from './AnalysisInfo';
+import { downloadAnalysisPDF } from '../../utils/downloadPDF';
 import { downloadCog } from '../../utils/api';
 
 
@@ -369,7 +369,7 @@ const SortableWidgetItem: React.FC<{
                       temporalResolution: analysisData?.temporalResolution,
                       variable: analysisData?.variable,
                     };
-                    downloadPDF(cardRef, exportAnalysis, 'BaselineTableContainer', ['widget-actions'])
+                    downloadAnalysisPDF(cardRef, exportAnalysis, 'BaselineTableContainer', ['widget-actions'])
                       .then(() => setDownloadLoading(false))
                       .catch(() => setDownloadLoading(false));
                   }}
