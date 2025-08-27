@@ -62,7 +62,8 @@ export const useMapSetup = (
             },
             center: [0, 0],
             zoom: initialZoom,
-            interactive: interactive
+            interactive: interactive,
+            preserveDrawingBuffer: true,
         });
 
         _map.once("load", () => {
