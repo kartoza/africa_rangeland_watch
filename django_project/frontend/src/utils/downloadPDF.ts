@@ -101,6 +101,10 @@ export const downloadAnalysisPDF = async (
     pdf.save(`${fileName}.pdf`);
 }
 
+function pxToMm(px: number): number {
+  return px * 0.264583; // mm
+}
+
 
 export const downloadDashboardPDF = async (
   containerRef: React.MutableRefObject<HTMLDivElement>,
@@ -112,18 +116,18 @@ export const downloadDashboardPDF = async (
   const clone = containerRef.current.cloneNode(true) as HTMLDivElement;
   clone.style.background = "white";
 
-  // remove unwanted elements
+  // hide unwanted elements
   elementToHideIds.forEach((id) => {
     const el = clone.querySelector(`#${id}`) as HTMLDivElement;
     if (el) el.style.display = "none";
   });
 
-  // cleanup styles
+  // cleanup clone
   clone.style.boxShadow = "none";
   clone.style.position = "absolute";
   clone.style.top = "-9999px";
   clone.style.left = "-9999px";
-  clone.style.background = "white";
+  document.body.appendChild(clone);
 
   // fix sticky header
   const header = clone.querySelector("#dashboard-header") as HTMLDivElement;
@@ -131,18 +135,18 @@ export const downloadDashboardPDF = async (
     header.style.position = "static";
     header.style.top = "0";
     header.style.background = "white";
+
+    const headerHeightMm = pxToMm(header.offsetHeight);
+    // console.log("Header height:", pxToMm(headerHeight));
   }
 
-  // copy over chart canvases
+  // copy charts
   const originalCanvases = containerRef.current.querySelectorAll("canvas");
   const clonedCanvases = clone.querySelectorAll("canvas");
   originalCanvases.forEach((origCanvas, i) => {
-    const clonedCanvas = clonedCanvases[i];
-    const ctx = clonedCanvas.getContext("2d");
+    const ctx = clonedCanvases[i].getContext("2d");
     ctx?.drawImage(origCanvas, 0, 0);
   });
-
-  document.body.appendChild(clone);
 
   const fullCanvas = await html2canvas(clone, {
     backgroundColor: "white",
@@ -152,39 +156,52 @@ export const downloadDashboardPDF = async (
 
   document.body.removeChild(clone);
 
-  // setup PDF
+  // PDF setup
   const pdf = new jsPDF("landscape", "mm", "a4");
   const pageWidth = pdf.internal.pageSize.getWidth();
   const pageHeight = pdf.internal.pageSize.getHeight();
 
-  const pxToMm = (px: number) => (px * 25.4) / 96; // 96dpi
   const imgWidthMm = pxToMm(fullCanvas.width);
   const imgHeightMm = pxToMm(fullCanvas.height);
 
-  const ratio = Math.min(pageWidth / imgWidthMm, 1);
-  const finalImgWidth = imgWidthMm * ratio;
-  const finalImgHeight = imgHeightMm * ratio;
+  // Scale image to fit page width
+  const scale = pageWidth / imgWidthMm;
+  const finalImgWidth = pageWidth;
+  const finalImgHeight = imgHeightMm * scale;
+  
 
+  // Slice properly using scaled height
   const pageContentHeight = pageHeight;
-  let renderedHeight = 0;
+  let renderedHeightMm = 0;
 
-  while (renderedHeight < finalImgHeight) {
-    // calculate slice height in px
-    const sliceHeightPx = Math.min(
-      fullCanvas.height - (renderedHeight / finalImgHeight) * fullCanvas.height,
+  console.log('imgWidthMm: ', imgWidthMm);
+  console.log('imgHeightMm: ', imgHeightMm);
+
+  console.log('scale: ', scale);
+  console.log('finalImgWidth mm: ', finalImgWidth);
+  console.log('finalImgHeight mm: ', finalImgHeight);
+  console.log('pageContentHeight mm: ', pageContentHeight);
+  console.log('-----------------------------')
+
+  while (renderedHeightMm < finalImgHeight) {
+    // slice in px equivalent of the current PDF window
+    const sliceHeightPx = Math.floor(
       (pageContentHeight / finalImgHeight) * fullCanvas.height
     );
 
-    // create slice
     const sliceCanvas = document.createElement("canvas");
     sliceCanvas.width = fullCanvas.width;
     sliceCanvas.height = sliceHeightPx;
     const sliceCtx = sliceCanvas.getContext("2d");
 
+    const sourceY = Math.floor(
+      (renderedHeightMm / finalImgHeight) * fullCanvas.height
+    );
+
     sliceCtx?.drawImage(
       fullCanvas,
       0,
-      (renderedHeight / finalImgHeight) * fullCanvas.height,
+      sourceY,
       fullCanvas.width,
       sliceHeightPx,
       0,
@@ -202,16 +219,20 @@ export const downloadDashboardPDF = async (
       sliceData,
       "JPEG",
       0,
-      renderedHeight === 0 ? EXPORT_Y_POSITION : 0,
+      0,
       finalImgWidth,
       sliceHeightMm
     );
 
-    renderedHeight += pageContentHeight;
-    if (renderedHeight < finalImgHeight) {
+    renderedHeightMm += pageContentHeight;
+    console.log('sliceHeightMm: ', sliceHeightMm);
+    console.log('renderedHeightMm :', renderedHeightMm);
+    if (renderedHeightMm < finalImgHeight) {
       pdf.addPage("a4", "landscape");
     }
+    console.log('-----------------------------')
   }
 
   pdf.save(`${dashboardName}.pdf`);
 };
+

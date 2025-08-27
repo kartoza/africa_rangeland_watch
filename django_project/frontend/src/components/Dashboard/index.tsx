@@ -709,7 +709,7 @@ const DynamicDashboard: React.FC<{
             onDragEnd={handleDragEnd}
           >
             <SortableContext items={widgets.map(w => w.id)} strategy={rectSortingStrategy} disabled={!isEditable}>
-              <Grid templateColumns="repeat(4, 1fr)" gap={4} w="full">
+              <Grid templateColumns="repeat(4, 1fr)" gap={4} w="full" id="dashoard-chart-grids">
                 {widgets.map((widget) => (
                   <SortableWidgetItem
                     key={widget.id}
