@@ -66,7 +66,21 @@ def delete_layer(request, uuid):
     """
     View to delete a user-defined layer by UUID.
     """
-    layer = get_object_or_404(InputLayer, uuid=uuid, created_by=request.user)
+    layer = get_object_or_404(InputLayer, uuid=uuid)
+
+    is_owned = (
+        layer.created_by.id == request.user.id or
+        request.user.is_superuser
+    )
+
+    if not is_owned:
+        return JsonResponse(
+            {
+                "error": "You do not have permission to delete this layer."
+            },
+            status=403
+        )
+
     layer.delete()
     return JsonResponse({"message": "Layer deleted successfully"}, status=200)
 
