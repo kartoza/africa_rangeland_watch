@@ -110,6 +110,10 @@ function pxToMm(px: number): number {
   return px * 0.264583; // mm
 }
 
+function mmToPx(mm: number): number {
+  return mm / 0.264583; // px
+}
+
 export const downloadDashboardPDF = async (
   containerRef: React.MutableRefObject<HTMLDivElement>,
   dashboardName: string,
@@ -132,18 +136,25 @@ export const downloadDashboardPDF = async (
   clone.style.position = "absolute";
   clone.style.top = "-9999px";
   clone.style.left = "-9999px";
+  clone.style.width = '100%';
   document.body.appendChild(clone);
 
   // fix sticky header
-  const header = clone.querySelector("#dashboard-header") as HTMLDivElement;
+  const header = clone.querySelector("#dashboard-header") as HTMLDivElement; 
   let headerHeightMm = 0;
   if (header) {
     header.style.position = "static";
     header.style.top = "0";
     header.style.background = "white";
     const headerPx = header.offsetHeight;
-    headerHeightMm = (headerPx + 30) * 0.264583; // px → mm
+    headerHeightMm = (headerPx + 25) * 0.264583; // px → mm
   }
+
+  const description = clone.querySelector("#dashboard-info") as HTMLDivElement; 
+  if (description) {
+    description.style.width = '100%';
+  }
+
 
   // copy charts
   const originalCanvases = containerRef.current.querySelectorAll("canvas");
@@ -173,88 +184,21 @@ export const downloadDashboardPDF = async (
   const scale = pageWidth / imgWidthMm;
   const finalImgWidth = pageWidth;
   const finalImgHeight = imgHeightMm * scale;
-  
 
-  // Slice properly using scaled height
-  const pageContentHeight = pageHeight;
-  // let renderedHeightMm = 0;
-
-  console.log('imgWidthMm: ', imgWidthMm);
-  console.log('imgHeightMm: ', imgHeightMm);
-  console.log('fullCanvas.width: ', fullCanvas.width);
-  console.log('fullCanvas.height: ', fullCanvas.height);
-
-  console.log('scale: ', scale);
-  console.log('finalImgWidth mm: ', finalImgWidth);
-  console.log('finalImgHeight mm: ', finalImgHeight);
-  console.log('pageContentHeight mm: ', pageContentHeight);
-  console.log('-----------------------------')
-
-  // while (renderedHeightMm < finalImgHeight) {
-  //   // slice in px equivalent of the current PDF window
-  //   const sliceHeightPx = Math.floor(
-  //     (pageContentHeight / finalImgHeight) * fullCanvas.height
-  //   );
-
-  //   const sliceCanvas = document.createElement("canvas");
-  //   sliceCanvas.width = fullCanvas.width;
-  //   sliceCanvas.height = sliceHeightPx;
-  //   const sliceCtx = sliceCanvas.getContext("2d");
-
-  //   const sourceY = Math.floor(
-  //     (renderedHeightMm / finalImgHeight) * fullCanvas.height
-  //   );
-
-  //   sliceCtx?.drawImage(
-  //     fullCanvas,
-  //     0,
-  //     sourceY,
-  //     fullCanvas.width,
-  //     sliceHeightPx,
-  //     0,
-  //     0,
-  //     fullCanvas.width,
-  //     sliceHeightPx
-  //   );
-
-  //   const sliceData = sliceCanvas.toDataURL("image/jpeg", 1.0);
-
-  //   const sliceHeightMm =
-  //     (sliceHeightPx / fullCanvas.height) * finalImgHeight;
-
-  //   pdf.addImage(
-  //     sliceData,
-  //     "JPEG",
-  //     0,
-  //     0,
-  //     finalImgWidth,
-  //     sliceHeightMm
-  //   );
-
-  //   renderedHeightMm += pageContentHeight;
-  //   console.log('sliceHeightMm: ', sliceHeightMm);
-  //   console.log('renderedHeightMm :', renderedHeightMm);
-  //   if (renderedHeightMm < finalImgHeight) {
-  //     pdf.addPage("a4", "landscape");
-  //   }
-  //   console.log('-----------------------------')
-  // }
+  console.log('pageHeight: ', pageHeight)
 
   // Loop over charts
   const charts = widgets
   let renderedHeightMm = headerHeightMm;
   let yOffsetPx = 0;
-
-  console.log(widgets);
-
   for (let i = 0; i < charts.length; ) {
     let newRenderedHeightMm = renderedHeightMm;
 
     const chart = charts[i];
     const widthCols = parseInt(chart.config.size); // assume chart stores width in cols
     const chartPxHeight: number = parseInt(heightConfig[chart.height].minH.replace('px', ''));
-    const chartMmHeight: number = (chartPxHeight + 30) * 0.264583;
-
+    const chartMmHeight: number = (chartPxHeight + 25) * 0.264583;
+    
     if (widthCols > 2) {
       newRenderedHeightMm += chartMmHeight;
     } else {
@@ -263,7 +207,7 @@ export const downloadDashboardPDF = async (
         const nextWidth = parseInt(chart.config.size);
         if (nextWidth === 2) {
           const nextPxHeight: number = parseInt(heightConfig[nextChart.height].minH.replace('px', ''));
-          const nextMmHeight = (nextPxHeight + 30) * 0.264583;
+          const nextMmHeight = (nextPxHeight + 25) * 0.264583;
           newRenderedHeightMm += Math.max(chartMmHeight, nextMmHeight);
           i++; // skip next since paired
         } else {
@@ -274,17 +218,17 @@ export const downloadDashboardPDF = async (
       }
     }
 
-    console.log(renderedHeightMm, newRenderedHeightMm)
-
     if (newRenderedHeightMm > pageHeight) {
-      const sliceHeightPx = (renderedHeightMm / finalImgHeight) * fullCanvas.height;
+      let sliceHeightPx = (((renderedHeightMm) / finalImgHeight) * fullCanvas.height) - 30;
+
+      if (i == charts.length - 1) {
+        sliceHeightPx = (newRenderedHeightMm / finalImgHeight) * fullCanvas.height;
+      }
       const pageCanvas = document.createElement("canvas");
       pageCanvas.width = fullCanvas.width;
       pageCanvas.height = sliceHeightPx;
       const ctx = pageCanvas.getContext("2d")!;
       ctx.drawImage(fullCanvas, 0, yOffsetPx, fullCanvas.width, sliceHeightPx, 0, 0, fullCanvas.width, sliceHeightPx);
-
-      console.log('(sliceHeightPx * pageWidth) / fullCanvas.width', (sliceHeightPx * pageWidth) / fullCanvas.width)
 
       const sliceHeightMm = (sliceHeightPx / fullCanvas.height) * finalImgHeight;
 
@@ -294,11 +238,11 @@ export const downloadDashboardPDF = async (
         0,
         0,
         finalImgWidth,
-        // pxToMm(sliceHeightPx)
-        // (sliceHeightPx * pageWidth) / fullCanvas.width
         sliceHeightMm
       );
-      pdf.addPage();
+      if (i < charts.length - 1 ) {
+        pdf.addPage();
+      }
       renderedHeightMm = 0;
       yOffsetPx += sliceHeightPx;
     } else {

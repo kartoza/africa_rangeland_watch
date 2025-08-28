@@ -558,7 +558,7 @@ const DynamicDashboard: React.FC<{
         px={6}
       >
         <Flex justify="space-between" align="center" wrap="wrap" gap={4}>
-          <VStack align="start" spacing={1} className={"vstack"} width={"50vw"}>
+          <VStack align="start" spacing={1} className={"vstack"} width={"50vw"} id='dashboard-info'>
             {isEditingDashboardTitle ? (
               <HStack spacing={2}>
                 <Input
@@ -598,6 +598,7 @@ const DynamicDashboard: React.FC<{
                     onClick={() => setIsEditingDashboardTitle(true)}
                     opacity={0.6}
                     _hover={{ opacity: 1 }}
+                    id='btn-edit-title'
                   />
                 </EditableWrapper>                
               </HStack>
@@ -640,20 +641,21 @@ const DynamicDashboard: React.FC<{
                       onClick={() => setIsEditingDashboardDescription(true)}
                       opacity={0.6}
                       _hover={{ opacity: 1 }}
+                      id='btn-edit-description'
                     />
                   </EditableWrapper>                
                 </HStack>
             )}
           </VStack>
-          <HStack spacing={3}>
+          <HStack spacing={3} id='dashboard-btns'>
             <Button
               size="sm"
-              leftIcon={<FiSave size={16} />}
+              leftIcon={<FiDownload size={16} />}
               variant="outline"
               colorScheme="green"
               onClick={() => {
                 setDownloadLoading(true);
-                downloadDashboardPDF(cardRef, dashboardTitle, widgets)
+                downloadDashboardPDF(cardRef, dashboardTitle, widgets, ['dashboard-btns', 'btn-edit-title', 'btn-edit-description'])
                   .then(() => setDownloadLoading(false))
                   .catch(() => setDownloadLoading(false));
               }}
