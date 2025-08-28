@@ -58,7 +58,7 @@ const CreateIndicatorWizard: React.FC = () => {
   }
 
   const validateStep2 = () => {
-    if (!formData.geeAssetID && !formData.uploadedInputLayerName) {
+    if (!formData.geeAssetID && !formData.sessionID) {
       return false;
     }
     // TODO: add validation to new uploaded asset

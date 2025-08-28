@@ -26,7 +26,8 @@ from frontend.api_views.layers import (
 from frontend.api_views.indicator import (
     IndicatorAPI,
     FetchBandAPI,
-    UserIndicatorAPI
+    UserIndicatorAPI,
+    GetSignedURLUploadAPI
 )
 
 router = DefaultRouter()
@@ -101,6 +102,11 @@ indicator_urls = [
         'user-indicator/',
         UserIndicatorAPI.as_view(),
         name='user-indicator'
+    ),
+    path(
+        'user-indicator/get-signed-url/',
+        GetSignedURLUploadAPI.as_view(),
+        name='upload-get-signed-url'
     ),
 ]
 

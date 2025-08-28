@@ -10,9 +10,17 @@ export interface VisParams {
   opacity: number;
 }
 
+export interface UploadedFile {
+  uploadItemID: number;
+  fileName: string;
+  fileSize: number;
+  startDate?: string;
+  endDate?: string;
+}
+
 export interface UserIndicatorFormData {
   id?: number;
-  sessionId?: string;
+  sessionID?: string;
   name: string;
   description?: string;
   analysisTypes: string[];
@@ -25,7 +33,6 @@ export interface UserIndicatorFormData {
 
   uploadedInputLayerName?: string;
   uploadedInputLayerId?: string;
-  inputLayerId?: string;
 
   // config
   bands: string[];
@@ -40,6 +47,9 @@ export interface UserIndicatorFormData {
 
   // createdAt
   createdDate?: string;
+
+  // uploaded files
+  files?: UploadedFile[];
 };
 
 // Payload for updating formData
@@ -54,6 +64,7 @@ export interface UpdateBandsPayload {
   geeAssetType: 'image' | 'image_collection';
   startDate?: string;
   endDate?: string;
+  files?: UploadedFile[];
 }
 
 export const REDUCER_VALUE_LIST = [
@@ -76,6 +87,7 @@ interface UserIndicatorState {
 const initialState: UserIndicatorState = {
   formData: {
     name: '',
+    sessionID: '',
     description: '',
     analysisTypes: [],
     temporalResolutions: [],
@@ -83,7 +95,6 @@ const initialState: UserIndicatorState = {
     geeAssetType: null,
     uploadedInputLayerName: '',
     uploadedInputLayerId: '',
-    inputLayerId: '',
     bands: [],
     selectedBand: '',
     reducer: '',
@@ -156,7 +167,8 @@ const userIndicatorSlice = createSlice({
         reducer,
         geeAssetType,
         startDate,
-        endDate
+        endDate,
+        files: action.payload.files || []
       };
     },
     setLoading(state, action: PayloadAction<boolean>) {
@@ -164,6 +176,12 @@ const userIndicatorSlice = createSlice({
     },
     resetForm(state) {
       state.formData = initialState.formData;
+    },
+    setSessionID(state, action: PayloadAction<string>) {
+      state.formData = {
+        ...state.formData,
+        sessionID: action.payload
+      }
     }
   },
   extraReducers: (builder) => {
@@ -189,7 +207,8 @@ export const {
   setFormField,
   setBandsData,
   setLoading,
-  resetForm
+  resetForm,
+  setSessionID
 } = userIndicatorSlice.actions;
 
 export default userIndicatorSlice.reducer;

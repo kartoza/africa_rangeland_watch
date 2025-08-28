@@ -14,6 +14,7 @@ import {
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "../../store";
 import { UserIndicatorFormData, setFormField, UpdateFieldPayload } from "../../store/userIndicatorSlice";
+import FileUploadComponent from "./FileUploadComponent";
 
 
 interface RenderStep2Props {
@@ -85,6 +86,12 @@ const RenderStep2: React.FC<RenderStep2Props> = () => {
         </VStack>)}
 
         {/* TODO: Add upload new asset form */}
+        { isNewAsset && (
+            <VStack spacing={4} align="stretch">
+              <FileUploadComponent />
+            </VStack>
+        )}
+
 
         </VStack>
     );

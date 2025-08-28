@@ -36,7 +36,8 @@ const RenderStep3: React.FC<RenderStep3Props> = () => {
     const fetchBands = () => {
         dispatch(setLoading(true));
         const axiosPromise = axios.post('/frontend-api/indicator/fetch-bands/', {
-            gee_asset_id: formData.geeAssetID
+            gee_asset_id: formData.geeAssetID,
+            session_id: formData.sessionID
         });
 
         toast.promise(axiosPromise, {
@@ -71,7 +72,8 @@ const RenderStep3: React.FC<RenderStep3Props> = () => {
                 bands: response.data.bands,
                 geeAssetType: response.data.geeAssetType,
                 startDate: response.data.startDate,
-                endDate: response.data.endDate
+                endDate: response.data.endDate,
+                files: response.data.files
             }));
         }).catch((error) => {
             console.error('Error fetching bands:', error);
@@ -97,7 +99,7 @@ const RenderStep3: React.FC<RenderStep3Props> = () => {
     }
 
     useEffect(() => {
-        if (formData.geeAssetID && formData.bands && formData.bands.length === 0) {
+        if ((formData.geeAssetID || formData.sessionID) && formData.bands && formData.bands.length === 0) {
             fetchBands();
         }
     }, [formData]);
