@@ -185,8 +185,6 @@ export const downloadDashboardPDF = async (
   const finalImgWidth = pageWidth;
   const finalImgHeight = imgHeightMm * scale;
 
-  console.log('pageHeight: ', pageHeight)
-
   // Loop over charts
   const charts = widgets
   let renderedHeightMm = headerHeightMm;
