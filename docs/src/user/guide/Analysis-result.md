@@ -17,19 +17,6 @@ You access the analysis results page by clicking on the 1️⃣ `Analysis Result
 
 [![Analysis Page](./img/guide-analysis-img-1.png)](./img/guide-analysis-img-1.png)
 
-## How to Create Dashboard?
-
-To create dashboard you first need to check the 1️⃣ `Checkbox` of the respective analysis result you want to create dashboard for, then click on the 2️⃣ `Create Dashboard` button. This will oepn a dashboard creation form.
-
-[![Analysis Home Page](./img/guide-analysis-img-2.png)](./img/guide-analysis-img-2.png)
-
-To create a dashboard, first fill in the 1️⃣ `Form`, then you will be able to click on the 2️⃣ `Save` button. 
-
-![Form](./img/guide-analysis-img-3.png)
-
-* After saving the form, you will be notified by the notification and the respective analysis will be added to the dashboard.
-
-![Notification](./img/guide-analysis-img-4.png)
 
 ## How to Delete Analysis?
 

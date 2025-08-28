@@ -96,7 +96,7 @@ export default function Footer(props: Props) {
           </Heading>
           <UnorderedList styleType="none" spacing={1}>
             <ListItem>
-              <Link href="#" fontSize="14px" fontWeight="bold" color="white">
+              <Link href="https://kartoza.github.io/africa_rangeland_watch/" fontSize="14px" fontWeight="bold" color="white">
                 ARW Documentation
               </Link>
             </ListItem>
