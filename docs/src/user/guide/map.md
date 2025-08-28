@@ -94,7 +94,10 @@ Available options in `Select analysis type` are:
 
 #### How to do Baseline Analysis?
 
-* **Baseline:** After selecting this option you have to select the polygons from the map and then you can go for the analysis.
+* **Baseline:** After selecting this option you have to select start date, end date, and the polygons from the map and then you can go for the analysis.
+
+[![Analysis Type](./img/guide-map-img-27.png)](./img/guide-map-img-27.png)
+
 
 #### How to do Temporal Analysis?
 
