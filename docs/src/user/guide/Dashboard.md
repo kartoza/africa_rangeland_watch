@@ -13,17 +13,17 @@ context_id:
 
 # Dashboard Page: Africa RangeLand Watch (ARW)
 
-To open the dashboard click on the 1️⃣ `DASHBOARD` tab from the navigation bar. This will redirect you to the dashboard page.
+To open all dashboards click on the 1️⃣ `DASHBOARD` tab from the navigation bar. This will redirect you to the dashboard page.
 
 [![Home Page](./img/guide-dashboard-img-1.png)](./img/guide-dashboard-img-1.png)
 
-## Accessing dashboard
+## Accessing My Dashboard
 
-Access the dashboard from the user profile page. Click on the 1️⃣ `My Dashboard` tab from the left menu bar to access the dashboard page.
+Dashboard you created can accessed from the user profile page. Click on the 1️⃣ `My Dashboard` tab from the left menu bar to access the dashboard page.
 
 [![User Profile Page](./img/guide-dashboard-img-3.png)](./img/guide-dashboard-img-3.png)    
 
-This is the dashboard page of ARW. You can arrange all dashboards as per your needs by applying the 1️⃣ `Filter` on the dashboard. The number of available resources is displayed at 2️⃣ `Resources Found` near the filter button. You can search for any specific resource using the 3️⃣ `Search` field. To add a new analysis to the dashboard, click on the 4️⃣ `New` button, which will redirect you to the analysis page. Each dashboard is listed with thumbnails and informations 5️⃣. You can navigate through the pages using the 6️⃣  `Pagination`.
+This is your dashboard page. You can arrange your dashboards as per your needs by applying the 1️⃣ `Filter` on the dashboard. The number of available resources is displayed at 2️⃣ `Resources Found` near the filter button. You can search for any specific resource using the 3️⃣ `Search` field. To add a new analysis to the dashboard, click on the 4️⃣ `New` button, which will redirect you to the analysis page. Each dashboard is listed with thumbnails and informations 5️⃣. You can navigate through the pages using the 6️⃣  `Pagination`.
 
 [![Dashboard Page](./img/guide-dashboard-img-2.png)](./img/guide-dashboard-img-2.png)
 
@@ -60,21 +60,21 @@ Currently, ARW has 2 widget categories: 1️⃣ Analysis Result Widget and 2️�
 ### Text Widget
 When you click `Add Text Widget`, it will be added to your dashboard. You can edit 1️⃣ the widget title, 2️⃣ widget size, and widget content 4️⃣. Once you've added content to Text Widget, it will be displayed on 3️⃣.
 
-[![Text Widget](./img/guide-dashboard-img-6.png)](./img/guide-dashboard-img-7.png)
+[![Text Widget](./img/guide-dashboard-img-7.png)](./img/guide-dashboard-img-7.png)
 
 ### Analysis Result Widget
-When you click `From Analysis Result`, ARW will show list of Analysis Result. You can see how many analysis are available 1️⃣, search analysis 2️⃣, select the analysis to be added 3️⃣, and OK button 4️⃣ to add analysis to the dashboard.
-[![Analysis Widget List](./img/guide-dashboard-img-6.png)](./img/guide-dashboard-img-8.png)
+When you click `From Analysis Result`, ARW will show list of Analysis Result. Note that only saved [Analysis Results](map.md#how-to-save-analysis) will be available. You can see how many analysis are available 1️⃣, search analysis 2️⃣, select the analysis to be added 3️⃣, and OK button 4️⃣ to add analysis to the dashboard.
+[![Analysis Widget List](./img/guide-dashboard-img-8.png)](./img/guide-dashboard-img-8.png)
 
 Depending on the analysis type, few widgets might be added to your dashboard. Here, you can update the widget title 1️⃣, show analysis information 2️⃣, update widget setting 3️⃣, delete widget 4️⃣, select basemap 5️⃣, and see tiff export status 6️⃣.
-[![Analysis Widget List](./img/guide-dashboard-img-6.png)](./img/guide-dashboard-img-9.png)
+[![Analysis Widget List](./img/guide-dashboard-img-9.png)](./img/guide-dashboard-img-9.png)
 
 On map widget, you can show or hide Earth Ranger events by clicking widget settings 1️⃣, then check `Earth Ranger` on th `Layers` 2️⃣.
-[![Map Widget](./img/guide-dashboard-img-6.png)](./img/guide-dashboard-img-10.png)
+[![Map Widget](./img/guide-dashboard-img-10.png)](./img/guide-dashboard-img-10.png)
 
 Once you are done adding widgets and customising your dashboard, click `Save Dashboard` 1️⃣. 
 
-[![Map Widget](./img/guide-dashboard-img-6.png)](./img/guide-dashboard-img-11.png)
+[![Map Widget](./img/guide-dashboard-img-11.png)](./img/guide-dashboard-img-11.png)
 
 ## How to Delete Dashboard?
 
@@ -90,11 +90,11 @@ To delete the dashboard click on the `Yes, Delete` otherwise click on the `Cance
 
 To Edit the dashboard click on the 1️⃣ `Icon`, then a pop-up dialogue box will appear with the dashboard details.
 
-[![Edit Dashboard](./img/guide-dashboard-img-10.png)](./img/guide-dashboard-img-14.png)
+[![Edit Dashboard](./img/guide-dashboard-img-14.png)](./img/guide-dashboard-img-14.png)
 
-Update the `Title` 1️⃣, `Description` 2️⃣ , add or remove widgets following the [`How to Add New Analysis Widget to Dashboard?`](#How-to-Add-New-Analysis-Widget-to-Dashboard?),
+Update the `Title` 1️⃣, `Description` 2️⃣ , add or remove widgets following the [`How to Add New Analysis Widget to Dashboard?`](#how-to-add-new-analysis-widget-to-dashboard),
 then click on the 2️⃣ `Save Dashboard` button to complete the dashboard editing.
 
-[![Edit Form Dashboard](./img/guide-dashboard-img-11.png)](./img/guide-dashboard-img-14.png)
+[![Edit Form Dashboard](./img/guide-dashboard-img-14.png)](./img/guide-dashboard-img-14.png)
 
 * After submitting the form , the dashboard will be updated with the new details.
