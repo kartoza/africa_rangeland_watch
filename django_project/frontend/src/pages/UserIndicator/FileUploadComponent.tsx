@@ -12,8 +12,6 @@ import {
   Input,
   Flex,
   Heading,
-  Alert,
-  AlertIcon,
   useColorModeValue,
   useToast,
   Divider,
@@ -23,44 +21,28 @@ import {
   useDndMonitor, 
   useDroppable
 } from '@dnd-kit/core';
-import { Upload, X, Check, AlertCircle, File, Pause, Play } from 'lucide-react';
+import { Upload, X, Check, AlertCircle, File, Play } from 'lucide-react';
 import { AppDispatch } from "../../store";
-import { setSessionID, setLoading } from "../../store/userIndicatorSlice";
+import {
+  setSessionID,
+  FileWithId,
+  SignedUrlResponse,
+  removeFile as removeFileAction,
+  startUpload as startUploadAction,
+  setUploadProgress,
+  setFileAttributes,
+  setUploadCompleted,
+  setUploadError,
+  addFiles as addFilesAction
+} from "../../store/userIndicatorSlice";
 
 
 // Types
-interface FileWithId extends File {
-  id: string;
-  deleteUrl?: string;
-  uploadItemID?: number;
-}
-
-interface UploadProgress {
-  [fileId: string]: number;
-}
-
-interface UploadStatus {
-  [fileId: string]: 'pending' | 'uploading' | 'completed' | 'error' | 'paused';
-}
-
-interface UploadSession {
-  sessionUrl: string;
-  uploadedBytes: number;
-  totalBytes: number;
-  retryCount: number;
-}
-
 interface FileValidationError {
   file: string;
   error: string;
 }
 
-interface SignedUrlResponse {
-  signedUrl: string;
-  sessionID: string;
-  uploadItemID: number;
-  deleteUrl?: string;
-}
 
 interface FileItemProps {
   file: FileWithId;
@@ -85,11 +67,7 @@ const ALLOWED_TYPES = ['image/tiff'];
 
 const FileUploadComponent: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const { formData, loading } = useSelector((state: any) => state.userIndicator);
-  const [files, setFiles] = useState<FileWithId[]>([]);
-  const [uploadProgress, setUploadProgress] = useState<UploadProgress>({});
-  const [uploadStatus, setUploadStatus] = useState<UploadStatus>({});
-  const [uploadSessions, setUploadSessions] = useState<{[fileId: string]: UploadSession}>({});
+  const { formData, loading, uploadedFiles, uploadProgress, uploadStatus } = useSelector((state: any) => state.userIndicator);
   const toast = useToast();
 
   // File validation
@@ -154,19 +132,16 @@ const FileUploadComponent: React.FC = () => {
 
   const uploadFileSimple = async (file: FileWithId, sessionID: string): Promise<void> => {
     try {
-      setUploadStatus(prev => ({ ...prev, [file.id]: 'uploading' }));
-      setUploadProgress(prev => ({ ...prev, [file.id]: 0 }));
+      dispatch(startUploadAction(file.id));
       
       // Get simple signed URL
       const signedUrl = await getSignedUrl(file.name, file.type, 'simple', sessionID, file.size);
       
       // set deleteUrl to files state
-      setFiles(prev => prev.map(f => {
-        if (f.id === file.id) {
-          f.deleteUrl = signedUrl.deleteUrl;
-          f.uploadItemID = signedUrl.uploadItemID;
-        }
-        return f;
+      dispatch(setFileAttributes({
+        fileId: file.id,
+        deleteUrl: signedUrl.deleteUrl,
+        uploadItemID: signedUrl.uploadItemID
       }));
 
       // Create XMLHttpRequest for progress tracking
@@ -176,14 +151,14 @@ const FileUploadComponent: React.FC = () => {
       xhr.upload.addEventListener('progress', (e) => {
         if (e.lengthComputable) {
           const progress = (e.loaded / e.total) * 100;
-          setUploadProgress(prev => ({ ...prev, [file.id]: progress }));
+          dispatch(setUploadProgress({ fileId: file.id, progress }));
         }
       });
       
       // Handle completion
       xhr.addEventListener('load', () => {
         if (xhr.status === 200 || xhr.status === 201) {
-          setUploadStatus(prev => ({ ...prev, [file.id]: 'completed' }));
+          dispatch(setUploadCompleted(file.id));
           toast({
             title: 'Upload completed',
             description: `${file.name} uploaded successfully`,
@@ -210,13 +185,11 @@ const FileUploadComponent: React.FC = () => {
       // Start upload
       xhr.open('PUT', signedUrl.signedUrl);
       xhr.setRequestHeader('Content-Type', file.type);
-    //   xhr.setRequestHeader('x-goog-content-length-range', `1,${MAX_FILE_SIZE}`);
       xhr.send(file);
       
     } catch (error) {
       console.error('Simple upload error:', error);
-      setUploadStatus(prev => ({ ...prev, [file.id]: 'error' }));
-      
+      dispatch(setUploadError(file.id));
       toast({
         title: 'Upload failed',
         description: `Failed to upload ${file.name}`,
@@ -261,14 +234,14 @@ const FileUploadComponent: React.FC = () => {
         },
       });
     }
-    
-    setFiles(prev => [...prev, ...validFiles]);
+
+    dispatch(addFilesAction(validFiles));
   }, [toast]);
 
   // Handle file removal
   const removeFile = (index: number): void => {
-    const file = files[index];
-    
+    const file = uploadedFiles[index];
+
     if (file.deleteUrl) {
       // Optionally, send a request to delete the uploaded file from the server
       fetch(file.deleteUrl, { method: 'DELETE' })
@@ -282,22 +255,7 @@ const FileUploadComponent: React.FC = () => {
         });
     }
 
-    setFiles(prev => prev.filter((_, i) => i !== index));
-    setUploadProgress(prev => {
-      const newProgress = { ...prev };
-      delete newProgress[file.id];
-      return newProgress;
-    });
-    setUploadStatus(prev => {
-      const newStatus = { ...prev };
-      delete newStatus[file.id];
-      return newStatus;
-    });
-    setUploadSessions(prev => {
-      const newSessions = { ...prev };
-      delete newSessions[file.id];
-      return newSessions;
-    });
+    dispatch(removeFileAction(index));
   };
 
   // Main upload function - chooses between simple and resumable based on file size
@@ -312,7 +270,7 @@ const FileUploadComponent: React.FC = () => {
 
   // Upload all files
   const uploadAllFiles = (): void => {
-    files.forEach(file => {
+    uploadedFiles.forEach((file: FileWithId) => {
       if (!uploadStatus[file.id] || uploadStatus[file.id] === 'error') {
         uploadFile(file);
       }
@@ -325,7 +283,7 @@ const FileUploadComponent: React.FC = () => {
         <DndContext onDragEnd={() => {}}>
           <FileDropzone onFilesAdded={addFiles} />
           
-          {files.length > 0 && (
+          {uploadedFiles.length > 0 && (
             <VStack spacing={4} align="stretch">
               <Flex justify="space-between" align="center">
                 <Heading size="md">Files to Upload</Heading>
@@ -342,15 +300,14 @@ const FileUploadComponent: React.FC = () => {
               <Divider />
               
               <VStack spacing={3} align="stretch">
-                {files.map((file, index) => (
+                {uploadedFiles.map((file: FileWithId, index: number) => (
                   <FileItem
                     key={file.id}
                     file={file}
                     index={index}
                     progress={uploadProgress[file.id] || 0}
                     status={uploadStatus[file.id]}
-                    hasSession={!!uploadSessions[file.id]}
-                    retryCount={uploadSessions[file.id]?.retryCount}
+                    hasSession={false}
                     onRemove={() => removeFile(index)}
                     onUpload={() => startUpload(file)}
                   />
@@ -587,7 +544,7 @@ const FileItem: React.FC<FileItemProps> = ({
             </>
           )}
           
-          {status === 'paused' && (
+          {status === 'paused' && onResume && (
             <IconButton
               aria-label="Resume upload"
               icon={<Play size={16} />}
@@ -598,7 +555,7 @@ const FileItem: React.FC<FileItemProps> = ({
             />
           )}
           
-          {status === 'error' && hasSession && (
+          {status === 'error' && hasSession && onResume && (
             <IconButton
               aria-label="Retry upload"
               icon={<Play size={16} />}

@@ -3,6 +3,28 @@ import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
 
 
+export interface FileWithId extends File {
+  id: string;
+  deleteUrl?: string;
+  uploadItemID?: number;
+}
+
+export interface UploadProgress {
+  [fileId: string]: number;
+}
+
+export interface UploadStatus {
+  [fileId: string]: 'pending' | 'uploading' | 'completed' | 'error' | 'paused';
+}
+
+interface UploadSession {
+  sessionUrl: string;
+  uploadedBytes: number;
+  totalBytes: number;
+  retryCount: number;
+}
+
+
 export interface VisParams {
   minValue: number;
   maxValue: number;
@@ -16,6 +38,13 @@ export interface UploadedFile {
   fileSize: number;
   startDate?: string;
   endDate?: string;
+}
+
+export interface SignedUrlResponse {
+  signedUrl: string;
+  sessionID: string;
+  uploadItemID: number;
+  deleteUrl?: string;
 }
 
 export interface UserIndicatorFormData {
@@ -82,6 +111,9 @@ interface UserIndicatorState {
   data: UserIndicatorFormData[];
   loading: boolean;
   error: string | null;
+  uploadedFiles: FileWithId[];
+  uploadProgress: UploadProgress;
+  uploadStatus: UploadStatus;
 }
 
 const initialState: UserIndicatorState = {
@@ -106,6 +138,9 @@ const initialState: UserIndicatorState = {
   data: [],
   loading: false,
   error: null,
+  uploadedFiles: [],
+  uploadProgress: {},
+  uploadStatus: {}
 };
 
 // Async thunk for fetching user indicator data
@@ -182,6 +217,87 @@ const userIndicatorSlice = createSlice({
         ...state.formData,
         sessionID: action.payload
       }
+    },
+    startUpload(state, action: PayloadAction<string>) {
+      state.uploadStatus = {
+        ...state.uploadStatus,
+        [action.payload]: 'uploading'
+      }
+      state.uploadProgress = {
+        ...state.uploadProgress,
+        [action.payload]: 0
+      }
+    },
+    setUploadProgress(state, action: PayloadAction<{ fileId: string; progress: number }>) {
+      state.uploadProgress = {
+        ...state.uploadProgress,
+        [action.payload.fileId]: action.payload.progress
+      }
+    },
+    setFileAttributes(state, action: PayloadAction<{ fileId: string; deleteUrl?: string; uploadItemID?: number }>) {
+      const { fileId, deleteUrl, uploadItemID } = action.payload;
+      state.uploadedFiles = state.uploadedFiles.map(file => {
+        if (file.id === fileId) {
+          file.deleteUrl = deleteUrl;
+          file.uploadItemID = uploadItemID;
+        }
+        return file;
+      });
+    },
+    setUploadCompleted(state, action: PayloadAction<string>) {
+      state.uploadStatus = {
+        ...state.uploadStatus,
+        [action.payload]: 'completed'
+      }
+    },
+    setUploadError(state, action: PayloadAction<string>) {
+      state.uploadStatus = {
+        ...state.uploadStatus,
+        [action.payload]: 'error'
+      }
+    },
+    removeFile(state, action: PayloadAction<number>) {
+      const index = action.payload;
+      const file = state.uploadedFiles[index];
+
+      state.uploadedFiles = state.uploadedFiles.filter((_, i) => i !== index);
+      const newProgress = {...state.uploadProgress};
+      delete newProgress[file.id];
+      state.uploadProgress = newProgress;
+
+      const newStatus = {...state.uploadStatus};
+      delete newStatus[file.id];
+      state.uploadStatus = newStatus;
+
+      if (state.formData.bands.length > 0) {
+        // reinit the bands and files
+        state.formData = {
+          ...state.formData,
+          bands: [],
+          files: [],
+          geeAssetType: null,
+          startDate: null,
+          endDate: null
+        }
+      }
+    },
+    addFiles(state, action: PayloadAction<FileWithId[]>) {
+      state.uploadedFiles = [
+        ...state.uploadedFiles,
+        ...action.payload
+      ];
+
+      if (state.formData.bands.length > 0) {
+        // reinit the bands and files
+        state.formData = {
+          ...state.formData,
+          bands: [],
+          files: [],
+          geeAssetType: null,
+          startDate: null,
+          endDate: null
+        }
+      }
     }
   },
   extraReducers: (builder) => {
@@ -208,7 +324,14 @@ export const {
   setBandsData,
   setLoading,
   resetForm,
-  setSessionID
+  setSessionID,
+  removeFile,
+  startUpload,
+  setUploadProgress,
+  setFileAttributes,
+  setUploadCompleted,
+  setUploadError,
+  addFiles
 } = userIndicatorSlice.actions;
 
 export default userIndicatorSlice.reducer;
