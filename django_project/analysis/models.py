@@ -1092,6 +1092,16 @@ class UserIndicator(BaseIndicator):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    ingestion_task_id = models.TextField(
+        null=True,
+        blank=True,
+        help_text="The task ID for the GEE ingestion task."
+    )
+    ingestion_task_error = models.TextField(
+        null=True,
+        blank=True,
+        help_text="Any error messages from the GEE ingestion task."
+    )
 
     def clean(self):
         super().clean()

@@ -22,7 +22,8 @@ from core.models import TaskStatus, Preferences
 from analysis.models import (
     AnalysisResultsCache,
     AnalysisRasterOutput,
-    AnalysisTask
+    AnalysisTask,
+    UserIndicator
 )
 from analysis.analysis import (
     export_image_to_drive,
@@ -371,3 +372,48 @@ def run_analysis_task(analysis_task_id: int):
         analysis_task.completed_at = timezone.now()
         analysis_task.updated_at = timezone.now()
         analysis_task.save()
+
+
+@app.task(name='check_ingestor_asset_status')
+def check_ingestor_asset_status(gee_task_id: str, user_indicator_id: int):
+    """Check ingestor asset status."""
+    user_indicator = UserIndicator.objects.filter(
+        id=user_indicator_id
+    ).first()
+    if not user_indicator:
+        logger.error(
+            f'UserIndicator with id {user_indicator_id} not found.'
+        )
+        return
+
+    completed_states = ['COMPLETED', 'FAILED', 'CANCELLED', 'UNKNOWN']
+    max_wait_time = 7200
+    start_time = time.time()
+    # Check the status of the GEE ingestion task
+    initialize_engine_analysis()
+    status = ee.data.getTaskStatus(gee_task_id)
+    while (
+        status['state'] not in completed_states and
+        (time.time() - start_time) < max_wait_time
+    ):
+        time.sleep(5)
+        status = ee.data.getTaskStatus(gee_task_id)
+
+    logger.info(
+        f'GEE task {gee_task_id} completed with status {status["state"]}.'
+    )
+
+    # update the indicator status if it's completed
+    if status['state'] == 'COMPLETED':
+        user_indicator.is_active = True
+        user_indicator.ingestion_task_error = None
+    elif status['state'] in ['FAILED']:
+        user_indicator.is_active = False
+        user_indicator.ingestion_task_error = status['error_message']
+    else:
+        user_indicator.is_active = False
+        user_indicator.ingestion_task_error = (
+            f'The task {gee_task_id} status is {status["state"]}.'
+        )
+
+    user_indicator.save()

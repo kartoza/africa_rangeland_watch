@@ -12,8 +12,10 @@ from datetime import datetime, timezone, timedelta
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from django.conf import settings
 from core.gcs import get_gcs_client, generate_object_name, rasterio_read_gcs
 from analysis.analysis import initialize_engine_analysis
+from analysis.tasks import check_ingestor_asset_status
 
 from analysis.models import (
     Indicator,
@@ -81,6 +83,80 @@ class UserIndicatorAPI(APIView):
             data=serializer.data
         )
 
+    def _create_gcs_image_manifest(self, files, gee_asset_id):
+        """Create GCS image manifest."""
+        file = files[0]
+        upload_item = AssetUploadItem.objects.filter(
+            id=file['uploadItemID']
+        ).first()
+        default_timestamp = datetime.now().timestamp()
+        manifest = {
+            'name': f'{settings.GEE_ASSET_ID_PREFIX}{gee_asset_id}',
+            'sources': [
+                {
+                    'uris': [
+                        f'gs://{settings.GCS_BUCKET_NAME}/'
+                        f'{upload_item.upload_path}'
+                    ]
+                }
+            ],
+            'properties': {
+                'system:time_start': file.get(
+                    'startDate', default_timestamp
+                ),
+                'system:time_end': file.get(
+                    'endDate', default_timestamp
+                )
+            }
+        }
+        return manifest
+
+    def _create_gcs_image_collection_manifest(self, files, gee_asset_id):
+        """Create GCS image collection manifest."""
+        manifest = {
+            'name': f'{settings.GEE_ASSET_ID_PREFIX}{gee_asset_id}',
+            'tilesets': []
+        }
+        for file in files:
+            upload_item = AssetUploadItem.objects.filter(
+                id=file['uploadItemID']
+            ).first()
+            if not upload_item:
+                continue
+
+            manifest['tilesets'].append({
+                'sources': [
+                    {
+                        'uris': [
+                            f'gs://{settings.GCS_BUCKET_NAME}/'
+                            f'{upload_item.upload_path}'
+                        ]
+                    }
+                ],
+                'properties': {
+                    'system:time_start': file.get(
+                        'startDate'
+                    ),
+                    'system:time_end': file.get(
+                        'endDate'
+                    )
+                }
+            })
+        return manifest
+
+    def _import_uploaded_raster_files(self, files, gee_asset_id):
+        """Import uploaded raster files to GEE."""
+        # Each file has uploadItemID, fileName, fileSize, startDate, endDate
+        manifest = (
+            self._create_gcs_image_manifest(files, gee_asset_id) if
+            len(files) == 1 else
+            self._create_gcs_image_collection_manifest(files, gee_asset_id)
+        )
+
+        # Upload the asset using the manifest.
+        initialize_engine_analysis()
+        return ee.data.createAsset(manifest)
+
     def post(self, request, *args, **kwargs):
         """Create a new User Indicator."""
         check_existing = UserIndicator.objects.filter(
@@ -138,12 +214,25 @@ class UserIndicatorAPI(APIView):
             created_by=request.user,
         )
 
+        # import uploaded raster files
+        files = request.data.get('files', [])
+        gee_task_id = None
+        if files:
+            task = self._import_uploaded_raster_files(files, gee_asset_id)
+            gee_task_id = task['id']
+            indicator.ingestion_task_id = task.id
+            indicator.is_active = False
+            indicator.save()
+            # start celery task to monitor its status/any error
+            check_ingestor_asset_status.delay(gee_task_id, indicator.id)
+
         return Response(
             status=201,
             data={
                 'id': indicator.id,
                 'geeAssetID': gee_asset_id,
-                'userAssetID': user_gee_asset.id
+                'userAssetID': user_gee_asset.id,
+                'geeTaskId': gee_task_id
             }
         )
 
