@@ -17,7 +17,8 @@ from analysis.models import (
     UserIndicator,
     AnalysisTask,
     GEEAssetType,
-    IndicatorSource
+    IndicatorSource,
+    Indicator
 )
 from analysis.factories import UserGEEAssetF, UserIndicatorF
 from analysis.runner import AnalysisRunner
@@ -33,8 +34,13 @@ class TestStoreAnalysisRasterOutput(TestCase):
         '3.gee_asset.json',
         '1.layer_group_type.json',
         '2.data_provider.json',
-        '3.input_layer.json'
+        '3.input_layer.json',
+        '4.indicator.json'
     ]
+
+    def setUp(self):
+        self.user = UserF.create()
+        return super().setUp()
 
     @patch('analysis.tasks.store_cog_as_layer')
     @patch('analysis.tasks.ee')
@@ -73,6 +79,18 @@ class TestStoreAnalysisRasterOutput(TestCase):
         )
         # Mock return values
         # mock_get_bounds.return_value = {'coordinates': [34.0, -1.0]}
+        user_analysis_result = UserAnalysisResults.objects.create(
+            created_by=self.user,
+            analysis_results={
+                'data': mock_raster_output.analysis,
+                'results': []
+            }
+        )
+        user_analysis_result.raster_outputs.add(mock_raster_output)
+        AnalysisTask.objects.create(
+            analysis_inputs=mock_raster_output.analysis,
+            submitted_by=self.user
+        )
         mock_ee.return_value = MagicMock()
         mock_run_spatial_analysis.return_value = 'mock_image'
         mock_export_image_to_drive.return_value = {'state': 'COMPLETED'}
@@ -87,7 +105,8 @@ class TestStoreAnalysisRasterOutput(TestCase):
         mock_initialize_engine_analysis.assert_called_once()
         mock_get_bounds.assert_called_once()
         mock_run_spatial_analysis.assert_called_once_with(
-            mock_raster_output
+            mock_raster_output,
+            Indicator.objects.get(variable_name='EVI')
         )
         mock_export_image_to_drive.assert_called_once()
         mock_raster_output.refresh_from_db()
@@ -114,9 +133,6 @@ class TestStoreAnalysisRasterOutput(TestCase):
         mock_get_rel_diff, mock_export_image_to_drive,
         mock_ee, mock_store_cog_as_layer
     ):
-        # Mock data
-        user = UserF.create()
-
         mock_get_analysis_dict_spatial.return_value = ({}, {})
         mock_spatial_get_date_filter.return_value = (
             datetime.date(2020, 1, 1),
@@ -145,21 +161,21 @@ class TestStoreAnalysisRasterOutput(TestCase):
         )
 
         user_analysis_result = UserAnalysisResults.objects.create(
-            created_by=user,
+            created_by=self.user,
             analysis_results={
                 'data': mock_raster_output.analysis,
                 'results': []
             }
         )
         user_analysis_result.raster_outputs.add(mock_raster_output)
-        analysis_task = AnalysisTask.objects.create(
+        AnalysisTask.objects.create(
             analysis_inputs=mock_raster_output.analysis,
-            submitted_by=user
+            submitted_by=self.user
         )
 
-        gee_asset = UserGEEAssetF(
+        UserGEEAssetF(
             key="temperature-asset",
-            created_by=user,
+            created_by=self.user,
             type=GEEAssetType.IMAGE_COLLECTION,
             source="projects/sample/temperature",
             metadata={
@@ -173,14 +189,15 @@ class TestStoreAnalysisRasterOutput(TestCase):
         user_indicator = UserIndicatorF(
             name="Custom Temperature",
             variable_name="Custom Temperature",
-            created_by=user,
+            created_by=self.user,
             source=IndicatorSource.OTHER,
             analysis_types=["Baseline", "Temporal", "Spatial"],
             temporal_resolutions=["Annual", "Monthly", "Quarterly"],
             metadata={
-                "max": 50,
-                "min": -40,
-                "palette": ["#ADD8E6", "#008000", "#FFFF00", "#FFA500", "#FF0000", "#800080"]
+                "maxValue": 50,
+                "minValue": -40,
+                "colors": ["#ADD8E6", "#008000", "#FFFF00", "#FFA500", "#FF0000", "#800080"],
+                "opacity": 0.7
             },
             config={"asset_keys": ["temperature-asset"], 'reducer': 'median'}
         )
@@ -247,6 +264,19 @@ class TestStoreAnalysisRasterOutput(TestCase):
             name='mock_filename',
             status='PENDING'
         )
+        user_analysis_result = UserAnalysisResults.objects.create(
+            created_by=self.user,
+            analysis_results={
+                'data': mock_raster_output.analysis,
+                'results': []
+            }
+        )
+        user_analysis_result.raster_outputs.add(mock_raster_output)
+        AnalysisTask.objects.create(
+            analysis_inputs=mock_raster_output.analysis,
+            submitted_by=self.user
+        )
+
         filename = AnalysisRasterOutput.generate_name(
             mock_raster_output.analysis
         )
@@ -323,6 +353,19 @@ class TestStoreAnalysisRasterOutput(TestCase):
             name='mock_filename',
             status='PENDING'
         )
+        user_analysis_result = UserAnalysisResults.objects.create(
+            created_by=self.user,
+            analysis_results={
+                'data': mock_raster_output.analysis,
+                'results': []
+            }
+        )
+        user_analysis_result.raster_outputs.add(mock_raster_output)
+        AnalysisTask.objects.create(
+            analysis_inputs=mock_raster_output.analysis,
+            submitted_by=self.user
+        )
+
         filename = AnalysisRasterOutput.generate_name(
             mock_raster_output.analysis
         )

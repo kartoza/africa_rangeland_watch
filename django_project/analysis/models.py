@@ -849,7 +849,9 @@ class AnalysisTask(models.Model):
         indicator = Indicator.objects.filter(
             variable_name=variable
         ).first()
-        if not indicator:
+        if indicator:
+            return indicator
+        else:
             indicator = UserIndicator.objects.filter(
                 variable_name=variable,
                 created_by=self.submitted_by
@@ -859,6 +861,7 @@ class AnalysisTask(models.Model):
                     f"Indicator for variable {variable} not found"
                 )
             return indicator
+        
 
 
 class IndicatorSource(models.TextChoices):
