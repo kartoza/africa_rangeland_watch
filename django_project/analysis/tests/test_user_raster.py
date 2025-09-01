@@ -5,13 +5,13 @@ Africa Rangeland Watch (ARW).
 .. note:: Unit tests for run_analysis_task function.
 """
 import json
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch, MagicMock, Mock
 
 from django.test import TestCase
 from django.utils import timezone
 
 from analysis.factories import UserIndicatorF, UserGEEAssetF
-from analysis.models import AnalysisTask, GEEAssetType, IndicatorSource
+from analysis.models import AnalysisTask, GEEAssetType, IndicatorSource, UserIndicator
 from analysis.tasks import run_analysis_task
 from core.factories import UserF
 from core.models import TaskStatus
@@ -19,6 +19,12 @@ from core.models import TaskStatus
 
 class RunAnalysisTaskTest(TestCase):
     """Test case for run_analysis_task function."""
+
+    fixtures = [
+        '1.project.json',
+        '2.landscape.json',
+        '3.gee_asset.json'
+    ]
 
     def setUp(self):
         """Set up test data."""
@@ -50,7 +56,7 @@ class RunAnalysisTaskTest(TestCase):
                 "min": -40,
                 "palette": ["#ADD8E6", "#008000", "#FFFF00", "#FFA500", "#FF0000", "#800080"]
             },
-            config={"asset_keys": ["temperature-asset"]}
+            config={"asset_keys": ["temperature-asset"], 'reducer': 'median'}
         )
 
     def _create_analysis_task(self, analysis_inputs):
@@ -313,6 +319,110 @@ class RunAnalysisTaskTest(TestCase):
         
         # Verify mocks were called
         mock_run_spatial.assert_called_once()
+
+    @patch('analysis.runner.initialize_engine_analysis')
+    @patch('analysis.runner.get_rel_diff')
+    @patch('analysis.runner.InputLayer')
+    @patch.object(UserIndicator, 'get_reducer')
+    def test_run_spatial_analysis_task_with_custom_reducer(
+        self, 
+        mock_get_reducer, 
+        mock_input_layer, 
+        mock_get_rel_diff, 
+        mock_init_gee
+    ):
+        """Test running spatial analysis task."""
+        rel_diff = MagicMock()
+        # Mock getMapId return value
+        rel_diff.getMapId.return_value = {
+            "tile_fetcher": MagicMock(url_format="http://mocked-url/{z}/{x}/{y}.png")
+        }
+        mock_get_rel_diff.return_value = rel_diff
+        mock_get_reducer.return_value = self.user_indicator.get_reducer_name()
+
+        # Create spatial analysis inputs
+        spatial_inputs = {
+            "period": {
+                "year": 2020
+            },
+            "variable": "Custom Temperature",
+            "landscape": "Bahine NP",
+            "locations": None,
+            "custom_geom": None,
+            "analysisType": "Spatial",
+            "baselineEndDate": None,
+            "reference_layer": {
+                "type": "FeatureCollection",
+                "features": [
+                    {
+                        "id": "NB4dkirvWAwqZ2PRnqhAlXnUfIVbTXdM",
+                        "type": "Feature",
+                        "geometry": {
+                            "type": "Polygon",
+                            "coordinates": [
+                                [
+                                    [32.655666743220564, -22.770232151581155],
+                                    [32.740281941201914, -22.787848582446287],
+                                    [32.682961968375594, -22.86835184292579],
+                                    [32.655666743220564, -22.770232151581155]
+                                ]
+                            ]
+                        },
+                        "properties": {
+                            "id": "NB4dkirvWAwqZ2PRnqhAlXnUfIVbTXdM"
+                        }
+                    }
+                ]
+            },
+            "comparisonPeriod": {
+                "year": 2023
+            },
+            "baselineStartDate": None,
+            "reference_layer_id": "NB4dkirvWAwqZ2PRnqhAlXnUfIVbTXdM",
+            "temporalResolution": "Annual",
+            "userDefinedFeatureId": None,
+            "userDefinedFeatureName": None
+        }
+
+        # Create AnalysisTask
+        task = self._create_analysis_task(spatial_inputs)
+        
+        # Run the task
+        run_analysis_task(task.id)
+        
+        # Refresh task from database
+        task.refresh_from_db()
+        
+        # Assertions
+        expected_task_result = {
+            'spatial': {
+                'results': {
+                    'id': 'spatial_analysis_rel_diff', 
+                    'url': 'http://mocked-url/{z}/{x}/{y}.png', 
+                    'name': '% difference in Custom Temperature', 
+                    'type': 'raster', 
+                    'uuid': task.result['spatial']['results']['uuid'], 
+                    'group': 'spatial_analysis', 
+                    'style': None, 
+                    'metadata': {
+                        'colors': [
+                            '#f9837b', '#fffcb9', 
+                            '#fffcb9', '#32c2c8'
+                        ], 
+                        'opacity': 0.7, 'maxValue': 25, 'minValue': -25
+                    }
+                }
+            }, 
+            'temporal': {
+                'results': {}
+            }
+        }
+        self.assertEqual(task.status, TaskStatus.COMPLETED)
+        self.assertEqual(task.result, expected_task_result)
+        self.assertIsNone(task.error)
+        self.assertIsNotNone(task.completed_at)
+        
+        # Verify mocks were called
 
     @patch('analysis.runner.initialize_engine_analysis')
     @patch('analysis.runner.AnalysisRunner.run')
