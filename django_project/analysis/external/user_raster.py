@@ -67,16 +67,12 @@ def user_temporal_analysis(
 
     if gee_asset.type not in [
         GEEAssetType.IMAGE_COLLECTION,
-        GEEAssetType.TABLE
+        GEEAssetType.IMAGE
     ]:
         raise ValueError(
-            'Only ImageCollection and Table '
+            'Only ImageCollection and Image '
             'are supported in temporal analysis'
         )
-
-    image_col = ee.ImageCollection(
-        gee_asset.source
-    )
 
     if resolution not in indicator.temporal_resolutions:
         raise ValueError(
@@ -112,9 +108,14 @@ def user_temporal_analysis(
 
     var_name = var_names[0]
     var_rename = indicator.variable_name
-    image_col = ee.ImageCollection(
-        gee_asset.source
-    )
+    image_col = None
+    if gee_asset.type == GEEAssetType.IMAGE_COLLECTION:
+        image_col = ee.ImageCollection(
+            gee_asset.source
+        )
+    elif gee_asset.type == GEEAssetType.IMAGE:
+        image = ee.Image(gee_asset.source)
+        image_col = ee.ImageCollection([image])
 
     # Get the first image in the collection
     first_img = image_col.first()
@@ -227,26 +228,19 @@ def user_spatial_analysis_dict(
     if not end_date:
         end_date = datetime.date.today()
 
-    # TODO: should it be image collection only, or image as well?
     indicator_asset_dicts = UserIndicator.map_user_indicator_to_gee_object(
         user=user,
-        asset_types=[GEEAssetType.IMAGE_COLLECTION]
+        asset_types=[GEEAssetType.IMAGE, GEEAssetType.IMAGE_COLLECTION]
     )
     variable_asset_dict = {}
-    for indicator, user_gee_asset in indicator_asset_dicts.items():
-        var_names = user_gee_asset.metadata.get(
-            'band_names', [indicator.variable_name]
-        )
-        var_name = var_names[0]
-
-        gee_asset_class = GEEAssetType.get_ee_asset_class(user_gee_asset)
-        gee_asset_obj = gee_asset_class(
-            user_gee_asset.source
-        ).select(var_name).filterDate(
-            start_date.isoformat(), end_date.isoformat()
-        ).filterBounds(countries)
+    for indicator, gee_asset_obj in indicator_asset_dicts.items():
+        if isinstance(gee_asset_obj, ee.ImageCollection):
+            gee_asset_obj = gee_asset_obj.filterDate(
+                start_date.isoformat(), end_date.isoformat()
+            )
 
         gee_asset_obj = gee_asset_obj.reduce(indicator.get_reducer())
+        gee_asset_obj = gee_asset_obj.clipToCollection(countries)
         variable_asset_dict[indicator.variable_name] = gee_asset_obj
 
     return variable_asset_dict

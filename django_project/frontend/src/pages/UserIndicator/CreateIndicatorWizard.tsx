@@ -32,14 +32,15 @@ import { AppDispatch } from "../../store";
 import RenderStep1 from "./Step1";
 import RenderStep2 from "./Step2";
 import RenderStep3 from "./Step3";
-import { resetForm, setLoading } from "../../store/userIndicatorSlice";
+import { resetForm, setLoading, FileWithId, UploadedFile } from "../../store/userIndicatorSlice";
 import { useNavigate } from "react-router-dom";
+import { sub } from "date-fns";
 
 const CreateIndicatorWizard: React.FC = () => {
   const navigate = useNavigate();
   const toast = useToast();
   const dispatch = useDispatch<AppDispatch>();
-  const { formData, loading, error } = useSelector((state: any) => state.userIndicator);
+  const { formData, loading, error, uploadedFiles, uploadStatus } = useSelector((state: any) => state.userIndicator);
 
   const validateStep1 = () => {
     // required fields
@@ -49,7 +50,6 @@ const CreateIndicatorWizard: React.FC = () => {
     ]
     let isValid = true;
     requiredFields.forEach(element => {
-      console.log(element + ' ' + formData[element])
       if (!formData[element] || formData[element].length === 0) {
         isValid = false;
       }
@@ -61,11 +61,32 @@ const CreateIndicatorWizard: React.FC = () => {
     if (!formData.geeAssetID && !formData.sessionID) {
       return false;
     }
-    // TODO: add validation to new uploaded asset
+    // add validation to new uploaded asset
+    if (uploadedFiles.length > 0) {
+      let isAllUploaded = true;
+      uploadedFiles.forEach((file: FileWithId) => {
+        if (uploadStatus[file.id] !== 'completed') {
+          isAllUploaded = false;
+        }
+      });
+      if (!isAllUploaded) {
+        return false;
+      }
+    }
+
     return true;
   }
 
   const validateStep3 = () => {
+    if (formData.files) {
+      let isValid = true;
+      formData.files.forEach((file: UploadedFile) => {
+        if (!file.startDate || !file.endDate) {
+          isValid = false;
+        }
+      });
+      return isValid;
+    }
     return true;
   }
 
@@ -123,7 +144,18 @@ const CreateIndicatorWizard: React.FC = () => {
     }
 
     dispatch(setLoading(true));
-    const axiosPromise = axios.post('/frontend-api/user-indicator/', formData);
+    let submittedData = {...formData};
+    let uploadedFiles = [];
+    for (const file of formData.files) {
+      uploadedFiles.push({
+        uploadItemID: file.uploadItemID,
+        fileName: file.fileName,
+        startDate: file.startDate ? new Date(file.startDate).toISOString() : undefined,
+        endDate: file.endDate ? new Date(file.endDate).toISOString() : undefined
+      });
+    }
+    submittedData.files = uploadedFiles;
+    const axiosPromise = axios.post('/frontend-api/user-indicator/', submittedData);
 
     toast.promise(axiosPromise, {
         'success': {

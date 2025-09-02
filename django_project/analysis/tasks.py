@@ -391,13 +391,15 @@ def check_ingestor_asset_status(gee_task_id: str, user_indicator_id: int):
     start_time = time.time()
     # Check the status of the GEE ingestion task
     initialize_engine_analysis()
-    status = ee.data.getTaskStatus(gee_task_id)
+    status_list = ee.data.getTaskStatus(gee_task_id)
+    status = status_list[0]
     while (
         status['state'] not in completed_states and
         (time.time() - start_time) < max_wait_time
     ):
         time.sleep(5)
-        status = ee.data.getTaskStatus(gee_task_id)
+        status_list = ee.data.getTaskStatus(gee_task_id)
+        status = status_list[0]
 
     logger.info(
         f'GEE task {gee_task_id} completed with status {status["state"]}.'

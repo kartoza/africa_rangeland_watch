@@ -8,12 +8,23 @@ import {
   useToast,
   HStack,
   Input,
-  FormHelperText
+  FormHelperText,
+  Box,
+  Text
 } from '@chakra-ui/react';
 import axios from 'axios';
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch } from "../../store";
-import { UserIndicatorFormData, setFormField, UpdateFieldPayload, setLoading, setBandsData, REDUCER_VALUE_LIST } from "../../store/userIndicatorSlice";
+import {
+    UserIndicatorFormData,
+    setFormField,
+    UpdateFieldPayload,
+    setLoading,
+    setBandsData,
+    REDUCER_VALUE_LIST,
+    UploadedFile,
+    setUploadedFileDate
+} from "../../store/userIndicatorSlice";
 
 
 interface RenderStep3Props {
@@ -33,6 +44,16 @@ const RenderStep3: React.FC<RenderStep3Props> = () => {
         dispatch(setFormField(updateValue));
     };
     
+    const handleStartDateChange = (fileId: number, value: string) => {
+        console.log('startDate ', fileId, ' ', value);
+        dispatch(setUploadedFileDate({ fileId, startDate: value }));
+    }
+
+    const handleEndDateChange = (fileId: number, value: string) => {
+        console.log('endDate ', fileId, ' ', value);
+        dispatch(setUploadedFileDate({ fileId, endDate: value }));
+    }
+
     const fetchBands = () => {
         dispatch(setLoading(true));
         const axiosPromise = axios.post('/frontend-api/indicator/fetch-bands/', {
@@ -107,6 +128,37 @@ const RenderStep3: React.FC<RenderStep3Props> = () => {
     return (
         <VStack spacing={4} align="stretch">
             <Heading size="md" color="dark_green.800">Configuration</Heading>
+            { formData.files.length > 0 && <FormControl isDisabled={loading}>
+                <FormLabel>Set images properties</FormLabel>
+                <VStack spacing={4} align="stretch" borderWidth={1} p={2}>
+                    {formData.files.map((file: UploadedFile, index: number) => (
+                    <VStack spacing={2} align="stretch" key={index}>
+                        <Text fontSize={"1rem"} fontWeight="bold" color={"black"}>{`${index+1}. ${file.fileName}`}</Text>
+                        <HStack spacing={4}>
+                            <Box>
+                                <FormLabel>Start Date</FormLabel>
+                                <Input
+                                    type="date"
+                                    name="startDate"
+                                    value={file.startDate ?? ""}
+                                    onChange={(e) => handleStartDateChange(file.uploadItemID, e.target.value)}
+                                />
+                            </Box>
+                            <Box>
+                                <FormLabel>End Date</FormLabel>
+                                <Input
+                                    type="date"
+                                    name="endDate"
+                                    value={file.endDate ?? ""}
+                                    onChange={(e) => handleEndDateChange(file.uploadItemID, e.target.value)}
+                                />
+                            </Box>
+                        </HStack>
+                    </VStack>
+                ))}
+                </VStack>
+            </FormControl>
+            }
             <FormControl isDisabled={loading}>
                 <FormLabel>Select band from asset</FormLabel>
                 <Select

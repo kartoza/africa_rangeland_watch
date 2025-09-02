@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { useDispatch, useSelector } from "react-redux";
 import {
   Box,
@@ -21,7 +21,7 @@ import {
   useDndMonitor, 
   useDroppable
 } from '@dnd-kit/core';
-import { Upload, X, Check, AlertCircle, File, Play } from 'lucide-react';
+import { Upload, X, Check, AlertCircle, File as FileIcon, Play } from 'lucide-react';
 import { AppDispatch } from "../../store";
 import {
   setSessionID,
@@ -68,18 +68,25 @@ const ALLOWED_TYPES = ['image/tiff'];
 const FileUploadComponent: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { formData, loading, uploadedFiles, uploadProgress, uploadStatus } = useSelector((state: any) => state.userIndicator);
+  const files = useRef(new Map<string, File>());
   const toast = useToast();
+
+  useEffect(() => {
+    return () => {
+      console.log('cleaning up file map')
+      files.current.clear();
+    };
+  }, []);
 
   // File validation
   const validateFile = (file: File): string | null => {
-    console.log('file ', file.size, ' - ', file.type)
     if (file.size > MAX_FILE_SIZE) {
       return `File size exceeds ${MAX_FILE_SIZE / (1024 * 1024)}MB limit`;
     }
     
     const isValidType = ALLOWED_TYPES.some(type => {
       if (type.includes('*')) {
-        return file.type.startsWith(type.replace('*', ''));
+        return file.type.startsWith(type.replace(/\*/g, ''));
       }
       return file.type === type;
     });
@@ -131,6 +138,13 @@ const FileUploadComponent: React.FC = () => {
   };
 
   const uploadFileSimple = async (file: FileWithId, sessionID: string): Promise<void> => {
+    console.log('uploading file ', file.id)
+    const binaryFile = files.current.get(file.id);
+    if (!binaryFile) {
+      alert('File not found for upload');
+      return;
+    }
+    
     try {
       dispatch(startUploadAction(file.id));
       
@@ -185,8 +199,8 @@ const FileUploadComponent: React.FC = () => {
       // Start upload
       xhr.open('PUT', signedUrl.signedUrl);
       xhr.setRequestHeader('Content-Type', file.type);
-      xhr.send(file);
-      
+      xhr.send(binaryFile);
+
     } catch (error) {
       console.error('Simple upload error:', error);
       dispatch(setUploadError(file.id));
@@ -214,10 +228,19 @@ const FileUploadComponent: React.FC = () => {
       if (error) {
         errors.push({ file: file.name, error });
       } else {
-        const fileWithId: FileWithId = Object.assign(file, {
-          id: `${file.name}-${file.lastModified}-${Date.now()}`
-        });
+        const fileWithId: FileWithId = {
+          id: `${file.name}-${file.lastModified}-${Date.now()}`,
+          name: file.name,
+          type: file.type,
+          lastModified: file.lastModified,
+          size: file.size
+        }
+        console.log('adding file ', fileWithId.id)
+        // Object.assign(file, {
+        //   id: 
+        // });
         validFiles.push(fileWithId);
+        files.current.set(fileWithId.id, file);
       }
     });
     
@@ -253,6 +276,10 @@ const FileUploadComponent: React.FC = () => {
         .catch(error => {
           console.error('Error deleting file on server:', error);
         });
+    }
+
+    if (files.current.has(file.id)) {
+      files.current.delete(file.id);
     }
 
     dispatch(removeFileAction(index));
@@ -478,7 +505,7 @@ const FileItem: React.FC<FileItemProps> = ({
       case 'error':
         return <AlertCircle size={16} color="var(--chakra-colors-red-500)" />;
       default:
-        return <File size={16} color="var(--chakra-colors-gray-400)" />;
+        return <FileIcon size={16} color="var(--chakra-colors-gray-400)" />;
     }
   };
 

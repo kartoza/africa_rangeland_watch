@@ -1,10 +1,15 @@
 // src/store/userIndicatorSlice.ts
 import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
+import { init } from '@sentry/browser';
 import axios from 'axios';
 
 
-export interface FileWithId extends File {
+export interface FileWithId {
   id: string;
+  name: string;
+  size: number;
+  type: string;
+  lastModified: number;
   deleteUrl?: string;
   uploadItemID?: number;
 }
@@ -134,6 +139,7 @@ const initialState: UserIndicatorState = {
     maxValue: 100,
     colors: ['#f9837b', '#fffcb9', '#fffcb9', '#32c2c8'],
     opacity: 1,
+    files: []
   },
   data: [],
   loading: false,
@@ -211,6 +217,9 @@ const userIndicatorSlice = createSlice({
     },
     resetForm(state) {
       state.formData = initialState.formData;
+      state.uploadedFiles = initialState.uploadedFiles;
+      state.uploadProgress = initialState.uploadProgress;
+      state.uploadStatus = initialState.uploadStatus;
     },
     setSessionID(state, action: PayloadAction<string>) {
       state.formData = {
@@ -298,6 +307,26 @@ const userIndicatorSlice = createSlice({
           endDate: null
         }
       }
+    },
+    setUploadedFileDate(state, action: PayloadAction<{ fileId: number; startDate?: string; endDate?: string }>) {
+      const { fileId, startDate, endDate } = action.payload;
+      const uploadedFiles = [...state.formData.files];
+      const fileIndex = uploadedFiles.findIndex(file => file.uploadItemID === fileId);
+      if (fileIndex !== -1) {
+        if (startDate) {
+          uploadedFiles[fileIndex] = {
+            ...uploadedFiles[fileIndex],
+            startDate: startDate
+          };
+        }
+        if (endDate) {
+          uploadedFiles[fileIndex] = {
+            ...uploadedFiles[fileIndex],
+            endDate: endDate
+          };
+        }
+      }
+      state.formData.files = uploadedFiles;
     }
   },
   extraReducers: (builder) => {
@@ -331,7 +360,8 @@ export const {
   setFileAttributes,
   setUploadCompleted,
   setUploadError,
-  addFiles
+  addFiles,
+  setUploadedFileDate
 } = userIndicatorSlice.actions;
 
 export default userIndicatorSlice.reducer;
