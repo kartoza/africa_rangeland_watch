@@ -31,7 +31,7 @@ interface RenderStep3Props {
 }
 
 const RenderStep3: React.FC<RenderStep3Props> = () => {
-    const { formData, loading } = useSelector((state: any) => state.userIndicator);
+    const { formData, loading, uploadedFiles } = useSelector((state: any) => state.userIndicator);
     const dispatch = useDispatch<AppDispatch>();
     const toast = useToast();
     const handleInputChange = (field: keyof UserIndicatorFormData, value: string | boolean | string[] | number, isCheckbox?: boolean, isChecked?: boolean) => {
@@ -45,12 +45,10 @@ const RenderStep3: React.FC<RenderStep3Props> = () => {
     };
     
     const handleStartDateChange = (fileId: number, value: string) => {
-        console.log('startDate ', fileId, ' ', value);
         dispatch(setUploadedFileDate({ fileId, startDate: value }));
     }
 
     const handleEndDateChange = (fileId: number, value: string) => {
-        console.log('endDate ', fileId, ' ', value);
         dispatch(setUploadedFileDate({ fileId, endDate: value }));
     }
 
@@ -66,6 +64,7 @@ const RenderStep3: React.FC<RenderStep3Props> = () => {
                 'title': 'Bands fetched successfully',
                 'description': 'Bands have been successfully fetched from the asset.',
                 'position': 'top-right',
+                'isClosable': true,
                 'containerStyle': {
                     'color': "white",
                 },
@@ -120,7 +119,7 @@ const RenderStep3: React.FC<RenderStep3Props> = () => {
     }
 
     useEffect(() => {
-        if ((formData.geeAssetID || formData.sessionID) && formData.bands && formData.bands.length === 0) {
+        if ((formData.geeAssetID || uploadedFiles.length > 0) && formData.bands.length === 0) {
             fetchBands();
         }
     }, [formData]);

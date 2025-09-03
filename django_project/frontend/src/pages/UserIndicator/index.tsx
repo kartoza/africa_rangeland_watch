@@ -42,7 +42,6 @@ export default function UserIndicator() {
 
   const handleView = (item: UserIndicatorFormData) => {
     // dispatch(setLayerId({layer_id: layer.layer_id, layer_name: layer.name}));
-    console.log(item);
     // TODO: handle view item (readonly)
   };
 
@@ -148,6 +147,7 @@ export default function UserIndicator() {
                         borderRadius="0px"
                         h={10}
                         onClick={() => handleView(item)}
+                        display={"none"}
                       >
                         View
                       </Button>

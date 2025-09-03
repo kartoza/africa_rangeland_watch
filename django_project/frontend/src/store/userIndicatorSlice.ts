@@ -1,6 +1,6 @@
 // src/store/userIndicatorSlice.ts
 import { createSlice, PayloadAction, createAsyncThunk } from '@reduxjs/toolkit';
-import { init } from '@sentry/browser';
+import { v4 as uuidv4 } from 'uuid';
 import axios from 'axios';
 
 
@@ -124,7 +124,7 @@ interface UserIndicatorState {
 const initialState: UserIndicatorState = {
   formData: {
     name: '',
-    sessionID: '',
+    sessionID: uuidv4(),
     description: '',
     analysisTypes: [],
     temporalResolutions: [],
@@ -216,7 +216,10 @@ const userIndicatorSlice = createSlice({
       state.loading = action.payload;
     },
     resetForm(state) {
-      state.formData = initialState.formData;
+      state.formData = {
+        ...initialState.formData,
+        sessionID: uuidv4()
+      };
       state.uploadedFiles = initialState.uploadedFiles;
       state.uploadProgress = initialState.uploadProgress;
       state.uploadStatus = initialState.uploadStatus;

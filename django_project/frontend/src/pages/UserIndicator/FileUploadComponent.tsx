@@ -73,7 +73,6 @@ const FileUploadComponent: React.FC = () => {
 
   useEffect(() => {
     return () => {
-      console.log('cleaning up file map')
       files.current.clear();
     };
   }, []);
@@ -138,7 +137,6 @@ const FileUploadComponent: React.FC = () => {
   };
 
   const uploadFileSimple = async (file: FileWithId, sessionID: string): Promise<void> => {
-    console.log('uploading file ', file.id)
     const binaryFile = files.current.get(file.id);
     if (!binaryFile) {
       alert('File not found for upload');
@@ -235,10 +233,6 @@ const FileUploadComponent: React.FC = () => {
           lastModified: file.lastModified,
           size: file.size
         }
-        console.log('adding file ', fileWithId.id)
-        // Object.assign(file, {
-        //   id: 
-        // });
         validFiles.push(fileWithId);
         files.current.set(fileWithId.id, file);
       }

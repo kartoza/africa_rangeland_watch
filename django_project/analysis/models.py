@@ -998,6 +998,9 @@ class Indicator(BaseIndicator):
 
 
 class UserGEEAsset(BaseGEEAsset):
+
+    FINAL_INGESTION_STATUS = ['COMPLETED', 'FAILED', 'CANCELLED', 'UNKNOWN']
+
     key = models.CharField(
         max_length=50,
         help_text='Key to the asset.'
@@ -1008,6 +1011,12 @@ class UserGEEAsset(BaseGEEAsset):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    ingestion_status = models.JSONField(
+        default=dict,
+        null=True,
+        blank=True,
+        help_text="The status of GEE ingestion task."
+    )
 
     def clean(self):
         super().clean()
@@ -1075,6 +1084,15 @@ class UserGEEAsset(BaseGEEAsset):
 
         return (True, start_date, end_date,)
 
+    def get_running_ingestion_task_id(self):
+        """Get the ID of the currently running ingestion task."""
+        task_ids = []
+        for task_id, item in self.ingestion_status.items():
+            status = item.get('status', 'UNKNOWN')
+            if status not in self.FINAL_INGESTION_STATUS:
+                task_ids.append(task_id)
+        return task_ids
+
     class Meta:
         verbose_name_plural = 'User GEE Assets'
         db_table = 'analysis_user_gee_asset'
@@ -1092,16 +1110,6 @@ class UserIndicator(BaseIndicator):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
-    ingestion_task_id = models.TextField(
-        null=True,
-        blank=True,
-        help_text="The task ID for the GEE ingestion task."
-    )
-    ingestion_task_error = models.TextField(
-        null=True,
-        blank=True,
-        help_text="Any error messages from the GEE ingestion task."
-    )
 
     def clean(self):
         super().clean()
@@ -1182,6 +1190,14 @@ class UserIndicator(BaseIndicator):
             asset_dict[indicator] = gee_asset_obj
 
         return asset_dict
+
+    @classmethod
+    def set_status_by_asset_key(cls, asset_key: str, is_active: bool):
+        """Set UserIndicator as is_active if its asset_key is found."""
+        indicators = cls.objects.filter(
+            config__asset_keys__contains=[asset_key]
+        )
+        indicators.update(is_active=is_active)
 
     class Meta:
         unique_together = ('name', 'created_by')

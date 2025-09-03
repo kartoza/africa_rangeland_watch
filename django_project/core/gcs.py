@@ -49,7 +49,9 @@ def rasterio_read_gcs(file_path: str):
     key_data = os.getenv("SERVICE_ACCOUNT_KEY")
     key_data = base64.b64decode(key_data).decode('utf-8')
 
-    with tempfile.NamedTemporaryFile(delete=False, suffix='.json') as temp_key_file:
+    with (
+        tempfile.NamedTemporaryFile(delete=False, suffix='.json')
+    ) as temp_key_file:
         temp_key_file.write(key_data.encode('utf-8'))
         temp_key_file_path = temp_key_file.name
 
@@ -65,7 +67,7 @@ def rasterio_read_gcs(file_path: str):
 
     try:
         os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = temp_key_file_path
-        
+
         with Env(**gdal_config):
             gcs_path = f'gs://{settings.GCS_BUCKET_NAME}/{file_path}'
             with rasterio.open(gcs_path) as dataset:

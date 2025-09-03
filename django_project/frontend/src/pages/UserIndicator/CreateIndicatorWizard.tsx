@@ -1,4 +1,4 @@
-import React, {  } from "react";
+import React, { useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import {
   Box,
@@ -34,13 +34,17 @@ import RenderStep2 from "./Step2";
 import RenderStep3 from "./Step3";
 import { resetForm, setLoading, FileWithId, UploadedFile } from "../../store/userIndicatorSlice";
 import { useNavigate } from "react-router-dom";
-import { sub } from "date-fns";
+
 
 const CreateIndicatorWizard: React.FC = () => {
   const navigate = useNavigate();
   const toast = useToast();
   const dispatch = useDispatch<AppDispatch>();
   const { formData, loading, error, uploadedFiles, uploadStatus } = useSelector((state: any) => state.userIndicator);
+
+  useEffect(() => {
+    dispatch(resetForm());
+  }, [])
 
   const validateStep1 = () => {
     // required fields
@@ -185,7 +189,6 @@ const CreateIndicatorWizard: React.FC = () => {
     });
 
     axiosPromise.then((response) => {
-        console.log('Indicator created:', response.data);
         dispatch(resetForm());
         // redirect back to list
         navigate('/user-indicator');

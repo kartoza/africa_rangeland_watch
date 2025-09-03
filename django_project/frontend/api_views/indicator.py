@@ -109,65 +109,78 @@ class UserIndicatorAPI(APIView):
                     'id': band,
                     'tilesetBandIndex': idx
                 } for idx, band in enumerate(bands)
-            ],       
+            ],
             'startTime': file.get('startDate'),
             'endTime': file.get('endDate')
         }
-        return manifest
+        return [manifest]
 
-    def _create_gcs_image_collection_manifest(self, files, gee_asset_id):
+    def _create_gcs_image_collection_manifest(
+        self, files, gee_asset_id, bands
+    ):
         """Create GCS image collection manifest."""
-        manifest = {
-            'name': f'{settings.GEE_ASSET_ID_PREFIX}{gee_asset_id}',
-            'tilesets': []
-        }
-        for file in files:
+        ee.data.createAsset(
+            {'type': 'ImageCollection'},
+            f'{settings.GEE_ASSET_ID_PREFIX}{gee_asset_id}'
+        )
+
+        manifests = []
+        for idx, file in enumerate(files):
             upload_item = AssetUploadItem.objects.filter(
                 id=file['uploadItemID']
             ).first()
             if not upload_item:
                 continue
 
-            manifest['tilesets'].append({
-                'sources': [
+            manifest = {
+                'name': (
+                    f'{settings.GEE_ASSET_ID_PREFIX}{gee_asset_id}/'
+                    f'image_{idx}'
+                ),
+                'tilesets': [
                     {
-                        'uris': [
-                            f'gs://{settings.GCS_BUCKET_NAME}/'
-                            f'{upload_item.upload_path}'
-                        ]
+                        'sources': [
+                            {
+                                'uris': [
+                                    f'gs://{settings.GCS_BUCKET_NAME}/'
+                                    f'{upload_item.upload_path}'
+                                ]
+                            }
+                        ],
                     }
                 ],
-                'properties': {
-                    'system:time_start': file.get(
-                        'startDate'
-                    ),
-                    'system:time_end': file.get(
-                        'endDate'
-                    )
-                }
-            })
-        return manifest
+                'bands': [
+                    {
+                        'id': band,
+                        'tilesetBandIndex': idx
+                    } for idx, band in enumerate(bands)
+                ],
+                'startTime': file.get('startDate'),
+                'endTime': file.get('endDate')
+            }
+
+            manifests.append(manifest)
+        return manifests
 
     def _import_uploaded_raster_files(self, files, gee_asset_id, bands):
         """Import uploaded raster files to GEE."""
         # Each file has uploadItemID, fileName, fileSize, startDate, endDate
-        manifest = (
+        initialize_engine_analysis()
+        manifests = (
             self._create_gcs_image_manifest(files, gee_asset_id, bands) if
             len(files) == 1 else
-            self._create_gcs_image_collection_manifest(files, gee_asset_id)
+            self._create_gcs_image_collection_manifest(
+                files, gee_asset_id, bands
+            )
         )
 
-        # DEBUG
-        print(bands)
-        print(manifest)
-
         # Upload the asset using the manifest.
-        initialize_engine_analysis()
-        # return ee.data.createAsset(manifest)
-        task_id = ee.data.newTaskId()[0]
-        res = ee.data.startIngestion(task_id, manifest)
-        print(res)
-        return task_id
+        task_ids = []
+        for manifest in manifests:
+            task_id = ee.data.newTaskId()[0]
+            res = ee.data.startIngestion(task_id, manifest)
+            task_ids.append(res.get('id'))
+        return task_ids
 
     def post(self, request, *args, **kwargs):
         """Create a new User Indicator."""
@@ -233,16 +246,25 @@ class UserIndicatorAPI(APIView):
 
         # import uploaded raster files
         files = request.data.get('files', [])
-        gee_task_id = None
+        gee_task_ids = None
         if files:
-            gee_task_id = self._import_uploaded_raster_files(
+            gee_task_ids = self._import_uploaded_raster_files(
                 files, gee_asset_id, request.data.get('bands')
             )
-            indicator.ingestion_task_id = gee_task_id
             indicator.is_active = False
             indicator.save()
+            # store task_ids in user_gee_asset
+            user_gee_asset.ingestion_status = {}
+            for task_id in gee_task_ids:
+                user_gee_asset.ingestion_status[task_id] = {
+                    'status': 'PENDING',
+                    'error': None,
+                    'started_at': datetime.now().isoformat()
+                }
+            user_gee_asset.save()
+
             # start celery task to monitor its status/any error
-            check_ingestor_asset_status.delay(gee_task_id, indicator.id)
+            check_ingestor_asset_status.delay(user_gee_asset.id)
 
         return Response(
             status=201,
@@ -250,7 +272,7 @@ class UserIndicatorAPI(APIView):
                 'id': indicator.id,
                 'geeAssetID': gee_asset_id,
                 'userAssetID': user_gee_asset.id,
-                'geeTaskId': gee_task_id
+                'geeTaskIds': gee_task_ids
             }
         )
 
@@ -298,37 +320,29 @@ class FetchBandAPI(APIView):
             bands, start_date, end_date
         ) = self._try_bands_from_image_collection(asset_id)
         if bands:
-            return (bands, GEEAssetType.IMAGE_COLLECTION, start_date, end_date)
+            return (
+                bands, GEEAssetType.IMAGE_COLLECTION, start_date, end_date
+            )
 
-        return None, None
+        return None, None, None, None
 
     def _normalize_band_name(self, band_name):
-        """
-        Normalize a band name to create a valid band ID.
-        
-        Requirements:
-        - Must start with a letter (a-z or A-Z)
-        - Can only contain: letters (a-z, A-Z), digits (0-9), underscores (_), or hyphens (-)
-        
-        Args:
-            band_name (str): The original band name to normalize
-            
-        Returns:
-            str: The normalized band ID, or None if normalization fails
-        """
+        """Normalize a band name to create a valid band ID."""
         if not band_name or not isinstance(band_name, str):
             return None
 
         # Step 1: Replace spaces with underscores
         normalized = band_name.strip().replace(' ', '_')
 
-        # Step 2: Remove any characters that aren't letters, digits, underscores, or hyphens
+        # Step 2: Remove any characters that aren't letters,
+        # digits, underscores, or hyphens
         normalized = re.sub(r'[^a-zA-Z0-9_-]', '', normalized)
 
         # Step 3: Remove leading characters that aren't letters
         normalized = re.sub(r'^[^a-zA-Z]+', '', normalized)
 
-        # Step 4: If string is empty or doesn't start with a letter, prepend 'band_'
+        # Step 4: If string is empty or doesn't start with
+        # a letter, prepend 'band_'
         if not normalized or not normalized[0].isalpha():
             if normalized:
                 normalized = 'band_' + normalized
@@ -343,7 +357,7 @@ class FetchBandAPI(APIView):
             session=session_id
         )
         if not upload_items.exists():
-            return None, None
+            return None, None, None
 
         # for each upload item, check if exists in bucket
         gcs_bucket = get_gcs_client()
@@ -358,7 +372,7 @@ class FetchBandAPI(APIView):
                 files.append(item)
             else:
                 deleted_ids.append(item.id)
-        
+
         if deleted_ids:
             AssetUploadItem.objects.filter(id__in=deleted_ids).delete()
 
@@ -378,7 +392,7 @@ class FetchBandAPI(APIView):
                 if desc:
                     bands.append(desc)
                 else:
-                    bands.append(f'b{i+1}')
+                    bands.append(f'b{i + 1}')
 
         return bands, asset_type, files
 
@@ -424,11 +438,12 @@ class FetchBandAPI(APIView):
                     status=400,
                     data={
                         'error': (
-                            'No valid files found for the provided session ID.'
+                            'No valid files found for '
+                            'the provided session ID.'
                         )
                     }
                 )
-            
+
             files = [{
                 'fileName': file.file_name,
                 'fileSize': file.file_size,
@@ -484,7 +499,7 @@ class GetSignedURLUploadAPI(APIView):
         object_name = generate_object_name(request.user.id, file_name)
 
         bucket = get_gcs_client()
-        blob = bucket.blob(object_name)        
+        blob = bucket.blob(object_name)
 
         # Set blob metadata
         blob.content_type = request.data.get('contentType')
