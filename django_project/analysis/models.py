@@ -1180,7 +1180,7 @@ class UserIndicator(BaseIndicator):
             var_names = gee_asset.metadata.get(
                 'band_names', [indicator.variable_name]
             )
-            var_name = var_names[0]
+            var_name = indicator.config.get('selected_band', var_names[0])
 
             gee_asset_class = GEEAssetType.get_ee_asset_class(gee_asset)
             gee_asset_obj = gee_asset_class(

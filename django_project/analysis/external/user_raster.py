@@ -106,7 +106,7 @@ def user_temporal_analysis(
             if td >= date_start and td <= date_end:
                 dates.append(date_start)
 
-    var_name = var_names[0]
+    var_name = indicator.config.get('selected_band', var_names[0])
     var_rename = indicator.variable_name
     image_col = None
     if gee_asset.type == GEEAssetType.IMAGE_COLLECTION:
