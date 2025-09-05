@@ -338,9 +338,6 @@ class FetchBandAPI(APIView):
         # digits, underscores, or hyphens
         normalized = re.sub(r'[^a-zA-Z0-9_-]', '', normalized)
 
-        # Step 3: Remove leading characters that aren't letters
-        normalized = re.sub(r'^[^a-zA-Z]+', '', normalized)
-
         # Step 4: If string is empty or doesn't start with
         # a letter, prepend 'band_'
         if not normalized or not normalized[0].isalpha():
@@ -387,6 +384,8 @@ class FetchBandAPI(APIView):
         check_file = files[0]
 
         with rasterio_read_gcs(check_file.upload_path) as src:
+            print(src.count)
+            print(src.descriptions)
             for i in range(src.count):
                 desc = self._normalize_band_name(src.descriptions[i])
                 if desc:
