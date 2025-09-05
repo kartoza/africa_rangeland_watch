@@ -10,7 +10,7 @@ import Chart from "chart.js/auto";
 import {FeatureCollection} from "geojson";
 import 'chartjs-adapter-date-fns';
 import { getTrendLineData, formatMonthYear } from "../../../utils/chartUtils";
-import { downloadPDF } from '../../../utils/downloadPDF';
+import { downloadAnalysisPDF } from '../../../utils/downloadPDF';
 
 import './style.css';
 
@@ -551,7 +551,7 @@ export default function AnalysisResult() {
               temporalResolution: analysis.data.temporalResolution,
               variable: analysis.data.variable,
             };
-            downloadPDF(containerRef, exportAnalysis, 'BaselineTableContainer', ['download-button'])
+            downloadAnalysisPDF(containerRef, exportAnalysis, 'BaselineTableContainer', ['download-button'])
           }} 
           colorScheme="teal" 
           aria-label="Download"
