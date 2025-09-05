@@ -12,3 +12,7 @@ license: This program is free software; you can redistribute it and/or modify it
 ---
 
 # Examples of running instances 
+
+Here are the running instances of ARW:
+
+[Staging](https://arw.sta.do.kartoza.com/)

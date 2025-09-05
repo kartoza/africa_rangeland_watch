@@ -234,15 +234,7 @@ def user_spatial_analysis_dict(
     )
     variable_asset_dict = {}
     for indicator, user_gee_asset in indicator_asset_dicts.items():
-        var_names = user_gee_asset.metadata.get(
-            'band_names', [indicator.variable_name]
-        )
-        var_name = var_names[0]
-
-        gee_asset_class = GEEAssetType.get_ee_asset_class(user_gee_asset)
-        gee_asset_obj = gee_asset_class(
-            user_gee_asset.source
-        ).select(var_name).filterDate(
+        gee_asset_obj = user_gee_asset.filterDate(
             start_date.isoformat(), end_date.isoformat()
         ).filterBounds(countries)
 

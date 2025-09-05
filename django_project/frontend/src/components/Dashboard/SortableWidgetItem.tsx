@@ -415,9 +415,10 @@ const SortableWidgetItem: React.FC<{
                         {height.charAt(0).toUpperCase() + height.slice(1)} ({heightConfig[height].minH})
                       </MenuItem>
                     ))}
-                    <Text px={3} py={2} pt={4} fontSize="xs" fontWeight="bold" color="gray.500" textTransform="uppercase">
-                      Layers
-                    </Text>
+                    {widget.type == "map" && <>
+                      <Text px={3} py={2} pt={4} fontSize="xs" fontWeight="bold" color="gray.500" textTransform="uppercase">
+                        Layers
+                      </Text>
                       <MenuItem 
                         key={'earth-ranger'} 
                         closeOnSelect={false}
@@ -431,6 +432,7 @@ const SortableWidgetItem: React.FC<{
                           Earth Ranger
                         </Checkbox>
                       </MenuItem>
+                    </>}
                   </MenuList>
                 </Menu>
                 <IconButton

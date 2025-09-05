@@ -25,6 +25,9 @@ Published under AGPL-3. See the [full license](license.md) text.
 | Jeremy Prior | [Jeremy-Prior](https://github.com/Jeremy-Prior) | <img src="https://github.com/Jeremy-Prior.png" alt="" width="64" height="64"> |
 | Tim Sutton | [timlinux](https://github.com/timlinux) | <img src="https://github.com/timlinux.png" alt= “” width="64" height="64"> |
 | Ketan Bamniya | [ketankartoza](https://github.com/ketankartoza) | <img src="https://github.com/ketankartoza.png" alt="" width="64" height="64"> |
+| Danang Massandy | [danangmassandy](https://github.com/danangmassandy) | <img src="https://github.com/danangmassandy.png" alt="" width="64" height="64"> |
+| Zulfikar Akbar Muzakki | [zamuzakki](https://github.com/zamuzakki) | <img src="https://github.com/zamuzakki.png" alt="" width="64" height="64"> |
+| Tinashe Chiraiya | [tinashechiraya](https://github.com/tinashechiraya) | <img src="https://github.com/tinashechiraya.png" alt="" width="64" height="64"> |
 
 
 ## Project funders/backers

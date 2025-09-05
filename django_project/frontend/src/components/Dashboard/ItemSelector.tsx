@@ -74,6 +74,7 @@ const ItemSelector = forwardRef(
   // Debounce search term
   useEffect(() => {
     const timer = setTimeout(() => {
+      console.log('localSearchTerm: ', localSearchTerm);
       setDebouncedSearchTerm(localSearchTerm);
     }, 500);
 
@@ -82,7 +83,7 @@ const ItemSelector = forwardRef(
 
   // Handle search term changes
   useEffect(() => {
-    if (debouncedSearchTerm !== searchTerm && error === null) {
+    if (((debouncedSearchTerm !== searchTerm) || (debouncedSearchTerm == '' && searchTerm == '')) && error === null) {
       dispatch(setSearchTerm(debouncedSearchTerm));
       dispatch(resetItems());
       dispatch(fetchItems({ page: 1, limit: 10, search: debouncedSearchTerm }));

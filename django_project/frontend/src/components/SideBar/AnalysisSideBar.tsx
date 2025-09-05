@@ -2,7 +2,7 @@ import React, {useState} from "react";
 import { Box, Button, Tabs, TabList, Tab, TabPanels, TabPanel, Table, Thead, Tbody, Tr, Th, Td, Flex, Divider, Text, Heading, Link, Spinner } from "@chakra-ui/react";
 import { FaTimes } from "react-icons/fa";
 import { motion } from "framer-motion";
-import { RenderResult } from "../DashboardCharts/CombinedCharts";
+import ChartWidgets from "../Dashboard/ChartWidget";
 import { downloadCog } from "../../utils/api";
 
 interface SidebarProps {
@@ -31,6 +31,15 @@ const AnalysisSideBar = ({ isOpen, onClose, selectedAnalysis }: SidebarProps) =>
       setIsDownloading(null);
     }
   };
+
+  const analysisType = selectedAnalysis.analysis_results.data.analysisType;
+  let analysisResults = selectedAnalysis.analysis_results;
+  if ( analysisType == 'Spatial') {
+    analysisResults = {
+      data: selectedAnalysis.analysis_results.data,
+      results: selectedAnalysis.analysis_results.results.spatial.results
+    }
+  }
 
   return (
     <>
@@ -99,7 +108,21 @@ const AnalysisSideBar = ({ isOpen, onClose, selectedAnalysis }: SidebarProps) =>
           mb={4}
           overflow={"auto"}
         >
-          <RenderResult analysisResults={[selectedAnalysis?.analysis_results]} />
+          <ChartWidgets 
+            widgetId={selectedAnalysis.id} 
+            data={analysisResults} 
+            height='medium' 
+          />
+          {analysisType == 'Spatial' && <ChartWidgets 
+            widgetId={selectedAnalysis.id} 
+            data={{
+              data: {
+                ...selectedAnalysis.analysis_results.data,
+                analysisType: 'Temporal'
+              },
+              results: selectedAnalysis.analysis_results.results.temporal.results
+            }} 
+          height='medium' />}
         </Box>
 
         {/* Title and View Analysis Button */}
@@ -107,9 +130,10 @@ const AnalysisSideBar = ({ isOpen, onClose, selectedAnalysis }: SidebarProps) =>
           <Heading size="md" color="black" fontWeight="bold">
             {selectedAnalysis?.heading}
           </Heading>
-          <Button colorScheme="green" variant="solid" backgroundColor="dark_green.800" _hover={{ backgroundColor: "light_green.400" }} borderRadius="2px" h={8} disabled>
+          {/* disable View Analysis for now */}
+          {/* <Button colorScheme="green" variant="solid" backgroundColor="dark_green.800" _hover={{ backgroundColor: "light_green.400" }} borderRadius="2px" h={8} disabled>
             View Analysis
-          </Button>
+          </Button> */}
         </Flex>
 
         <Divider mb={4} borderColor="gray.300" />
