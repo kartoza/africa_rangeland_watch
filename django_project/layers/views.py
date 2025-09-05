@@ -28,9 +28,8 @@ def user_input_layers(request):
     filtering for layers that belong to the 'user-defined' group.
     """
     user_layers = InputLayer.objects.filter(
-        created_by=request.user,
         group__name="user-defined"
-    ).select_related('data_provider', 'group')
+    ).select_related('data_provider', 'group').order_by('-created_at')
 
     # Group layers by 'group' field
     grouped_layers = defaultdict(list)
@@ -47,6 +46,15 @@ def user_input_layers(request):
             "updated_at": layer.updated_at,
             "layer_id": gis_layer.id if gis_layer else None,
             "url": layer.url,
+            "is_owned": (
+                layer.created_by.id == request.user.id or
+                request.user.is_superuser
+            ),
+            "created_by": (
+                f"{layer.created_by.first_name} "
+                f"{layer.created_by.last_name}" if
+                layer.created_by else ""
+            )
         })
 
     # Return grouped layers as a JsonResponse
@@ -58,7 +66,21 @@ def delete_layer(request, uuid):
     """
     View to delete a user-defined layer by UUID.
     """
-    layer = get_object_or_404(InputLayer, uuid=uuid, created_by=request.user)
+    layer = get_object_or_404(InputLayer, uuid=uuid)
+
+    is_owned = (
+        layer.created_by.id == request.user.id or
+        request.user.is_superuser
+    )
+
+    if not is_owned:
+        return JsonResponse(
+            {
+                "error": "You do not have permission to delete this layer."
+            },
+            status=403
+        )
+
     layer.delete()
     return JsonResponse({"message": "Layer deleted successfully"}, status=200)
 
