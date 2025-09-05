@@ -16,6 +16,7 @@ import alertSettingReducer from "./alertSettingSlice";
 import dataPreviewReducer from './dataPreviewSlice';
 import downloadReducer from './downloadSlice';
 import userAnalysisSearchReducer from './userAnalysisSearchSlice';
+import userIndicatorReducer from './userIndicatorSlice';
 
 
 const store = configureStore({
@@ -36,7 +37,8 @@ const store = configureStore({
     alertSettings: alertSettingReducer,
     dataPreview: dataPreviewReducer,
     download: downloadReducer,
-    userAnalysisSearch: userAnalysisSearchReducer
+    userAnalysisSearch: userAnalysisSearchReducer,
+    userIndicator: userIndicatorReducer,
   },
 });
 

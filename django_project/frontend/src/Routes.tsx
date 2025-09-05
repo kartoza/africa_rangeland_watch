@@ -21,6 +21,8 @@ const MapPage  = React.lazy(() => import("./pages/Map"));
 const LearnMorePage  = React.lazy(() => import("./pages/About/LearnMore"));
 const EarthRangersPage = React.lazy(() => import("./pages/EarthRangers"));
 const EarthRangersEventsPage = React.lazy(() => import("./pages/EarthRangers/EarthRangerEvents"));
+const UserIndicatorPage = React.lazy(() => import("./pages/UserIndicator"));
+const UserIndicatorWizardPage = React.lazy(() => import("./pages/UserIndicator/CreateIndicatorWizard"));
 
 
 const ProjectRoutes = () => {
@@ -68,6 +70,14 @@ const ProjectRoutes = () => {
     {
       path: "/uploaded-resources",
       element: <PrivateRoute Component={UploadedResourcesPage} />,
+    },
+    {
+      path: "/user-indicator/create",
+      element: <PrivateRoute Component={UserIndicatorWizardPage} />,
+    },
+    {
+      path: "/user-indicator",
+      element: <PrivateRoute Component={UserIndicatorPage} />,
     },
     {
       path: "/analysis-results",

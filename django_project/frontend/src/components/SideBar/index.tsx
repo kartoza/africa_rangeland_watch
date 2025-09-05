@@ -171,6 +171,16 @@ export default function Sidebar(props: Props) {
           </MenuItem>
           <MenuItem
             style={{
+              backgroundColor: isActive("/user-indicator")
+                ? "#a8d159"
+                : "transparent",
+            }}
+            onClick={() => navigate("/user-indicator")}
+          >
+            User Indicator
+          </MenuItem>
+          <MenuItem
+            style={{
               backgroundColor: isActive("/support") ? "#a8d159" : "transparent",
             }}
             onClick={() => navigate("/support")}

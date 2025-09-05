@@ -22,7 +22,9 @@ from core.models import TaskStatus, Preferences
 from analysis.models import (
     AnalysisResultsCache,
     AnalysisRasterOutput,
-    AnalysisTask
+    AnalysisTask,
+    UserIndicator,
+    UserGEEAsset
 )
 from analysis.analysis import (
     export_image_to_drive,
@@ -371,3 +373,74 @@ def run_analysis_task(analysis_task_id: int):
         analysis_task.completed_at = timezone.now()
         analysis_task.updated_at = timezone.now()
         analysis_task.save()
+
+
+@app.task(name='check_ingestor_asset_status')
+def check_ingestor_asset_status(user_gee_asset_id: int):
+    """Check ingestor asset status."""
+    gee_asset = UserGEEAsset.objects.filter(
+        id=user_gee_asset_id
+    ).first()
+    if not gee_asset:
+        logger.error(
+            f'UserGEEAsset with id {user_gee_asset_id} not found.'
+        )
+        return
+
+    if not gee_asset.ingestion_status:
+        logger.error(
+            f'UserGEEAsset with id {user_gee_asset_id} '
+            'has no ingestion status.'
+        )
+        return
+
+    task_ids = gee_asset.get_running_ingestion_task_id()
+    if not task_ids:
+        UserIndicator.set_status_by_asset_key(gee_asset.key, True)
+        return
+
+    max_wait_time = 3600
+    start_time = time.time()
+    # Check the status of the GEE ingestion task
+    initialize_engine_analysis()
+    status_list = ee.data.getTaskStatus(task_ids)
+
+    while (
+        (time.time() - start_time) < max_wait_time
+    ):
+        for status in status_list:
+            ingestion_status_dict = gee_asset.ingestion_status.get(
+                status['id']
+            )
+            if ingestion_status_dict:
+                ingestion_status_dict['status'] = status['state']
+                ingestion_status_dict['error'] = status.get('error_message')
+                gee_asset.ingestion_status[status['id']] = (
+                    ingestion_status_dict
+                )
+        gee_asset.save()
+        task_ids = gee_asset.get_running_ingestion_task_id()
+        if not task_ids:
+            break  # all tasks are completed
+        time.sleep(60)
+        status_list = ee.data.getTaskStatus(task_ids)
+
+    # count stats
+    completed_count = 0
+    failed_count = 0
+    for _, status in gee_asset.ingestion_status.items():
+        if status['status'] == 'COMPLETED':
+            completed_count += 1
+        elif status['status'] == 'FAILED':
+            failed_count += 1
+
+    logger.info(
+        f'GEE task {user_gee_asset_id} completed with '
+        f'{completed_count} and failed with {failed_count}.'
+    )
+
+    # update the indicator status if it's completed or failed
+    if failed_count > 0 or len(gee_asset.ingestion_status) != completed_count:
+        UserIndicator.set_status_by_asset_key(gee_asset.key, False)
+    else:
+        UserIndicator.set_status_by_asset_key(gee_asset.key, True)

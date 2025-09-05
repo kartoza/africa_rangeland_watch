@@ -50,3 +50,8 @@ TEMPLATES[0]['DIRS'] += [
     absolute_path('base', 'templates'),
 ]
 
+# GCS BUCKET NAME
+GCS_BUCKET_NAME = os.getenv("GCS_BUCKET_NAME", "ktz-dev-bkt-gcs-01")
+
+# GEE ASSET ID PREFIX
+GEE_ASSET_ID_PREFIX = os.getenv("GEE_ASSET_ID_PREFIX", "projects/ee-dng/assets/")
