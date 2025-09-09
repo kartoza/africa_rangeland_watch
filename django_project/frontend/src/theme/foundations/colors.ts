@@ -1,5 +1,6 @@
 const colors = {
     dark_green: {
+      "500": "#005c4a",
       "800": "#005c4a",
     },
     light_green: {

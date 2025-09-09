@@ -1,6 +1,7 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import axios from 'axios';
 import { DataState } from './common';
+import { setCSRFToken } from "../utils/csrfUtils";
 
 export interface Layer {
   id: string;
@@ -22,6 +23,10 @@ export interface Layer {
   created_at?: string;
   updated_at?: string;
   layer_id?: number;
+  description?: string;
+  layer_type?: string; // New tag for layer type
+  is_owned?: boolean;
+  created_by?: string;
 }
 
 interface LayerState extends DataState {
@@ -51,6 +56,7 @@ export const fetchUserDefinedLayers = createAsyncThunk(
 export const fetchLayers = createAsyncThunk(
   'layer/fetchLayers',
   async () => {
+    setCSRFToken();
     const response = await axios.get('/frontend-api/layer/');
     return response.data;
   }
@@ -61,6 +67,7 @@ export const deleteLayer = createAsyncThunk(
   'layer/deleteLayer',
   async (uuid: string, { rejectWithValue }) => {
     try {
+      setCSRFToken();
       await axios.delete(`/delete-layer/${uuid}/`);
       return uuid; // Return UUID to remove from state
     } catch (error) {
@@ -74,6 +81,7 @@ export const downloadLayer = createAsyncThunk(
   'layer/downloadLayer',
   async (uuid: string, { rejectWithValue }) => {
     try {
+      setCSRFToken();
       const response = await axios.get(`/download-layer/${uuid}/`, {
         responseType: 'blob', // Important for file downloads
       });
