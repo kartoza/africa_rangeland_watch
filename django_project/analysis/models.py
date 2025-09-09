@@ -844,6 +844,24 @@ class AnalysisTask(models.Model):
         help_text='Error message if the task failed.'
     )
 
+    def get_indicator(self):
+        variable = self.analysis_inputs['variable']
+        indicator = Indicator.objects.filter(
+            variable_name=variable
+        ).first()
+        if indicator:
+            return indicator
+        else:
+            indicator = UserIndicator.objects.filter(
+                variable_name=variable,
+                created_by=self.submitted_by
+            ).first()
+            if not indicator:
+                raise ValueError(
+                    f"Indicator for variable {variable} not found"
+                )
+            return indicator
+
 
 class IndicatorSource(models.TextChoices):
     """Choices for the source of an indicator."""
@@ -872,12 +890,6 @@ class BaseIndicator(models.Model):
         blank=True,
         null=True,
         help_text="Description of the indicator."
-    )
-
-    variable_name = models.CharField(
-        max_length=255,
-        unique=True,
-        help_text="The variable name used in the analysis."
     )
 
     source = models.CharField(
@@ -989,6 +1001,12 @@ class Indicator(BaseIndicator):
         max_length=255,
         unique=True,
         help_text="The name of the indicator."
+    )
+
+    variable_name = models.CharField(
+        max_length=255,
+        unique=True,
+        help_text="The variable name used in the analysis."
     )
 
     class Meta:
@@ -1104,6 +1122,10 @@ class UserIndicator(BaseIndicator):
         max_length=255,
         help_text="The name of the indicator."
     )
+    variable_name = models.CharField(
+        max_length=255,
+        help_text="The variable name used in the analysis."
+    )
     created_by = models.ForeignKey(
         User, on_delete=models.SET_NULL,
         null=True, related_name="indicators"
@@ -1119,6 +1141,13 @@ class UserIndicator(BaseIndicator):
         if indicator.exists():
             raise ValidationError(
                 f"Invalid name: '{self.name}' already exists!"
+            )
+
+        # check for variable in Indicator
+        indicator = Indicator.objects.filter(variable_name=self.name)
+        if indicator.exists():
+            raise ValidationError(
+                f"Invalid variable name: '{self.name}' already exists!"
             )
 
     @classmethod
@@ -1200,4 +1229,10 @@ class UserIndicator(BaseIndicator):
         indicators.update(is_active=is_active)
 
     class Meta:
-        unique_together = ('name', 'created_by')
+        # unique_together = ('name', 'variable_name', 'created_by')
+        constraints = [
+            models.UniqueConstraint(
+                fields=['name', 'variable_name', 'created_by'],
+                name='unique_user_indicator'
+            )
+        ]

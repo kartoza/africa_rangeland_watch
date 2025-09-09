@@ -4,6 +4,7 @@ Africa Rangeland Watch (ARW).
 
 .. note:: Background task for analysis
 """
+import typing
 import os
 from core.celery import app
 import ee
@@ -12,6 +13,7 @@ import tempfile
 import shutil
 import time
 import subprocess
+from dateutil.relativedelta import relativedelta
 from django.utils import timezone
 from django.conf import settings
 from django.contrib.auth import get_user_model
@@ -23,8 +25,11 @@ from analysis.models import (
     AnalysisResultsCache,
     AnalysisRasterOutput,
     AnalysisTask,
+    Indicator,
     UserIndicator,
-    UserGEEAsset
+    UserGEEAsset,
+    UserAnalysisResults,
+    IndicatorSource
 )
 from analysis.analysis import (
     export_image_to_drive,
@@ -32,6 +37,8 @@ from analysis.analysis import (
     get_rel_diff, calculate_temporal_modis_veg,
     spatial_get_date_filter
 )
+from analysis.external.user_raster import _build_aggregated_images
+from analysis.external.gpw import _build_gpw_annual_images
 from analysis.runner import AnalysisRunner
 from analysis.utils import (
     get_gdrive_file,
@@ -46,8 +53,29 @@ logger = logging.getLogger(__name__)
 User = get_user_model()
 
 
-def _run_spatial_analysis(data):
+def _get_indicator(raster_output: AnalysisRasterOutput):
+    user_analysis_result = UserAnalysisResults.objects.filter(
+        raster_outputs=raster_output
+    ).first()
+
+    if not user_analysis_result:
+        raise ValueError("No User Analysis Result found!")
+
+    analysis_task: AnalysisTask = AnalysisTask.objects.filter(
+        analysis_inputs=user_analysis_result.analysis_results['data']
+    ).first()
+    if not analysis_task:
+        raise ValueError("No Analysis Task found!")
+    indicator = analysis_task.get_indicator()
+    return indicator
+
+
+def _run_spatial_analysis(
+    analysis_raster_output: AnalysisRasterOutput,
+    indicator: typing.Union[UserIndicator, Indicator]
+):
     """Run spatial analysis to get difference of relative layer."""
+    data = analysis_raster_output.analysis
     input_layers = InputLayer()
     reference_layer_geom = AnalysisRunner.get_reference_layer_geom(data)
     (
@@ -57,12 +85,23 @@ def _run_spatial_analysis(data):
     filter_start_date, filter_end_date = spatial_get_date_filter(
         spatial_analysis_dict
     )
+
+    user_analysis_result = UserAnalysisResults.objects.filter(
+        raster_outputs=analysis_raster_output
+    ).first()
+
+    analysis_task: AnalysisTask = AnalysisTask.objects.filter(
+        analysis_inputs=user_analysis_result.analysis_results['data']
+    ).first()
+    indicator = analysis_task.get_indicator()
+
     rel_diff = get_rel_diff(
         input_layers.get_spatial_layer_dict(
             filter_start_date, filter_end_date
         ),
         spatial_analysis_dict,
-        reference_layer_geom
+        reference_layer_geom,
+        indicator.get_reducer()
     )
     return rel_diff
 
@@ -100,14 +139,25 @@ def store_spatial_analysis_raster_output(raster_output_id: int):
 
     initialize_engine_analysis()
 
+    indicator = _get_indicator(raster_output)
     aoi = _get_bounds(raster_output)
-    vis_params = {
-        'min': -25,
-        'max': 25,
-        'palette': ['#f9837b', '#fffcb9', '#fffcb9', '#32c2c8'],
-        'opacity': 0.7
-    }
-    image = _run_spatial_analysis(raster_output.analysis)
+    if isinstance(indicator, UserIndicator) or\
+        indicator.source == IndicatorSource.GPW:
+        metadata = indicator.metadata
+        vis_params = {
+            'min': metadata['minValue'],
+            'max': metadata['maxValue'],
+            'palette': metadata['colors'],
+            'opacity': metadata['opacity']
+        }
+    else:
+        vis_params = {
+            'min': -25,
+            'max': 25,
+            'palette': ['#f9837b', '#fffcb9', '#fffcb9', '#32c2c8'],
+            'opacity': 0.7
+        }
+    image = _run_spatial_analysis(raster_output, indicator)
 
     status = export_image_to_drive(
         image=image,
@@ -281,12 +331,41 @@ def generate_temporal_analysis_raster_output(raster_output_id):
         name=raster_output.analysis.get('variable')
     )
 
+    indicator = _get_indicator(raster_output)
+
     # generate the image
-    img = calculate_temporal_modis_veg(
-        selected_area, start_date.isoformat(), end_date.isoformat(),
-        resolution, resolution_step,
-        raster_output.analysis.get('variable')
-    )
+    if isinstance(indicator, UserIndicator):
+        img_col, var_name, _ = _build_aggregated_images(
+            indicator.variable_name,
+            indicator.created_by,
+            start_date,
+            [end_date],
+            resolution
+        )
+        img = img_col.reduce(indicator.get_reducer())
+    elif indicator.source == IndicatorSource.GPW:
+        # Since 1 GPW raster represents 1 year,
+        # date_ranges must have length of 1
+        (
+            img_col,
+            var_name,
+            indicator,
+            date_ranges,
+            dates
+        ) = _build_gpw_annual_images(
+            indicator.variable_name, start_date, [end_date.year]
+        )
+        year_start, year_end = date_ranges[0]
+        test_dt = (year_end + relativedelta(months=1)).isoformat()
+
+        subset = img_col.filterDate(year_start.isoformat(), test_dt)
+        img = subset.reduce(indicator.get_reducer())
+    else:
+        img = calculate_temporal_modis_veg(
+            selected_area, start_date.isoformat(), end_date.isoformat(),
+            resolution, resolution_step,
+            raster_output.analysis.get('variable')
+        )
     if temporal_resolution == 'Annual':
         img = img.filter(
             ee.Filter.eq('year', raster_output.analysis.get('year'))
