@@ -8,6 +8,7 @@ Africa Rangeland Watch (ARW).
 from django.urls import reverse
 
 from core.tests.common import BaseAPIViewTest
+from unittest.mock import patch, MagicMock
 from analysis.models import (
     GEEAssetType,
     Indicator, 
@@ -15,7 +16,13 @@ from analysis.models import (
     IndicatorSource,
     UserGEEAsset
 )
-from frontend.api_views.indicator import IndicatorAPI
+from frontend.models import AssetUploadItem
+from frontend.api_views.indicator import (
+    IndicatorAPI,
+    UserIndicatorAPI,
+    FetchBandAPI,
+    GetSignedURLUploadAPI
+)
 
 
 class IndicatorAPITest(BaseAPIViewTest):
@@ -136,9 +143,154 @@ class IndicatorAPITest(BaseAPIViewTest):
             item,
             {
                 'name': user_indicator.name, 
+                'description': user_indicator.description,
                 'variable': user_indicator.variable_name, 
                 'analysis_types': user_indicator.analysis_types, 
                 'temporal_resolutions': user_indicator.temporal_resolutions, 
-                'source': user_indicator.source
+                'source': 'other',
+                'config': user_indicator.config,
+                'metadata': user_indicator.metadata
             }
         )
+
+
+class UserIndicatorAPITest(BaseAPIViewTest):
+    """Test case for UserIndicatorAPI."""
+
+    pass
+
+
+class FetchBandAPITest(BaseAPIViewTest):
+    """Test case for FetchBandAPI."""
+
+    def test_fetch_band_api_anonymous_user(self):
+        """Test FetchBandAPI with anonymous user should fail."""
+        view = FetchBandAPI.as_view()
+        request = self.factory.post(
+            reverse('frontend-api:fetch-bands'),
+            data={'gee_asset_id': '', 'session_id': '12345'},
+            content_type='application/json'
+        )
+        response = view(request)
+        self.assertEqual(response.status_code, 401)
+
+    @patch('frontend.api_views.indicator.initialize_engine_analysis')
+    @patch('ee.Image')
+    def test_fetch_band_api_gee_asset_id(self, mock_image, mock_init_ee):
+        """Test FetchBandAPI with gee_asset_id."""
+        mock_getInfo = MagicMock()
+        mock_bandNames = MagicMock()
+        mock_image.return_value = mock_bandNames
+        mock_bandNames.bandNames.return_value = mock_getInfo
+        mock_getInfo.getInfo.return_value = ['B1', 'B2', 'B3']
+        view = FetchBandAPI.as_view()
+        request = self.factory.post(
+            reverse('frontend-api:fetch-bands'),
+            data={'gee_asset_id': 'valid-id', 'session_id': ''},
+            content_type='application/json'
+        )
+        self._force_authenticate(request, self.user)
+        response = view(request)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('bands', response.data)
+        mock_init_ee.assert_called_once()
+        self.assertEqual(response.data['bands'], ['B1', 'B2', 'B3'])
+
+    @patch('frontend.api_views.indicator.rasterio_read_gcs')
+    @patch('frontend.api_views.indicator.get_gcs_client')
+    def test_fetch_band_api_session_id(
+        self, mock_get_gcs_client, mock_rasterio_read_gcs
+    ):
+        """Test FetchBandAPI with session_id."""
+        session_id = 'session-12345'
+        # Create asset upload item
+        AssetUploadItem.objects.create(
+            file_name='test_file.tif',
+            file_size=1024,
+            session=session_id,
+            upload_path='path/to/file.tif',
+            uploaded_by=self.user
+        )
+
+        mock_bucket = MagicMock()
+        mock_blob = MagicMock()
+        mock_get_gcs_client.return_value = mock_bucket
+        mock_bucket.blob.return_value = mock_blob
+        mock_blob.exists.return_value = True
+
+        class MockDataset:
+            count = 3
+            descriptions = ['Red Band', 'Green@Band', '0blue']
+
+        mock_enter = MagicMock()
+        mock_enter.__enter__.return_value = MockDataset()
+        mock_rasterio_read_gcs.return_value = mock_enter
+
+        view = FetchBandAPI.as_view()
+        request = self.factory.post(
+            reverse('frontend-api:fetch-bands'),
+            data={'gee_asset_id': '', 'session_id': session_id},
+            content_type='application/json'
+        )
+        self._force_authenticate(request, self.user)
+        response = view(request)
+        self.assertEqual(response.status_code, 200)
+        self.assertIn('bands', response.data)
+        self.assertIn('files', response.data)
+        mock_get_gcs_client.assert_called_once()
+        mock_rasterio_read_gcs.assert_called_once()
+        self.assertEqual(
+            response.data['bands'],
+            ['Red_Band', 'GreenBand', 'band_0blue']
+        )
+
+
+class GetSignedURLUploadAPITest(BaseAPIViewTest):
+    """Test case for GetSignedURLUploadAPI."""
+
+    def test_get_signed_url_upload_api_anonymous_user(self):
+        """Test GetSignedURLUploadAPI with anonymous user should fail."""
+        view = GetSignedURLUploadAPI.as_view()
+        request = self.factory.post(
+            reverse('frontend-api:upload-get-signed-url'),
+            data={'filename': 'testfile.tif'},
+            content_type='application/json'
+        )
+        response = view(request)
+        self.assertEqual(response.status_code, 401)
+
+    @patch('frontend.api_views.indicator.get_gcs_client')
+    def test_get_signed_url_upload_api_mocked(self, mock_get_gcs_client):
+        """Test GetSignedURLUploadAPI with mocked GCS client and blob."""
+        mock_bucket = MagicMock()
+        mock_blob = MagicMock()
+        mock_generate_signed_url = MagicMock(
+            return_value='https://signed-url.example.com'
+        )
+
+        mock_get_gcs_client.return_value = mock_bucket
+        mock_bucket.blob.return_value = mock_blob
+        mock_blob.generate_signed_url = mock_generate_signed_url
+
+        view = GetSignedURLUploadAPI.as_view()
+        request = self.factory.post(
+            reverse('frontend-api:upload-get-signed-url'),
+            data={
+                'fileName': 'mockfile.tif',
+                'contentType': 'image/tiff',
+                'contentLength': 2048
+            },
+            content_type='application/json'
+        )
+        self._force_authenticate(request, self.user)
+        response = view(request)
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(
+            response.data['signedUrl'],
+            'https://signed-url.example.com'
+        )
+        self.assertEqual(
+            response.data['deleteUrl'],
+            'https://signed-url.example.com'
+        )
+        self.assertEqual(mock_blob.generate_signed_url.call_count, 2)
