@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { Box, Heading, Flex, Button, Text, Divider, Tag, TagLabel, Card, CardBody, Input, IconButton, Checkbox, Select, Collapse, SimpleGrid } from "@chakra-ui/react";
 import { FaEye, FaFilter, FaTrashAlt } from "react-icons/fa";
-import { deleteLayer, fetchUserDefinedLayers } from "../../store/layerSlice";
+import { deleteLayer, fetchUserDefinedLayers, Layer } from "../../store/layerSlice";
 import { AppDispatch, RootState } from "../../store";
 // import { Box, Heading, Flex, Button, Text, Divider, Tag, TagLabel, Card, CardBody, Input, IconButton, Modal, ModalOverlay, ModalHeader, ModalCloseButton, ModalBody, ModalContent, Checkbox, Select, Collapse, SimpleGrid } from "@chakra-ui/react";
 import Helmet from "react-helmet";
@@ -19,17 +19,6 @@ import DatasetPreview from "../../components/DatasetPreview";
 import DatasetDownloader from "../../components/DatasetDownloader";
 import { addUuid, removeUuid } from '../../store/downloadSlice';
 
-
-
-interface Layer {
-  uuid: string;
-  name: string;
-  description?: string;
-  data_provider: string;
-  layer_type: string; // New tag for layer type
-  created_at: string; // New tag for creation date
-  layer_id: number;
-}
 
 export default function UploadedResults() {
   const dispatch = useDispatch<AppDispatch>();
@@ -157,7 +146,9 @@ export default function UploadedResults() {
 
           {/* New Add Data Button and Download Button */}
           <Box display="flex" gap={2} width={{ base: "100%", md: "auto" }} mb={{ base: 4, md: "0" }} flexDirection={{ base: "column", md: "row" }}>
-            <DatasetUploader buttonVariant="profileArea"/>
+            <DatasetUploader buttonVariant="profileArea" onSuccessUpload={() => {
+              dispatch(fetchUserDefinedLayers());
+            }} />
 
             {/* Download Button */}
             <DatasetDownloader buttonVariant="profileArea" />
@@ -266,7 +257,7 @@ export default function UploadedResults() {
 
                       <Box mt={4} display="flex" flexWrap="wrap" gap={2}>
                         <Tag colorScheme="green" mr={2}>
-                          <TagLabel>{layer.data_provider || "Unknown"}</TagLabel>
+                          <TagLabel>{layer.created_by || "Unknown"}</TagLabel>
                         </Tag>
                         <Tag colorScheme="blue" mr={2}>
                           <TagLabel>{layer.layer_type || "Unknown Layer Type"}</TagLabel>
@@ -305,6 +296,7 @@ export default function UploadedResults() {
                         borderRadius="0px"
                         h={10}
                         onClick={() => handleDelete(layer.uuid)}
+                        isDisabled={!layer.is_owned}
                       >
                         Delete
                       </Button>
