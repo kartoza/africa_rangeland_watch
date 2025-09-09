@@ -861,7 +861,6 @@ class AnalysisTask(models.Model):
                     f"Indicator for variable {variable} not found"
                 )
             return indicator
-        
 
 
 class IndicatorSource(models.TextChoices):

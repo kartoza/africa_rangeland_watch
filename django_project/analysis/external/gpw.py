@@ -27,7 +27,9 @@ def _build_gpw_annual_images(variable, start_date, test_years):
 
     asset_keys = indicator.config.get('asset_keys', [])
     if not asset_keys:
-        raise ValueError(f'No asset keys found for indicator {indicator.name}.')
+        raise ValueError(
+            f'No asset keys found for indicator {indicator.name}.'
+        )
     asset_key = asset_keys[0]
 
     dates = [datetime.date(ty, 1, 1) for ty in test_years]
@@ -56,7 +58,13 @@ def gpw_annual_temporal_analysis(
     Perform annual temporal analysis for GPW dataset.
     Returns time series results (FeatureCollection -> dicts).
     """
-    image_col, var_name, indicator, date_ranges, dates = _build_gpw_annual_images(
+    (
+        image_col,
+        var_name,
+        indicator,
+        date_ranges,
+        dates
+    ) = _build_gpw_annual_images(
         variable, start_date, test_years
     )
     var_rename = indicator.name
@@ -93,7 +101,9 @@ def gpw_annual_temporal_analysis(
             return reduced
 
         annual_table = annual_table.map(process_image).flatten()
-        annual_table = annual_table.map(lambda feature: feature.setGeometry(None))
+        annual_table = annual_table.map(
+            lambda feature: feature.setGeometry(None)
+        )
         annual_table = annual_table.select(
             ['Name', var_name, 'year', 'month'],
             ['Name', var_rename, 'year', 'month']

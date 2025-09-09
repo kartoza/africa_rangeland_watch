@@ -60,7 +60,7 @@ def _get_indicator(raster_output: AnalysisRasterOutput):
 
     if not user_analysis_result:
         raise ValueError("No User Analysis Result found!")
-    
+
     analysis_task: AnalysisTask = AnalysisTask.objects.filter(
         analysis_inputs=user_analysis_result.analysis_results['data']
     ).first()
@@ -71,9 +71,9 @@ def _get_indicator(raster_output: AnalysisRasterOutput):
 
 
 def _run_spatial_analysis(
-        analysis_raster_output: AnalysisRasterOutput,
-        indicator: typing.Union[UserIndicator, Indicator]
-    ):
+    analysis_raster_output: AnalysisRasterOutput,
+    indicator: typing.Union[UserIndicator, Indicator]
+):
     """Run spatial analysis to get difference of relative layer."""
     data = analysis_raster_output.analysis
     input_layers = InputLayer()
@@ -141,7 +141,8 @@ def store_spatial_analysis_raster_output(raster_output_id: int):
 
     indicator = _get_indicator(raster_output)
     aoi = _get_bounds(raster_output)
-    if isinstance(indicator, UserIndicator) or indicator.source == IndicatorSource.GPW:
+    if isinstance(indicator, UserIndicator) or\
+        indicator.source == IndicatorSource.GPW:
         metadata = indicator.metadata
         vis_params = {
             'min': metadata['minValue'],
@@ -343,8 +344,15 @@ def generate_temporal_analysis_raster_output(raster_output_id):
         )
         img = img_col.reduce(indicator.get_reducer())
     elif indicator.source == IndicatorSource.GPW:
-        # Since 1 GPW raster represents 1 year, date_ranges must have length of 1
-        img_col, var_name, indicator, date_ranges, dates = _build_gpw_annual_images(
+        # Since 1 GPW raster represents 1 year,
+        # date_ranges must have length of 1
+        (
+            img_col,
+            var_name,
+            indicator,
+            date_ranges,
+            dates
+        ) = _build_gpw_annual_images(
             indicator.variable_name, start_date, [end_date.year]
         )
         year_start, year_end = date_ranges[0]

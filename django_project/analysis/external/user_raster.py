@@ -13,7 +13,9 @@ from analysis.models import UserIndicator, UserGEEAsset, GEEAssetType
 from analysis.utils import split_dates
 
 
-def _build_aggregated_images(variable, user, start_date, test_dates, resolution):
+def _build_aggregated_images(
+        variable, user,
+        start_date, test_dates, resolution):
     """Core function: returns ee.ImageCollection of aggregated images."""
     from analysis.analysis import quarterly_medians
 
@@ -156,7 +158,8 @@ def user_temporal_analysis(
     to_plot_ts = collections.sort('Name').sort('date')
 
     date_ranges = split_dates(
-        start_date, max(test_dates), resolution.lower(), last_date_of_month=True
+        start_date, max(test_dates),
+        resolution.lower(), last_date_of_month=True
     )
     dates = []
     for date_start, date_end in date_ranges:
