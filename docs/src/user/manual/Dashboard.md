@@ -49,27 +49,23 @@ license: This program is free software; you can redistribute it and/or modify it
 
 ## Add New Dashboard
 
-[![New Button](./img/dashboard-img-6.png)](./img/dashboard-img-6.png)
+1. **Click New** on the Dashboard page.  
+   [![New](./img/dashboard-img-6.png)](./img/dashboard-img-6.png)
 
-1. **New:** Users can use this button to add new analysis to the dashboard. After clicking on this button users will be redirected to the analysis page
+2. **Fill in the details** — Dashboard Name, Description (optional), and Access Level — then **Save**.  
+   [![Fill in the details](./img/dashboard-img-7.png)](./img/dashboard-img-7.png)
 
-    [![Add New Analysis](./img/dashboard-img-7.png)](./img/dashboard-img-7.png)
+3. Use **Add Widget → From Analysis Result** to insert the analysis as a widget (and add more if needed).
+   [![Add widget](./img/dashboard-img-8.png)](./img/dashboard-img-8.png)
+   [![Add widget from analysis result](./img/dashboard-img-9.png)](./img/dashboard-img-9.png)
 
-    **1 Create Dashboard:** First users need to select the analysis and then click on the `Create Dashboard` button.
+4. The **Choose an Analysis Result** panel appears. **Select** the saved analysis result and confirm.
+   [![Choose an Analysis Result](./img/dashboard-img-15.png)](./img/dashboard-img-15.png)
 
-    [![Create Dashboard](./img/dashboard-img-8.png)](./img/dashboard-img-8.png)
+5. The new dashboard is created.  
+   [![Toast](./img/dashboard-img-16.png)](./img/dashboard-img-16.png)
 
-    **1 Dashboard Name:** Users are required to enter the name of the dashboard.
-
-    **2 Preferences:** Users can select their preference between `Chart` and `Map`.
-
-    **3 Access Level:** Users can select the access level of the dashboard from the dropdown menu.
-
-    **4 Save:** After filling in the required information, users will be able to click on the `Save` button to save the dashboard. 
-    
-* The saved dashboard will be displayed on the dashboard page.
-
-    [![New Dashboard Analysis](./img/dashboard-img-9.png)](./img/dashboard-img-9.png)
+> Tip: If you don’t see your analysis in Step 4, run it on **MAP → Analysis** and click **Save Results** first.
 
 ## Explore Dashboard
 

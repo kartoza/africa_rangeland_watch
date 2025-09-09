@@ -39,6 +39,17 @@ To add a profile image, click on the 1️⃣ `Profile Icon` to open the file exp
 
 ## How to Change Associated Email
 
+Use this when you want ARW to send all notifications and sign-in links to a different email address.
+
+[![Change Associated Email](./img/guide-profile-img-20.png)](./img/guide-profile-img-20.png)
+
+### Steps
+1️⃣ **Open Profile** Click **Change Associated Email**.  
+2️⃣ **Enter new email.** In the **Email Address** field, type the new address you want to use.  
+3️⃣ **Submit.** Click **Update Info**. You’ll see a confirmation message that a verification email was sent.  
+4️⃣ **Verify the new address.** Open the email titled **“Verify your ARW email”** and follow the link to confirm.  
+5️⃣ **Sign in with the new email.** After verification, your ARW account uses the new address for login and notifications.
+
 ## How to Change Password?
 
 Click on the 1️⃣ `Change Password` tab to access the change password form.
