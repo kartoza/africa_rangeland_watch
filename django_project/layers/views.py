@@ -196,15 +196,13 @@ def cog_export_status(request, uuid, task_id):
         )
         # if we found it, return its info
         if exp.file_name:
-            pass
+            download_url = reverse('download_from_gdrive', args=[uuid])
+            return Response({
+                "status": "completed",
+                "download_url": download_url,
+                "file_name": exp.file_name
+            })
 
     except ExportedCog.DoesNotExist:
         # it might not yet have saved the record
         return Response({"status": "processing"})
-
-    if task_id == "READY":
-        download_url = reverse('download_from_gdrive', args=[uuid])
-        return Response({
-            "status": "completed",
-            "download_url": download_url
-        })
