@@ -1,10 +1,12 @@
 import React from 'react';
 import { Box, Icon, Flex, Spacer, Tooltip } from "@chakra-ui/react";
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { HamburgerIcon, ExternalLinkIcon } from "@chakra-ui/icons";
 import { useNavigate } from 'react-router-dom';
+import { AppDispatch } from "../../store";
 import DatasetUploader from '../DatasetUploader';
 import { selectIsLoggedIn } from "../../store/authSlice";
+import { fetchLayers } from '../../store/layerSlice';
 
 interface Props {
   toggleClicked: () => void;
@@ -12,6 +14,7 @@ interface Props {
 
 /** Top side component of map. */
 export default function TopSide({ toggleClicked }: Props) {
+  const dispatch = useDispatch<AppDispatch>();
   const isAuthenticated = useSelector(selectIsLoggedIn);
   const navigate = useNavigate();
 
@@ -56,7 +59,9 @@ export default function TopSide({ toggleClicked }: Props) {
         )}
 
         
-        {isAuthenticated && <DatasetUploader />}
+        {isAuthenticated && <DatasetUploader onSuccessUpload={() => {
+          dispatch(fetchLayers())
+        }} />}
       </Flex>
     </Box>
   );

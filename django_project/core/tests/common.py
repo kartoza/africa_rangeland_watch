@@ -6,7 +6,7 @@ Africa Rangeland Watch (ARW).
 """
 
 from django.test import TestCase
-from rest_framework.test import APIRequestFactory
+from rest_framework.test import APIRequestFactory, force_authenticate
 
 from core.factories import UserF
 
@@ -34,3 +34,6 @@ class BaseAPIViewTest(TestCase):
         """Assert that all keys are in the item dict."""
         for key in keys:
             self.assertIn(key, item)
+
+    def _force_authenticate(self, request, user):
+        force_authenticate(request, user=user)

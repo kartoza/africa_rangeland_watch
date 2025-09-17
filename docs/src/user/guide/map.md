@@ -94,7 +94,10 @@ Available options in `Select analysis type` are:
 
 #### How to do Baseline Analysis?
 
-* **Baseline:** After selecting this option you have to select the polygons from the map and then you can go for the analysis.
+* **Baseline:** After selecting this option you have to select start date, end date, and the polygons from the map and then you can go for the analysis.
+
+[![Analysis Type](./img/guide-map-img-27.png)](./img/guide-map-img-27.png)
+
 
 #### How to do Temporal Analysis?
 
@@ -111,9 +114,8 @@ Available options in `Select analysis type` are:
 
 #### How to do Spatial Analysis?
 
-* **Spatial:** After selecting this option, you can choose a specific variable. Next, you need to select a polygon from the map. Once the selections are made, you can proceed with the analysis.
-
-    [![Spatial Analysis Type](./img/guide-map-img-8.png)](./img/guide-map-img-8.png)
+* **Spatial:** After selecting this option, you can choose a specific variable. Next, you need to select reference period, draw a polygon on the map, and select a community polygon from the map. Once the selections are made, you can proceed with the analysis.
+[![Spatial Analysis Type](./img/guide-map-img-8.png)](./img/guide-map-img-8.png)
 
 #### How to do BACI Analysis?
 
@@ -131,6 +133,11 @@ After saving the analysis results, you will be notified by a 1️⃣ `toast noti
 
 [![Notification](./img/guide-map-img-24.png)](./img/guide-map-img-24.png)
 
+
+#### How to Save Analysis?
+Saving analysis is the way to make analysis result available as widget to the dashboard. Click on the `Save Results` button, and your analysis will be available when adding dashboard widgets.
+
+[![Save Analysis Result](./img/guide-map-img-26.png)](./img/guide-map-img-26.png)
 
 ### How to Upload Shapefile
 

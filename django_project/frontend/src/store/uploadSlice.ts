@@ -1,6 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import axios from 'axios';
-import { fetchLayers } from './layerSlice';
 
 
 interface UploadState {
@@ -63,11 +62,6 @@ export const fetchProcessingStatus = createAsyncThunk(
   async ({layerId, uploadId}: {layerId: string, uploadId: string}, { dispatch, rejectWithValue }) => {
     try {
       const response = await axios.get(`/api/layer/${layerId}/layer-upload/${uploadId}/`);
-      
-      if (response.data && response.data['status'] === 'Success') {
-        dispatch(fetchLayers())
-      }
-
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data || 'Failed to fetch status');

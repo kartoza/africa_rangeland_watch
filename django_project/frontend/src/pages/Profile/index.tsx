@@ -168,6 +168,20 @@ export default function ProfileInformationPage() {
   }, [profile]);
 
   const handleUpdate = async () => {
+    if (!first_name.trim() || !last_name.trim()) {
+      return toast({
+        title: "Missing required fields",
+        description: "First name and last name must be filled out.",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+        position: "top-right",
+        containerStyle: {
+          backgroundColor: "red",
+          color: "white",
+        },
+      });
+    }
     const updatedData = {
       first_name,
       last_name,
@@ -176,8 +190,25 @@ export default function ProfileInformationPage() {
       user_role: user_role,
       is_support_staff: is_support_staff,
     };
-    dispatch(updateProfile(updatedData));
-    setIsChanged(false);
+    try {
+      await dispatch(updateProfile(updatedData)).unwrap();
+      // (resetUpdateSuccess effect will show your “Profile Updated” toast)
+      setIsChanged(false);
+    } catch (err: any) {
+      // err.detail should contain the message from the API, if any
+      toast({
+        title: err.status === 401 ? "Unauthorized" : "Error updating profile",
+        description: err.detail || "Could not update your profile.",
+        status: "error",
+        duration: 5000,
+        isClosable: true,
+        position: "top-right",
+        containerStyle: {
+          backgroundColor: "red",
+          color: "white",
+        },
+      });
+    }
   };
 
   const handleInputChange = () => {

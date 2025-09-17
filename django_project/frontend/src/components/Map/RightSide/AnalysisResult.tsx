@@ -10,7 +10,7 @@ import Chart from "chart.js/auto";
 import {FeatureCollection} from "geojson";
 import 'chartjs-adapter-date-fns';
 import { getTrendLineData, formatMonthYear } from "../../../utils/chartUtils";
-import { downloadPDF } from '../../../utils/downloadPDF';
+import { downloadAnalysisPDF } from '../../../utils/downloadPDF';
 
 import './style.css';
 
@@ -51,6 +51,67 @@ const splitAndTruncateString = (str: string, maxLength: number) => {
   return truncated;
 }
 
+export function BACITable({ analysis, decimalPlaces }: Props) {
+  const _decimalPlaces = decimalPlaces || DEFAULT_DECIMAL_PLACES;
+  const variable = analysis.data.variable;
+  const keys: string[] = ['Name', `${variable} Before`, `${variable} After`];
+  const columns: string[] = ['Name', `Before`, `After`];
+
+  let beforePeriod = '';
+  let afterPeriod = '';
+  const comparisonPeriod = analysis.data.comparisonPeriod;
+  const yearAfter = Array.isArray(comparisonPeriod.year) ? comparisonPeriod.year[0] : comparisonPeriod.year;
+  if (analysis.data.temporalResolution === 'Annual') {
+    beforePeriod = `${analysis.data.period.year}`;
+    afterPeriod = `${yearAfter}`;
+  } else if (analysis.data.temporalResolution === 'Quarterly') {
+    beforePeriod = `Q${analysis.data.period.quarter} ${analysis.data.period.year}`;
+    if (Array.isArray(comparisonPeriod.quarter)) {
+      afterPeriod = `Q${comparisonPeriod.quarter[0]} ${yearAfter}`;
+    } else {
+      afterPeriod = `Q${comparisonPeriod.quarter} ${yearAfter}`;
+    }
+  } else if (analysis.data.temporalResolution === 'Monthly') {
+    const beforeMonth = Array.isArray(analysis.data.period.month) ? analysis.data.period.month[0] : analysis.data.period.month;
+    const beforeYear = Array.isArray(analysis.data.period.year) ? analysis.data.period.year[0] : analysis.data.period.year;
+    beforePeriod = formatMonthYear(beforeMonth, beforeYear);
+    const afterMonth = Array.isArray(comparisonPeriod.month) ? comparisonPeriod.month[0] : comparisonPeriod.month;
+    afterPeriod = formatMonthYear(afterMonth, yearAfter);
+  }
+
+  return <Box>
+    <Text color='black' marginTop={2}>Before Period: {beforePeriod}</Text>
+    <Text color='black' marginTop={2} marginBottom={2}>After Period: {afterPeriod}</Text>
+    <Table className='BaselineAnalysisResultTable' cellPadding={8}>
+      <thead>
+      <tr>
+        {
+          keys.map(
+            (column: string, index: number) => <th key={column}>{columns[index]}</th>
+          )
+        }
+      </tr>
+      </thead>
+      <tbody>
+      {
+        analysis.results.features.map((feature: any, index: any) => {
+          const properties = feature.properties;
+          return <tr key={index}>
+            {
+              keys.map(
+                (column: string) => <td key={column}>
+                  {typeof properties[column] === 'number' ? properties[column].toFixed(_decimalPlaces) : properties[column]}
+                </td>
+              )
+            }
+          </tr>
+        })
+      }
+      </tbody>
+    </Table>
+  </Box>
+}
+
 
 export function StatisticTable({analysis, decimalPlaces}: Props) {
   const statistics = analysis.results[0].statistics;
@@ -75,6 +136,10 @@ export function StatisticTable({analysis, decimalPlaces}: Props) {
     });
     return rows;
   };
+
+  if (Object.keys(statistics).length === 0) {
+    return null;
+  }
 
   return (
     <Box>
@@ -402,6 +467,11 @@ export function RenderSpatial({ analysis }: Props) {
   </Box>
 }
 
+export function RenderBACI({ analysis, decimalPlaces }: Props) {
+  return <Box id="BACIAnalysisResultContainer" maxWidth={400} overflowX={"auto"}>
+    <BACITable analysis={analysis} decimalPlaces={decimalPlaces}/>
+  </Box>
+}
 
 export function RenderResult({ analysis, decimalPlaces }: Props) {
   switch (analysis.data.analysisType) {
@@ -419,6 +489,8 @@ export function RenderResult({ analysis, decimalPlaces }: Props) {
         <RenderSpatial analysis={newAnalysis.results.spatial} decimalPlaces={decimalPlaces}/>
         <RenderTemporal analysis={newAnalysis.results.temporal}/>
       </Box>
+    case "BACI":
+      return <RenderBACI analysis={analysis} decimalPlaces={decimalPlaces}/>
     default:
       return null
   }
@@ -454,6 +526,8 @@ export default function AnalysisResult() {
     if (analysis.data.spatialStartYear && analysis.data.spatialEndYear) {
       header += ` (${analysis.data.spatialStartYear} - ${analysis.data.spatialEndYear})`
     }
+  } else if (analysis?.data.analysisType === "BACI") {
+    header = `BACI Analysis on ${analysis.data.variable}`;
   }
 
   return (
@@ -477,7 +551,7 @@ export default function AnalysisResult() {
               temporalResolution: analysis.data.temporalResolution,
               variable: analysis.data.variable,
             };
-            downloadPDF(containerRef, exportAnalysis, 'BaselineTableContainer', ['download-button'])
+            downloadAnalysisPDF(containerRef, exportAnalysis, 'BaselineTableContainer', ['download-button'])
           }} 
           colorScheme="teal" 
           aria-label="Download"
@@ -487,7 +561,7 @@ export default function AnalysisResult() {
       </Flex>
       {header && (
         <Box id="analysis-header" marginTop={2} marginBottom={2}>
-          <Text fontSize="1.0rem" fontWeight={600} color='green.600'>
+          <Text fontSize="1.0rem" fontWeight={600} color='green.600' maxW={400} wordBreak={"break-word"}>
             {header}
           </Text>
         </Box>

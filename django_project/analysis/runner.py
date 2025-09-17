@@ -4,6 +4,7 @@ Africa Rangeland Watch (ARW).
 
 .. note:: Analysis Runner Class
 """
+import typing
 import uuid
 from concurrent.futures import ThreadPoolExecutor
 from collections import OrderedDict
@@ -11,6 +12,7 @@ from datetime import date
 from copy import deepcopy
 
 from core.models import Preferences
+from analysis.models import Indicator, IndicatorSource, AnalysisTask
 from analysis.analysis import (
     initialize_engine_analysis,
     run_analysis,
@@ -18,7 +20,8 @@ from analysis.analysis import (
     InputLayer,
     AnalysisResultsCacheUtils,
     spatial_get_date_filter,
-    validate_spatial_date_range_filter
+    validate_spatial_date_range_filter,
+    UserIndicator
 )
 
 
@@ -31,6 +34,9 @@ def _temporal_analysis(locations, analysis_dict, custom_geom):
 
 
 class AnalysisRunner:
+
+    def __init__(self, analysis_task: typing.Optional[AnalysisTask] = None):
+        self.analysis_task: typing.Optional[AnalysisTask] = analysis_task
 
     @staticmethod
     def get_analysis_dict_baseline(data):
@@ -177,6 +183,42 @@ class AnalysisRunner:
         return spatial_analysis_dict, temporal_analysis_dict
 
     @staticmethod
+    def get_analysis_dict_baci(data):
+        """Get analysis dictionary for BACI."""
+        analysis_dict = {
+            'landscape': data['landscape'],
+            'analysisType': 'BACI',
+            'variable': data['variable'],
+            't_resolution': data['temporalResolution'],
+            'Temporal': {
+                'Annual': {
+                    'ref': data.get('period', {}).get('year', ''),
+                    'test': [data.get('comparisonPeriod', {}).get('year', '')]
+                },
+                'Quarterly': {
+                    'ref': data.get('period', {}).get('quarter', '')
+                    if data['temporalResolution'] == 'Quarterly' else '',
+                    'test': [
+                        data.get('comparisonPeriod', {}).get('quarter', '')
+                    ]
+                    if data['temporalResolution'] == 'Quarterly' else ''
+                },
+                'Monthly': {
+                    'ref': data.get('period', {}).get('month', '')
+                    if data['temporalResolution'] == 'Monthly' else '',
+                    'test': [data.get('comparisonPeriod', {}).get('month', '')]
+                    if data['temporalResolution'] == 'Monthly' else ''
+                }
+            },
+            'Spatial': {
+                'Annual': '',
+                'Quarterly': ''
+            }
+        }
+
+        return analysis_dict
+
+    @staticmethod
     def get_reference_layer_geom(data):
         """Retrieve selected reference layer and return its geom."""
         layers = data['reference_layer']
@@ -198,7 +240,8 @@ class AnalysisRunner:
         return run_analysis(
             locations=data.get('locations', []),
             analysis_dict=analysis_dict,
-            custom_geom=data.get('custom_geom', None)
+            custom_geom=data.get('custom_geom', None),
+            analysis_task_id=self.analysis_task.id
         )
 
     @staticmethod
@@ -447,17 +490,26 @@ class AnalysisRunner:
     def run_temporal_analysis(self, data, analysis_dict=None):
         """Run the temporal analysis."""
         analysis_dict = analysis_dict or self.get_analysis_dict_temporal(data)
+        variable = data['variable']
         initialize_engine_analysis()
 
         results = run_analysis(
             locations=data.get('locations', []) or [],
             analysis_dict=analysis_dict,
-            custom_geom=data.get('custom_geom', None)
+            custom_geom=data.get('custom_geom', None),
+            analysis_task_id=(
+                self.analysis_task.id if
+                self.analysis_task else None
+            )
         )
-        results[0]['statistics'] = self.add_statistics(
-            data['comparisonPeriod']['year'],
-            results[1]['features']
-        )
+        if Indicator.has_statistics(variable):
+            results[0]['statistics'] = self.add_statistics(
+                data['comparisonPeriod']['year'],
+                results[1]['features']
+            )
+        else:
+            results[0]['statistics'] = {}
+
         return results
 
     def run_spatial_analysis(self, data):
@@ -508,21 +560,40 @@ class AnalysisRunner:
         locations = data.get('locations', [])
         if locations is None or len(locations) == 0:
             # return the relative different layer
+            indicator = Indicator.objects.filter(
+                variable_name=data['variable']
+            ).first()
+            if not indicator:
+                indicator = self.analysis_task.get_indicator()
+
+            # reducer = None will use ee.Reducer.mean() in get_rel_diff
+            reducer = indicator.get_reducer() if isinstance(
+                indicator, UserIndicator
+            ) else None
             input_layers = InputLayer()
             rel_diff = get_rel_diff(
                 input_layers.get_spatial_layer_dict(
                     filter_start_date,
-                    filter_end_date
+                    filter_end_date,
+                    (
+                        self.analysis_task.submitted_by if
+                        self.analysis_task else None
+                    )
                 ),
                 spatial_analysis_dict,
-                reference_layer_geom
+                reference_layer_geom,
+                reducer
             )
-            metadata = {
-                'minValue': -25,
-                'maxValue': 25,
-                'colors': ['#f9837b', '#fffcb9', '#fffcb9', '#32c2c8'],
-                'opacity': 0.7
-            }
+
+            if indicator.source == IndicatorSource.GPW:
+                metadata = indicator.metadata
+            else:
+                metadata = {
+                    'minValue': -25,
+                    'maxValue': 25,
+                    'colors': ['#f9837b', '#fffcb9', '#fffcb9', '#32c2c8'],
+                    'opacity': 0.7
+                }
             results = {
                 'id': 'spatial_analysis_rel_diff',
                 'uuid': str(uuid.uuid4()),
@@ -553,13 +624,16 @@ class AnalysisRunner:
                 locations=locations,
                 analysis_dict=spatial_analysis_dict,
                 reference_layer=reference_layer_geom,
-                custom_geom=data.get('custom_geom', None)
+                custom_geom=data.get('custom_geom', None),
+                analysis_task_id=(
+                    self.analysis_task.id if self.analysis_task else None
+                )
             )
 
             temporal_future = executor.submit(
                 self.run_temporal_analysis,
-                data,
-                temporal_analysis_dict
+                data=data,
+                analysis_dict=temporal_analysis_dict
             )
 
             try:
@@ -595,7 +669,35 @@ class AnalysisRunner:
             'temporal': {'results': results_temporal}
         }
 
-    def run(self, data):
+    def run_baci_analysis(self, data):
+        reference_layer_geom = self.get_reference_layer_geom(data)
+        if reference_layer_geom is None:
+            raise ValueError(
+                'Invalid reference_layer with id '
+                f'{data.get('reference_layer_id')}!'
+            )
+
+        analysis_dict = self.get_analysis_dict_baci(data)
+        analysis_cache = AnalysisResultsCacheUtils({
+            'locations': data.get('locations', []),
+            'analysis_dict': analysis_dict,
+            'args': [],
+            'kwargs': {
+                'reference_layer': reference_layer_geom
+            }
+        })
+        output = analysis_cache.get_analysis_cache()
+        if output:
+            return output
+
+        initialize_engine_analysis()
+        return run_analysis(
+            locations=data.get('locations', []) or [],
+            analysis_dict=analysis_dict,
+            reference_layer=reference_layer_geom
+        )
+
+    def run(self, data, analysis_task=None):
         """Run the analysis."""
         if data['analysisType'] == 'Baseline':
             return self.run_baseline_analysis(data)
@@ -603,5 +705,7 @@ class AnalysisRunner:
             return self.run_temporal_analysis(data)
         elif data['analysisType'] == 'Spatial':
             return self.run_spatial_analysis(data)
+        elif data['analysisType'] == 'BACI':
+            return self.run_baci_analysis(data)
         else:
             raise ValueError('Invalid analysis type!')

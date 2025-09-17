@@ -1,7 +1,8 @@
 from django.contrib import admin
 from .models import (
     APISchedule,
-    EarthRangerEvents
+    EarthRangerEvents,
+    EarthRangerSetting
 )
 from django.forms import ModelForm
 
@@ -52,3 +53,9 @@ class APIScheduleAdmin(admin.ModelAdmin):
 class EarthRangerEventsAdmin(admin.ModelAdmin):
     list_display = ("id", "earth_ranger_uuid", "created_at")
     search_fields = ("earth_ranger_uuid", "id")
+
+
+@admin.register(EarthRangerSetting)
+class EarthRangerSettingAdmin(admin.ModelAdmin):
+    list_display = ("id", "user", "name", "url", "privacy", "is_active")
+    search_fields = ("name", "user")

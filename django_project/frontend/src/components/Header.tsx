@@ -178,9 +178,6 @@ export default function Header(props: any) {
                 >
                     {isAuthenticated && (
                         <>
-                            <Link href="#">
-                            <Image src="static/images/search_icon.svg" alt="search" h="24px" w="24px" />
-                            </Link>
                             <Box position="relative">
                             <Link href="#/notifications">
                                 <Image

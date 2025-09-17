@@ -35,10 +35,9 @@ setup.describe('login', () => {
 
     // Check if the Sign In button is visible
     await expect(page.getByRole('button', { name: 'Sign In' })).toBeVisible();
-    // Check if Google, GitHub and Apple icons are visible
+    // Check if Google, and GitHub icons are visible
     await expect(page.getByRole('link', { name: 'Google Icon' })).toBeVisible();
     await expect(page.getByRole('link', { name: 'GitHub Icon' })).toBeVisible();
-    await expect(page.getByRole('img', { name: 'Apple Icon' })).toBeVisible();
 
     // Click on the Sign In button
     await page.getByRole('button', { name: 'Sign In' }).click();

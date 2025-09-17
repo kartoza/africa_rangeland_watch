@@ -1,8 +1,11 @@
 import datetime
+from unittest.mock import patch, MagicMock
 from django.test import TestCase
 from analysis.analysis import (
     spatial_get_date_filter,
-    validate_spatial_date_range_filter
+    validate_spatial_date_range_filter,
+    calculate_baci,
+    InputLayer
 )
 
 
@@ -282,3 +285,66 @@ class TestSpatialDateFilter(TestCase):
             variable, start_date, end_date
         )
         self.assertTrue(valid)
+
+
+class TestBACIAnalysis(TestCase):
+    
+    fixtures = [
+        '3.gee_asset.json'
+    ]
+
+    def setUp(self):
+        self.before_dict = {
+            'year': 2015,
+            'quarter': None,
+            'month': 1,
+        }
+        self.after_dict = {
+            'year': 2019,
+            'quarter': None,
+            'month': 6,
+        }
+        self.locations = [
+            {
+                'lat': -23.035376296859013,
+                'lon': 32.192377992891466,
+                'community': '00000000000000000161',
+                'communityName': 'LNP-BNP corridor',
+                'communityFeatureId': 430
+            }
+        ]
+        self.reference_layer_geom = {
+            'type': 'Polygon',
+            'coordinates': [
+                [
+                    [32.192377992891466, -23.035376296859013],
+                    [32.192377992891466, -23.035376296859013],
+                    [32.192377992891466, -23.035376296859013],
+                    [32.192377992891466, -23.035376296859013]
+                ]
+            ]
+        }
+
+    @patch('analysis.analysis.ee')
+    def test_calculate_baci(self, mock_ee):
+        """Test BACI calculation with valid inputs."""
+        baci_result = calculate_baci(
+            self.locations,
+            self.reference_layer_geom,
+            'NDVI',
+            'Monthly',
+            self.before_dict,
+            self.after_dict
+        )
+        # get_s3_cloud_masked 3 times
+        # quarterly_medians 1 time
+        # multiply by 2 for before and after
+        self.assertEqual(mock_ee.ImageCollection.call_count, 8)
+        # Assert that baci_result is a MagicMock (from the patched ee)
+        self.assertIsInstance(baci_result, MagicMock)
+        # Optionally, check the name/id of the MagicMock for more specificity
+        self.assertIn("ee.Join.inner().apply().map()", str(baci_result))
+        # Ensure the patched ee was called as expected
+        self.assertTrue(mock_ee.Join.inner.called)
+        self.assertTrue(mock_ee.Join.inner().apply.called)
+        self.assertTrue(mock_ee.Join.inner().apply().map.called)

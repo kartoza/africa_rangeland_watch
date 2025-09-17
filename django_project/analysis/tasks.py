@@ -4,6 +4,7 @@ Africa Rangeland Watch (ARW).
 
 .. note:: Background task for analysis
 """
+import typing
 import os
 from core.celery import app
 import ee
@@ -12,7 +13,6 @@ import tempfile
 import shutil
 import time
 import subprocess
-from datetime import date
 from dateutil.relativedelta import relativedelta
 from django.utils import timezone
 from django.conf import settings
@@ -24,16 +24,28 @@ from core.models import TaskStatus, Preferences
 from analysis.models import (
     AnalysisResultsCache,
     AnalysisRasterOutput,
-    AnalysisTask
+    AnalysisTask,
+    Indicator,
+    UserIndicator,
+    UserGEEAsset,
+    UserAnalysisResults,
+    IndicatorSource
 )
 from analysis.analysis import (
     export_image_to_drive,
     initialize_engine_analysis, InputLayer,
-    get_rel_diff, calculate_temporal_to_img,
+    get_rel_diff, calculate_temporal_modis_veg,
     spatial_get_date_filter
 )
+from analysis.external.user_raster import _build_aggregated_images
+from analysis.external.gpw import _build_gpw_annual_images
 from analysis.runner import AnalysisRunner
-from analysis.utils import get_gdrive_file, delete_gdrive_file, get_cog_bounds
+from analysis.utils import (
+    get_gdrive_file,
+    delete_gdrive_file,
+    get_cog_bounds,
+    get_date_range_for_analysis
+)
 from layers.models import InputLayer as InputLayerFixture
 from layers.utils import upload_file
 
@@ -41,8 +53,29 @@ logger = logging.getLogger(__name__)
 User = get_user_model()
 
 
-def _run_spatial_analysis(data):
+def _get_indicator(raster_output: AnalysisRasterOutput):
+    user_analysis_result = UserAnalysisResults.objects.filter(
+        raster_outputs=raster_output
+    ).first()
+
+    if not user_analysis_result:
+        raise ValueError("No User Analysis Result found!")
+
+    analysis_task: AnalysisTask = AnalysisTask.objects.filter(
+        analysis_inputs=user_analysis_result.analysis_results['data']
+    ).first()
+    if not analysis_task:
+        raise ValueError("No Analysis Task found!")
+    indicator = analysis_task.get_indicator()
+    return indicator
+
+
+def _run_spatial_analysis(
+    analysis_raster_output: AnalysisRasterOutput,
+    indicator: typing.Union[UserIndicator, Indicator]
+):
     """Run spatial analysis to get difference of relative layer."""
+    data = analysis_raster_output.analysis
     input_layers = InputLayer()
     reference_layer_geom = AnalysisRunner.get_reference_layer_geom(data)
     (
@@ -52,12 +85,23 @@ def _run_spatial_analysis(data):
     filter_start_date, filter_end_date = spatial_get_date_filter(
         spatial_analysis_dict
     )
+
+    user_analysis_result = UserAnalysisResults.objects.filter(
+        raster_outputs=analysis_raster_output
+    ).first()
+
+    analysis_task: AnalysisTask = AnalysisTask.objects.filter(
+        analysis_inputs=user_analysis_result.analysis_results['data']
+    ).first()
+    indicator = analysis_task.get_indicator()
+
     rel_diff = get_rel_diff(
         input_layers.get_spatial_layer_dict(
             filter_start_date, filter_end_date
         ),
         spatial_analysis_dict,
-        reference_layer_geom
+        reference_layer_geom,
+        indicator.get_reducer()
     )
     return rel_diff
 
@@ -95,14 +139,25 @@ def store_spatial_analysis_raster_output(raster_output_id: int):
 
     initialize_engine_analysis()
 
+    indicator = _get_indicator(raster_output)
     aoi = _get_bounds(raster_output)
-    vis_params = {
-        'min': -25,
-        'max': 25,
-        'palette': ['#f9837b', '#fffcb9', '#fffcb9', '#32c2c8'],
-        'opacity': 0.7
-    }
-    image = _run_spatial_analysis(raster_output.analysis)
+    if isinstance(indicator, UserIndicator) or\
+        indicator.source == IndicatorSource.GPW:
+        metadata = indicator.metadata
+        vis_params = {
+            'min': metadata['minValue'],
+            'max': metadata['maxValue'],
+            'palette': metadata['colors'],
+            'opacity': metadata['opacity']
+        }
+    else:
+        vis_params = {
+            'min': -25,
+            'max': 25,
+            'palette': ['#f9837b', '#fffcb9', '#fffcb9', '#32c2c8'],
+            'opacity': 0.7
+        }
+    image = _run_spatial_analysis(raster_output, indicator)
 
     status = export_image_to_drive(
         image=image,
@@ -250,32 +305,17 @@ def generate_temporal_analysis_raster_output(raster_output_id):
     initialize_engine_analysis()
 
     # get date filter
-    start_date = date(raster_output.analysis.get('year'), 1, 1)
-    end_date = date(raster_output.analysis.get('year') + 1, 1, 1)
-    resolution = 'year'
-    resolution_step = 1
-    month_filter = None
-    if temporal_resolution == 'Monthly':
-        start_date = start_date.replace(
-            month=raster_output.analysis.get('month')
-        )
-        end_date = start_date + relativedelta(months=1)
-        month_filter = raster_output.analysis.get('month')
-        resolution = 'month'
-    elif temporal_resolution == 'Quarterly':
-        quarter_dict = {
-            1: 1,
-            2: 4,
-            3: 7,
-            4: 10
-        }
-        start_date = start_date.replace(
-            month=quarter_dict[raster_output.analysis.get('quarter')]
-        )
-        end_date = start_date + relativedelta(months=3)
-        resolution_step = 3
-        month_filter = quarter_dict[raster_output.analysis.get('quarter')]
-        resolution = 'month'
+    date_range_result = get_date_range_for_analysis(
+        temporal_resolution,
+        raster_output.analysis.get('year'),
+        raster_output.analysis.get('quarter'),
+        raster_output.analysis.get('month')
+    )
+    start_date = date_range_result['start_date']
+    end_date = date_range_result['end_date']
+    resolution = date_range_result['resolution']
+    resolution_step = date_range_result['resolution_step']
+    month_filter = date_range_result['month_filter']
 
     logger.info(
         f'Generating img {resolution} ({resolution_step}) '
@@ -283,19 +323,49 @@ def generate_temporal_analysis_raster_output(raster_output_id):
     )
     # get aoi
     aoi = _get_bounds(raster_output)
+    input_layer = InputLayer()
+    selected_area = input_layer.get_selected_area(aoi, False)
 
     # find input layer for get the vis param config
     input_layer_fixture = InputLayerFixture.objects.get(
         name=raster_output.analysis.get('variable')
     )
 
+    indicator = _get_indicator(raster_output)
+
     # generate the image
-    img = calculate_temporal_to_img(
-        aoi, start_date.isoformat(), end_date.isoformat(),
-        resolution, resolution_step,
-        'bare' if raster_output.analysis.get('variable') == 'Bare ground' else
-        raster_output.analysis.get('variable').lower()
-    )
+    if isinstance(indicator, UserIndicator):
+        img_col, var_name, _ = _build_aggregated_images(
+            indicator.variable_name,
+            indicator.created_by,
+            start_date,
+            [end_date],
+            resolution
+        )
+        img = img_col.reduce(indicator.get_reducer())
+    elif indicator.source == IndicatorSource.GPW:
+        # Since 1 GPW raster represents 1 year,
+        # date_ranges must have length of 1
+        (
+            img_col,
+            var_name,
+            indicator,
+            date_ranges,
+            dates
+        ) = _build_gpw_annual_images(
+            indicator.variable_name, start_date, [end_date.year]
+        )
+        year_start, year_end = date_ranges[0]
+        test_dt = (year_end + relativedelta(months=1)).isoformat()
+
+        subset = img_col.filterDate(year_start.isoformat(), test_dt)
+        img = subset.reduce(indicator.get_reducer())
+    else:
+        img = calculate_temporal_modis_veg(
+            selected_area, start_date.isoformat(), end_date.isoformat(),
+            resolution, resolution_step,
+            raster_output.analysis.get('variable')
+        )
     if temporal_resolution == 'Annual':
         img = img.filter(
             ee.Filter.eq('year', raster_output.analysis.get('year'))
@@ -365,7 +435,7 @@ def run_analysis_task(analysis_task_id: int):
     analysis_task.save()
 
     try:
-        runner = AnalysisRunner()
+        runner = AnalysisRunner(analysis_task=analysis_task)
         results = runner.run(analysis_task.analysis_inputs)
         analysis_task.result = results
         analysis_task.status = TaskStatus.COMPLETED
@@ -382,3 +452,74 @@ def run_analysis_task(analysis_task_id: int):
         analysis_task.completed_at = timezone.now()
         analysis_task.updated_at = timezone.now()
         analysis_task.save()
+
+
+@app.task(name='check_ingestor_asset_status')
+def check_ingestor_asset_status(user_gee_asset_id: int):
+    """Check ingestor asset status."""
+    gee_asset = UserGEEAsset.objects.filter(
+        id=user_gee_asset_id
+    ).first()
+    if not gee_asset:
+        logger.error(
+            f'UserGEEAsset with id {user_gee_asset_id} not found.'
+        )
+        return
+
+    if not gee_asset.ingestion_status:
+        logger.error(
+            f'UserGEEAsset with id {user_gee_asset_id} '
+            'has no ingestion status.'
+        )
+        return
+
+    task_ids = gee_asset.get_running_ingestion_task_id()
+    if not task_ids:
+        UserIndicator.set_status_by_asset_key(gee_asset.key, True)
+        return
+
+    max_wait_time = 3600
+    start_time = time.time()
+    # Check the status of the GEE ingestion task
+    initialize_engine_analysis()
+    status_list = ee.data.getTaskStatus(task_ids)
+
+    while (
+        (time.time() - start_time) < max_wait_time
+    ):
+        for status in status_list:
+            ingestion_status_dict = gee_asset.ingestion_status.get(
+                status['id']
+            )
+            if ingestion_status_dict:
+                ingestion_status_dict['status'] = status['state']
+                ingestion_status_dict['error'] = status.get('error_message')
+                gee_asset.ingestion_status[status['id']] = (
+                    ingestion_status_dict
+                )
+        gee_asset.save()
+        task_ids = gee_asset.get_running_ingestion_task_id()
+        if not task_ids:
+            break  # all tasks are completed
+        time.sleep(60)
+        status_list = ee.data.getTaskStatus(task_ids)
+
+    # count stats
+    completed_count = 0
+    failed_count = 0
+    for _, status in gee_asset.ingestion_status.items():
+        if status['status'] == 'COMPLETED':
+            completed_count += 1
+        elif status['status'] == 'FAILED':
+            failed_count += 1
+
+    logger.info(
+        f'GEE task {user_gee_asset_id} completed with '
+        f'{completed_count} and failed with {failed_count}.'
+    )
+
+    # update the indicator status if it's completed or failed
+    if failed_count > 0 or len(gee_asset.ingestion_status) != completed_count:
+        UserIndicator.set_status_by_asset_key(gee_asset.key, False)
+    else:
+        UserIndicator.set_status_by_asset_key(gee_asset.key, True)
