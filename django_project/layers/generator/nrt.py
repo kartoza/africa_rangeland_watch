@@ -10,11 +10,9 @@ import ee
 
 from analysis.models import Landscape, GEEAsset
 from analysis.analysis import (
+    InputLayer as BaseInputLayer,
     get_nrt_sentinel, train_bgt, classify_bgt,
-    get_soil_carbon,
-    get_soil_carbon_change,
-    get_grazing_capacity_layer,
-    calculate_firefreq
+    calculate_grazing_capacity,
 )
 from layers.models import InputLayer
 from layers.generator.base import BaseLayerGenerator, LayerCacheResult
@@ -141,141 +139,120 @@ class NearRealTimeGenerator(BaseLayerGenerator):
             logger.error(ex)
             return None
 
-    def _generate_tree_cover_layer(self, nrt_img, aoi, landscape: Landscape):
-        """Generate tree plant cover layer for a landscape."""
-        try:
-            classifier = train_bgt(
-                aoi,
-                GEEAsset.fetch_asset_source('random_forest_training')
-            )
-            tree = classify_bgt(nrt_img, classifier).select('tree')
+    def _generate_fire_frequency_layer(self, aoi, landscape):
+        ff_global = ee.Image(
+            GEEAsset.fetch_asset_source('fire_freq')
+        ).divide(18).rename('fireFreq')
 
-            tree_layer = InputLayer.objects.get(
-                name='tree plant cover',
+        fire_img = ff_global.clip(aoi)
+
+        ff_layer = InputLayer.objects.get(
+            name='Fire frequency',
+            data_provider=self.get_provider(),
+            group__name='near-real-time'
+        )
+
+        return LayerCacheResult(
+            ff_layer,
+            fire_img.getMapId(
+                self.metadata_to_vis_params(ff_layer)
+            )['tile_fetcher'].url_format,
+            f'{landscape.id}'
+        )
+
+    def _generate_soil_carbon_layer(self, aoi, landscape):
+        soil_layer = InputLayer.objects.get(
+            name='Soil carbon',
+            data_provider=self.get_provider(),
+            group__name='near-real-time'
+        )
+        aoi_fc = ee.FeatureCollection([ee.Feature(aoi)])
+        soil_img = BaseInputLayer().get_soil_carbon(
+            start_date=datetime.date(1984, 1, 1),
+            end_date=datetime.date(2019, 12, 31),
+            clip_to_countries=False,
+            aoi=aoi_fc
+        )
+        return LayerCacheResult(
+            soil_layer,
+            soil_img.getMapId(
+                self.metadata_to_vis_params(soil_layer)
+            )['tile_fetcher'].url_format,
+            f'{landscape.id}'
+        )
+
+    def _generate_grazing_capacity_layer(self, aoi, landscape):
+        grazing_layer = InputLayer.objects.get(
+            name='Grazing capacity',
+            data_provider=self.get_provider(),
+            group__name='near-real-time'
+        )
+        grazing_img = calculate_grazing_capacity(
+            aoi,
+            self.NRT_START_DATE,
+            datetime.date.today().isoformat()
+        )
+        return LayerCacheResult(
+            grazing_layer,
+            grazing_img.getMapId(
+                self.metadata_to_vis_params(grazing_layer)
+            )['tile_fetcher'].url_format,
+            f'{landscape.id}'
+        )
+
+    def _generate_soil_carbon_change_layer(self, aoi, landscape):
+        change_layer = InputLayer.objects.get(
+            name='Soil carbon change',
+            data_provider=self.get_provider(),
+            group__name='near-real-time'
+        )
+        aoi_fc = ee.FeatureCollection([ee.Feature(aoi)])
+        change_img = BaseInputLayer().get_soil_carbon_change(
+            start_date=datetime.date(1984, 1, 1),
+            end_date=datetime.date(2019, 12, 31),
+            clip_to_countries=False,
+            aoi=aoi_fc
+        )
+        return LayerCacheResult(
+            change_layer,
+            change_img.getMapId(
+                self.metadata_to_vis_params(change_layer)
+            )['tile_fetcher'].url_format,
+            f'{landscape.id}'
+        )
+
+    def _generate_woody_cover_layer(self, aoi, nrt_end_dt, landscape):
+        try:
+            cgls_nrt = (ee.ImageCollection(
+                            GEEAsset.fetch_asset_source('cgls_ground_cover'))
+                        .filterDate(self.NRT_START_DATE, nrt_end_dt)
+                        .filterBounds(aoi)
+                        .select(['tree-coverfraction', 'shrub-coverfraction'])
+                        .median())
+
+            woody_img = (
+                cgls_nrt.select(
+                    'tree-coverfraction'
+                ).add(
+                    cgls_nrt.select('shrub-coverfraction')
+                ).rename('Woody cover'))
+
+            woody_layer = InputLayer.objects.get(
+                name='Woody plant cover',
                 data_provider=self.get_provider(),
                 group__name='near-real-time'
             )
 
             return LayerCacheResult(
-                tree_layer,
-                tree.getMapId(
-                    self.metadata_to_vis_params(tree_layer)
+                woody_layer,
+                woody_img.getMapId(
+                    self.metadata_to_vis_params(woody_layer)
                 )['tile_fetcher'].url_format,
                 f'{landscape.id}'
             )
-        except Exception as ex:
-            logger.error(f'_generate_tree_cover_layer failed on {landscape}')
-            logger.error(ex)
-            return None
 
-    def _generate_fire_frequency_layer(
-            self, aoi, nrt_end_dt, landscape: Landscape
-    ):
-        try:
-            fire_layer = InputLayer.objects.get(
-                name='Fire frequency',
-                data_provider=self.get_provider(),
-                group__name='near-real-time'
-            )
-
-            fire_img = calculate_firefreq(aoi, self.NRT_START_DATE, nrt_end_dt)
-
-            return LayerCacheResult(
-                fire_layer,
-                fire_img.getMapId(
-                    self.metadata_to_vis_params(fire_layer)
-                )['tile_fetcher'].url_format,
-                f'{landscape.id}'
-            )
-        except Exception as ex:
-            logger.error(
-                f'_generate_fire_frequency_layer failed on {landscape}'
-            )
-            logger.error(ex)
-            return None
-
-    def _generate_soil_carbon_layer(
-            self, aoi, nrt_end_dt, landscape: Landscape
-    ):
-        try:
-            soil_layer = InputLayer.objects.get(
-                name='Soil Carbon',
-                data_provider=self.get_provider(),
-                group__name='near-real-time'
-            )
-
-            soil_img = get_soil_carbon(
-                start_date=datetime.date.fromisoformat(self.NRT_START_DATE),
-                end_date=datetime.date.fromisoformat(nrt_end_dt),
-                clip_to_countries=False,
-                aoi=aoi
-            )
-
-            return LayerCacheResult(
-                soil_layer,
-                soil_img.getMapId(
-                    self.metadata_to_vis_params(soil_layer)
-                )['tile_fetcher'].url_format,
-                f'{landscape.id}'
-            )
-        except Exception as ex:
-            logger.error(f'_generate_soil_carbon_layer failed on {landscape}')
-            logger.error(ex)
-            return None
-
-    def _generate_grazing_capacity_layer(self, aoi, landscape: Landscape):
-        try:
-            grazing_layer = InputLayer.objects.get(
-                name='Grazing capacity',
-                data_provider=self.get_provider(),
-                group__name='near-real-time'
-            )
-
-            grazing_img = get_grazing_capacity_layer.clip(aoi)
-
-            return LayerCacheResult(
-                grazing_layer,
-                grazing_img.getMapId(
-                    self.metadata_to_vis_params(grazing_layer)
-                )['tile_fetcher'].url_format,
-                f'{landscape.id}'
-            )
-        except Exception as ex:
-            logger.error(
-                f'_generate_grazing_capacity_layer failed on {landscape}'
-            )
-            logger.error(ex)
-            return None
-
-    def _generate_soil_carbon_change_layer(
-            self, aoi, nrt_end_dt, landscape: Landscape
-    ):
-        try:
-            change_layer = InputLayer.objects.get(
-                name='Soil Carbon change',
-                data_provider=self.get_provider(),
-                group__name='near-real-time'
-            )
-
-            change_img = get_soil_carbon_change(
-                start_date=datetime.date.fromisoformat(self.NRT_START_DATE),
-                end_date=datetime.date.fromisoformat(nrt_end_dt),
-                clip_to_countries=False,
-                aoi=aoi
-            )
-
-            return LayerCacheResult(
-                change_layer,
-                change_img.getMapId(
-                    self.metadata_to_vis_params(change_layer)
-                )['tile_fetcher'].url_format,
-                f'{landscape.id}'
-            )
-        except Exception as ex:
-            logger.error(
-                f'_generate_soil_carbon_change_layer failed on {landscape}'
-            )
-            logger.error(ex)
+        except Exception:
+            logger.exception(f'Generating woody cover failed on {landscape}')
             return None
 
     def _generate(self):
@@ -305,16 +282,13 @@ class NearRealTimeGenerator(BaseLayerGenerator):
             grass = self._generate_grass_cover_layer(nrt_img, aoi, landscape)
             if grass:
                 results.append(grass)
-            tree = self._generate_tree_cover_layer(nrt_img, aoi, landscape)
-            if tree:
-                results.append(tree)
             fire = self._generate_fire_frequency_layer(
-                aoi, nrt_end_dt, landscape
+                aoi, landscape
             )
             if fire:
                 results.append(fire)
 
-            soil = self._generate_soil_carbon_layer(aoi, nrt_end_dt, landscape)
+            soil = self._generate_soil_carbon_layer(aoi, landscape)
             if soil:
                 results.append(soil)
 
@@ -323,9 +297,14 @@ class NearRealTimeGenerator(BaseLayerGenerator):
                 results.append(grazing)
 
             soil_change = self._generate_soil_carbon_change_layer(
-                aoi, nrt_end_dt, landscape
+                aoi, landscape
             )
             if soil_change:
                 results.append(soil_change)
+            woody = self._generate_woody_cover_layer(
+                aoi, nrt_end_dt, landscape
+            )
+            if woody:
+                results.append(woody)
 
         return results
