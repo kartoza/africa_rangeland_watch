@@ -21,21 +21,26 @@ Click on the 2️⃣ `Settings` icon.
 
 [![Alertsettings](./img/alertsettings-img-2.png)](./img/alertsettings-img-2.png)
 
-To add Alert settings, click on `Add Alert settings button`.
-It will open up the form below.
+Click **Add Alert Setting** to open the form.
 
-[![Add Alert settings](./img/alertsettings-img-3.png)](./img/alertsettings-img-3.png)
+[![Create New Alert Setting](./img/alertsettings-img-3.png)](./img/alertsettings-img-3.png)
 
-To create an alert setting:
+Use the numbered guide on the screenshot:
 
-- 1️⃣ Set an alert name.
-- 2️⃣ Search location for the specific alert.
-- 3️⃣ Select the specific indicator
-- 4️⃣ Select the necessary thresholds criteria
-- 5️⃣ Set the threshold value
-- 6️⃣ Enable alerts as desired.
+1️⃣ **Alert Name** — A short, human-readable name shown in notifications and lists.  
+2️⃣ **Location** — Search and select the specific location this alert should monitor.  
+3️⃣ **Analysis Type** — Choose what you want to monitor (e.g., *Baseline*, *Spatial*, *Temporal*).  
+4️⃣ **Indicator** — Pick the indicator to track (e.g., NDVI, EVI).  
+5️⃣ **Condition** — Select the threshold operator (e.g., *Less Than*, *Greater Than*, *Equal To*).  
+6️⃣ **Threshold Value** — Enter the numeric value to compare against.  
+7️⃣ **Options**  
+&nbsp;&nbsp;&nbsp;&nbsp;• **Email Alert** — Send an email when the alert triggers.  
+&nbsp;&nbsp;&nbsp;&nbsp;• **In-App Alert** — Show it in the Notifications panel.  
+&nbsp;&nbsp;&nbsp;&nbsp;• **Anomaly Detection** — Trigger alerts based on anomaly logic (can be used alongside thresholds).  
+&nbsp;&nbsp;&nbsp;&nbsp;• **Enable Alert** — Toggle the alert on/off without deleting it.  
+8️⃣ **Submit** — Save the alert (or **Cancel** to close without saving).
 
-You can the submit the data and your alert setting will be saved.
+> **Tip:** You can later edit or disable an alert without deleting it.
 
 Alert settings are grouped by indicators.
 To view your specific alert setting, click on `View Alert Settings` button.

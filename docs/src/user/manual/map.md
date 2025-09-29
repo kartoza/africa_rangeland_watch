@@ -129,13 +129,17 @@ license: This program is free software; you can redistribute it and/or modify it
 
             [![Polygons](./img/manual-map-img-25.png)](./img/manual-map-img-25.png)
 
-            **1 Landscape:** For example, we have selected the `Bahine NP` landscape.
+            **Steps**
 
-            **2 Polygons:** The highlighted area displays the available polygons within the selected landscape. 
-
-            **3 Click polygon the map:** This description provides users with the location of the polygon, specifying whether it is situated in the eastern, northern, western, or southern section of the landscape.
-
-            [![Polygons 2](./img/manual-map-img-26.png)](./img/manual-map-img-26.png)
+            1. In **Select analysis type**, choose **BACI**.  
+            2. **Select resolution** — Annual, Quarterly, or Monthly.  
+            3. **Select variable** — e.g., NDVI, EVI, Bare Ground, etc.  
+            4. **Select reference period (Before)** — pick the year and, if applicable, the quarter/month.  
+            5. **Select comparison period (After)** — pick the year and, if applicable, the quarter/month.  
+            6. **Draw a control (reference) area** — click **Draw a reference area → Draw**, then sketch a small polygon in a comparable, *unaffected* area. Use **Reset** to redraw.  
+            7. **Choose the impact area** — click the polygon(s) on the map you want to evaluate. *(Multiple polygons are supported.)*  
+            8. Click **Run Analysis** to compute the BACI effect.  
+            9. (Optional) Click **Save Result** to store the output; a toast confirms it’s saved and you can view it on the **Analysis Results** page.
 
             * After successfully running the analysis, the user will be able to view the results in the statistics pop up. The `Statistics` table provides quantitative data for the selected polygon. It includes the following columns: Name, EVI, and Bare Ground % etc.
 

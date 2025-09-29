@@ -123,6 +123,18 @@ Available options in `Select analysis type` are:
 
     [![BACI Analysis Type](./img/guide-map-img-9.png)](./img/guide-map-img-9.png)
 
+**Steps**
+
+1️⃣ **Select landscape** — Pick the landscape you want to analyse.  
+2️⃣ **Select analysis type → BACI.**  
+3️⃣ **Select resolution** — *Annual*, *Quarterly*, or *Monthly*.  
+4️⃣ **Select variable** — e.g., **NDVI**, **EVI**, Bare Ground, etc.  
+5️⃣ **Select reference period (Before)** — Choose the year and, if applicable, the quarter/month.  
+6️⃣ **Select comparison period (After)** — Choose the year and, if applicable, the quarter/month.  
+7️⃣ **Draw a control (reference) area** — Click **Draw a reference area → Draw**, then click on the map to sketch a small polygon in a comparable, **unaffected** area. Double-click to finish. Use **Reset** to redraw if needed.  
+8️⃣ **Choose the impact area** — Select the polygon(s) on the map you want to evaluate (the selected landscape or specific polygons within it). Multiple polygons are supported.  
+9️⃣ **Run the analysis** — Click **Run Analysis**. When results load, you can click **Save Results** to store them.
+
 **Note**: One can now run analysis for multiple polygons by selecting them on the map.
 
 [![Select Multiple Polygons](./img/guide-map-img-25.png)](./img/guide-map-img-25.png)
