@@ -20,10 +20,11 @@ import { uploadFile, fetchProcessingStatus, resetState } from '../../store/uploa
 
 
 interface DatasetUploaderProps {
+  onSuccessUpload: () => void;
   buttonVariant?: string | null;
 }
 
-const DatasetUploader: React.FC<DatasetUploaderProps> = ({ buttonVariant = null }) => {
+const DatasetUploader: React.FC<DatasetUploaderProps> = ({ onSuccessUpload, buttonVariant = null }) => {
   const dispatch = useDispatch<AppDispatch>();
   const { file, uploadProgress, processingProgress, status, error, uploadId, layerId } = useSelector(
     (state: RootState) => state.upload
@@ -59,6 +60,10 @@ const DatasetUploader: React.FC<DatasetUploaderProps> = ({ buttonVariant = null 
 
     if (status === 'success' || status === 'failed') {
       if (interval) clearInterval(interval);
+    }
+
+    if (status === 'success') {
+      onSuccessUpload();
     }
 
     return () => {

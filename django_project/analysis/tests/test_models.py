@@ -112,11 +112,19 @@ class UserIndicatorTest(TestCase):
 
     def test_create_fails_on_duplicate_name_same_user(self):
         user = UserF()
-        UserIndicatorF.create(name="dup-name", created_by=user)
+        UserIndicatorF.create(
+            name="dup-name", 
+            variable_name="dup-var-name", 
+            created_by=user
+        )
 
         with self.assertRaises(IntegrityError):
             # Second indicator with same name and user should fail
-            ind = UserIndicatorF.create(name="dup-name", created_by=user)
+            ind = UserIndicatorF.create(
+                name="dup-name",
+                variable_name="dup-var-name",
+                created_by=user
+            )
 
 
 class GEEAssetTypeTest(TestCase):

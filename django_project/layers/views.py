@@ -3,6 +3,8 @@ import tempfile
 import logging
 import mimetypes
 from collections import defaultdict
+from datetime import datetime, timedelta, timezone
+from googleapiclient.errors import HttpError
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from django.shortcuts import render  # noqa: F401
@@ -11,7 +13,9 @@ from django.contrib.auth.decorators import login_required
 
 from django.shortcuts import get_object_or_404
 from django.http import FileResponse, Http404
+from django.urls import reverse
 
+from celery.result import AsyncResult
 from cloud_native_gis.models import Layer
 from analysis.utils import _initialize_gdrive_instance
 from .models import InputLayer, ExportedCog
@@ -28,9 +32,8 @@ def user_input_layers(request):
     filtering for layers that belong to the 'user-defined' group.
     """
     user_layers = InputLayer.objects.filter(
-        created_by=request.user,
         group__name="user-defined"
-    ).select_related('data_provider', 'group')
+    ).select_related('data_provider', 'group').order_by('-created_at')
 
     # Group layers by 'group' field
     grouped_layers = defaultdict(list)
@@ -47,6 +50,15 @@ def user_input_layers(request):
             "updated_at": layer.updated_at,
             "layer_id": gis_layer.id if gis_layer else None,
             "url": layer.url,
+            "is_owned": (
+                layer.created_by.id == request.user.id or
+                request.user.is_superuser
+            ),
+            "created_by": (
+                f"{layer.created_by.first_name} "
+                f"{layer.created_by.last_name}" if
+                layer.created_by else ""
+            )
         })
 
     # Return grouped layers as a JsonResponse
@@ -58,7 +70,21 @@ def delete_layer(request, uuid):
     """
     View to delete a user-defined layer by UUID.
     """
-    layer = get_object_or_404(InputLayer, uuid=uuid, created_by=request.user)
+    layer = get_object_or_404(InputLayer, uuid=uuid)
+
+    is_owned = (
+        layer.created_by.id == request.user.id or
+        request.user.is_superuser
+    )
+
+    if not is_owned:
+        return JsonResponse(
+            {
+                "error": "You do not have permission to delete this layer."
+            },
+            status=403
+        )
+
     layer.delete()
     return JsonResponse({"message": "Layer deleted successfully"}, status=200)
 
@@ -97,13 +123,34 @@ def trigger_cog_export(request, uuid):
     if not landscape_id:
         return Response({"error": "landscape_id is required"}, status=400)
 
-    try:
-        layer = get_object_or_404(InputLayer, uuid=uuid)
-        export_ee_image_to_cog_task.delay(str(layer.uuid), landscape_id)
-        return Response({"message": "Export task triggered."})
-    except Exception as ex:
-        logger.error(f"Export failed {ex}", exc_info=True)
-        return Response({"error": "An internal error occurred."}, status=500)
+    layer = get_object_or_404(InputLayer, uuid=uuid)
+
+    cog_qs = ExportedCog.objects.filter(
+        input_layer=layer,
+        landscape_id=landscape_id,
+        downloaded=True,
+        created_at__gte=datetime.now(timezone.utc) - timedelta(hours=24)
+    )
+
+    if cog_qs.exists():
+        cog = cog_qs.first()
+        gdrive = _initialize_gdrive_instance()
+        try:
+            # quick existence check — inexpensive 'files.get' call
+            gdrive.CreateFile({'id': cog.gdrive_file_id}).FetchMetadata()
+        except HttpError:
+            # file was deleted on Drive -> fall through and re-export
+            cog_qs.delete()
+        else:
+            download_url = reverse('download_from_gdrive', args=[uuid])
+            return Response({
+                "already_exported": True,
+                "download_url": download_url
+            })
+
+    async_result = export_ee_image_to_cog_task.delay(str(layer.uuid),
+                                                     landscape_id)
+    return Response({"task_id": async_result.id})
 
 
 @api_view(['GET'])
@@ -143,3 +190,41 @@ def download_from_gdrive(request, uuid):
     except Exception as ex:
         logger.error(f"Download failed: {ex}", exc_info=True)
         raise Http404("Download failed.")
+
+
+@api_view(['GET'])
+@login_required
+def cog_export_status(request, uuid, task_id):
+    """
+    Client polls this to learn when the COG is ready.
+    """
+    # 1) check the Celery task
+    res = AsyncResult(task_id)
+    if res.state in ('PENDING', 'STARTED', 'RETRY'):
+        return Response({"status": "processing"})
+    if res.state == 'FAILURE':
+        return Response(
+            {"status": "error", "info": str(res.result)},
+            status=500
+        )
+
+    # 2) task succeeded — look up the ExportedCog row
+    landscape_id = request.query_params.get("landscape_id")
+    try:
+        exp = ExportedCog.objects.get(
+            input_layer__uuid=uuid,
+            landscape_id=landscape_id,
+            downloaded=True
+        )
+        # if we found it, return its info
+        if exp.file_name:
+            download_url = reverse('download_from_gdrive', args=[uuid])
+            return Response({
+                "status": "completed",
+                "download_url": download_url,
+                "file_name": exp.file_name
+            })
+
+    except ExportedCog.DoesNotExist:
+        # it might not yet have saved the record
+        return Response({"status": "processing"})

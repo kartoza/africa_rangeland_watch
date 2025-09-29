@@ -159,21 +159,19 @@ class AnalysisRunner:
             'Temporal': {
                 'Annual': {
                     'ref': data.get('period', {}).get('year', ''),
-                    'test': [data.get('comparisonPeriod', {}).get('year', '')]
+                    'test': data.get('comparisonPeriod', {}).get('year', [])
                 },
                 'Quarterly': {
                     'ref': data.get('period', {}).get('quarter', '')
                     if data['temporalResolution'] == 'Quarterly' else '',
-                    'test': [
-                        data.get('comparisonPeriod', {}).get('quarter', '')
-                    ]
-                    if data['temporalResolution'] == 'Quarterly' else ''
+                    'test': data.get('comparisonPeriod', {}).get('quarter', [])
+                    if data['temporalResolution'] == 'Quarterly' else []
                 },
                 'Monthly': {
                     'ref': data.get('period', {}).get('month', '')
                     if data['temporalResolution'] == 'Monthly' else '',
-                    'test': [data.get('comparisonPeriod', {}).get('month', '')]
-                    if data['temporalResolution'] == 'Monthly' else ''
+                    'test': data.get('comparisonPeriod', {}).get('month', [])
+                    if data['temporalResolution'] == 'Monthly' else []
                 }
             },
             'Spatial': {
@@ -562,6 +560,16 @@ class AnalysisRunner:
         locations = data.get('locations', [])
         if locations is None or len(locations) == 0:
             # return the relative different layer
+            indicator = Indicator.objects.filter(
+                variable_name=data['variable']
+            ).first()
+            if not indicator:
+                indicator = self.analysis_task.get_indicator()
+
+            # reducer = None will use ee.Reducer.mean() in get_rel_diff
+            reducer = indicator.get_reducer() if isinstance(
+                indicator, UserIndicator
+            ) else None
             input_layers = InputLayer()
             rel_diff = get_rel_diff(
                 input_layers.get_spatial_layer_dict(
@@ -573,22 +581,9 @@ class AnalysisRunner:
                     )
                 ),
                 spatial_analysis_dict,
-                reference_layer_geom
+                reference_layer_geom,
+                reducer
             )
-
-            variable = data["variable"]
-            indicator = Indicator.objects.filter(
-                variable_name=variable
-            ).first()
-            if not indicator:
-                indicator = UserIndicator.objects.filter(
-                    variable_name=variable,
-                    created_by=self.analysis_task.submitted_by
-                ).first()
-                if not indicator:
-                    raise ValueError(
-                        f"Indicator for variable {variable} not found"
-                    )
 
             if indicator.source == IndicatorSource.GPW:
                 metadata = indicator.metadata

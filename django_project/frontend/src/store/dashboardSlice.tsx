@@ -59,7 +59,7 @@ export interface Widget {
 }
 
 // Height configurations
-export const heightConfig = {
+export const heightConfig: Record<WidgetHeight, { minH: string; maxH: string; rows: number }> = {
   small: { minH: '200px', maxH: '250px', rows: 1 },
   medium: { minH: '300px', maxH: '350px', rows: 2 },
   large: { minH: '400px', maxH: '450px', rows: 3 },

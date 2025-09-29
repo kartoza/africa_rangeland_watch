@@ -162,9 +162,19 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
   /** When data changed */
   const triggerAnalysis = () => {
     dispatch(resetAnalysisResult(data.analysisType))
+    let comparisonPeriod = {
+      year: data.comparisonPeriod?.year,
+      quarter: data.temporalResolution == 'Quarterly' ? data.comparisonPeriod?.quarter : data.analysisType == 'Temporal' ? [] : null,
+      month: data.temporalResolution == 'Monthly' ? data.comparisonPeriod?.month : data.analysisType == 'Temporal' ? [] : null
+    };
     if (![Types.SPATIAL, Types.BACI].includes(data.analysisType)) {
       // remove polygon for reference layer diff
       geometrySelectorRef?.current?.removeLayer();
+      comparisonPeriod = {
+        year: Array.isArray(data.comparisonPeriod?.year) ? data.comparisonPeriod?.year.slice(1) : [data.comparisonPeriod?.year],
+        quarter: Array.isArray(data.comparisonPeriod?.quarter) ? data.comparisonPeriod?.quarter.slice(1) : [data.comparisonPeriod?.quarter],
+        month: Array.isArray(data.comparisonPeriod?.month) ? data.comparisonPeriod?.month.slice(1) : [data.comparisonPeriod?.month]
+      }
     }
     const newData = {
       ...data,
@@ -409,6 +419,8 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
             value={data.period}
             isQuarter={data.temporalResolution === TemporalResolution.QUARTERLY}
             isMonthly={data.temporalResolution === TemporalResolution.MONTHLY}
+            multiple={false}
+            maxLength={1}
             onSelectedYear={(value: number) => {
               setData({
                 ...data,
@@ -479,7 +491,8 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
             value={data.comparisonPeriod}
             isQuarter={data.temporalResolution === TemporalResolution.QUARTERLY}
             isMonthly={data.temporalResolution === TemporalResolution.MONTHLY}
-            multiple={data.analysisType === Types.TEMPORAL}
+            multiple={[Types.TEMPORAL, Types.SPATIAL, Types.BACI].includes(data.analysisType)}
+            maxLength={data.analysisType === Types.SPATIAL ? 1 : 100}
             onSelectedYear={(value: number) => {
               setData({
                 ...data,

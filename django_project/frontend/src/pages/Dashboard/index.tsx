@@ -259,6 +259,7 @@ const DashboardListPage: React.FC<DashboardListProps> = ({allDashboards}) => {
                                 objectFit="cover"
                                 borderRadius="md"
                                 fallbackSrc="static/images/sa_map.png"
+                                onClick={() => handleItemClick(dashboard)}
                               />
                             </Box>
 

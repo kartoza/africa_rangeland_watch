@@ -13,20 +13,10 @@ from analysis.models import UserIndicator, UserGEEAsset, GEEAssetType
 from analysis.utils import split_dates
 
 
-def user_temporal_analysis(
-    variable, user, start_date, test_dates, resolution,
-    select_geo, analysis_cache
-):
-    """
-    Perform annual temporal analysis for GPW dataset.
-
-    :param variable: Variable to analyze.
-    :param start_date: Start date for the analysis.
-    :param test_dates: List of years to test.
-    :param select_geo: Geographic selection criteria.
-    :param analysis_cache: Cache for analysis results.
-    :return: Analysis results.
-    """
+def _build_aggregated_images(
+        variable, user,
+        start_date, test_dates, resolution):
+    """Core function: returns ee.ImageCollection of aggregated images."""
     from analysis.analysis import quarterly_medians
 
     indicator: UserIndicator = UserIndicator.objects.filter(
@@ -37,16 +27,13 @@ def user_temporal_analysis(
             f'Indicator with variable name {variable} not found.'
         )
 
-    asset_keys = indicator.config.get(
-        'asset_keys', []
-    )
+    asset_keys = indicator.config.get('asset_keys', [])
     if not asset_keys:
         raise ValueError(
             f'No asset keys found for indicator {indicator.name}.'
         )
     # Use the first asset key
     asset_key = asset_keys[0]
-
 
     gee_asset: UserGEEAsset = UserGEEAsset.objects.filter(
         key=asset_key, created_by=user
@@ -55,22 +42,20 @@ def user_temporal_analysis(
         raise ValueError(
             f'GEEAsset with key {asset_key} not found.'
         )
-    var_names = gee_asset.metadata.get(
-        'band_names', [variable]
-    )
+
+    var_names = gee_asset.metadata.get('band_names', [variable])
     if not var_names:
         raise ValueError(
             f'No band names found for GEEAsset {gee_asset.key}.'
         )
-
-    var_rename = indicator.name
+    var_name = var_names[0]
 
     if gee_asset.type not in [
         GEEAssetType.IMAGE_COLLECTION,
-        GEEAssetType.TABLE
+        GEEAssetType.IMAGE
     ]:
         raise ValueError(
-            'Only ImageCollection and Table '
+            'Only ImageCollection and Image '
             'are supported in temporal analysis'
         )
 
@@ -88,54 +73,6 @@ def user_temporal_analysis(
             "Indicator does not support temporal analysis."
         )
 
-    split_date_mode = 'year'
-    if resolution.lower() == 'monthly':
-        split_date_mode = 'month'
-    elif resolution.lower() == 'quarterly':
-        split_date_mode = 'quarter'
-
-    end_date = max(test_dates)
-
-    date_ranges = split_dates(
-        start_date,
-        end_date,
-        split_date_mode,
-        last_date_of_month=True
-    )
-
-    # only select applicable date ranges
-    dates = []
-    for date_start, date_end in date_ranges:
-        for td in sorted(test_dates):
-            if td >= date_start and td <= date_end:
-                dates.append(date_start)
-
-    var_name = var_names[0]
-    var_rename = indicator.variable_name
-    image_col = ee.ImageCollection(
-        gee_asset.source
-    )
-
-    # Get the first image in the collection
-    first_img = image_col.first()
-
-    # Get the band names as a Python list
-    band_names = first_img.bandNames().getInfo()
-
-    # Band you want to check
-    target_band = var_name
-
-    if target_band not in band_names:
-        raise ValueError(f"Band {target_band} does NOT exist.")
-
-    # Map function to create a 'date' property
-    def add_date(ft):
-        year = ee.String(ft.get('year'))
-        month = ee.Number(ft.get('month')).format('%02d')  # ensures 2 digits
-        date = ee.Date.parse('yyyy-MM-dd', year.cat('-').cat(month).cat('-01'))
-        return ft.set('date', date.millis())
-
-    # 1. Aggregate images first (monthly/quarterly)
     split_date_unit = 'year'
     if resolution.lower() == 'monthly':
         split_date_unit = 'month'
@@ -146,6 +83,8 @@ def user_temporal_analysis(
     if resolution.lower() == 'quarterly':
         split_step = 3
 
+    end_date = max(test_dates)
+
     agg_images = quarterly_medians(
         collection=image_col,
         date_start=start_date.strftime("%Y-%m-%d"),
@@ -154,9 +93,22 @@ def user_temporal_analysis(
         reducer=indicator.get_reducer(),
         date_end=(end_date + relativedelta(months=1)).strftime("%Y-%m-%d")
     )
+
+    # Rename bands to include reducer name for clarity
     var_name = f"{var_name}_{indicator.get_reducer_name()}"
 
-    # 2. Reduce each aggregated image over the selected geometry
+    return agg_images, var_name, indicator
+
+
+def user_temporal_analysis(
+    variable, user, start_date, test_dates, resolution,
+    select_geo, analysis_cache
+):
+    agg_images, var_name, indicator = _build_aggregated_images(
+        variable, user, start_date, test_dates, resolution
+    )
+
+    # --- your original process_agg_image logic ---
     def process_agg_image(img):
         year = img.get('year')
         month = img.get('month')
@@ -188,14 +140,32 @@ def user_temporal_analysis(
     collections = collections.map(lambda feature: feature.setGeometry(None))
 
     # 5. Final property rename and add date property
+    var_rename = indicator.variable_name
     collections = collections.select(
         ['Name', var_name, 'year', 'month'],
         ['Name', var_rename, 'year', 'month']
     )
+
+    def add_date(ft):
+        year = ee.String(ft.get('year'))
+        month = ee.Number(ft.get('month')).format('%02d')
+        date = ee.Date.parse('yyyy-MM-dd', year.cat('-').cat(month).cat('-01'))
+        return ft.set('date', date.millis())
+
     collections = collections.map(add_date)
 
     # 6. Sort and filter for plotting
     to_plot_ts = collections.sort('Name').sort('date')
+
+    date_ranges = split_dates(
+        start_date, max(test_dates),
+        resolution.lower(), last_date_of_month=True
+    )
+    dates = []
+    for date_start, date_end in date_ranges:
+        for td in sorted(test_dates):
+            if td >= date_start and td <= date_end:
+                dates.append(date_start)
 
     date_list_ee = ee.List(
         [start_date.isoformat()] + [dt.isoformat() for dt in dates]
@@ -227,26 +197,19 @@ def user_spatial_analysis_dict(
     if not end_date:
         end_date = datetime.date.today()
 
-    # TODO: should it be image collection only, or image as well?
     indicator_asset_dicts = UserIndicator.map_user_indicator_to_gee_object(
         user=user,
-        asset_types=[GEEAssetType.IMAGE_COLLECTION]
+        asset_types=[GEEAssetType.IMAGE, GEEAssetType.IMAGE_COLLECTION]
     )
     variable_asset_dict = {}
-    for indicator, user_gee_asset in indicator_asset_dicts.items():
-        var_names = user_gee_asset.metadata.get(
-            'band_names', [indicator.variable_name]
-        )
-        var_name = var_names[0]
-
-        gee_asset_class = GEEAssetType.get_ee_asset_class(user_gee_asset)
-        gee_asset_obj = gee_asset_class(
-            user_gee_asset.source
-        ).select(var_name).filterDate(
-            start_date.isoformat(), end_date.isoformat()
-        ).filterBounds(countries)
+    for indicator, gee_asset_obj in indicator_asset_dicts.items():
+        if isinstance(gee_asset_obj, ee.ImageCollection):
+            gee_asset_obj = gee_asset_obj.filterDate(
+                start_date.isoformat(), end_date.isoformat()
+            )
 
         gee_asset_obj = gee_asset_obj.reduce(indicator.get_reducer())
+        gee_asset_obj = gee_asset_obj.clipToCollection(countries)
         variable_asset_dict[indicator.variable_name] = gee_asset_obj
 
     return variable_asset_dict

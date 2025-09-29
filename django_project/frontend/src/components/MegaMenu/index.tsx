@@ -38,6 +38,10 @@ export default function MegaMenu({ hoveredSection, isUserAvatarHovered }: MegaMe
     }
   };
 
+  const goToDocs = () => {
+    window.open('https://kartoza.github.io/africa_rangeland_watch/', '_blank')
+  };
+
   const userIsAdmin = useSelector(isAdmin);
 
   // Menu items based on hover
@@ -55,7 +59,7 @@ export default function MegaMenu({ hoveredSection, isUserAvatarHovered }: MegaMe
           { label: "Sign Out", to: "", onClick: handleLogout },
       ],
     resources: [
-      { label: "ARW Documentation", to: "/resources" },
+      { label: "ARW Documentation", to: "", onClick: goToDocs },
       { label: "Resources", to: "/resources" },
     ],
   };
@@ -146,12 +150,12 @@ export default function MegaMenu({ hoveredSection, isUserAvatarHovered }: MegaMe
                 {menuItems.resources.map((item) => (
                   <Box
                     key={item.label}
-                    onClick={() => item.label !== "ARW Documentation" && handleNavigation(item.to, item.onClick)}
-                    cursor={item.label === "ARW Documentation" ? "not-allowed" : "pointer"}
+                    onClick={() => handleNavigation(item.to, item.onClick)}
+                    cursor={"pointer"}
                     fontSize={{ base: "13px", sm: "medium" }}
                   >
                     <Text 
-                      color={item.label === "ARW Documentation" ? "gray.400" : "black"} 
+                      color={"black"} 
                       fontSize="16px" 
                       fontWeight={400}
                     >

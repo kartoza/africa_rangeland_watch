@@ -123,7 +123,7 @@ class LayerViewsTestCase(TestCase):
     def test_delete_layer_forbidden(self):
         self.client.login(username='otheruser', password='password')
         response = self.client.delete(reverse('delete_layer', args=[self.layer.uuid]))
-        self.assertEqual(response.status_code, 404)  # Since filter by created_by excludes it
+        self.assertEqual(response.status_code, 403)  # Since filter by created_by excludes it
 
     def test_download_layer_success(self):
         response = self.client.get(reverse('download_layer', args=[self.layer_with_file.uuid]))
