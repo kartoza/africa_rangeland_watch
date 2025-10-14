@@ -21,7 +21,13 @@ import {
   useBreakpointValue,
 } from "@chakra-ui/react";
 import { useDispatch, useSelector } from "react-redux";
-import { loginUser, registerUser, resetPasswordRequest, resetPasswordConfirm } from "../store/authSlice";
+import { 
+  loginUser,
+  registerUser,
+  resetPasswordRequest,
+  resetPasswordConfirm,
+  fetchAvailableSocialAuthProviders
+} from "../store/authSlice";
 import { RootState, AppDispatch } from "../store";
 import { useLocation } from "react-router-dom";
 import SessionPrompt from "./SessionPrompt";
@@ -44,7 +50,6 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
     base: "translate(-50%, -50%)",
     md: "none",
   });
-
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
   const [formType, setFormType] = useState<"signin" | "forgotPassword" | "signup" | "resetPassword">("signin");
   const [email, setEmail] = useState("");
@@ -54,18 +59,19 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
   const [rememberMe, setRememberMe] = useState(false);
   const [resetError, setResetError] = useState("");
   const [canSubmit, setCanSubmit] = useState(true);
-  
-
   const dispatch = useDispatch<AppDispatch>();
-  const { loading, error, token } = useSelector((state: RootState) => state.auth);
-
+  const { loading, error, token, socialAuthProviders } = useSelector((state: RootState) => state.auth);
   const location = useLocation();
-
   const searchParams = new URLSearchParams(location.search);
   const uid = searchParams.get("uid");
   const tokenFromUrl = searchParams.get("token");
-
   const [isOpenReset, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    if (socialAuthProviders === null) {
+      dispatch(fetchAvailableSocialAuthProviders());
+    }
+  }, [dispatch]);
 
   useEffect(() => {
     if (uid && tokenFromUrl) {
@@ -318,7 +324,7 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
                 </Flex>
 
                 {/* Social login options */}
-                {(formType === "signin" || formType === "signup") && (
+                {(formType === "signin" || formType === "signup") && (socialAuthProviders && socialAuthProviders.length > 0) && (
                   <>
                     <Flex mt="22px" justifyContent="center" gap="20px">
                       <Text color="gray.800" fontSize="16px" mt="14px">
@@ -327,6 +333,7 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
                     </Flex>
 
                     <Flex mt="22px" justifyContent="center" gap="20px">
+                      {socialAuthProviders.includes("google") && (
                       <a href="/accounts/google/login/">
                         <Image
                           src="static/images/google_icon.svg"
@@ -334,6 +341,8 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
                           h="40px"
                           w="40px" />
                       </a>
+                      )}
+                      {socialAuthProviders.includes("github") && (
                       <a href="/accounts/github/login/">
                         <Image
                           src="static/images/github_icon.svg"
@@ -341,6 +350,7 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
                           h="40px"
                           w="40px" />
                       </a>
+                      )}
                     </Flex>
                   </>
                 )}
