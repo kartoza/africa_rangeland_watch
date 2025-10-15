@@ -182,7 +182,7 @@ class CustomRegistrationView(APIView):
         except Exception as e:
             logger.error(f"Error during registration: {e}", exc_info=True)
             return Response(
-                {'error': str(e), 'details': 'An unexpected error occurred.'},
+                {'details': 'An unexpected error occurred.'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
@@ -221,7 +221,7 @@ class ResendActivationEmailView(CustomRegistrationView):
                 f"Error resending activation email: {e}", exc_info=True
             )
             return Response(
-                {'error': str(e), 'message': 'An unexpected error occurred.'},
+                {'message': 'An unexpected error occurred.'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
