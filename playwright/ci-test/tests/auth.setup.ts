@@ -41,8 +41,7 @@ setup.describe('login', () => {
 
     // Click on the Sign In button
     await page.getByRole('button', { name: 'Sign In' }).click();
-    await expect(page.locator('[id="chakra-modal-\\:r4\\:"]').getByText('Start New')).toBeVisible();
-    await page.locator('[id="chakra-modal-\\:r4\\:"]').getByText('Start New').click();
+    await expect(page.locator('[id="chakra-modal-\\:r4\\:"]').getByText('Start New')).not.toBeVisible();
 
     // Check if the page has loaded
     await expect(page.locator('h1')).toContainText('Africa Rangeland Watch');
