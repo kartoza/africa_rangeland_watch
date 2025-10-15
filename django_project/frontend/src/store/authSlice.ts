@@ -272,9 +272,18 @@ export const registerUser = (email: string, password: string, repeatPassword: st
 };
 
 
-
-
-
+// Action to resent activation email
+export const resendActivationEmail = async (email: string) => {
+  try {
+    setCSRFToken();
+    const url = `/registration/resend-activation/`;
+    await axios.post(url, { email });
+    return null;
+  } catch (error) {
+    const errorMessage = error.response?.data?.message || 'Error resending activation email';
+    return errorMessage;
+  }
+};
 
 export const selectIsLoggedIn = (state: RootState) =>
   !!state.auth.token || state.auth.isAuthenticated;

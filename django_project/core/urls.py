@@ -27,7 +27,8 @@ from .custom_auth_view import (
     ResetPasswordConfirmView,
     user_info,
     logout_view,
-    CustomLoginView
+    CustomLoginView,
+    ResendActivationEmailView
 )
 
 urlpatterns = [
@@ -51,6 +52,11 @@ urlpatterns = [
     path(
         'api/auth/check-token/',
         CheckTokenView.as_view(), name='check-token'
+    ),
+    path(
+        'registration/resend-activation/',
+        ResendActivationEmailView.as_view(),
+        name='resend-activation'
     ),
     path(
         'registration/',

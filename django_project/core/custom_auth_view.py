@@ -1,3 +1,4 @@
+import logging
 from django.conf import settings
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticated
@@ -28,6 +29,7 @@ from dj_rest_auth.views import LoginView
 from allauth.account import app_settings as allauth_settings
 from django.contrib.auth import login as auth_login
 
+logger = logging.getLogger(__name__)
 
 
 class CustomLoginView(LoginView):
@@ -90,6 +92,40 @@ class CustomRegistrationView(APIView):
     permission_classes = [AllowAny]
     throttle_classes = [AnonRateThrottle]
 
+    def _send_activation_email(self, user):
+        # Generate account activation token and link
+        token = default_token_generator.make_token(user)
+        uid = urlsafe_base64_encode(str(user.pk).encode())
+        activation_link = (
+            f"{settings.DJANGO_BACKEND_URL}/activate/{uid}/{token}/"
+        )
+
+        # Send email with activation link
+        subject = "Activate Your Account"
+        html_message = render_to_string(
+            'account/email_confirmation.html',
+            {
+                'user': user,
+                'activation_url': activation_link,
+                'django_backend_url': settings.DJANGO_BACKEND_URL,
+            }
+        )
+
+        email_message = EmailMultiAlternatives(
+            subject=subject,
+            body="Please activate your account using the link below.",
+            from_email=settings.NO_REPLY_EMAIL,
+            to=[user.email]
+        )
+        logo_path = find('images/main_logo.svg')
+
+        if logo_path:
+            with open(logo_path, 'rb') as img_file:
+                image = MIMEImage(img_file.read(), _subtype="svg+xml")
+                image.add_header('Content-ID', '<logo_image>')
+        email_message.attach_alternative(html_message, "text/html")
+        email_message.send()
+
     def post(self, request, *args, **kwargs):
         email = request.data.get('email')
         password1 = request.data.get('password1')
@@ -133,51 +169,61 @@ class CustomRegistrationView(APIView):
             )
             user.is_active = False
             user.save()
-
-            # Generate account activation token and link
-            token = default_token_generator.make_token(user)
-            uid = urlsafe_base64_encode(str(user.pk).encode())
-            activation_link = f"{
-                settings.DJANGO_BACKEND_URL}/activate/{uid}/{token}/"
-
-            # Send email with activation link
-            subject = "Activate Your Account"
-            html_message = render_to_string(
-                'account/email_confirmation.html',
-                {
-                    'user': user,
-                    'activation_url': activation_link,
-                    'django_backend_url': settings.DJANGO_BACKEND_URL,
-                }
-            )
-
-            email_message = EmailMultiAlternatives(
-                subject=subject,
-                body="Please activate your account using the link below.",
-                from_email=settings.NO_REPLY_EMAIL,
-                to=[email]
-            )
-            logo_path = find('images/main_logo.svg')
-
-            if logo_path:
-                with open(logo_path, 'rb') as img_file:
-                    image = MIMEImage(img_file.read(), _subtype="svg+xml")
-                    image.add_header('Content-ID', '<logo_image>')
-            email_message.attach_alternative(html_message, "text/html")
-            email_message.send()
+            self._send_activation_email(user)
 
             return Response(
-                {'message': 'Verification email sent.'},
+                {
+                    'message': 'Verification email sent.',
+                    'email': user.email
+                },
                 status=status.HTTP_201_CREATED
             )
 
         except Exception as e:
+            logger.error(f"Error during registration: {e}", exc_info=True)
             return Response(
                 {'error': str(e), 'details': 'An unexpected error occurred.'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
 
 
+class ResendActivationEmailView(CustomRegistrationView):
+    permission_classes = [AllowAny]
+    throttle_classes = [AnonRateThrottle]
+
+    def post(self, request, *args, **kwargs):
+        email = request.data.get('email')
+        if not email:
+            return Response(
+                {'message': 'Email is required.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        try:
+            user = get_user_model().objects.get(email=email)
+            if user.is_active:
+                return Response(
+                    {'message': 'Account is already active.'},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            self._send_activation_email(user)
+            return Response(
+                {'message': 'Activation email resent.'},
+                status=status.HTTP_200_OK
+            )
+        except get_user_model().DoesNotExist:
+            return Response(
+                {'message': 'Email not found.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            logger.error(
+                f"Error resending activation email: {e}", exc_info=True
+            )
+            return Response(
+                {'error': str(e), 'message': 'An unexpected error occurred.'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
 
 class AccountActivationView(APIView):
