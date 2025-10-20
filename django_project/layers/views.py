@@ -10,6 +10,7 @@ from rest_framework.response import Response
 from django.shortcuts import render  # noqa: F401
 from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
+from django.utils import timezone as django_timezone
 
 from django.shortcuts import get_object_or_404
 from django.http import FileResponse, Http404
@@ -128,42 +129,70 @@ def trigger_cog_export(request, uuid):
     cog_qs = ExportedCog.objects.filter(
         input_layer=layer,
         landscape_id=landscape_id,
-        downloaded=True,
         created_at__gte=datetime.now(timezone.utc) - timedelta(hours=24)
-    )
-
+    ).order_by('-created_at')
+    print(f'cog_qs: {cog_qs.count()}')
     if cog_qs.exists():
         cog = cog_qs.first()
-        gdrive = _initialize_gdrive_instance()
-        try:
-            # quick existence check — inexpensive 'files.get' call
-            gdrive.CreateFile({'id': cog.gdrive_file_id}).FetchMetadata()
-        except HttpError:
-            # file was deleted on Drive -> fall through and re-export
-            cog_qs.delete()
-        else:
-            download_url = reverse('download_from_gdrive', args=[uuid])
+        if cog.downloaded and cog.gdrive_file_id:
+            gdrive = _initialize_gdrive_instance()
+            try:
+                # quick existence check — inexpensive 'files.get' call
+                gdrive.CreateFile({'id': cog.gdrive_file_id}).FetchMetadata()
+                print(f'Found existing file on Drive: {cog.gdrive_file_id}')
+            except HttpError:
+                # file was deleted on Drive -> fall through and re-export
+                cog_qs.delete()
+            else:
+                download_url = reverse('nrt-layer-download', args=[cog.id])
+                return Response({
+                    "already_exported": True,
+                    "download_url": download_url
+                })
+        elif cog.task_id and cog.status in ['PENDING', 'PROCESSING']:
             return Response({
-                "already_exported": True,
-                "download_url": download_url
+                "task_id": cog.task_id,
+                "already_exported": False,
+                "cog_id": cog.id
             })
+    file_name = (
+        f"{layer.name.replace(' ', '_')}_{uuid}.tif"
+    )
+    return Response({
+        "error": "COG export is currently disabled.",
+        "info": "Please contact support for assistance."
+    }, status=503)
+    # TODO: uncomment when ready to re-enable export
+    # # create a new ExportedCog entry with status PROCESSING
+    # cog = ExportedCog.objects.create(
+    #     input_layer=layer,
+    #     landscape_id=landscape_id,
+    #     file_name=file_name,
+    #     task_id=None,
+    #     status="PENDING",
+    #     started_at=django_timezone.now()
+    # )
 
-    async_result = export_ee_image_to_cog_task.delay(str(layer.uuid),
-                                                     landscape_id)
-    return Response({"task_id": async_result.id})
+    # async_result = export_ee_image_to_cog_task.delay(str(cog.id))
+    # cog.task_id = async_result.id
+    # cog.save()
+    # return Response({
+    #     "task_id": cog.task_id,
+    #     "already_exported": False,
+    #     "cog_id": cog.id
+    # })
 
 
 @api_view(['GET'])
 @login_required
-def download_from_gdrive(request, uuid):
+def download_from_gdrive(request, cog_id):
     """
     Streams a downloaded COG file directly from Google Drive
     using the stored gdrive_file_id from ExportedCog.
     """
     try:
-        input_layer = InputLayer.objects.get(uuid=uuid)
         exported = ExportedCog.objects.filter(
-            input_layer=input_layer,
+            id=cog_id,
             downloaded=True
         ).first()
 
@@ -194,37 +223,40 @@ def download_from_gdrive(request, uuid):
 
 @api_view(['GET'])
 @login_required
-def cog_export_status(request, uuid, task_id):
+def cog_export_status(request, cog_id):
     """
     Client polls this to learn when the COG is ready.
     """
-    # 1) check the Celery task
-    res = AsyncResult(task_id)
-    if res.state in ('PENDING', 'STARTED', 'RETRY'):
-        return Response({"status": "processing"})
-    if res.state == 'FAILURE':
-        return Response(
-            {"status": "error", "info": str(res.result)},
-            status=500
-        )
-
-    # 2) task succeeded — look up the ExportedCog row
-    landscape_id = request.query_params.get("landscape_id")
     try:
-        exp = ExportedCog.objects.get(
-            input_layer__uuid=uuid,
-            landscape_id=landscape_id,
-            downloaded=True
+        cog = ExportedCog.objects.get(
+            id=cog_id
         )
         # if we found it, return its info
-        if exp.file_name:
-            download_url = reverse('download_from_gdrive', args=[uuid])
+        if cog.downloaded and cog.status == 'COMPLETED':
+            download_url = reverse('nrt-layer-download', args=[cog.id])
             return Response({
                 "status": "completed",
                 "download_url": download_url,
-                "file_name": exp.file_name
+                "file_name": cog.file_name
             })
-
+        elif cog.status == 'FAILED':
+            return Response(
+                {
+                    "status": "error",
+                    "info": "Export task failed. Please try again."
+                }
+            )
+        else:
+            return Response(
+                {
+                    "status": "processing",
+                    "info": "Export is still in progress."
+                }
+            )
     except ExportedCog.DoesNotExist:
-        # it might not yet have saved the record
-        return Response({"status": "processing"})
+        return Response(
+            {
+                "status": "error",
+                "info": "Export task not found."
+            }
+        )

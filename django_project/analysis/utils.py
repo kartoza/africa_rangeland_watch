@@ -49,7 +49,7 @@ def gdrive_file_list(folder_name):
         "'application/vnd.google-apps.folder' and trashed = false"
     )
     folder_list = gdrive.ListFile({'q': folder_query}).GetList()
-
+    print(f'Found {len(folder_list)} folder(s) named "{folder_name}".')
     if not folder_list:
         # folder not found
         return None

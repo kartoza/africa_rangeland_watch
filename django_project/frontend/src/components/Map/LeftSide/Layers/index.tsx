@@ -20,6 +20,7 @@ import LayerCheckbox from "./LayerCheckbox";
 import LandscapeSelector from "./LandscapeSelector";
 import LeftSideLoading from "../Loading";
 import CogDownloadButton from "./LayerDownloadButton";
+import { selectIsLoggedIn } from "../../../../store/authSlice";
 
 /* ---------- type aliases (unchanged) ------------------------------------ */
 export interface LayerCheckboxProps {
@@ -48,6 +49,7 @@ export default function Layers({
     (s: RootState) => s.landscape
   );
   const selectedNrt = useSelector((s: RootState) => s.layer.selectedNrt);
+  const isAuthenticated = useSelector(selectIsLoggedIn);
   const toast = useToast();
 
   const [exportTasks, setExportTasks] = useState<Record<string, string>>({});
@@ -208,7 +210,7 @@ export default function Layers({
                     }
                   />
 
-                  {selectedNrt?.id === layer.id && (
+                  {isAuthenticated && (
                     <Box display="flex" gap={2}>
                       <Button
                         size="xs"
@@ -222,7 +224,6 @@ export default function Layers({
                         layerId={layer.id}
                         landscapeId={selectedLandscape.id.toString()}
                         taskId={exportTasks[layer.id]}
-                        downloadUrl={selectedLandscape.urls[layer.id]}
                         isSelected
                       />
                     </Box>

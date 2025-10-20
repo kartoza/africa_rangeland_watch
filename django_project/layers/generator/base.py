@@ -81,4 +81,4 @@ class BaseLayerGenerator:
                 self.save_url_to_cache(layer.cache_key(), layer.file_url)
         except Exception as ex:
             logger.error(f'Failed {self.__class__.__name__} generator!')
-            logger.error(ex)
+            logger.error(ex, exc_info=True)

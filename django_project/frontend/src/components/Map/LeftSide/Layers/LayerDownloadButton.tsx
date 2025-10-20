@@ -1,5 +1,5 @@
 // src/components/Map/LeftSide/LayerDownloadButton.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Button, Spinner, Box, useToast } from '@chakra-ui/react';
 
 /* ------------------------------------------------------------------ */
@@ -23,6 +23,7 @@ export default function CogDownloadButton({
   downloadUrl: downloadUrlProp,
 }: Props) {
   const toast = useToast();
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   /* ---------------------------------------------------------------- */
   /*  Local state                                                     */
@@ -34,6 +35,7 @@ export default function CogDownloadButton({
   const [downloadUrl, setDownloadUrl] = useState<string | null>(
     downloadUrlProp ?? null
   );
+  console.log('CogDownloadButton', { taskId, downloadUrlProp, status, downloadUrl, layerId, landscapeId });
 
   /* ---------------------------------------------------------------- */
   /*  Poll the server *only if* we have a taskId and no URL yet.       */
@@ -70,21 +72,34 @@ export default function CogDownloadButton({
               isClosable: true,
             });
           }
+          if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+          }
         } else if (json.status === 'error') {
           if (!cancelled) setStatus('error');
+          if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+          }
         }
         // else still processing
       } catch {
         if (!cancelled) setStatus('error');
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
       }
     };
 
-    // first check, then poll every 3 s
+    // first check, then poll every 5 s
     check();
-    const interval = setInterval(check, 3000);
+    intervalRef.current = setInterval(check, 5000);
     return () => {
       cancelled = true;
-      clearInterval(interval);
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
     };
   }, [taskId, layerId, landscapeId, toast, downloadUrlProp]);
 
@@ -94,7 +109,11 @@ export default function CogDownloadButton({
   if (!taskId && !downloadUrlProp) return null;
 
   if (status === 'processing') {
-    return <Spinner size="sm" />;
+    return (
+    <Box fontSize="xs" paddingTop={'8px'}>
+      <Spinner size="sm"/>
+    </Box>
+    )
   }
 
   if (status === 'completed' && downloadUrl) {
@@ -113,7 +132,7 @@ export default function CogDownloadButton({
 
   if (status === 'error') {
     return (
-      <Box fontSize="xs" color="red.500">
+      <Box fontSize="xs" color="red.500" paddingTop={'8px'}>
         Export failed
       </Box>
     );

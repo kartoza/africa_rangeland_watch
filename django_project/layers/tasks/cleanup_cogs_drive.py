@@ -13,9 +13,9 @@ logger = logging.getLogger(__name__)
 @app.task(name="cleanup_exported_cogs_from_drive")
 def cleanup_exported_cogs_from_drive():
     """
-    Weekly task to delete GDrive COG files older than 7 days.
+    Weekly task to delete GDrive COG files older than 2 days.
     """
-    threshold_date = timezone.now() - timedelta(days=7)
+    threshold_date = timezone.now() - timedelta(days=2)
     old_cogs = ExportedCog.objects.filter(
         downloaded=True,
         updated_at__lt=threshold_date
