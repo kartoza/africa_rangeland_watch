@@ -305,7 +305,7 @@ class NearRealTimeGenerator(BaseLayerGenerator):
             # if soil_change:
             #     results.append(soil_change)
 
-            # woody cover asset is only available up to 2019   
+            # woody cover asset is only available up to 2019
             # woody = self._generate_woody_cover_layer(
             #     aoi, nrt_end_dt, landscape
             # )
