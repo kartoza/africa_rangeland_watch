@@ -16,7 +16,6 @@ from django.shortcuts import get_object_or_404
 from django.http import FileResponse, Http404
 from django.urls import reverse
 
-from celery.result import AsyncResult
 from cloud_native_gis.models import Layer
 from analysis.utils import _initialize_gdrive_instance
 from .models import InputLayer, ExportedCog

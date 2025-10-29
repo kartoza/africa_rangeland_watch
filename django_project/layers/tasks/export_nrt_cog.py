@@ -6,7 +6,7 @@ ARW: Task to export Earth Engine image to Google Drive as COG and download it.
 import logging
 from celery import shared_task
 from django.utils import timezone
-from layers.models import InputLayer, ExportedCog
+from layers.models import ExportedCog
 from analysis.analysis import export_image_to_drive, initialize_engine_analysis
 from analysis.utils import get_gdrive_file
 from layers.utils import get_nrt_image
