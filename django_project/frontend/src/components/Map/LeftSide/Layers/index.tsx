@@ -49,11 +49,8 @@ export default function Layers({
     (s: RootState) => s.landscape
   );
   const { exportTasks } = useSelector((s: RootState) => s.layer);
-  // const selectedNrt = useSelector((s: RootState) => s.layer.selectedNrt);
   const isAuthenticated = useSelector(selectIsLoggedIn);
   const toast = useToast();
-
-  // const [exportTasks, setExportTasks] = useState<Record<string, string>>({});
 
   /* ---------------- helpers -------------------------------------------- */
   const handleNrtLayerChecked = (layer: Layer) => {
