@@ -74,9 +74,10 @@ jobs:
           make build-react
           make dev-runserver
           make sleep
+          make sleep
       - name: Test django endpoint
         run: |
-          curl http://localhost:61100/
+          curl --retry 10 --retry-delay 2 http://localhost:61100/
           if [ $? -ne 0 ]; then
             echo "Curl command failed"
             exit 1
