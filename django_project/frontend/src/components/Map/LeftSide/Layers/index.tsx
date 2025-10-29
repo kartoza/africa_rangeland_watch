@@ -13,7 +13,7 @@ import {
 } from "@chakra-ui/react";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "../../../../store";
-import { Layer, setSelectedNrtLayer } from "../../../../store/layerSlice";
+import { Layer, setSelectedNrtLayer, setExportNrtLayer, ExportNrtLayer } from "../../../../store/layerSlice";
 import { Landscape } from "../../../../store/landscapeSlice";
 import { GroupName } from "../../DataTypes";
 import LayerCheckbox from "./LayerCheckbox";
@@ -48,11 +48,12 @@ export default function Layers({
   const { selected: selectedLandscape } = useSelector(
     (s: RootState) => s.landscape
   );
-  const selectedNrt = useSelector((s: RootState) => s.layer.selectedNrt);
+  const { exportTasks } = useSelector((s: RootState) => s.layer);
+  // const selectedNrt = useSelector((s: RootState) => s.layer.selectedNrt);
   const isAuthenticated = useSelector(selectIsLoggedIn);
   const toast = useToast();
 
-  const [exportTasks, setExportTasks] = useState<Record<string, string>>({});
+  // const [exportTasks, setExportTasks] = useState<Record<string, string>>({});
 
   /* ---------------- helpers -------------------------------------------- */
   const handleNrtLayerChecked = (layer: Layer) => {
@@ -100,10 +101,29 @@ export default function Layers({
       });
       if (!res.ok) throw new Error("Export endpoint returned error");
 
-      const { task_id } = await res.json();
-      setExportTasks((prev) => ({ ...prev, [layer.id]: task_id }));
+      const { task_id, already_exported, cog_id, download_url } = await res.json();
+      const exportNrtLayer: ExportNrtLayer = {
+        loading: false,
+        error: null,
+        layerId: layer.id,
+        taskId: task_id,
+        status: already_exported ? "completed" : "processing",
+        download_url: download_url,
+        cogId: cog_id,
+      };
 
-      showToast("Export started!", "COG export task has been queued.", ToastStatus.Success);
+      dispatch(setExportNrtLayer(exportNrtLayer));
+
+      if (already_exported) {
+        showToast(
+          "Export already finished",
+          "A COG has already been generated for this layer and landscape. Please check the download button.",
+          ToastStatus.Success
+        );
+      } else {
+        showToast("Export started!", "COG export task has been queued.", ToastStatus.Success);
+      }
+
     } catch (err) {
       showToast(
         "Export failed",
@@ -223,7 +243,7 @@ export default function Layers({
                       <CogDownloadButton
                         layerId={layer.id}
                         landscapeId={selectedLandscape.id.toString()}
-                        taskId={exportTasks[layer.id]}
+                        exportNrtLayer={exportTasks[layer.id]}
                         isSelected
                       />
                     </Box>

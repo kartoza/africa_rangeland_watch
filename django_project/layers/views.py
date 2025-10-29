@@ -131,7 +131,6 @@ def trigger_cog_export(request, uuid):
         landscape_id=landscape_id,
         created_at__gte=datetime.now(timezone.utc) - timedelta(hours=24)
     ).order_by('-created_at')
-    print(f'cog_qs: {cog_qs.count()}')
     if cog_qs.exists():
         cog = cog_qs.first()
         if cog.downloaded and cog.gdrive_file_id:
@@ -139,7 +138,6 @@ def trigger_cog_export(request, uuid):
             try:
                 # quick existence check — inexpensive 'files.get' call
                 gdrive.CreateFile({'id': cog.gdrive_file_id}).FetchMetadata()
-                print(f'Found existing file on Drive: {cog.gdrive_file_id}')
             except HttpError:
                 # file was deleted on Drive -> fall through and re-export
                 cog_qs.delete()
@@ -147,7 +145,8 @@ def trigger_cog_export(request, uuid):
                 download_url = reverse('nrt-layer-download', args=[cog.id])
                 return Response({
                     "already_exported": True,
-                    "download_url": download_url
+                    "download_url": download_url,
+                    "cog_id": cog.id
                 })
         elif cog.task_id and cog.status in ['PENDING', 'PROCESSING']:
             return Response({
@@ -158,29 +157,25 @@ def trigger_cog_export(request, uuid):
     file_name = (
         f"{layer.name.replace(' ', '_')}_{uuid}.tif"
     )
-    return Response({
-        "error": "COG export is currently disabled.",
-        "info": "Please contact support for assistance."
-    }, status=503)
-    # TODO: uncomment when ready to re-enable export
-    # # create a new ExportedCog entry with status PROCESSING
-    # cog = ExportedCog.objects.create(
-    #     input_layer=layer,
-    #     landscape_id=landscape_id,
-    #     file_name=file_name,
-    #     task_id=None,
-    #     status="PENDING",
-    #     started_at=django_timezone.now()
-    # )
 
-    # async_result = export_ee_image_to_cog_task.delay(str(cog.id))
-    # cog.task_id = async_result.id
-    # cog.save()
-    # return Response({
-    #     "task_id": cog.task_id,
-    #     "already_exported": False,
-    #     "cog_id": cog.id
-    # })
+    # create a new ExportedCog entry with status PROCESSING
+    cog = ExportedCog.objects.create(
+        input_layer=layer,
+        landscape_id=landscape_id,
+        file_name=file_name,
+        task_id=None,
+        status="PENDING",
+        started_at=django_timezone.now()
+    )
+
+    async_result = export_ee_image_to_cog_task.delay(str(cog.id))
+    cog.task_id = async_result.id
+    cog.save()
+    return Response({
+        "task_id": cog.task_id,
+        "already_exported": False,
+        "cog_id": cog.id
+    })
 
 
 @api_view(['GET'])
