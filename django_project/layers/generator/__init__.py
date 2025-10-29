@@ -8,12 +8,12 @@ from layers.generator.livestock import LiveStockGenerator
 
 
 GENERATOR_CLASSES = [
-    # CGLSGenerator,
-    # FireFrequencyGenerator,
-    # GrazingCapacityGenerator,
-    # ModisVegetationGenerator,
-    # SoilOrganicCarbonGenerator,
-    # LiveStockGenerator,
+    CGLSGenerator,
+    FireFrequencyGenerator,
+    GrazingCapacityGenerator,
+    ModisVegetationGenerator,
+    SoilOrganicCarbonGenerator,
+    LiveStockGenerator,
     NearRealTimeGenerator
 ]
 
