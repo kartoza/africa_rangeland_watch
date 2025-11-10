@@ -12,7 +12,7 @@ import { fetchBaseMaps } from '../../store/baseMapSlice';
 import { fetchMapConfig } from '../../store/mapConfigSlice';
 import { selectIsLoggedIn } from "../../store/authSlice";
 import { Layer } from '../../store/layerSlice';
-import { COMMUNITY_ID } from "./DataTypes";
+import { COMMUNITY_ID, EARTH_EANGER_EVENT } from "./DataTypes";
 import { BasemapControl, LegendControl } from "./control";
 import { doRenderLayer, doRemoveLayer } from "./utils";
 
@@ -155,7 +155,7 @@ export const useMapSetup = (
     useImperativeHandle(ref, () => ({
         /** Render layer */
         renderLayer(layer: Layer) {
-            doRenderLayer(mapRef, layer, isAuthenticated ? COMMUNITY_ID : null, legendRef)
+            doRenderLayer(mapRef, layer, isAuthenticated ? COMMUNITY_ID : EARTH_EANGER_EVENT, legendRef)
         },
         /** Hide layer */
         removeLayer(layer: Layer, isRemoveSource?: boolean) {
