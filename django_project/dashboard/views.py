@@ -407,10 +407,18 @@ class UpdateDashboardView(APIView):
 class DashboardDetailView(APIView):
     """View to retrieve detailed information about a dashboard."""
 
-    permission_classes = [permissions.IsAuthenticated]
+    permission_classes = [permissions.AllowAny]
 
     def get(self, request, uuid):
         dashboard = get_object_or_404(Dashboard, uuid=uuid)
+        if dashboard.privacy_type != 'public' and request.user.is_anonymous:
+            return Response(
+                {
+                    "error":
+                    "You do not have permission to view this dashboard."
+                },
+                status=status.HTTP_401_UNAUTHORIZED
+            )
         serializer = DashboardDetailSerializer(dashboard)
         return Response(serializer.data)
 
