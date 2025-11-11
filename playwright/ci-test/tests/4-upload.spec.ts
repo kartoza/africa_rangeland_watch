@@ -42,6 +42,8 @@ test.describe('upload files', () => {
   });
 
   test('test gpkg', async ({ page }) => {
+    await expect(page.locator('[id="chakra-modal-\\:r4\\:"]').getByText('Start New')).toBeVisible();
+    await page.locator('[id="chakra-modal-\\:r4\\:"]').getByText('Start New').click();
     await page.getByRole('link', { name: 'MAP' }).click();
     await expect(page.getByRole('button', { name: 'Upload' })).toBeVisible();
     await page.getByRole('button', { name: 'Upload' }).click();
@@ -61,6 +63,8 @@ test.describe('upload files', () => {
   });
 
   test('test kml', async ({ page }) => {
+    await expect(page.locator('[id="chakra-modal-\\:r4\\:"]').getByText('Start New')).toBeVisible();
+    await page.locator('[id="chakra-modal-\\:r4\\:"]').getByText('Start New').click();
     await page.getByRole('link', { name: 'MAP' }).click();
     await page.getByRole('button', { name: 'Upload' }).click();
     const fileChooserPromise = page.waitForEvent('filechooser');
@@ -77,6 +81,8 @@ test.describe('upload files', () => {
   });
 
   test('test zip', async ({ page }) => {
+    await expect(page.locator('[id="chakra-modal-\\:r4\\:"]').getByText('Start New')).toBeVisible();
+    await page.locator('[id="chakra-modal-\\:r4\\:"]').getByText('Start New').click();
     await expect(page.getByRole('link', { name: 'MAP' })).toBeVisible();
     await page.getByRole('link', { name: 'MAP' }).click();
     await expect(page.getByRole('button', { name: 'Upload' })).toBeVisible();
