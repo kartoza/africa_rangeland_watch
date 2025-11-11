@@ -96,6 +96,7 @@ CMD ["/usr/sbin/sshd", "-D"]
 
 FROM prod AS test
 
+RUN apt-get update && apt-get install -y curl
 COPY deployment/docker/requirements-dev.txt /requirements-dev.txt
 RUN pip install -r /requirements-dev.txt
 

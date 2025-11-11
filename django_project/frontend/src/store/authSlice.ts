@@ -1,4 +1,4 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
 import axios from 'axios';
 import { AppDispatch, RootState } from '.';
 import { setCSRFToken } from '../utils/csrfUtils';
@@ -15,6 +15,7 @@ interface AuthState {
   error: string | null;
   isAuthenticated: boolean;
   isAdmin: boolean;
+  socialAuthProviders?: string[];
 }
 
 const initialState: AuthState = {
@@ -23,8 +24,19 @@ const initialState: AuthState = {
   loading: false,
   error: null,
   isAuthenticated: false,
-  isAdmin: false
+  isAdmin: false,
+  socialAuthProviders: null
 };
+
+
+export const fetchAvailableSocialAuthProviders = createAsyncThunk(
+    'auth/fetchAvailableSocialAuthProviders',
+    async () => {
+      const response = await axios.get('/frontend-api/social-auth-providers/');
+      return response.data;
+    }
+);
+
 
 const authSlice = createSlice({
   name: 'auth',
@@ -62,6 +74,20 @@ const authSlice = createSlice({
       state.user = action.payload;
     },
   },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchAvailableSocialAuthProviders.pending, (state) => {
+        state.loading = true;
+      })
+      .addCase(fetchAvailableSocialAuthProviders.fulfilled, (state, action: PayloadAction<string[]>) => {
+        state.loading = false;
+        state.socialAuthProviders = action.payload;
+      })
+      .addCase(fetchAvailableSocialAuthProviders.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.error.message || 'An error occurred while fetching social auth providers';
+      })
+  }
 });
 
 
@@ -246,9 +272,18 @@ export const registerUser = (email: string, password: string, repeatPassword: st
 };
 
 
-
-
-
+// Action to resent activation email
+export const resendActivationEmail = async (email: string) => {
+  try {
+    setCSRFToken();
+    const url = `/registration/resend-activation/`;
+    await axios.post(url, { email });
+    return null;
+  } catch (error) {
+    const errorMessage = error.response?.data?.message || 'Error resending activation email';
+    return errorMessage;
+  }
+};
 
 export const selectIsLoggedIn = (state: RootState) =>
   !!state.auth.token || state.auth.isAuthenticated;
