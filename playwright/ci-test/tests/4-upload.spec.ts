@@ -13,6 +13,9 @@ test.describe('upload files', () => {
   });
 
   test('test geojson', async ({ page }) => {
+    await expect(page.locator('[id="chakra-modal-\\:r4\\:"]').getByText('Start New')).toBeVisible();
+    await page.locator('[id="chakra-modal-\\:r4\\:"]').getByText('Start New').click();
+
     await page.getByRole('link', { name: 'MAP' }).click();
 
     await page.getByRole('button', { name: 'Upload' }).click();
