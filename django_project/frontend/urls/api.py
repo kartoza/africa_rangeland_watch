@@ -29,6 +29,7 @@ from frontend.api_views.indicator import (
     UserIndicatorAPI,
     GetSignedURLUploadAPI
 )
+from frontend.api_views.auth import AvailableSocialAuthProvidersAPI
 
 router = DefaultRouter()
 router.register(r'landscapes', LandscapeViewSet, basename='landscapes')
@@ -133,4 +134,9 @@ urlpatterns = base_map_urls + layers_urls + indicator_urls + router.urls + [
         AnalysisAPI.as_view(),
         name='analysis'
     ),
+    path(
+        'social-auth-providers/',
+        AvailableSocialAuthProvidersAPI.as_view(),
+        name='social-auth-providers'
+    )
 ]

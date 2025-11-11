@@ -21,7 +21,14 @@ import {
   useBreakpointValue,
 } from "@chakra-ui/react";
 import { useDispatch, useSelector } from "react-redux";
-import { loginUser, registerUser, resetPasswordRequest, resetPasswordConfirm } from "../store/authSlice";
+import { 
+  loginUser,
+  registerUser,
+  resetPasswordRequest,
+  resetPasswordConfirm,
+  fetchAvailableSocialAuthProviders,
+  resendActivationEmail
+} from "../store/authSlice";
 import { RootState, AppDispatch } from "../store";
 import { useLocation } from "react-router-dom";
 import SessionPrompt from "./SessionPrompt";
@@ -44,9 +51,8 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
     base: "translate(-50%, -50%)",
     md: "none",
   });
-
   const [isPasswordVisible, setIsPasswordVisible] = useState(false);
-  const [formType, setFormType] = useState<"signin" | "forgotPassword" | "signup" | "resetPassword">("signin");
+  const [formType, setFormType] = useState<"signin" | "forgotPassword" | "signup" | "resetPassword" | "successSignUp">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -54,18 +60,19 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
   const [rememberMe, setRememberMe] = useState(false);
   const [resetError, setResetError] = useState("");
   const [canSubmit, setCanSubmit] = useState(true);
-  
-
   const dispatch = useDispatch<AppDispatch>();
-  const { loading, error, token } = useSelector((state: RootState) => state.auth);
-
+  const { loading, error, token, socialAuthProviders } = useSelector((state: RootState) => state.auth);
   const location = useLocation();
-
   const searchParams = new URLSearchParams(location.search);
   const uid = searchParams.get("uid");
   const tokenFromUrl = searchParams.get("token");
-
   const [isOpenReset, setIsOpen] = useState(false);
+
+  useEffect(() => {
+    if (socialAuthProviders === null) {
+      dispatch(fetchAvailableSocialAuthProviders());
+    }
+  }, [dispatch]);
 
   useEffect(() => {
     if (uid && tokenFromUrl) {
@@ -76,12 +83,25 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
   useEffect(() => {
     setStatusMessage(null);
     setResetError(null);
-    setEmail("");
+    if (formType !== "successSignUp") {
+      setEmail("");
+    }
+
     setPassword("");
     setConfirmPassword("");
     formType === "resetPassword" ? setIsOpen(true):setIsOpen(false);
     setCanSubmit(true);
   }, [formType]);
+
+  const handleOnClose = () => {
+    setFormType("signin");
+    setStatusMessage(null);
+    setResetError(null);
+    setEmail("");
+    setPassword("");
+    setConfirmPassword("");
+    onClose();
+  };
 
   const togglePasswordVisibility = () => {
     setIsPasswordVisible(!isPasswordVisible);
@@ -143,14 +163,27 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
     if (error) {
       setResetError(error);
       setStatusMessage(null)
-    } else
-    if (statusMessage) {
+      if (error == 'Verification email sent.') {
+        setFormType('successSignUp');
+      }
+    } else if (statusMessage) {
       setResetError(null);
     }
   }, [error, statusMessage]); 
 
+  const handleResendActivation = async (email: string) => {
+    setStatusMessage(null);
+    setResetError(null);
+    const errorMsg = await resendActivationEmail(email);
+    if (errorMsg) {
+      setResetError(errorMsg);
+    } else {
+      setResetError("Activation email has been resent.");
+    }
+  }
+
   return (
-    <><Modal isOpen={isOpen || isOpenReset} onClose={onClose} isCentered={modalPosition === "absolute"}>
+    <><Modal isOpen={isOpen || isOpenReset} onClose={handleOnClose} isCentered={modalPosition === "absolute"}>
       <ModalOverlay />
       <ModalContent
         maxW={{ base: "90vw", md: "25vw" }}
@@ -175,25 +208,41 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
                           ? "Reset Password"
                           : "Sign Up"}
                   </Heading>
-                  <Text color="gray.800" fontSize="16px">
+                  <Text color={formType === "successSignUp" ? "green.500" : "gray.800"} fontSize="16px">
                     {formType === "signin"
                       ? "Please sign into your profile."
                       : formType === "forgotPassword"
                         ? "Enter your email to receive a reset link."
                         : formType === "resetPassword"
                           ? "Please set your new password."
+                          : formType === "successSignUp"
+                            ? "Verification email sent!"
                           : "Create a new account."}
                   </Text>
                 </Flex>
 
                 {statusMessage && <Text color="green.500">{statusMessage}</Text>}
-                {resetError && (
-                  <Text color={resetError === "Verification email sent." ? "green.500" : resetError === "Password has been successfully reset." ? "green.500" : "red.500"}>
+                {resetError && resetError !== "Verification email sent." && (
+                  <Text color={resetError === "Activation email has been resent." ? "green.500" : resetError === "Password has been successfully reset." ? "green.500" : "red.500"}>
                     {resetError}
                   </Text>
                 )}
 
+                { formType === "successSignUp" && (
+                  <Flex mb="6px" flexDirection="column" alignItems="center">
+                    <Flex gap="20px" alignSelf="stretch" flexDirection="column">
+                      <Text color="gray.800" fontSize={"16px"}>
+                        A verification email has been sent to <Link color="green.500" fontSize={"16px"}>{email}</Link>. Please check your inbox and click the link to activate your account.
+                      </Text>
+                      <Text color="gray.800" fontSize={"16px"}>
+                        If you did not receive the email, please check your spam folder or
+                        <Link color="dark_orange.800" onClick={() => handleResendActivation(email)}> resend the activation email</Link>.
+                      </Text>
+                    </Flex>
+                  </Flex>
+                )}
 
+                { formType !== "successSignUp" && (
                 <Flex mb="6px" flexDirection="column" alignItems="center">
                   <Flex gap="20px" alignSelf="stretch" flexDirection="column">
                     {(formType === "signin" || formType === "signup" || formType === "forgotPassword") && (
@@ -262,8 +311,6 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
                       </InputGroup>
                     )}
 
-
-
                     {formType === "signin" && (
                       <Flex mt="8px" justifyContent="space-between" alignItems="center" gap="20px">
                         <Checkbox
@@ -316,9 +363,10 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
 
                   </Flex>
                 </Flex>
+                )}
 
                 {/* Social login options */}
-                {(formType === "signin" || formType === "signup") && (
+                {(formType === "signin" || formType === "signup") && (socialAuthProviders && socialAuthProviders.length > 0) && (
                   <>
                     <Flex mt="22px" justifyContent="center" gap="20px">
                       <Text color="gray.800" fontSize="16px" mt="14px">
@@ -327,6 +375,7 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
                     </Flex>
 
                     <Flex mt="22px" justifyContent="center" gap="20px">
+                      {socialAuthProviders.includes("google") && (
                       <a href="/accounts/google/login/">
                         <Image
                           src="static/images/google_icon.svg"
@@ -334,6 +383,8 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
                           h="40px"
                           w="40px" />
                       </a>
+                      )}
+                      {socialAuthProviders.includes("github") && (
                       <a href="/accounts/github/login/">
                         <Image
                           src="static/images/github_icon.svg"
@@ -341,6 +392,7 @@ export default function SignIn({ isOpen, onClose }: SignInProps) {
                           h="40px"
                           w="40px" />
                       </a>
+                      )}
                     </Flex>
                   </>
                 )}
