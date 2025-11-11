@@ -35,9 +35,9 @@ setup.describe('login', () => {
 
     // Check if the Sign In button is visible
     await expect(page.getByRole('button', { name: 'Sign In' })).toBeVisible();
-    // Check if Google, and GitHub icons are visible
-    await expect(page.getByRole('link', { name: 'Google Icon' })).toBeVisible();
-    await expect(page.getByRole('link', { name: 'GitHub Icon' })).toBeVisible();
+    // Check if Google, and GitHub icons are not visible if not configured in the server
+    await expect(page.getByRole('link', { name: 'Google Icon' })).not.toBeVisible();
+    await expect(page.getByRole('link', { name: 'GitHub Icon' })).not.toBeVisible();
 
     // Click on the Sign In button
     await page.getByRole('button', { name: 'Sign In' }).click();

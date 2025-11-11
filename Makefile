@@ -89,3 +89,19 @@ dev-runserver:
 	@echo "Start django runserver in dev container"
 	@echo "------------------------------------------------------------------"
 	@docker compose $(ARGS) exec -T dev bash -c "nohup python manage.py runserver 0.0.0.0:8080 &"
+
+test-runserver:
+	@echo
+	@echo "------------------------------------------------------------------"
+	@echo "Start django runserver in dev container"
+	@echo "------------------------------------------------------------------"
+	@docker compose $(ARGS) exec -d dev python manage.py runserver 0.0.0.0:8080
+	@echo "Waiting for server to be ready..."
+	@for i in 1 2 3 4 5 6 7 8 9 10; do \
+		docker compose $(ARGS) exec -T dev curl -s -f http://localhost:8080 > /dev/null 2>&1 && \
+		echo "Server is ready!" && exit 0 || \
+		(echo "Attempt $$i failed, waiting..." && sleep 2); \
+	done; \
+	echo "Server failed to start within timeout"; \
+	docker compose $(ARGS) logs dev; \
+	exit 1
