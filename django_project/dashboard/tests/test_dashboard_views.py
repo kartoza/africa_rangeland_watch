@@ -380,7 +380,7 @@ class DashboardDetailViewTests(TestCase):
         url = f"/dashboards/{self.dashboard.uuid}/detail/"
         response = self.client.get(url)
         
-        self.assertEqual(response.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
 
     def test_get_non_existent_dashboard(self):
         """Test retrieving details of a non-existent dashboard."""
