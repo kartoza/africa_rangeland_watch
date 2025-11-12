@@ -321,6 +321,33 @@ class ExportedCog(models.Model):
     downloaded = models.BooleanField(
         default=False
     )
+    status = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text="Status message from the export operation."
+    )
+    task_id = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True,
+        help_text="Celery task ID for tracking the export task."
+    )
+    started_at = models.DateTimeField(
+        blank=True,
+        null=True,
+        help_text="Timestamp when the export task started."
+    )
+    completed_at = models.DateTimeField(
+        blank=True,
+        null=True,
+        help_text="Timestamp when the export task completed."
+    )
+    errors = models.TextField(
+        blank=True,
+        null=True,
+        help_text="Error messages if the export failed."
+    )
 
     def __str__(self):
         return f"{self.file_name} ({self.input_layer.name})"

@@ -37,8 +37,12 @@ class DataProviderAdmin(admin.ModelAdmin):
 @admin.register(InputLayer)
 class InputLayerAdmin(admin.ModelAdmin):
     list_display = (
-        'name', 'layer_type', 'data_provider', 'created_at', 'updated_at')
-    list_filter = ('layer_type', 'data_provider', 'created_at', 'updated_at')
+        'name', 'layer_type', 'group', 'data_provider',
+        'created_at', 'updated_at'
+    )
+    list_filter = (
+        'layer_type', 'group', 'data_provider', 'created_at', 'updated_at'
+    )
     search_fields = ('name', 'data_provider__name')
     readonly_fields = ('created_at', 'updated_at')
     autocomplete_fields = ['data_provider', 'created_by', 'updated_by']

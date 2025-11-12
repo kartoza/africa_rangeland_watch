@@ -15,6 +15,7 @@ from tempfile import NamedTemporaryFile
 import ee
 import rasterio
 from datetime import datetime
+from dateutil.relativedelta import relativedelta
 from django.core.files.base import ContentFile
 import datetime as dt
 from analysis.models import Landscape, GEEAsset
@@ -76,8 +77,9 @@ def get_nrt_image(input_layer, landscape_id):
     aoi = ee.Geometry.Polygon(list(landscape.bbox.coords[0]))
 
     DEFAULT_MONTHS = 2
-    NRT_START_DATE = '2022-06-01'
     today = dt.date.today()
+    NRT_START_DATE = today - relativedelta(years=1)
+    NRT_START_DATE = NRT_START_DATE.isoformat()
     end_date = today.isoformat()
 
     # Get the raw image

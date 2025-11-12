@@ -288,23 +288,31 @@ class NearRealTimeGenerator(BaseLayerGenerator):
             if fire:
                 results.append(fire)
 
-            soil = self._generate_soil_carbon_layer(aoi, landscape)
-            if soil:
-                results.append(soil)
+            # soil carbon asset is only available up to 2019
+            # soil = self._generate_soil_carbon_layer(aoi, landscape)
+            # if soil:
+            #     results.append(soil)
 
-            grazing = self._generate_grazing_capacity_layer(aoi, landscape)
-            if grazing:
-                results.append(grazing)
+            # TODO: Grazing Capacity got computation timed out error
+            # grazing = self._generate_grazing_capacity_layer(aoi, landscape)
+            # if grazing:
+            #     results.append(grazing)
 
-            soil_change = self._generate_soil_carbon_change_layer(
-                aoi, landscape
-            )
-            if soil_change:
-                results.append(soil_change)
-            woody = self._generate_woody_cover_layer(
-                aoi, nrt_end_dt, landscape
-            )
-            if woody:
-                results.append(woody)
+            # soil carbon asset is only available up to 2019
+            # soil_change = self._generate_soil_carbon_change_layer(
+            #     aoi, landscape
+            # )
+            # if soil_change:
+            #     results.append(soil_change)
+
+            # woody cover asset is only available up to 2019
+            # woody = self._generate_woody_cover_layer(
+            #     aoi, nrt_end_dt, landscape
+            # )
+            # if woody:
+            #     results.append(woody)
+
+            # Note: Above commented out layers are also removed from
+            # fixture 3.input_layer.json
 
         return results

@@ -5,7 +5,8 @@ ARW: Task to export Earth Engine image to Google Drive as COG and download it.
 
 import logging
 from celery import shared_task
-from layers.models import InputLayer, ExportedCog
+from django.utils import timezone
+from layers.models import ExportedCog
 from analysis.analysis import export_image_to_drive, initialize_engine_analysis
 from analysis.utils import get_gdrive_file
 from layers.utils import get_nrt_image
@@ -16,8 +17,7 @@ CHUNK_SIZE = 5
 
 
 def export_ee_image_to_cog(
-    input_layer_id,
-    landscape_id,
+    exported_cog_id,
     export_folder="ARW-NRT-Exports"
 ):
     """
@@ -26,20 +26,17 @@ def export_ee_image_to_cog(
     exported_cog = None
     initialize_engine_analysis()
     try:
-        # Load InputLayer
-        input_layer = InputLayer.objects.get(uuid=input_layer_id)
+        exported_cog = ExportedCog.objects.get(id=exported_cog_id)
+        input_layer = exported_cog.input_layer
+        file_name = (
+            f"{input_layer.name.replace(' ', '_')}_{input_layer.uuid}.tif"
+        )
+        exported_cog.status = "PROCESSING"
+        exported_cog.started_at = timezone.now()
+        exported_cog.save()
+        landscape_id = exported_cog.landscape_id
 
         ee_image, region = get_nrt_image(input_layer, landscape_id)
-        file_name = (
-            f"{input_layer.name.replace(' ', '_')}_{input_layer_id}.tif"
-        )
-        # ExportedCog is a model to track exported COGs
-        exported_cog, _ = ExportedCog.objects.get_or_create(
-            input_layer=input_layer,
-            landscape_id=landscape_id,
-            defaults={"file_name": file_name}
-        )
-
         task_config = {
             "image": ee_image,
             "description": file_name,
@@ -72,6 +69,8 @@ def export_ee_image_to_cog(
         exported_cog.downloaded = True
         exported_cog.file_name = file_name
         exported_cog.gdrive_file_id = gfile.get('id')
+        exported_cog.status = 'COMPLETED'
+        exported_cog.completed_at = timezone.now()
         exported_cog.save()
 
         logger.info(
@@ -83,22 +82,24 @@ def export_ee_image_to_cog(
         )
 
     except Exception as ex:
-        logger.error(f"Failed to export COG: {ex}")
-        if input_layer:
-            input_layer.metadata["cog_error"] = str(ex)
-            input_layer.save()
+        logger.error(f"Failed to export COG: {ex}", exc_info=True)
         if exported_cog:
             exported_cog.downloaded = False
+            exported_cog.status = 'FAILED'
+            exported_cog.errors = str(ex)
+            exported_cog.completed_at = timezone.now()
             exported_cog.save()
 
 
 @shared_task(name="export_ee_image_to_cog_task")
 def export_ee_image_to_cog_task(
-    input_layer_id,
-    landscape_id,
+    exported_cog_id,
     export_folder="ARW-NRT-Exports"
 ):
     """
     Celery task to export EE image to COG.
     """
-    export_ee_image_to_cog(input_layer_id, landscape_id, export_folder)
+    export_ee_image_to_cog(
+        exported_cog_id,
+        export_folder
+    )

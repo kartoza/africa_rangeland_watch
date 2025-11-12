@@ -49,7 +49,6 @@ def gdrive_file_list(folder_name):
         "'application/vnd.google-apps.folder' and trashed = false"
     )
     folder_list = gdrive.ListFile({'q': folder_query}).GetList()
-
     if not folder_list:
         # folder not found
         return None
@@ -320,7 +319,6 @@ def convert_temporal_to_dates(data: dict):
             result["period_date"] = date(ref_year, ref, 1)
 
         if test and test_years:
-            print(test, test_years)
             result["comparison_dates"] = [
                 end_of_month(test_years[i], q) for i, q in enumerate(test)
             ]

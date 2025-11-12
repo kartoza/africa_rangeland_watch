@@ -1,6 +1,9 @@
 // src/components/Map/LeftSide/LayerDownloadButton.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Button, Spinner, Box, useToast } from '@chakra-ui/react';
+import { useDispatch } from "react-redux";
+import { AppDispatch } from "../../../../store";
+import {ExportNrtLayer, setStatusForExportNrtLayer} from "../../../../store/layerSlice";
 
 /* ------------------------------------------------------------------ */
 /*  Props                                                              */
@@ -8,8 +11,7 @@ import { Button, Spinner, Box, useToast } from '@chakra-ui/react';
 interface Props {
   layerId: string;
   landscapeId: string;
-  taskId?: string;          // returned by POST /export/
-  downloadUrl?: string;     // present when BE said “already exported”
+  exportNrtLayer?: ExportNrtLayer;
   isSelected?: boolean;
 }
 
@@ -19,49 +21,35 @@ interface Props {
 export default function CogDownloadButton({
   layerId,
   landscapeId,
-  taskId,
-  downloadUrl: downloadUrlProp,
+  exportNrtLayer
 }: Props) {
   const toast = useToast();
-
-  /* ---------------------------------------------------------------- */
-  /*  Local state                                                     */
-  /* ---------------------------------------------------------------- */
-  const [status, setStatus] = useState<
-    'idle' | 'processing' | 'completed' | 'error'
-  >(downloadUrlProp ? 'completed' : 'idle');
-
-  const [downloadUrl, setDownloadUrl] = useState<string | null>(
-    downloadUrlProp ?? null
-  );
+  const dispatch = useDispatch<AppDispatch>();
+  const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
   /* ---------------------------------------------------------------- */
   /*  Poll the server *only if* we have a taskId and no URL yet.       */
   /* ---------------------------------------------------------------- */
   useEffect(() => {
-    if (downloadUrlProp) return;
+    if (exportNrtLayer?.download_url) return;
 
-    if (taskId === 'READY') {
-      setStatus('completed');
-      return;
-    }
-
-    if (!taskId) return;
+    if (!exportNrtLayer?.cogId) return;
 
     let cancelled = false;
-    setStatus('processing');
-
     const check = async () => {
       try {
         const res = await fetch(
-          `/nrt-layer/${layerId}/export-status/${taskId}/?landscape_id=${landscapeId}`
+          `/nrt-layer/${exportNrtLayer.cogId}/export-status/`
         );
         const json = await res.json();
 
         if (json.status === 'completed') {
           if (!cancelled) {
-            setDownloadUrl(json.download_url);
-            setStatus('completed');
+            dispatch(setStatusForExportNrtLayer({
+              layerId,
+              status: 'completed',
+              download_url: json.download_url
+            }));
             toast({
               title: 'Export ready!',
               position: 'top-right',
@@ -70,50 +58,78 @@ export default function CogDownloadButton({
               isClosable: true,
             });
           }
+          if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+          }
         } else if (json.status === 'error') {
-          if (!cancelled) setStatus('error');
+          if (!cancelled) {
+            dispatch(setStatusForExportNrtLayer({
+              layerId,
+              status: 'error'
+            }));
+          }
+          if (intervalRef.current) {
+            clearInterval(intervalRef.current);
+            intervalRef.current = null;
+          }
         }
         // else still processing
       } catch {
-        if (!cancelled) setStatus('error');
+        if (!cancelled) {
+          dispatch(setStatusForExportNrtLayer({
+            layerId,
+            status: 'error'
+          }));
+        }
+        if (intervalRef.current) {
+          clearInterval(intervalRef.current);
+          intervalRef.current = null;
+        }
       }
     };
 
-    // first check, then poll every 3 s
+    // first check, then poll every 5 s
     check();
-    const interval = setInterval(check, 3000);
+    intervalRef.current = setInterval(check, 5000);
     return () => {
       cancelled = true;
-      clearInterval(interval);
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
     };
-  }, [taskId, layerId, landscapeId, toast, downloadUrlProp]);
+  }, [exportNrtLayer?.cogId, exportNrtLayer?.download_url, layerId, landscapeId, toast]);
 
   /* ---------------------------------------------------------------- */
   /*  Render                                                          */
   /* ---------------------------------------------------------------- */
-  if (!taskId && !downloadUrlProp) return null;
+  if (!exportNrtLayer?.cogId && !exportNrtLayer?.download_url) return null;
 
-  if (status === 'processing') {
-    return <Spinner size="sm" />;
+  if (exportNrtLayer?.status === 'processing') {
+    return (
+    <Box fontSize="xs" paddingTop={'8px'}>
+      <Spinner size="sm"/>
+    </Box>
+    )
   }
 
-  if (status === 'completed' && downloadUrl) {
+  if (exportNrtLayer?.status === 'completed' && exportNrtLayer?.download_url) {
     return (
       <Button
         as="a"
-        href={downloadUrl}
+        href={exportNrtLayer.download_url}
         size="xs"
         colorScheme="green"
-        download
+        target="_blank"
+        rel="noopener noreferrer"
       >
         Download
       </Button>
     );
   }
 
-  if (status === 'error') {
+  if (exportNrtLayer?.status === 'error') {
     return (
-      <Box fontSize="xs" color="red.500">
+      <Box fontSize="xs" color="red.500" paddingTop={'8px'}>
         Export failed
       </Box>
     );

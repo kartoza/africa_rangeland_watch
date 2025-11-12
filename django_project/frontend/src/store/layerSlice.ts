@@ -29,16 +29,26 @@ export interface Layer {
   created_by?: string;
 }
 
+export interface ExportNrtLayer extends DataState {
+  layerId: string;
+  taskId: string | null;
+  status: 'pending' | 'processing' | 'completed' | 'error' | null;
+  download_url: string | null;
+  cogId: string | null;
+}
+
 interface LayerState extends DataState {
   layers: Layer[];
   selectedNrt: Layer | null;
+  exportTasks: Record<string, ExportNrtLayer>;
 }
 
 const initialLayerState: LayerState = {
   layers: [],
   loading: false,
   error: null,
-  selectedNrt: null
+  selectedNrt: null,
+  exportTasks: {},
 };
 
 // Fetch user-defined layers
@@ -108,6 +118,21 @@ export const layerSlice = createSlice({
     },
     setSelectedNrtLayer(state, action: PayloadAction<Layer>) {
       state.selectedNrt = action.payload;
+    },
+    setExportNrtLayer(state, action: PayloadAction<ExportNrtLayer>) {
+      const { layerId } = action.payload;
+      state.exportTasks[layerId] = action.payload;
+    },
+    setStatusForExportNrtLayer(state, action: PayloadAction<{ layerId: string; status: ExportNrtLayer['status']; download_url?: string }>) {
+      const { layerId, status, download_url } = action.payload;
+      if (state.exportTasks[layerId]) {
+        let task = { ...state.exportTasks[layerId] };
+        task.status = status;
+        if (download_url) {
+          task.download_url = download_url;
+        }
+        state.exportTasks[layerId] = task;
+      }
     }
   },
   extraReducers: (builder) => {
@@ -143,6 +168,6 @@ export const layerSlice = createSlice({
   }
 });
 
-export const { clearError, setSelectedNrtLayer } = layerSlice.actions;
+export const { clearError, setSelectedNrtLayer, setExportNrtLayer, setStatusForExportNrtLayer } = layerSlice.actions;
 
 export default layerSlice.reducer;

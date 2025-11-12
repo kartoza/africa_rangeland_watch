@@ -50,12 +50,12 @@ urlpatterns = [
         name='trigger_cog_export'
     ),
     path(
-        'nrt-layer/<uuid:uuid>/export-status/<str:task_id>/',
+        'nrt-layer/<int:cog_id>/export-status/',
         cog_export_status,
         name='cog-export-status'
     ),
     path(
-        'nrt-layer/<uuid:uuid>/download/',
+        'nrt-layer/<int:cog_id>/download/',
         download_from_gdrive,
         name='nrt-layer-download'
     ),
