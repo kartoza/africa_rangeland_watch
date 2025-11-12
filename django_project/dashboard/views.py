@@ -417,7 +417,7 @@ class DashboardDetailView(APIView):
                     "error":
                     "You do not have permission to view this dashboard."
                 },
-                status=status.HTTP_401_UNAUTHORIZED
+                status=status.HTTP_404_NOT_FOUND
             )
         serializer = DashboardDetailSerializer(dashboard)
         return Response(serializer.data)
