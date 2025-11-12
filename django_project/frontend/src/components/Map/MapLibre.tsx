@@ -12,7 +12,7 @@ import { AppDispatch, RootState } from "../../store";
 import { removeSource, doRenderLayer, doRemoveLayer, hasSource } from "./utils";
 import { Layer, setSelectedNrtLayer } from '../../store/layerSlice';
 import { selectIsLoggedIn } from "../../store/authSlice";
-import { COMMUNITY_ID } from "./DataTypes";
+import { COMMUNITY_ID, EARTH_EANGER_EVENT } from "./DataTypes";
 import { useMap } from '../../MapContext';
 import { useMapSetup } from './useMapSetup';
 import EarthRanger from "../Map/EarthRanger";
@@ -94,7 +94,7 @@ export const MapLibre = forwardRef(
         // render NRT layer from landscape url
         let _copyLayer = { ...selectedNrt }
         _copyLayer.url = selectedLandscape.urls[selectedNrt.id]
-        doRenderLayer(mapRef, _copyLayer, isAuthenticated ? COMMUNITY_ID : null, legendRef)
+        doRenderLayer(mapRef, _copyLayer, isAuthenticated ? COMMUNITY_ID : EARTH_EANGER_EVENT, legendRef)
       }
     }, [selectedLandscape, selectedNrt])
 
@@ -113,6 +113,7 @@ export const ReusableMapLibre = forwardRef(
     const baseMapRef = useRef(null);
     const mapRef = useRef<maplibregl.Map | null>(null);
     const [isMapLoaded, setIsMapLoaded] = useState(false);
+    const isAuthenticated = useSelector(selectIsLoggedIn);
 
     useMapSetup(
       ref,
@@ -136,7 +137,7 @@ export const ReusableMapLibre = forwardRef(
       if (!props.layer) {
         return;
       }
-      doRenderLayer(mapRef, props.layer, COMMUNITY_ID, null)
+      doRenderLayer(mapRef, props.layer, isAuthenticated ? COMMUNITY_ID : EARTH_EANGER_EVENT, null)
 
     }, [isMapLoaded, props.layer])
 

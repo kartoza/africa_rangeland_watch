@@ -80,7 +80,11 @@ export const doRenderLayer = (mapRef: React.MutableRefObject<maplibregl.Map | nu
         layerStyle['source'] = ID
         layerStyle['id'] = ID
       }
-      map.addLayer(layerStyle, layerIdBefore)
+      if (layerIdBefore && !hasLayer(map, layerIdBefore)) {
+        map.addLayer(layerStyle)
+      } else {
+        map.addLayer(layerStyle, layerIdBefore)
+      }
     } else if (layer.type === "raster") {
       if (!hasSource(map, ID)) {
         if (layer.url.startsWith('cog://')) {
@@ -99,14 +103,24 @@ export const doRenderLayer = (mapRef: React.MutableRefObject<maplibregl.Map | nu
           )
         }
       }
-      map.addLayer(
-        {
-          id: ID,
-          source: ID,
-          type: "raster"
-        },
-        layerIdBefore
-      )
+      if (layerIdBefore && !hasLayer(map, layerIdBefore)) {
+        map.addLayer(
+          {
+            id: ID,
+            source: ID,
+            type: "raster"
+          }
+        )
+      } else {
+        map.addLayer(
+          {
+            id: ID,
+            source: ID,
+            type: "raster"
+          },
+          layerIdBefore
+        )
+      }
       if (legendRef) {
         legendRef?.current?.renderLayer(layer)
       }
