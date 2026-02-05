@@ -878,7 +878,8 @@ class BaseIndicator(models.Model):
     ALLOWED_ANALYSIS_TYPES = [
         'Baseline',
         'Temporal',
-        'Spatial'
+        'Spatial',
+        'BACI'
     ]
     ALLOWED_TEMPORAL_RESOLUTIONS = [
         'Annual',
