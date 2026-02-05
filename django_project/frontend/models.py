@@ -29,11 +29,20 @@ class BaseMap(models.Model):
             "Thumbnail for the base map."
         )
     )
+    default = models.BooleanField(
+        default=False
+    )
 
     class Meta:
         verbose_name = "Base Map"
         verbose_name_plural = "Base Maps"
         ordering = ['name']
+
+    def save(self, *args, **kwargs):
+        if self.default:
+            # Set all other BaseMap objects to not default
+            BaseMap.objects.exclude(pk=self.pk).update(default=False)
+        super().save(*args, **kwargs)
 
     def __str__(self):
         return self.name
