@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Feedback Notification</title>
+</head>
+<body style="font-family: Helvetica, sans-serif; margin: 0; padding: 0; background-color: #f4f4f4;">
+    <!-- Header with logo and title -->
+    <table align="center" border="0" cellpadding="0" cellspacing="0" width="900" style="background-color: #2f5c4a; padding: 10px;">
+        <tr>
+            <td align="left" width="50%" style="padding: 10px;">
+                <img src="{{ django_backend_url }}/static/images/arw_logo.png" alt="Africa Rangeland Watch Logo" width="200" style="display: block;">
+            </td>
+            <td align="right" width="50%" style="padding: 10px; color: #ffffff; font-family: Helvetica, sans-serif;">
+                <h2 style="margin: 0; font-size: 24px;">Africa Rangeland Watch</h2>
+            </td>
+        </tr>
+    </table>
+
+    <!-- Feedback details -->
+    <table align="center" border="0" cellpadding="0" cellspacing="0" width="900" style="background-color: #ffffff; padding: 20px; border: 10px solid #dddddd;">
+        <tr>
+            <td style="padding: 20px;">
+                <h2 style="font-size: 20px; color: #333333;">New User Feedback Received</h2>
+                
+                <p style="font-size: 16px; color: #333333;">
+                    Dear Administrator,
+                </p>
+                <p style="font-size: 16px; color: #333333;">
+                    A user has submitted feedback on the Africa Rangeland Watch platform. Please find the details below:
+                </p>
+                
+                <table border="0" cellpadding="5" cellspacing="0" width="100%" style="font-size: 16px; color: #333333;">
+                    <tr>
+                        <td style="font-weight: bold; width: 30%;">Feedback ID:</td>
+                        <td>{{ feedback.id }}</td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: bold;">Name:</td>
+                        <td>{{ feedback.name }}</td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: bold;">Email:</td>
+                        <td>{{ feedback.email }}</td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: bold;">Username:</td>
+                        <td>
+                            {% if feedback.user %}
+                                {{ feedback.user.username }}
+                            {% else %}
+                                N/A
+                            {% endif %}
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: bold;">Date Submitted:</td>
+                        <td>{{ feedback.created_at|date:"F d, Y H:i" }}</td>
+                    </tr>
+                    <tr>
+                        <td style="font-weight: bold; vertical-align: top;">Message:</td>
+                        <td style="white-space: pre-wrap;">{{ feedback.message }}</td>
+                    </tr>
+                </table>
+
+                <p style="font-size: 16px; color: #333333; margin-top: 30px;">
+                    To review and manage this feedback, please log in to the Django admin panel:
+                </p>
+                <p style="text-align: center;">
+                    <a href="{{ django_backend_url }}/admin/feedback/feedback/{{ feedback.id }}/change/" 
+                       style="display: inline-block; padding: 10px 20px; color: #ffffff; background-color: #ff9800; text-decoration: none; border-radius: 4px;">
+                        View in Admin Panel
+                    </a>
+                </p>
+                
+                <p style="font-size: 16px; color: #333333;">
+                    Thank you,<br>
+                    The Africa Rangeland Watch Notification System
+                </p>
+            </td>
+        </tr>
+
+        <!-- Footer -->
+        <tr>
+            <td style="padding: 10px; text-align: center; font-size: 14px; color: #999999;">
+                <p>
+                    Visit the platform at <a href="{{ django_backend_url }}" style="color: #FFA500;">Africa Rangeland Watch</a>.
+                </p>
+            </td>
+        </tr>
+    </table>
+</body>
+</html>

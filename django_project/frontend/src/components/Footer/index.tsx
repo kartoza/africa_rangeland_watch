@@ -42,6 +42,18 @@ export default function Footer(props: Props) {
               </Link>
             </ListItem>
 
+            <ListItem>
+              <Link 
+                as={RouterLink} 
+                to="/feedback" 
+                fontSize="14px" 
+                fontWeight="bold" 
+                color="white"
+              >
+                Send Feedback
+              </Link>
+            </ListItem>
+
             {/* External link opening in a new tab */}
             <ListItem>
               <Link 

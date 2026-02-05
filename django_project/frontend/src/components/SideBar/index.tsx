@@ -189,6 +189,14 @@ export default function Sidebar(props: Props) {
           </MenuItem>
           <MenuItem
             style={{
+              backgroundColor: isActive("/feedback") ? "#a8d159" : "transparent",
+            }}
+            onClick={() => navigate("/feedback")}
+          >
+            Feedback
+          </MenuItem>
+          <MenuItem
+            style={{
               backgroundColor: isActive("/notifications")
                 ? "#a8d159"
                 : "transparent",
@@ -316,6 +324,19 @@ export default function Sidebar(props: Props) {
                   }}
                 >
                   Support
+                </MenuItem>
+                <MenuItem
+                  style={{
+                    backgroundColor: isActive("/feedback")
+                      ? "#a8d159"
+                      : "transparent",
+                  }}
+                  onClick={() => {
+                    navigate("/feedback");
+                    onClose();
+                  }}
+                >
+                  Feedback
                 </MenuItem>
                 <MenuItem
                   style={{
