@@ -26,11 +26,14 @@ Follow these steps to add a new base map to the platform:
 1. **Access the Base Maps Section**
    - Log in to the Django admin interface
    - In the left sidebar, locate and click on **"Base Maps"** under the Frontend section
+
 ![alt text](../img/image.png)
 
 2. **Create a New Base Map**
    - Click the **"Add Base Map"** button in the top right corner
+
 ![alt text](../img/image-1.png)
+
 3. **Fill in the Required Fields**
    - **Name**: Enter a descriptive name for the base map (e.g., "OpenStreetMap", "Satellite Imagery")
    - **URL**: Enter the tile server URL for the base map
@@ -45,13 +48,16 @@ Follow these steps to add a new base map to the platform:
 4. **Save the Base Map**
    - Click the **"Save"** button at the bottom of the form
    - The base map will be immediately available in the frontend
+
 ![alt text](../img/image-2.png)
 
 5. **Verify on Frontend**
    - Navigate to the main map interface
    - Open the base map selector on the bottom left
    - Your new base map should appear in the list and be selectable by users
+
 ![alt text](../img/image-3.png)
+
 ### Common Base Map Tile Servers
 
 Here are some popular tile server URLs you can use:
