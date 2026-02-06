@@ -47,11 +47,6 @@ const Feedback: React.FC = () => {
   const userEmail = user?.email || '';
 
   useEffect(() => {
-    // Reset state when component mounts
-    dispatch(resetFeedbackState());
-  }, [dispatch]);
-
-  useEffect(() => {
     // Handle success
     if (success) {
       toast({
@@ -67,12 +62,15 @@ const Feedback: React.FC = () => {
         },
       });
       
+      // Reset state immediately to prevent re-triggering on navigation back
+      dispatch(resetFeedbackState());
+      
       // Redirect to home after a short delay
       setTimeout(() => {
         navigate('/');
       }, 2000);
     }
-  }, [success, message, toast, navigate]);
+  }, [success, message, toast, navigate, dispatch]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
