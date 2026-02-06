@@ -11,7 +11,7 @@ from django.core.mail import EmailMultiAlternatives
 from rest_framework.test import APITestCase
 from rest_framework import status
 from django.urls import reverse
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 from feedback.models import Feedback
 from feedback.serializers import FeedbackSerializer
@@ -62,7 +62,7 @@ class FeedbackModelTest(TestCase):
     def test_send_feedback_email_with_admin_users(self, mock_send):
         """Test sending feedback email when admin users exist."""
         # Create a superuser with email
-        admin_user = UserF(
+        _admin_user = UserF(  # noqa: F841
             username='admin',
             email='admin@example.com',
             is_superuser=True
