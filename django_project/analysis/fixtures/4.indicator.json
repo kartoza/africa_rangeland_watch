@@ -386,5 +386,43 @@
         },
         "is_active": true
     }
+},
+{
+    "model": "analysis.indicator",
+    "pk": 12,
+    "fields": {
+        "name": "NDWI",
+        "description": "Normalized Difference Water Index - measures water content and availability in vegetation and surface water",
+        "variable_name": "NDWI",
+        "source": "base",
+        "analysis_types": [
+            "Temporal",
+            "Spatial",
+            "BACI"
+        ],
+        "temporal_resolutions": [
+            "Annual",
+            "Quarterly",
+            "Monthly"
+        ],
+        "metadata": {
+            "colors": [
+                "#0000FF",
+                "#00FFFF",
+                "#FFFF00",
+                "#FF0000",
+                "#FFFFFF"
+            ],
+            "opacity": 0.7,
+            "maxValue": 1.0,
+            "minValue": 0.0
+        },
+        "config": {
+            "asset_keys": [
+                "landsat_ndwi"
+            ]
+        },
+        "is_active": true
+    }
 }
 ]

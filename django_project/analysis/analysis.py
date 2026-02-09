@@ -405,6 +405,22 @@ class InputLayer:
         ndvi_baseline = (modis_veg.select('NDVI').
                          median().clipToCollection(self.countries))
 
+        # Get NDWI from Landsat 8-day composites
+        landsat_ndwi_col = ee.ImageCollection(
+            GEEAsset.fetch_asset_source('landsat_ndwi')
+        )
+        if start_date and end_date:
+            landsat_ndwi_col = landsat_ndwi_col.filterDate(
+                start_date.isoformat(),
+                end_date.isoformat()
+            )
+        else:
+            landsat_ndwi_col = landsat_ndwi_col.filterDate(
+                '2016-01-01', '2020-01-01'
+            )
+        ndwi_baseline = (landsat_ndwi_col.select('NDWI').
+                         median().clipToCollection(self.countries))
+
         # Get fractional ground cover from CGLS
         cgls_col = ee.ImageCollection(
             GEEAsset.fetch_asset_source('cgls_ground_cover')
@@ -437,6 +453,7 @@ class InputLayer:
         spatial_layer_dict = {
             'EVI': evi_baseline,
             'NDVI': ndvi_baseline,
+            'NDWI': ndwi_baseline,
             'Bare ground': bg,
             'Grass cover': g,
             'Woody cover': t,
@@ -2211,6 +2228,24 @@ def calculate_baseline(aoi: ee.Geometry, start_date: str, end_date: str,
             'asset': ndvi_baseline,
             'attribute': 'NDVI',
             'label': 'NDVI'
+        })
+
+    # Get NDWI from Landsat 8-day composites
+    valid, start_dt, end_dt = GEEAsset.get_dates_within_asset_period(
+        'landsat_ndwi', start_date, end_date
+    )
+    if valid:
+        landsat_ndwi = (ee.ImageCollection(
+                            GEEAsset.fetch_asset_source('landsat_ndwi')
+                        )
+                        .filterDate(start_dt, end_dt)
+                        .filterBounds(selected_area)
+                        .select(['NDWI']))
+        ndwi_baseline = landsat_ndwi.select('NDWI').median()
+        image_list.append({
+            'asset': ndwi_baseline,
+            'attribute': 'NDWI',
+            'label': 'NDWI'
         })
 
     # Get CGLS Ground Cover data
