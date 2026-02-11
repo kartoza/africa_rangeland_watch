@@ -37,6 +37,7 @@ const Feedback: React.FC = () => {
 
   const [feedbackMessage, setFeedbackMessage] = useState('');
   const [validationError, setValidationError] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   // Get user's name and email with intelligent fallback
   // Priority: username > "first_name last_name" > email username part
@@ -65,10 +66,10 @@ const Feedback: React.FC = () => {
       // Reset state immediately to prevent re-triggering on navigation back
       dispatch(resetFeedbackState());
       
-      // Redirect to home after a short delay
+      // Redirect
       setTimeout(() => {
         navigate('/');
-      }, 2000);
+      }, 500);
     }
   }, [success, message, toast, navigate, dispatch]);
 
@@ -92,6 +93,9 @@ const Feedback: React.FC = () => {
       setValidationError('Feedback message cannot exceed 500 characters.');
       return;
     }
+    
+    // Set submitting flag to keep button disabled through success state
+    setSubmitting(true);
     
     // Submit feedback
     dispatch(submitFeedback(feedbackMessage.trim()));
@@ -171,7 +175,7 @@ const Feedback: React.FC = () => {
                     placeholder="Share your thoughts, suggestions, or concerns..."
                     rows={8}
                     resize="vertical"
-                    isDisabled={loading}
+                    isDisabled={loading || submitting}
                     maxLength={500}
                   />
                   <Flex justify="space-between" mt={1}>
@@ -192,7 +196,7 @@ const Feedback: React.FC = () => {
                   <Button
                     leftIcon={<FaTimes />}
                     onClick={handleCancel}
-                    isDisabled={loading}
+                    isDisabled={loading || submitting}
                     backgroundColor="darkorange"
                     _hover={{ backgroundColor: "dark_orange.800" }}
                     color="white"
@@ -204,7 +208,7 @@ const Feedback: React.FC = () => {
                   <Button
                     type="submit"
                     leftIcon={<FaPaperPlane />}
-                    isLoading={loading}
+                    isLoading={loading || submitting}
                     loadingText="Submitting..."
                     backgroundColor="dark_green.800"
                     _hover={{ backgroundColor: "light_green.400" }}
