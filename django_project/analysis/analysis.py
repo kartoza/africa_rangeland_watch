@@ -416,7 +416,7 @@ class InputLayer:
             )
         else:
             landsat_ndwi_col = landsat_ndwi_col.filterDate(
-                '2016-01-01', '2020-01-01'
+                '2015-01-01', '2020-01-01'
             )
         ndwi_baseline = (landsat_ndwi_col.select('NDWI').
                          median().clipToCollection(self.countries))
