@@ -2,6 +2,7 @@ import typing
 import datetime
 import time
 import base64
+import logging
 from dateutil.parser import parse
 from dateutil.relativedelta import relativedelta
 from django.contrib.auth.models import User
@@ -32,6 +33,8 @@ from analysis.external.user_raster import (
 
 SERVICE_ACCOUNT_KEY = os.environ.get('SERVICE_ACCOUNT_KEY', '')
 SERVICE_ACCOUNT = os.environ.get('SERVICE_ACCOUNT', '')
+
+logger = logging.getLogger(__name__)
 
 # Sentinel-2 bands and names
 S2_BANDS = ['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B11', 'B12']
@@ -1566,6 +1569,12 @@ def train_bgt(aoi, training_path):
     ee.Classifier
         A trained Random Forest classifier with multi-probability output mode.
 
+    Raises
+    ------
+    ValueError
+        If no training data exists in the area of interest, or if training
+        data contains only one land cover class.
+
     Notes
     -----
     - The variable `TRAINING_DATA_ASSET_PATH` should be defined and point to
@@ -1583,6 +1592,35 @@ def train_bgt(aoi, training_path):
     """
     training_testing_master = ee.FeatureCollection(training_path)
     training_testing = training_testing_master.filterBounds(aoi)
+
+    # Validate training data availability
+    sample_count = training_testing.size().getInfo()
+
+    if sample_count == 0:
+        raise ValueError(
+            "No training data available in this area for bare ground "
+            "analysis. Try selecting a different location, using years "
+            "2015-2024, or choosing EVI/NDVI as the variable."
+        )
+
+    # Validate class diversity
+    distinct_classes = training_testing.aggregate_array(
+        'landcover'
+    ).distinct().size().getInfo()
+
+    if distinct_classes < 2:
+        raise ValueError(
+            "Training data in this area has insufficient diversity "
+            f"({distinct_classes} land cover class found, need at least 2). "
+            "Try selecting a different location, using years 2015-2024, "
+            "or choosing EVI/NDVI as the variable."
+        )
+
+    logger.info(
+        f"Training classifier: {sample_count} samples, "
+        f"{distinct_classes} classes"
+    )
+
     classifier = ee.Classifier.smileRandomForest(100).train(
         features=training_testing,
         classProperty='landcover',
