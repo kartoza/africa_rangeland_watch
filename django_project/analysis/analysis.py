@@ -781,15 +781,19 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
     select_names = None
 
     custom_geom = kwargs.get('custom_geom', None)
+    custom_geom_geometry = None
+    custom_geom_fc = None
+
     if custom_geom:
-        custom_geom = ee.FeatureCollection([
-            ee.Feature(
-                ee.Geometry.Polygon(custom_geom['coordinates']) if
-                custom_geom['type'] == 'Polygon' else
-                ee.Geometry.MultiPolygon(custom_geom['coordinates'])
-            )
+        custom_geom_geometry = (
+            ee.Geometry.Polygon(custom_geom['coordinates']) if
+            custom_geom['type'] == 'Polygon' else
+            ee.Geometry.MultiPolygon(custom_geom['coordinates'])
+        )
+        custom_geom_fc = ee.FeatureCollection([
+            ee.Feature(custom_geom_geometry)
         ])
-        select_names = communities.filterBounds(custom_geom).distinct(
+        select_names = communities.filterBounds(custom_geom_fc).distinct(
             ['Name']
         ).reduceColumns(ee.Reducer.toList(), ['Name']).getInfo()['list']
     else:
@@ -820,7 +824,7 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
         )
         reduced = rel_diff.reduceRegions(
             collection=(
-                custom_geom if custom_geom else
+                custom_geom_fc if custom_geom else
                 communities.filterBounds(selected_geos)
             ),
             reducer=reducer,
@@ -837,9 +841,7 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
         if has_dates:
             if custom_geom:
                 select = calculate_baseline(
-                    ee.Geometry.Polygon(custom_geom['coordinates']) if
-                    custom_geom['type'] == 'Polygon' else
-                    ee.Geometry.MultiPolygon(custom_geom['coordinates']),
+                    custom_geom_geometry,
                     analysis_dict['Baseline']['startDate'],
                     analysis_dict['Baseline']['endDate'],
                     is_custom_geom=True,
@@ -855,13 +857,13 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
                 )
         else:
             if custom_geom:
-                select = baseline_table.filterBounds(custom_geom)
+                select = baseline_table.filterBounds(custom_geom_fc)
             else:
                 select = baseline_table.filterBounds(selected_geos)
 
             # add livestock baseline
             livestock_baseline = calculate_livestock_baseline(
-                custom_geom if custom_geom else
+                custom_geom_fc if custom_geom else
                 communities.filterBounds(selected_geos)
             )
             join_filter = ee.Filter.equals(
@@ -893,7 +895,7 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
                 baseline_yr, 1, 1
             )
             select_geo = input_layers.get_selected_area(
-                custom_geom if custom_geom else selected_geos,
+                custom_geom_fc if custom_geom else selected_geos,
                 True if custom_geom else False
             )
 
@@ -908,7 +910,7 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
 
         elif isinstance(indicator, UserIndicator):
             select_geo = input_layers.get_selected_area(
-                custom_geom if custom_geom else selected_geos,
+                custom_geom_fc if custom_geom else selected_geos,
                 True if custom_geom else False
             )
 
@@ -937,9 +939,9 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
                     analysis_dict['Temporal']['Annual']['test'] == 2023
             ):
                 new_stats = get_latest_stats(
-                    custom_geom if custom_geom else
+                    custom_geom_fc if custom_geom else
                     landscapes_dict[analysis_dict['landscape']],
-                    custom_geom if custom_geom else
+                    custom_geom_fc if custom_geom else
                     communities.filterBounds(selected_geos)
                 )
                 new_stats = new_stats.select(
@@ -1005,11 +1007,7 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
                 ee.Filter.inList('Name', select_names)
             )
             if custom_geom:
-                select_geo = (
-                    ee.Geometry.Polygon(custom_geom['coordinates']) if
-                    custom_geom['type'] == 'Polygon' else
-                    ee.Geometry.MultiPolygon(custom_geom['coordinates'])
-                )
+                select_geo = custom_geom_geometry
             baseline_month = int(analysis_dict['Temporal']['Monthly']['ref'])
             test_months = [
                 int(month) for month in
