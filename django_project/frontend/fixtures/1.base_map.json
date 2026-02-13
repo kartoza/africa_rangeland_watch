@@ -5,16 +5,18 @@
     "fields": {
         "name": "OpenStreetMap",
         "url": "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
-        "thumbnail": ""
+        "thumbnail": "",
+        "default": true
     }
 },
 {
     "model": "frontend.basemap",
     "pk": 2,
     "fields": {
-        "name": "Stamen Watercolor",
-        "url": "https://tiles.stadiamaps.com/tiles/stamen_watercolor/{z}/{x}/{y}.jpg",
-        "thumbnail": ""
+        "name": "EOX::Maps - Sentinel-2 cloudless",
+        "url": "https://tiles.maps.eox.at/wmts/1.0.0/s2cloudless_3857/default/g/{z}/{y}/{x}.jpg",
+        "thumbnail": "",
+        "default": false
     }
 }
 ]

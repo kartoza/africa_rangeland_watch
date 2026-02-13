@@ -8,7 +8,7 @@ from frontend.models import BaseMap, AssetUploadItem
 class BaseMapAdmin(admin.ModelAdmin):
     """Admin for BaseMap model."""
 
-    list_display = ('name', 'url',)
+    list_display = ('name', 'url', 'default', 'thumbnail')
 
 
 @admin.register(AssetUploadItem)
