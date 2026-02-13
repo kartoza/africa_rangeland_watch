@@ -491,7 +491,7 @@ export default function Analysis({ landscapes, layers, onLayerChecked, onLayerUn
             value={data.comparisonPeriod}
             isQuarter={data.temporalResolution === TemporalResolution.QUARTERLY}
             isMonthly={data.temporalResolution === TemporalResolution.MONTHLY}
-            multiple={[Types.TEMPORAL, Types.SPATIAL, Types.BACI].includes(data.analysisType)}
+            multiple={[Types.TEMPORAL, Types.SPATIAL].includes(data.analysisType)}
             maxLength={data.analysisType === Types.SPATIAL ? 1 : 100}
             onSelectedYear={(value: number) => {
               setData({
