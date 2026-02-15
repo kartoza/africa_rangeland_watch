@@ -35,8 +35,11 @@ const SessionPrompt: React.FC = () => {
   // Open modal when session is loaded and authenticated, and loading is false
   useEffect(() => {
     if (isAuthenticated && !hasPromptBeenOpened && session && !loadingSession) {
-      setIsOpen(true); 
-      setHasPromptBeenOpened(true);
+      // show only if activity data has 'Visited Analysis'
+      if (session.activityData && session.activityData.activity && session.activityData.activity.includes("Visited Analysis")) {
+        setIsOpen(true); 
+        setHasPromptBeenOpened(true);
+      }
     }
   }, [isAuthenticated, loadingSession, hasPromptBeenOpened]);
 
