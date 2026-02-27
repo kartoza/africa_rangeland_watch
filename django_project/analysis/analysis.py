@@ -97,6 +97,84 @@ def _safe_int(value, default=None):
     return int(value)
 
 
+def _collection_check(
+    start_date: str, end_date: str, asset_end: str
+) -> bool:
+    """
+    Determine if ImageCollection size check is needed.
+
+    Uses hybrid approach: check if request dates are within 2 years
+    of dataset end date or beyond it.
+
+    Parameters
+    ----------
+    start_date : str
+        Request start date (YYYY-MM-DD)
+    end_date : str
+        Request end date (YYYY-MM-DD)
+    asset_end : str
+        Asset end date (YYYY-MM-DD or 'now')
+
+    Returns
+    -------
+    bool
+        True if collection size check is needed
+    """
+    if asset_end == 'now':
+        return False  # Dataset is current, no need to check
+
+    try:
+        asset_end_dt = datetime.date.fromisoformat(asset_end)
+        request_start_dt = datetime.date.fromisoformat(start_date)
+
+        # Check if request is within 2 years of asset end or beyond
+        two_years_before = asset_end_dt - relativedelta(years=2)
+        return request_start_dt >= two_years_before
+    except (ValueError, TypeError):
+        # If date parsing fails, be conservative and check
+        return True
+
+
+def _check_collection_size(
+    collection: ee.ImageCollection, asset_name: str,
+    start_date: str, end_date: str
+) -> typing.Tuple[bool, typing.Optional[str]]:
+    """
+    Check if ImageCollection contains data.
+
+    Parameters
+    ----------
+    collection : ee.ImageCollection
+        Collection to check
+    asset_name : str
+        Name of asset for warning message
+    start_date : str
+        Request start date
+    end_date : str
+        Request end date
+
+    Returns
+    -------
+    tuple
+        (has_data: bool, warning_message: str or None)
+    """
+    try:
+        size = collection.size().getInfo()
+        if size == 0:
+            warning = (
+                f"{asset_name}: No data available for date range "
+                f"{start_date} to {end_date}"
+            )
+            return False, warning
+        return True, None
+    except Exception as e:
+        # If check fails, log but allow operation to proceed
+        warning = (
+            f"{asset_name}: Could not verify data availability - {str(e)}"
+        )
+        return True, warning  # Assume has data to avoid false negatives
+
+
 class InputLayer:
     """
     Class to prepare all input layer necessary for analysis.
@@ -879,8 +957,9 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
             analysis_dict['Baseline']['endDate']
         )
         if has_dates:
+            baseline_warnings = []
             if custom_geom:
-                select = calculate_baseline(
+                baseline_result = calculate_baseline(
                     custom_geom_geometry,
                     analysis_dict['Baseline']['startDate'],
                     analysis_dict['Baseline']['endDate'],
@@ -888,13 +967,20 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
                     user=analysis_task.submitted_by
                 )
             else:
-                select = calculate_baseline(
+                baseline_result = calculate_baseline(
                     selected_geos,
                     analysis_dict['Baseline']['startDate'],
                     analysis_dict['Baseline']['endDate'],
                     is_custom_geom=False,
                     user=analysis_task.submitted_by
                 )
+
+            # Handle new return format (dict with warnings or ee object)
+            if isinstance(baseline_result, dict):
+                select = baseline_result['result']
+                baseline_warnings = baseline_result.get('warnings', [])
+            else:
+                select = baseline_result
         else:
             if custom_geom:
                 select = baseline_table.filterBounds(custom_geom_fc)
@@ -921,7 +1007,13 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
                 lambda f: ee.Feature(f.get('primary'))
                             .copyProperties(ee.Feature(f.get('secondary')))
             )
-        return analysis_cache.create_analysis_cache(select.getInfo())
+            baseline_warnings = []
+
+        result = analysis_cache.create_analysis_cache(select.getInfo())
+        # Add warnings to result if any
+        if baseline_warnings:
+            result['warnings'] = baseline_warnings
+        return result
 
     if analysis_dict['analysisType'] == "Temporal":
         res = analysis_dict['t_resolution']
@@ -1061,7 +1153,6 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
             select_geo = communities.filter(
                 ee.Filter.inList('Name', select_names)
             )
-            if custom_geom:
             if custom_geom:
                 select_geo = custom_geom_geometry
 
@@ -2276,6 +2367,7 @@ def calculate_baseline(aoi: ee.Geometry, start_date: str, end_date: str,
     ee.Image
     """
     image_list = []
+    warnings = []  # Track warnings for empty collections
     input_layer = InputLayer()
     selected_area = input_layer.get_selected_area(aoi, is_custom_geom)
 
@@ -2284,6 +2376,11 @@ def calculate_baseline(aoi: ee.Geometry, start_date: str, end_date: str,
         'modis_vegetation_061', start_date, end_date
     )
     if valid:
+        modis_asset = GEEAsset.objects.filter(
+            key='modis_vegetation_061'
+        ).first()
+        asset_end = modis_asset.end_date if modis_asset else 'now'
+
         modis_veg = (ee.ImageCollection(
                         GEEAsset.fetch_asset_source('modis_vegetation_061')
                     )
@@ -2291,24 +2388,43 @@ def calculate_baseline(aoi: ee.Geometry, start_date: str, end_date: str,
                     .filterBounds(selected_area)
                     .select(['NDVI', 'EVI'])
                     .map(lambda i: i.divide(10000)))
-        evi_baseline = modis_veg.select('EVI').median()
-        ndvi_baseline = modis_veg.select('NDVI').median()
-        image_list.append({
-            'asset': evi_baseline,
-            'attribute': 'EVI',
-            'label': 'EVI'
-        })
-        image_list.append({
-            'asset': ndvi_baseline,
-            'attribute': 'NDVI',
-            'label': 'NDVI'
-        })
+
+        # Check collection size if needed (hybrid approach)
+        needs_check = _collection_check(start_dt, end_dt, asset_end)
+        if needs_check:
+            has_data, warning = _check_collection_size(
+                modis_veg, 'MODIS Vegetation', start_dt, end_dt
+            )
+            if not has_data:
+                warnings.append(warning)
+            elif warning:
+                # Could not verify, but proceed with warning
+                warnings.append(warning)
+
+        if not needs_check or has_data:
+            evi_baseline = modis_veg.select('EVI').median()
+            ndvi_baseline = modis_veg.select('NDVI').median()
+            image_list.append({
+                'asset': evi_baseline,
+                'attribute': 'EVI',
+                'label': 'EVI'
+            })
+            image_list.append({
+                'asset': ndvi_baseline,
+                'attribute': 'NDVI',
+                'label': 'NDVI'
+            })
 
     # Get CGLS Ground Cover data
     valid, start_dt, end_dt = GEEAsset.get_dates_within_asset_period(
         'cgls_ground_cover', start_date, end_date
     )
     if valid:
+        cgls_asset = GEEAsset.objects.filter(
+            key='cgls_ground_cover'
+        ).first()
+        asset_end = cgls_asset.end_date if cgls_asset else 'now'
+
         cgls = (ee.ImageCollection(
                     GEEAsset.fetch_asset_source('cgls_ground_cover')
                 )
@@ -2321,31 +2437,46 @@ def calculate_baseline(aoi: ee.Geometry, start_date: str, end_date: str,
                         'grass-coverfraction', 'tree-coverfraction'
                     ]
                 ))
-        cgls = cgls.median()
 
-        # Additional calculations for land cover fractions and grazing capacity
-        bg = cgls.select('bare-coverfraction').add(
-            cgls.select('urban-coverfraction')
-        )
-        t = cgls.select('tree-coverfraction').add(
-            cgls.select('shrub-coverfraction')
-        )
-        g = cgls.select('grass-coverfraction')
-        image_list.append({
-            'asset': bg,
-            'attribute': 'bare-coverfraction',
-            'label': 'Bare ground %'
-        })
-        image_list.append({
-            'asset': t,
-            'attribute': 'tree-coverfraction',
-            'label': 'Woody cover %'
-        })
-        image_list.append({
-            'asset': g,
-            'attribute': 'grass-coverfraction',
-            'label': 'Grass cover %'
-        })
+        # Check collection size if needed (hybrid approach)
+        needs_check = _collection_check(start_dt, end_dt, asset_end)
+        has_data = True  # Default to True
+        if needs_check:
+            has_data, warning = _check_collection_size(
+                cgls, 'CGLS Ground Cover', start_dt, end_dt
+            )
+            if not has_data:
+                warnings.append(warning)
+            elif warning:
+                # Could not verify, but proceed with warning
+                warnings.append(warning)
+
+        if has_data:
+            cgls = cgls.median()
+
+            # Additional calculations for land cover fractions
+            bg = cgls.select('bare-coverfraction').add(
+                cgls.select('urban-coverfraction')
+            )
+            t = cgls.select('tree-coverfraction').add(
+                cgls.select('shrub-coverfraction')
+            )
+            g = cgls.select('grass-coverfraction')
+            image_list.append({
+                'asset': bg,
+                'attribute': 'bare-coverfraction',
+                'label': 'Bare ground %'
+            })
+            image_list.append({
+                'asset': t,
+                'attribute': 'tree-coverfraction',
+                'label': 'Woody cover %'
+            })
+            image_list.append({
+                'asset': g,
+                'attribute': 'grass-coverfraction',
+                'label': 'Grass cover %'
+            })
 
     # TODO: add grazing capacity
 
@@ -2354,56 +2485,82 @@ def calculate_baseline(aoi: ee.Geometry, start_date: str, end_date: str,
         'fire_cci', start_date, end_date
     )
     if valid:
-        fire_freq = calculate_firefreq(
-            selected_area,
-            start_dt,
-            end_dt
-        ).divide(18)
-        fire_freq = fire_freq.unmask(0)
-        image_list.append({
-            'asset': fire_freq,
-            'attribute': 'fireFreq',
-            'label': 'Fires/yr'
-        })
+        try:
+            fire_freq = calculate_firefreq(
+                selected_area,
+                start_dt,
+                end_dt
+            ).divide(18)
+            fire_freq = fire_freq.unmask(0)
+            image_list.append({
+                'asset': fire_freq,
+                'attribute': 'fireFreq',
+                'label': 'Fires/yr'
+            })
+        except Exception as e:
+            # Fire frequency calculation can fail with empty collections
+            warning = (
+                f"Fire CCI: Unable to calculate fire frequency for "
+                f"date range {start_dt} to {end_dt} - {str(e)}"
+            )
+            warnings.append(warning)
 
     # SOCltMean and SOCltTrend
     valid, start_dt, end_dt = GEEAsset.get_dates_within_asset_period(
         'soil_carbon', start_date, end_date
     )
     if valid:
-        soc_lt_mean = input_layer.get_soil_carbon(
-            datetime.date.fromisoformat(start_dt),
-            datetime.date.fromisoformat(end_dt),
-            False,
-            selected_area
-        )
-        soc_lt_mean = soc_lt_mean.rename('SOCltMean')
-        image_list.append({
-            'asset': soc_lt_mean,
-            'attribute': 'SOCltMean',
-            'label': 'SOC kg/m2'
-        })
+        try:
+            soc_lt_mean = input_layer.get_soil_carbon(
+                datetime.date.fromisoformat(start_dt),
+                datetime.date.fromisoformat(end_dt),
+                False,
+                selected_area
+            )
+            soc_lt_mean = soc_lt_mean.rename('SOCltMean')
+            image_list.append({
+                'asset': soc_lt_mean,
+                'attribute': 'SOCltMean',
+                'label': 'SOC kg/m2'
+            })
+        except Exception as e:
+            warning = (
+                f"Soil Carbon Mean: Unable to calculate for "
+                f"date range {start_dt} to {end_dt} - {str(e)}"
+            )
+            warnings.append(warning)
 
         # SOCltTrend
-        soil_start_dt = datetime.date.fromisoformat(start_dt)
-        if soil_start_dt.year == datetime.date.fromisoformat(end_dt).year:
-            # soild_carbon_change needs 2 years of data
-            soil_start_dt = datetime.date(
-                soil_start_dt.year - 1, soil_start_dt.month, soil_start_dt.day
+        try:
+            soil_start_dt = datetime.date.fromisoformat(start_dt)
+            if soil_start_dt.year == datetime.date.fromisoformat(
+                end_dt
+            ).year:
+                # soild_carbon_change needs 2 years of data
+                soil_start_dt = datetime.date(
+                    soil_start_dt.year - 1,
+                    soil_start_dt.month,
+                    soil_start_dt.day
+                )
+                start_dt = soil_start_dt.isoformat()
+            soc_lt_trend = input_layer.get_soil_carbon_change(
+                datetime.date.fromisoformat(start_dt),
+                datetime.date.fromisoformat(end_dt),
+                False,
+                selected_area
             )
-            start_dt = soil_start_dt.isoformat()
-        soc_lt_trend = input_layer.get_soil_carbon_change(
-            datetime.date.fromisoformat(start_dt),
-            datetime.date.fromisoformat(end_dt),
-            False,
-            selected_area
-        )
-        soc_lt_trend = soc_lt_trend.rename('SOCltTrend')
-        image_list.append({
-            'asset': soc_lt_trend,
-            'attribute': 'SOCltTrend',
-            'label': 'SOC change kg/m2'
-        })
+            soc_lt_trend = soc_lt_trend.rename('SOCltTrend')
+            image_list.append({
+                'asset': soc_lt_trend,
+                'attribute': 'SOCltTrend',
+                'label': 'SOC change kg/m2'
+            })
+        except Exception as e:
+            warning = (
+                f"Soil Carbon Trend: Unable to calculate for "
+                f"date range {start_dt} to {end_dt} - {str(e)}"
+            )
+            warnings.append(warning)
 
     # Add livestock all species
     livestock_map = ee.Image(
@@ -2434,12 +2591,31 @@ def calculate_baseline(aoi: ee.Geometry, start_date: str, end_date: str,
             if not var_names:
                 continue
             var_name = var_names[0]
-            gee_asset_obj = gee_asset_class(
+
+            asset_end = user_gee_asset.end_date
+
+            gee_collection = gee_asset_class(
                 user_gee_asset.source
             ).select(var_name).filterDate(
                 parse(start_dt).isoformat(), parse(end_dt).isoformat()
             ).filterBounds(selected_area)
-            gee_asset_obj = gee_asset_obj.reduce(indicator.get_reducer())
+
+            # Check collection size if needed (hybrid approach)
+            needs_check = _collection_check(start_dt, end_dt, asset_end)
+            has_data = True  # Default to True
+            if needs_check:
+                has_data, warning = _check_collection_size(
+                    gee_collection,
+                    f"User Asset: {indicator.variable_name}",
+                    start_dt, end_dt
+                )
+                if not has_data:
+                    warnings.append(warning)
+                    continue  # Skip this asset
+                elif warning:
+                    warnings.append(warning)
+
+            gee_asset_obj = gee_collection.reduce(indicator.get_reducer())
             gee_asset_obj = gee_asset_obj.rename(indicator.variable_name)
             image_list.append({
                 'asset': gee_asset_obj,
@@ -2448,7 +2624,12 @@ def calculate_baseline(aoi: ee.Geometry, start_date: str, end_date: str,
             })
 
     if len(image_list) == 0:
-        raise ValueError('No baseline in the input date ranges.')
+        # Return warnings about why no data is available
+        if warnings:
+            error_msg = 'No baseline data available. ' + '; '.join(warnings)
+        else:
+            error_msg = 'No baseline in the input date ranges.'
+        raise ValueError(error_msg)
 
     # Combining all layers for analysis and renaming for clarity
     combined = ee.Image.cat(
@@ -2467,6 +2648,12 @@ def calculate_baseline(aoi: ee.Geometry, start_date: str, end_date: str,
         lambda feature: feature.setGeometry(None)
     )
 
+    # Return result with warnings if any
+    if warnings:
+        return {
+            'result': reduced,
+            'warnings': warnings
+        }
     return reduced
 
 
