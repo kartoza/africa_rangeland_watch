@@ -57,6 +57,46 @@ quarter_dict = {
 }
 
 
+def _safe_int(value, default=None):
+    """
+    Safely convert a value to int, handling lists, None, and empty values.
+
+    This helper handles inconsistent data formats from the frontend where
+    values may be sent as single values (e.g., 2021) or arrays (e.g., [2021]).
+
+    Args:
+        value: Value to convert (can be int, str, list, or None)
+        default: Default value if conversion fails or value is None/empty
+
+    Returns:
+        int or default value
+
+    Examples:
+        >>> _safe_int(2021)
+        2021
+        >>> _safe_int([2021])
+        2021
+        >>> _safe_int([[2021]])
+        2021
+        >>> _safe_int(None, default=0)
+        0
+        >>> _safe_int('', default=None)
+        None
+        >>> _safe_int([])
+        None
+    """
+    if value is None or value == '':
+        return default
+
+    # Handle nested lists (e.g., [[2021]])
+    while isinstance(value, list):
+        if len(value) == 0:
+            return default
+        value = value[0]
+
+    return int(value)
+
+
 class InputLayer:
     """
     Class to prepare all input layer necessary for analysis.
@@ -885,10 +925,18 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
 
     if analysis_dict['analysisType'] == "Temporal":
         res = analysis_dict['t_resolution']
-        baseline_yr = int(analysis_dict['Temporal']['Annual']['ref'])
-        test_years = [
-            int(year) for year in analysis_dict['Temporal']['Annual']['test']
-        ]
+
+        # Extract and normalize baseline year
+        ref_year = analysis_dict['Temporal']['Annual']['ref']
+        baseline_yr = _safe_int(ref_year)
+
+        # Extract and normalize test years
+        test_years_raw = analysis_dict['Temporal']['Annual']['test']
+        # Ensure test_years_raw is a list
+        if not isinstance(test_years_raw, list):
+            test_years_raw = [test_years_raw]
+        # Normalize each year value (handles nested lists)
+        test_years = [_safe_int(year) for year in test_years_raw]
 
         if indicator.source == IndicatorSource.GPW:
             baseline_dt = datetime.date(
@@ -962,20 +1010,27 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
                 ))
                 temporal_table = temporal_table.merge(new_stats)
 
-            baseline_quart = quarter_dict[
-                analysis_dict['Temporal']['Quarterly']['ref']
-            ]
+            # Extract and normalize quarterly reference value
+            ref_quarter = analysis_dict['Temporal']['Quarterly']['ref']
+            ref_quarter_key = _safe_int(ref_quarter)
+            baseline_quart = quarter_dict[ref_quarter_key]
+
+            # Extract and normalize quarterly test values
+            test_quarts_raw = analysis_dict['Temporal']['Quarterly']['test']
+            if not isinstance(test_quarts_raw, list):
+                test_quarts_raw = [test_quarts_raw]
             test_quarts = [
-                quarter_dict[quart] for quart in
-                analysis_dict['Temporal']['Quarterly']['test']
+                quarter_dict[_safe_int(quart)] for quart in test_quarts_raw
             ]
 
             # Get annual years
-            ref_year = int(analysis_dict['Temporal']['Annual']['ref'])
-            test_years = [
-                int(year) for year in
-                analysis_dict['Temporal']['Annual']['test']
-            ]
+            ref_year = analysis_dict['Temporal']['Annual']['ref']
+            ref_year = _safe_int(ref_year)
+
+            test_years_raw = analysis_dict['Temporal']['Annual']['test']
+            if not isinstance(test_years_raw, list):
+                test_years_raw = [test_years_raw]
+            test_years = [_safe_int(year) for year in test_years_raw]
 
             # Create filters for reference year and all test years
             year_filters = []
@@ -1007,12 +1062,18 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
                 ee.Filter.inList('Name', select_names)
             )
             if custom_geom:
+            if custom_geom:
                 select_geo = custom_geom_geometry
-            baseline_month = int(analysis_dict['Temporal']['Monthly']['ref'])
-            test_months = [
-                int(month) for month in
-                analysis_dict['Temporal']['Monthly']['test']
-            ]
+
+            # Extract and normalize baseline month (fixes #665)
+            ref_month = analysis_dict['Temporal']['Monthly']['ref']
+            baseline_month = _safe_int(ref_month)
+
+            # Extract and normalize test months
+            test_months_raw = analysis_dict['Temporal']['Monthly']['test']
+            if not isinstance(test_months_raw, list):
+                test_months_raw = [test_months_raw]
+            test_months = [_safe_int(month) for month in test_months_raw]
             baseline_dt = datetime.date(
                 baseline_yr, baseline_month, 1
             )
@@ -1047,41 +1108,39 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
             raise ValueError("Reference layer not provided")
 
         res = analysis_dict['t_resolution']
+
+        # Extract and normalize reference period values
+        ref_year = analysis_dict['Temporal']['Annual']['ref']
+        ref_year = _safe_int(ref_year)
+
+        ref_quarter = analysis_dict['Temporal']['Quarterly']['ref']
+        ref_quarter = _safe_int(ref_quarter) if res == 'Quarterly' else None
+
+        ref_month = analysis_dict['Temporal']['Monthly']['ref']
+        ref_month = _safe_int(ref_month) if res == 'Monthly' else None
+
         before_dict = {
-            'year': int(analysis_dict['Temporal']['Annual']['ref']),
-            'quarter': (
-                int(analysis_dict['Temporal']['Quarterly']['ref']) if
-                res == 'Quarterly' else None
-            ),
-            'month': (
-                int(analysis_dict['Temporal']['Monthly']['ref']) if
-                res == 'Monthly' else None
-            )
+            'year': ref_year,
+            'quarter': ref_quarter,
+            'month': ref_month
         }
+
+        # Extract and normalize test period values
         test_year = analysis_dict['Temporal']['Annual']['test']
-        if isinstance(test_year, list):
-            test_year = int(test_year[0])
-        else:
-            test_year = int(test_year)
+        test_year = _safe_int(test_year)
+
         test_quarter = analysis_dict['Temporal']['Quarterly']['test']
-        if isinstance(test_quarter, list):
-            test_quarter = int(test_quarter[0])
-        elif res == 'Quarterly':
-            test_quarter = int(test_quarter)
-        else:
-            test_quarter = None
+        test_quarter = _safe_int(test_quarter) if res == 'Quarterly' else None
+
         test_month = analysis_dict['Temporal']['Monthly']['test']
-        if isinstance(test_month, list):
-            test_month = int(test_month[0])
-        elif res == 'Monthly':
-            test_month = int(test_month)
-        else:
-            test_month = None
+        test_month = _safe_int(test_month) if res == 'Monthly' else None
+
         after_dict = {
             'year': test_year,
             'quarter': test_quarter,
             'month': test_month
         }
+
         result = calculate_baci(
             locations, reference_layer,
             analysis_dict['variable'], res,
@@ -1856,56 +1915,56 @@ def spatial_get_date_filter(analysis_dict):
     # Get reference values based on temporal resolution
     start_year = analysis_dict['Spatial'].get('Annual', {}).get('ref')
     end_year = analysis_dict['Spatial'].get('Annual', {}).get('test')
-    try:
-        end_year = end_year[0] if isinstance(end_year, list) else end_year
-    except IndexError:
-        end_year = ''
+
+    # Normalize start_year and end_year using helper
+    start_year = _safe_int(start_year)
+    end_year = _safe_int(end_year)
 
     if t_resolution == 'Annual':
 
         if start_year:
-            filter_start_date = datetime.date(int(start_year), 1, 1)
+            filter_start_date = datetime.date(start_year, 1, 1)
 
         if end_year:
             # For annual year 2023, end date is December 31 on the same year
             if end_year == 2023:
-                filter_end_date = datetime.date(int(end_year), 12, 31)
+                filter_end_date = datetime.date(end_year, 12, 31)
             else:
                 # Otherwise, end date is January 1 next year
-                filter_end_date = datetime.date(int(end_year) + 1, 1, 1)
+                filter_end_date = datetime.date(end_year + 1, 1, 1)
 
     elif t_resolution == 'Quarterly':
         start_quarter = analysis_dict['Spatial'].get(
             'Quarterly', {}
         ).get('ref')
         end_quarter = analysis_dict['Spatial'].get('Quarterly', {}).get('test')
-        try:
-            end_quarter = end_quarter[0] if isinstance(
-                end_quarter, list
-            ) else end_quarter
-        except IndexError:
-            end_quarter = ''
+
+        # Normalize all values using helper
+        start_quarter = _safe_int(start_quarter)
+        end_quarter = _safe_int(end_quarter)
+        start_year = _safe_int(start_year)  # Already extracted above
+        end_year = _safe_int(end_year)      # Already extracted above
 
         if start_quarter and start_year:
             # Convert quarter to month (Q1=1, Q2=4, Q3=7, Q4=10)
-            start_month = (int(start_quarter) - 1) * 3 + 1
-            filter_start_date = datetime.date(int(start_year), start_month, 1)
+            start_month = (start_quarter - 1) * 3 + 1
+            filter_start_date = datetime.date(start_year, start_month, 1)
 
         if end_quarter and end_year:
             # Calculate end date as the last day of
             # the last month in the quarter
-            end_month = int(end_quarter) * 3  # Last month of the quarter
+            end_month = end_quarter * 3  # Last month of the quarter
 
             # Handle December specially
             if end_month == 12:
                 if end_year == 2023:
-                    filter_end_date = datetime.date(int(end_year), 12, 31)
+                    filter_end_date = datetime.date(end_year, 12, 31)
                 else:
-                    filter_end_date = datetime.date(int(end_year) + 1, 1, 1)
+                    filter_end_date = datetime.date(end_year + 1, 1, 1)
             else:
                 # Last day of the month = first day of next month - 1 day
                 # But since it's exclusive, we don't decrease by 1 day
-                next_month_year = int(end_year)
+                next_month_year = end_year
                 next_month = end_month + 1
                 if next_month > 12:
                     next_month = 1
@@ -1920,36 +1979,33 @@ def spatial_get_date_filter(analysis_dict):
     elif t_resolution == 'Monthly':
         start_month = analysis_dict['Spatial'].get('Monthly', {}).get('ref')
         end_month = analysis_dict['Spatial'].get('Monthly', {}).get('test')
-        try:
-            end_month = end_month[0] if isinstance(
-                end_month, list
-            ) else end_month
-        except IndexError:
-            end_month = ''
+
+        # Normalize all values using helper
+        start_month = _safe_int(start_month)
+        end_month = _safe_int(end_month)
+        start_year = _safe_int(start_year)  # Already extracted above
+        end_year = _safe_int(end_year)      # Already extracted above
 
         if start_month and start_year:
             filter_start_date = datetime.date(
-                int(start_year),
-                int(start_month),
+                start_year,
+                start_month,
                 1
             )
 
         if end_month and end_year:
             # Calculate the last day of the end month
-            end_month_int = int(end_month)
-            end_year_int = int(end_year)
-
             # Last day of the month = first day of next month - 1 day
             # But since it's exclusive, we don't decrease by 1 day
-            if end_month_int == 12:
-                if end_month_int == 2023:
-                    filter_end_date = datetime.date(end_year_int, 12, 31)
+            if end_month == 12:
+                if end_year == 2023:
+                    filter_end_date = datetime.date(end_year, 12, 31)
                 else:
-                    filter_end_date = datetime.date(end_year_int + 1, 1, 1)
+                    filter_end_date = datetime.date(end_year + 1, 1, 1)
             else:
                 filter_end_date = datetime.date(
-                    end_year_int,
-                    end_month_int + 1,
+                    end_year,
+                    end_month + 1,
                     1
                 )
 
@@ -1957,15 +2013,14 @@ def spatial_get_date_filter(analysis_dict):
     # specific resolution handling failed
     if filter_start_date is None and\
         analysis_dict['Spatial'].get('start_year', None):
-        filter_start_date = datetime.date(
-            int(start_year), 1, 1
-        )
+        # start_year already normalized above
+        if start_year:
+            filter_start_date = datetime.date(start_year, 1, 1)
 
     if filter_end_date is None and\
         analysis_dict['Spatial'].get('end_year', None) and end_year:
-        filter_end_date = datetime.date(
-            int(end_year), 12, 31
-        )
+        # end_year already normalized above
+        filter_end_date = datetime.date(end_year, 12, 31)
 
     return filter_start_date, filter_end_date
 
