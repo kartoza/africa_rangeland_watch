@@ -13,6 +13,7 @@ const AnalysisResults = React.lazy(() => import("./pages/AnalysisResults"));
 const NotificationsPage  = React.lazy(() => import("./pages/Notifications"));
 const UploadedResourcesPage  = React.lazy(() => import("./pages/UploadedResources"));
 const SupportPage = React.lazy(() => import("./pages/Support"));
+const FeedbackPage = React.lazy(() => import("./pages/Feedback"));
 import AboutPage from "./pages/About";
 import ResourcesPage from "./pages/Resources";
 const DashboardListPage = React.lazy(() => import("./pages/Dashboard"));
@@ -98,6 +99,10 @@ const ProjectRoutes = () => {
     {
       path: "/support",
       element: <PrivateRoute Component={SupportPage} />,
+    },
+    {
+      path: "/feedback",
+      element: <PrivateRoute Component={FeedbackPage} />,
     },
     {
       path: "/map",

@@ -1,6 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 import authReducer from './authSlice';
 import ticketReducer from './ticketSlice';
+import feedbackReducer from './feedbackSlice';
 import organizationReducer from './organizationSlice';
 import baseMapReducer from './baseMapSlice';
 import landscapeReducer from './landscapeSlice';
@@ -23,6 +24,7 @@ const store = configureStore({
   reducer: {
     auth: authReducer,
     ticket: ticketReducer,
+    feedback: feedbackReducer,
     organization: organizationReducer,
     baseMap: baseMapReducer,
     landscape: landscapeReducer,

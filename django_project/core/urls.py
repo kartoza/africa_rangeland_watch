@@ -79,6 +79,7 @@ urlpatterns = [
         name='password-reset-confirm'
     ),
     path('', include('support.urls')),
+    path('', include('feedback.urls')),
     path('', include('cloud_native_gis.urls')),
     path(
         'api/session/',
