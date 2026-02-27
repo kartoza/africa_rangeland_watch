@@ -4,6 +4,7 @@ import maplibregl from "maplibre-gl";
 import { Layer } from '../../../../store/layerSlice';
 import { useMap } from '../../../../MapContext';
 import { removeSource } from '../../utils';
+import UserLayerAttributePopup from '../../UserLayerAttributePopup';
 
 const USER_DEFINED_LAYER_ID = 'user-defined-analysis-layer';
 const DEFAULT_FALLBACK_FEATURE_ID = 'id';
@@ -104,6 +105,11 @@ export default function AnalysisUserDefinedLayerSelector(
 ) {
   const { mapRef, isMapLoaded } = useMap();
   const [attributeId, setAttributeId] = useState<LayerAttributeIdDict>({})
+  const [popupData, setPopupData] = useState<{
+    properties: Record<string, any>;
+    position: { x: number; y: number };
+    layerName: string;
+  } | null>(null);
   useEffect(() => {
     const map = mapRef.current;
     try {
@@ -159,6 +165,21 @@ export default function AnalysisUserDefinedLayerSelector(
           if (features.length > 0) {
             // get first feature
             const feature = features[0]
+            
+            // Calculate screen position for popup
+            const canvas = map.getCanvas();
+            const rect = canvas.getBoundingClientRect();
+            const layer = layers.find(l => `${USER_DEFINED_LAYER_ID}-${l.id}` === originalLayerId);
+            
+            setPopupData({
+              properties: feature.properties || {},
+              position: {
+                x: e.point.x + rect.left,
+                y: e.point.y + rect.top
+              },
+              layerName: layer?.name || 'User Layer'
+            });
+            
             if (feature.geometry.type === "Polygon" || feature.geometry.type === "MultiPolygon") {
               const featureName = feature.properties[DEFAULT_FEATURE_NAME] !== undefined ? feature.properties[DEFAULT_FEATURE_NAME] : DEFAULT_EMPTY_NAME
               const featureId = feature.properties[attrId] !== undefined ? feature.properties[attrId] : DEFAULT_EMPTY_ID
@@ -215,5 +236,17 @@ export default function AnalysisUserDefinedLayerSelector(
     }
   }, [isMapLoaded, attributeId, featureId, enableSelection])
 
-  return <></>
+  return (
+    <>
+      {popupData && (
+        <UserLayerAttributePopup
+          properties={popupData.properties}
+          position={popupData.position}
+          isOpen={!!popupData}
+          onClose={() => setPopupData(null)}
+          layerName={popupData.layerName}
+        />
+      )}
+    </>
+  )
 }
