@@ -5,6 +5,7 @@ from layers.generator.modis_vegetation import ModisVegetationGenerator
 from layers.generator.soil_organic_carbon import SoilOrganicCarbonGenerator
 from layers.generator.nrt import NearRealTimeGenerator
 from layers.generator.livestock import LiveStockGenerator
+from layers.generator.landsat_ndwi import LandsatNDWIGenerator
 
 
 GENERATOR_CLASSES = [
@@ -14,7 +15,8 @@ GENERATOR_CLASSES = [
     ModisVegetationGenerator,
     SoilOrganicCarbonGenerator,
     LiveStockGenerator,
-    NearRealTimeGenerator
+    NearRealTimeGenerator,
+    LandsatNDWIGenerator
 ]
 
 

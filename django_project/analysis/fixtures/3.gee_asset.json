@@ -477,5 +477,18 @@
         "type": "image",
         "metadata": {}
     }
+},
+{
+    "model": "analysis.geeasset",
+    "pk": 45,
+    "fields": {
+        "key": "landsat_ndwi",
+        "source": "LANDSAT/COMPOSITES/C02/T1_L2_8DAY_NDWI",
+        "type": "image_collection",
+        "metadata": {
+            "start_date": "1984-01-01",
+            "end_date": "now"
+        }
+    }
 }
 ]
