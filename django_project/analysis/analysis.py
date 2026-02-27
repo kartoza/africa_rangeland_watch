@@ -2,6 +2,7 @@ import typing
 import datetime
 import time
 import base64
+import logging
 from dateutil.parser import parse
 from dateutil.relativedelta import relativedelta
 from django.contrib.auth.models import User
@@ -33,6 +34,8 @@ from analysis.external.user_raster import (
 SERVICE_ACCOUNT_KEY = os.environ.get('SERVICE_ACCOUNT_KEY', '')
 SERVICE_ACCOUNT = os.environ.get('SERVICE_ACCOUNT', '')
 
+logger = logging.getLogger(__name__)
+
 # Sentinel-2 bands and names
 S2_BANDS = ['B1', 'B2', 'B3', 'B4', 'B5', 'B6', 'B7', 'B8', 'B11', 'B12']
 S2_NAMES = [
@@ -52,6 +55,124 @@ quarter_dict = {
     3: 7,
     4: 10
 }
+
+
+def _safe_int(value, default=None):
+    """
+    Safely convert a value to int, handling lists, None, and empty values.
+
+    This helper handles inconsistent data formats from the frontend where
+    values may be sent as single values (e.g., 2021) or arrays (e.g., [2021]).
+
+    Args:
+        value: Value to convert (can be int, str, list, or None)
+        default: Default value if conversion fails or value is None/empty
+
+    Returns:
+        int or default value
+
+    Examples:
+        >>> _safe_int(2021)
+        2021
+        >>> _safe_int([2021])
+        2021
+        >>> _safe_int([[2021]])
+        2021
+        >>> _safe_int(None, default=0)
+        0
+        >>> _safe_int('', default=None)
+        None
+        >>> _safe_int([])
+        None
+    """
+    if value is None or value == '':
+        return default
+
+    # Handle nested lists (e.g., [[2021]])
+    while isinstance(value, list):
+        if len(value) == 0:
+            return default
+        value = value[0]
+
+    return int(value)
+
+
+def _collection_check(
+    start_date: str, end_date: str, asset_end: str
+) -> bool:
+    """
+    Determine if ImageCollection size check is needed.
+
+    Uses hybrid approach: check if request dates are within 2 years
+    of dataset end date or beyond it.
+
+    Parameters
+    ----------
+    start_date : str
+        Request start date (YYYY-MM-DD)
+    end_date : str
+        Request end date (YYYY-MM-DD)
+    asset_end : str
+        Asset end date (YYYY-MM-DD or 'now')
+
+    Returns
+    -------
+    bool
+        True if collection size check is needed
+    """
+    if asset_end == 'now':
+        return False  # Dataset is current, no need to check
+
+    try:
+        asset_end_dt = datetime.date.fromisoformat(asset_end)
+        request_start_dt = datetime.date.fromisoformat(start_date)
+
+        # Check if request is within 2 years of asset end or beyond
+        two_years_before = asset_end_dt - relativedelta(years=2)
+        return request_start_dt >= two_years_before
+    except (ValueError, TypeError):
+        # If date parsing fails, be conservative and check
+        return True
+
+
+def _check_collection_size(
+    collection: ee.ImageCollection, asset_name: str,
+    start_date: str, end_date: str
+) -> typing.Tuple[bool, typing.Optional[str]]:
+    """
+    Check if ImageCollection contains data.
+
+    Parameters
+    ----------
+    collection : ee.ImageCollection
+        Collection to check
+    asset_name : str
+        Name of asset for warning message
+    start_date : str
+        Request start date
+    end_date : str
+        Request end date
+
+    Returns
+    -------
+    tuple
+        (has_data: bool, warning_message: str or None)
+    """
+    try:
+        size = collection.size().getInfo()
+        if size == 0:
+            warning = (
+                f"{asset_name}: No data available for date range "
+                f"{start_date} to {end_date}"
+            )
+            return False, warning
+        return True, None
+    except Exception as e:
+        # If check fails, log but allow operation to proceed
+        warning = (
+            f"{asset_name}: Could not verify data availability - {str(e)}"
+        )
+        return True, warning  # Assume has data to avoid false negatives
 
 
 class InputLayer:
@@ -778,15 +899,19 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
     select_names = None
 
     custom_geom = kwargs.get('custom_geom', None)
+    custom_geom_geometry = None
+    custom_geom_fc = None
+
     if custom_geom:
-        custom_geom = ee.FeatureCollection([
-            ee.Feature(
-                ee.Geometry.Polygon(custom_geom['coordinates']) if
-                custom_geom['type'] == 'Polygon' else
-                ee.Geometry.MultiPolygon(custom_geom['coordinates'])
-            )
+        custom_geom_geometry = (
+            ee.Geometry.Polygon(custom_geom['coordinates']) if
+            custom_geom['type'] == 'Polygon' else
+            ee.Geometry.MultiPolygon(custom_geom['coordinates'])
+        )
+        custom_geom_fc = ee.FeatureCollection([
+            ee.Feature(custom_geom_geometry)
         ])
-        select_names = communities.filterBounds(custom_geom).distinct(
+        select_names = communities.filterBounds(custom_geom_fc).distinct(
             ['Name']
         ).reduceColumns(ee.Reducer.toList(), ['Name']).getInfo()['list']
     else:
@@ -817,7 +942,7 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
         )
         reduced = rel_diff.reduceRegions(
             collection=(
-                custom_geom if custom_geom else
+                custom_geom_fc if custom_geom else
                 communities.filterBounds(selected_geos)
             ),
             reducer=reducer,
@@ -832,33 +957,39 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
             analysis_dict['Baseline']['endDate']
         )
         if has_dates:
+            baseline_warnings = []
             if custom_geom:
-                select = calculate_baseline(
-                    ee.Geometry.Polygon(custom_geom['coordinates']) if
-                    custom_geom['type'] == 'Polygon' else
-                    ee.Geometry.MultiPolygon(custom_geom['coordinates']),
+                baseline_result = calculate_baseline(
+                    custom_geom_geometry,
                     analysis_dict['Baseline']['startDate'],
                     analysis_dict['Baseline']['endDate'],
                     is_custom_geom=True,
                     user=analysis_task.submitted_by
                 )
             else:
-                select = calculate_baseline(
+                baseline_result = calculate_baseline(
                     selected_geos,
                     analysis_dict['Baseline']['startDate'],
                     analysis_dict['Baseline']['endDate'],
                     is_custom_geom=False,
                     user=analysis_task.submitted_by
                 )
+
+            # Handle new return format (dict with warnings or ee object)
+            if isinstance(baseline_result, dict):
+                select = baseline_result['result']
+                baseline_warnings = baseline_result.get('warnings', [])
+            else:
+                select = baseline_result
         else:
             if custom_geom:
-                select = baseline_table.filterBounds(custom_geom)
+                select = baseline_table.filterBounds(custom_geom_fc)
             else:
                 select = baseline_table.filterBounds(selected_geos)
 
             # add livestock baseline
             livestock_baseline = calculate_livestock_baseline(
-                custom_geom if custom_geom else
+                custom_geom_fc if custom_geom else
                 communities.filterBounds(selected_geos)
             )
             join_filter = ee.Filter.equals(
@@ -876,21 +1007,35 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
                 lambda f: ee.Feature(f.get('primary'))
                             .copyProperties(ee.Feature(f.get('secondary')))
             )
-        return analysis_cache.create_analysis_cache(select.getInfo())
+            baseline_warnings = []
+
+        result = analysis_cache.create_analysis_cache(select.getInfo())
+        # Add warnings to result if any
+        if baseline_warnings:
+            result['warnings'] = baseline_warnings
+        return result
 
     if analysis_dict['analysisType'] == "Temporal":
         res = analysis_dict['t_resolution']
-        baseline_yr = int(analysis_dict['Temporal']['Annual']['ref'])
-        test_years = [
-            int(year) for year in analysis_dict['Temporal']['Annual']['test']
-        ]
+
+        # Extract and normalize baseline year
+        ref_year = analysis_dict['Temporal']['Annual']['ref']
+        baseline_yr = _safe_int(ref_year)
+
+        # Extract and normalize test years
+        test_years_raw = analysis_dict['Temporal']['Annual']['test']
+        # Ensure test_years_raw is a list
+        if not isinstance(test_years_raw, list):
+            test_years_raw = [test_years_raw]
+        # Normalize each year value (handles nested lists)
+        test_years = [_safe_int(year) for year in test_years_raw]
 
         if indicator.source == IndicatorSource.GPW:
             baseline_dt = datetime.date(
                 baseline_yr, 1, 1
             )
             select_geo = input_layers.get_selected_area(
-                custom_geom if custom_geom else selected_geos,
+                custom_geom_fc if custom_geom else selected_geos,
                 True if custom_geom else False
             )
 
@@ -905,7 +1050,7 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
 
         elif isinstance(indicator, UserIndicator):
             select_geo = input_layers.get_selected_area(
-                custom_geom if custom_geom else selected_geos,
+                custom_geom_fc if custom_geom else selected_geos,
                 True if custom_geom else False
             )
 
@@ -934,9 +1079,9 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
                     analysis_dict['Temporal']['Annual']['test'] == 2023
             ):
                 new_stats = get_latest_stats(
-                    custom_geom if custom_geom else
+                    custom_geom_fc if custom_geom else
                     landscapes_dict[analysis_dict['landscape']],
-                    custom_geom if custom_geom else
+                    custom_geom_fc if custom_geom else
                     communities.filterBounds(selected_geos)
                 )
                 new_stats = new_stats.select(
@@ -957,20 +1102,27 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
                 ))
                 temporal_table = temporal_table.merge(new_stats)
 
-            baseline_quart = quarter_dict[
-                analysis_dict['Temporal']['Quarterly']['ref']
-            ]
+            # Extract and normalize quarterly reference value
+            ref_quarter = analysis_dict['Temporal']['Quarterly']['ref']
+            ref_quarter_key = _safe_int(ref_quarter)
+            baseline_quart = quarter_dict[ref_quarter_key]
+
+            # Extract and normalize quarterly test values
+            test_quarts_raw = analysis_dict['Temporal']['Quarterly']['test']
+            if not isinstance(test_quarts_raw, list):
+                test_quarts_raw = [test_quarts_raw]
             test_quarts = [
-                quarter_dict[quart] for quart in
-                analysis_dict['Temporal']['Quarterly']['test']
+                quarter_dict[_safe_int(quart)] for quart in test_quarts_raw
             ]
 
             # Get annual years
-            ref_year = int(analysis_dict['Temporal']['Annual']['ref'])
-            test_years = [
-                int(year) for year in
-                analysis_dict['Temporal']['Annual']['test']
-            ]
+            ref_year = analysis_dict['Temporal']['Annual']['ref']
+            ref_year = _safe_int(ref_year)
+
+            test_years_raw = analysis_dict['Temporal']['Annual']['test']
+            if not isinstance(test_years_raw, list):
+                test_years_raw = [test_years_raw]
+            test_years = [_safe_int(year) for year in test_years_raw]
 
             # Create filters for reference year and all test years
             year_filters = []
@@ -1002,16 +1154,17 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
                 ee.Filter.inList('Name', select_names)
             )
             if custom_geom:
-                select_geo = (
-                    ee.Geometry.Polygon(custom_geom['coordinates']) if
-                    custom_geom['type'] == 'Polygon' else
-                    ee.Geometry.MultiPolygon(custom_geom['coordinates'])
-                )
-            baseline_month = int(analysis_dict['Temporal']['Monthly']['ref'])
-            test_months = [
-                int(month) for month in
-                analysis_dict['Temporal']['Monthly']['test']
-            ]
+                select_geo = custom_geom_geometry
+
+            # Extract and normalize baseline month (fixes #665)
+            ref_month = analysis_dict['Temporal']['Monthly']['ref']
+            baseline_month = _safe_int(ref_month)
+
+            # Extract and normalize test months
+            test_months_raw = analysis_dict['Temporal']['Monthly']['test']
+            if not isinstance(test_months_raw, list):
+                test_months_raw = [test_months_raw]
+            test_months = [_safe_int(month) for month in test_months_raw]
             baseline_dt = datetime.date(
                 baseline_yr, baseline_month, 1
             )
@@ -1046,41 +1199,39 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
             raise ValueError("Reference layer not provided")
 
         res = analysis_dict['t_resolution']
+
+        # Extract and normalize reference period values
+        ref_year = analysis_dict['Temporal']['Annual']['ref']
+        ref_year = _safe_int(ref_year)
+
+        ref_quarter = analysis_dict['Temporal']['Quarterly']['ref']
+        ref_quarter = _safe_int(ref_quarter) if res == 'Quarterly' else None
+
+        ref_month = analysis_dict['Temporal']['Monthly']['ref']
+        ref_month = _safe_int(ref_month) if res == 'Monthly' else None
+
         before_dict = {
-            'year': int(analysis_dict['Temporal']['Annual']['ref']),
-            'quarter': (
-                int(analysis_dict['Temporal']['Quarterly']['ref']) if
-                res == 'Quarterly' else None
-            ),
-            'month': (
-                int(analysis_dict['Temporal']['Monthly']['ref']) if
-                res == 'Monthly' else None
-            )
+            'year': ref_year,
+            'quarter': ref_quarter,
+            'month': ref_month
         }
+
+        # Extract and normalize test period values
         test_year = analysis_dict['Temporal']['Annual']['test']
-        if isinstance(test_year, list):
-            test_year = int(test_year[0])
-        else:
-            test_year = int(test_year)
+        test_year = _safe_int(test_year)
+
         test_quarter = analysis_dict['Temporal']['Quarterly']['test']
-        if isinstance(test_quarter, list):
-            test_quarter = int(test_quarter[0])
-        elif res == 'Quarterly':
-            test_quarter = int(test_quarter)
-        else:
-            test_quarter = None
+        test_quarter = _safe_int(test_quarter) if res == 'Quarterly' else None
+
         test_month = analysis_dict['Temporal']['Monthly']['test']
-        if isinstance(test_month, list):
-            test_month = int(test_month[0])
-        elif res == 'Monthly':
-            test_month = int(test_month)
-        else:
-            test_month = None
+        test_month = _safe_int(test_month) if res == 'Monthly' else None
+
         after_dict = {
             'year': test_year,
             'quarter': test_quarter,
             'month': test_month
         }
+
         result = calculate_baci(
             locations, reference_layer,
             analysis_dict['variable'], res,
@@ -1566,6 +1717,12 @@ def train_bgt(aoi, training_path):
     ee.Classifier
         A trained Random Forest classifier with multi-probability output mode.
 
+    Raises
+    ------
+    ValueError
+        If no training data exists in the area of interest, or if training
+        data contains only one land cover class.
+
     Notes
     -----
     - The variable `TRAINING_DATA_ASSET_PATH` should be defined and point to
@@ -1583,6 +1740,35 @@ def train_bgt(aoi, training_path):
     """
     training_testing_master = ee.FeatureCollection(training_path)
     training_testing = training_testing_master.filterBounds(aoi)
+
+    # Validate training data availability
+    sample_count = training_testing.size().getInfo()
+
+    if sample_count == 0:
+        raise ValueError(
+            "No training data available in this area for bare ground "
+            "analysis. Try selecting a different location, using years "
+            "2015-2024, or choosing EVI/NDVI as the variable."
+        )
+
+    # Validate class diversity
+    distinct_classes = training_testing.aggregate_array(
+        'landcover'
+    ).distinct().size().getInfo()
+
+    if distinct_classes < 2:
+        raise ValueError(
+            "Training data in this area has insufficient diversity "
+            f"({distinct_classes} land cover class found, need at least 2). "
+            "Try selecting a different location, using years 2015-2024, "
+            "or choosing EVI/NDVI as the variable."
+        )
+
+    logger.info(
+        f"Training classifier: {sample_count} samples, "
+        f"{distinct_classes} classes"
+    )
+
     classifier = ee.Classifier.smileRandomForest(100).train(
         features=training_testing,
         classProperty='landcover',
@@ -1820,56 +2006,56 @@ def spatial_get_date_filter(analysis_dict):
     # Get reference values based on temporal resolution
     start_year = analysis_dict['Spatial'].get('Annual', {}).get('ref')
     end_year = analysis_dict['Spatial'].get('Annual', {}).get('test')
-    try:
-        end_year = end_year[0] if isinstance(end_year, list) else end_year
-    except IndexError:
-        end_year = ''
+
+    # Normalize start_year and end_year using helper
+    start_year = _safe_int(start_year)
+    end_year = _safe_int(end_year)
 
     if t_resolution == 'Annual':
 
         if start_year:
-            filter_start_date = datetime.date(int(start_year), 1, 1)
+            filter_start_date = datetime.date(start_year, 1, 1)
 
         if end_year:
             # For annual year 2023, end date is December 31 on the same year
             if end_year == 2023:
-                filter_end_date = datetime.date(int(end_year), 12, 31)
+                filter_end_date = datetime.date(end_year, 12, 31)
             else:
                 # Otherwise, end date is January 1 next year
-                filter_end_date = datetime.date(int(end_year) + 1, 1, 1)
+                filter_end_date = datetime.date(end_year + 1, 1, 1)
 
     elif t_resolution == 'Quarterly':
         start_quarter = analysis_dict['Spatial'].get(
             'Quarterly', {}
         ).get('ref')
         end_quarter = analysis_dict['Spatial'].get('Quarterly', {}).get('test')
-        try:
-            end_quarter = end_quarter[0] if isinstance(
-                end_quarter, list
-            ) else end_quarter
-        except IndexError:
-            end_quarter = ''
+
+        # Normalize all values using helper
+        start_quarter = _safe_int(start_quarter)
+        end_quarter = _safe_int(end_quarter)
+        start_year = _safe_int(start_year)  # Already extracted above
+        end_year = _safe_int(end_year)      # Already extracted above
 
         if start_quarter and start_year:
             # Convert quarter to month (Q1=1, Q2=4, Q3=7, Q4=10)
-            start_month = (int(start_quarter) - 1) * 3 + 1
-            filter_start_date = datetime.date(int(start_year), start_month, 1)
+            start_month = (start_quarter - 1) * 3 + 1
+            filter_start_date = datetime.date(start_year, start_month, 1)
 
         if end_quarter and end_year:
             # Calculate end date as the last day of
             # the last month in the quarter
-            end_month = int(end_quarter) * 3  # Last month of the quarter
+            end_month = end_quarter * 3  # Last month of the quarter
 
             # Handle December specially
             if end_month == 12:
                 if end_year == 2023:
-                    filter_end_date = datetime.date(int(end_year), 12, 31)
+                    filter_end_date = datetime.date(end_year, 12, 31)
                 else:
-                    filter_end_date = datetime.date(int(end_year) + 1, 1, 1)
+                    filter_end_date = datetime.date(end_year + 1, 1, 1)
             else:
                 # Last day of the month = first day of next month - 1 day
                 # But since it's exclusive, we don't decrease by 1 day
-                next_month_year = int(end_year)
+                next_month_year = end_year
                 next_month = end_month + 1
                 if next_month > 12:
                     next_month = 1
@@ -1884,36 +2070,33 @@ def spatial_get_date_filter(analysis_dict):
     elif t_resolution == 'Monthly':
         start_month = analysis_dict['Spatial'].get('Monthly', {}).get('ref')
         end_month = analysis_dict['Spatial'].get('Monthly', {}).get('test')
-        try:
-            end_month = end_month[0] if isinstance(
-                end_month, list
-            ) else end_month
-        except IndexError:
-            end_month = ''
+
+        # Normalize all values using helper
+        start_month = _safe_int(start_month)
+        end_month = _safe_int(end_month)
+        start_year = _safe_int(start_year)  # Already extracted above
+        end_year = _safe_int(end_year)      # Already extracted above
 
         if start_month and start_year:
             filter_start_date = datetime.date(
-                int(start_year),
-                int(start_month),
+                start_year,
+                start_month,
                 1
             )
 
         if end_month and end_year:
             # Calculate the last day of the end month
-            end_month_int = int(end_month)
-            end_year_int = int(end_year)
-
             # Last day of the month = first day of next month - 1 day
             # But since it's exclusive, we don't decrease by 1 day
-            if end_month_int == 12:
-                if end_month_int == 2023:
-                    filter_end_date = datetime.date(end_year_int, 12, 31)
+            if end_month == 12:
+                if end_year == 2023:
+                    filter_end_date = datetime.date(end_year, 12, 31)
                 else:
-                    filter_end_date = datetime.date(end_year_int + 1, 1, 1)
+                    filter_end_date = datetime.date(end_year + 1, 1, 1)
             else:
                 filter_end_date = datetime.date(
-                    end_year_int,
-                    end_month_int + 1,
+                    end_year,
+                    end_month + 1,
                     1
                 )
 
@@ -1921,15 +2104,14 @@ def spatial_get_date_filter(analysis_dict):
     # specific resolution handling failed
     if filter_start_date is None and\
         analysis_dict['Spatial'].get('start_year', None):
-        filter_start_date = datetime.date(
-            int(start_year), 1, 1
-        )
+        # start_year already normalized above
+        if start_year:
+            filter_start_date = datetime.date(start_year, 1, 1)
 
     if filter_end_date is None and\
         analysis_dict['Spatial'].get('end_year', None) and end_year:
-        filter_end_date = datetime.date(
-            int(end_year), 12, 31
-        )
+        # end_year already normalized above
+        filter_end_date = datetime.date(end_year, 12, 31)
 
     return filter_start_date, filter_end_date
 
@@ -2185,6 +2367,7 @@ def calculate_baseline(aoi: ee.Geometry, start_date: str, end_date: str,
     ee.Image
     """
     image_list = []
+    warnings = []  # Track warnings for empty collections
     input_layer = InputLayer()
     selected_area = input_layer.get_selected_area(aoi, is_custom_geom)
 
@@ -2193,6 +2376,11 @@ def calculate_baseline(aoi: ee.Geometry, start_date: str, end_date: str,
         'modis_vegetation_061', start_date, end_date
     )
     if valid:
+        modis_asset = GEEAsset.objects.filter(
+            key='modis_vegetation_061'
+        ).first()
+        asset_end = modis_asset.end_date if modis_asset else 'now'
+
         modis_veg = (ee.ImageCollection(
                         GEEAsset.fetch_asset_source('modis_vegetation_061')
                     )
@@ -2200,24 +2388,43 @@ def calculate_baseline(aoi: ee.Geometry, start_date: str, end_date: str,
                     .filterBounds(selected_area)
                     .select(['NDVI', 'EVI'])
                     .map(lambda i: i.divide(10000)))
-        evi_baseline = modis_veg.select('EVI').median()
-        ndvi_baseline = modis_veg.select('NDVI').median()
-        image_list.append({
-            'asset': evi_baseline,
-            'attribute': 'EVI',
-            'label': 'EVI'
-        })
-        image_list.append({
-            'asset': ndvi_baseline,
-            'attribute': 'NDVI',
-            'label': 'NDVI'
-        })
+
+        # Check collection size if needed (hybrid approach)
+        needs_check = _collection_check(start_dt, end_dt, asset_end)
+        if needs_check:
+            has_data, warning = _check_collection_size(
+                modis_veg, 'MODIS Vegetation', start_dt, end_dt
+            )
+            if not has_data:
+                warnings.append(warning)
+            elif warning:
+                # Could not verify, but proceed with warning
+                warnings.append(warning)
+
+        if not needs_check or has_data:
+            evi_baseline = modis_veg.select('EVI').median()
+            ndvi_baseline = modis_veg.select('NDVI').median()
+            image_list.append({
+                'asset': evi_baseline,
+                'attribute': 'EVI',
+                'label': 'EVI'
+            })
+            image_list.append({
+                'asset': ndvi_baseline,
+                'attribute': 'NDVI',
+                'label': 'NDVI'
+            })
 
     # Get CGLS Ground Cover data
     valid, start_dt, end_dt = GEEAsset.get_dates_within_asset_period(
         'cgls_ground_cover', start_date, end_date
     )
     if valid:
+        cgls_asset = GEEAsset.objects.filter(
+            key='cgls_ground_cover'
+        ).first()
+        asset_end = cgls_asset.end_date if cgls_asset else 'now'
+
         cgls = (ee.ImageCollection(
                     GEEAsset.fetch_asset_source('cgls_ground_cover')
                 )
@@ -2230,31 +2437,46 @@ def calculate_baseline(aoi: ee.Geometry, start_date: str, end_date: str,
                         'grass-coverfraction', 'tree-coverfraction'
                     ]
                 ))
-        cgls = cgls.median()
 
-        # Additional calculations for land cover fractions and grazing capacity
-        bg = cgls.select('bare-coverfraction').add(
-            cgls.select('urban-coverfraction')
-        )
-        t = cgls.select('tree-coverfraction').add(
-            cgls.select('shrub-coverfraction')
-        )
-        g = cgls.select('grass-coverfraction')
-        image_list.append({
-            'asset': bg,
-            'attribute': 'bare-coverfraction',
-            'label': 'Bare ground %'
-        })
-        image_list.append({
-            'asset': t,
-            'attribute': 'tree-coverfraction',
-            'label': 'Woody cover %'
-        })
-        image_list.append({
-            'asset': g,
-            'attribute': 'grass-coverfraction',
-            'label': 'Grass cover %'
-        })
+        # Check collection size if needed (hybrid approach)
+        needs_check = _collection_check(start_dt, end_dt, asset_end)
+        has_data = True  # Default to True
+        if needs_check:
+            has_data, warning = _check_collection_size(
+                cgls, 'CGLS Ground Cover', start_dt, end_dt
+            )
+            if not has_data:
+                warnings.append(warning)
+            elif warning:
+                # Could not verify, but proceed with warning
+                warnings.append(warning)
+
+        if has_data:
+            cgls = cgls.median()
+
+            # Additional calculations for land cover fractions
+            bg = cgls.select('bare-coverfraction').add(
+                cgls.select('urban-coverfraction')
+            )
+            t = cgls.select('tree-coverfraction').add(
+                cgls.select('shrub-coverfraction')
+            )
+            g = cgls.select('grass-coverfraction')
+            image_list.append({
+                'asset': bg,
+                'attribute': 'bare-coverfraction',
+                'label': 'Bare ground %'
+            })
+            image_list.append({
+                'asset': t,
+                'attribute': 'tree-coverfraction',
+                'label': 'Woody cover %'
+            })
+            image_list.append({
+                'asset': g,
+                'attribute': 'grass-coverfraction',
+                'label': 'Grass cover %'
+            })
 
     # TODO: add grazing capacity
 
@@ -2263,56 +2485,82 @@ def calculate_baseline(aoi: ee.Geometry, start_date: str, end_date: str,
         'fire_cci', start_date, end_date
     )
     if valid:
-        fire_freq = calculate_firefreq(
-            selected_area,
-            start_dt,
-            end_dt
-        ).divide(18)
-        fire_freq = fire_freq.unmask(0)
-        image_list.append({
-            'asset': fire_freq,
-            'attribute': 'fireFreq',
-            'label': 'Fires/yr'
-        })
+        try:
+            fire_freq = calculate_firefreq(
+                selected_area,
+                start_dt,
+                end_dt
+            ).divide(18)
+            fire_freq = fire_freq.unmask(0)
+            image_list.append({
+                'asset': fire_freq,
+                'attribute': 'fireFreq',
+                'label': 'Fires/yr'
+            })
+        except Exception as e:
+            # Fire frequency calculation can fail with empty collections
+            warning = (
+                f"Fire CCI: Unable to calculate fire frequency for "
+                f"date range {start_dt} to {end_dt} - {str(e)}"
+            )
+            warnings.append(warning)
 
     # SOCltMean and SOCltTrend
     valid, start_dt, end_dt = GEEAsset.get_dates_within_asset_period(
         'soil_carbon', start_date, end_date
     )
     if valid:
-        soc_lt_mean = input_layer.get_soil_carbon(
-            datetime.date.fromisoformat(start_dt),
-            datetime.date.fromisoformat(end_dt),
-            False,
-            selected_area
-        )
-        soc_lt_mean = soc_lt_mean.rename('SOCltMean')
-        image_list.append({
-            'asset': soc_lt_mean,
-            'attribute': 'SOCltMean',
-            'label': 'SOC kg/m2'
-        })
+        try:
+            soc_lt_mean = input_layer.get_soil_carbon(
+                datetime.date.fromisoformat(start_dt),
+                datetime.date.fromisoformat(end_dt),
+                False,
+                selected_area
+            )
+            soc_lt_mean = soc_lt_mean.rename('SOCltMean')
+            image_list.append({
+                'asset': soc_lt_mean,
+                'attribute': 'SOCltMean',
+                'label': 'SOC kg/m2'
+            })
+        except Exception as e:
+            warning = (
+                f"Soil Carbon Mean: Unable to calculate for "
+                f"date range {start_dt} to {end_dt} - {str(e)}"
+            )
+            warnings.append(warning)
 
         # SOCltTrend
-        soil_start_dt = datetime.date.fromisoformat(start_dt)
-        if soil_start_dt.year == datetime.date.fromisoformat(end_dt).year:
-            # soild_carbon_change needs 2 years of data
-            soil_start_dt = datetime.date(
-                soil_start_dt.year - 1, soil_start_dt.month, soil_start_dt.day
+        try:
+            soil_start_dt = datetime.date.fromisoformat(start_dt)
+            if soil_start_dt.year == datetime.date.fromisoformat(
+                end_dt
+            ).year:
+                # soild_carbon_change needs 2 years of data
+                soil_start_dt = datetime.date(
+                    soil_start_dt.year - 1,
+                    soil_start_dt.month,
+                    soil_start_dt.day
+                )
+                start_dt = soil_start_dt.isoformat()
+            soc_lt_trend = input_layer.get_soil_carbon_change(
+                datetime.date.fromisoformat(start_dt),
+                datetime.date.fromisoformat(end_dt),
+                False,
+                selected_area
             )
-            start_dt = soil_start_dt.isoformat()
-        soc_lt_trend = input_layer.get_soil_carbon_change(
-            datetime.date.fromisoformat(start_dt),
-            datetime.date.fromisoformat(end_dt),
-            False,
-            selected_area
-        )
-        soc_lt_trend = soc_lt_trend.rename('SOCltTrend')
-        image_list.append({
-            'asset': soc_lt_trend,
-            'attribute': 'SOCltTrend',
-            'label': 'SOC change kg/m2'
-        })
+            soc_lt_trend = soc_lt_trend.rename('SOCltTrend')
+            image_list.append({
+                'asset': soc_lt_trend,
+                'attribute': 'SOCltTrend',
+                'label': 'SOC change kg/m2'
+            })
+        except Exception as e:
+            warning = (
+                f"Soil Carbon Trend: Unable to calculate for "
+                f"date range {start_dt} to {end_dt} - {str(e)}"
+            )
+            warnings.append(warning)
 
     # Add livestock all species
     livestock_map = ee.Image(
@@ -2343,12 +2591,31 @@ def calculate_baseline(aoi: ee.Geometry, start_date: str, end_date: str,
             if not var_names:
                 continue
             var_name = var_names[0]
-            gee_asset_obj = gee_asset_class(
+
+            asset_end = user_gee_asset.end_date
+
+            gee_collection = gee_asset_class(
                 user_gee_asset.source
             ).select(var_name).filterDate(
                 parse(start_dt).isoformat(), parse(end_dt).isoformat()
             ).filterBounds(selected_area)
-            gee_asset_obj = gee_asset_obj.reduce(indicator.get_reducer())
+
+            # Check collection size if needed (hybrid approach)
+            needs_check = _collection_check(start_dt, end_dt, asset_end)
+            has_data = True  # Default to True
+            if needs_check:
+                has_data, warning = _check_collection_size(
+                    gee_collection,
+                    f"User Asset: {indicator.variable_name}",
+                    start_dt, end_dt
+                )
+                if not has_data:
+                    warnings.append(warning)
+                    continue  # Skip this asset
+                elif warning:
+                    warnings.append(warning)
+
+            gee_asset_obj = gee_collection.reduce(indicator.get_reducer())
             gee_asset_obj = gee_asset_obj.rename(indicator.variable_name)
             image_list.append({
                 'asset': gee_asset_obj,
@@ -2357,7 +2624,12 @@ def calculate_baseline(aoi: ee.Geometry, start_date: str, end_date: str,
             })
 
     if len(image_list) == 0:
-        raise ValueError('No baseline in the input date ranges.')
+        # Return warnings about why no data is available
+        if warnings:
+            error_msg = 'No baseline data available. ' + '; '.join(warnings)
+        else:
+            error_msg = 'No baseline in the input date ranges.'
+        raise ValueError(error_msg)
 
     # Combining all layers for analysis and renaming for clarity
     combined = ee.Image.cat(
@@ -2376,6 +2648,12 @@ def calculate_baseline(aoi: ee.Geometry, start_date: str, end_date: str,
         lambda feature: feature.setGeometry(None)
     )
 
+    # Return result with warnings if any
+    if warnings:
+        return {
+            'result': reduced,
+            'warnings': warnings
+        }
     return reduced
 
 

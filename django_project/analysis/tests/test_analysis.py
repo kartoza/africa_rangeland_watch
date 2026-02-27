@@ -348,3 +348,425 @@ class TestBACIAnalysis(TestCase):
         self.assertTrue(mock_ee.Join.inner.called)
         self.assertTrue(mock_ee.Join.inner().apply.called)
         self.assertTrue(mock_ee.Join.inner().apply().map.called)
+
+
+class TestSafeIntHelper(TestCase):
+    """Test the _safe_int helper function."""
+
+    def test_safe_int_with_integer(self):
+        """Test _safe_int with integer input."""
+        from analysis.analysis import _safe_int
+        self.assertEqual(_safe_int(2021), 2021)
+        self.assertEqual(_safe_int(0), 0)
+        self.assertEqual(_safe_int(-5), -5)
+
+    def test_safe_int_with_string(self):
+        """Test _safe_int with string input."""
+        from analysis.analysis import _safe_int
+        self.assertEqual(_safe_int('2021'), 2021)
+        self.assertEqual(_safe_int('0'), 0)
+
+    def test_safe_int_with_single_element_list(self):
+        """Test _safe_int with single-element list."""
+        from analysis.analysis import _safe_int
+        self.assertEqual(_safe_int([2021]), 2021)
+        self.assertEqual(_safe_int(['2021']), 2021)
+
+    def test_safe_int_with_nested_list(self):
+        """Test _safe_int with nested list."""
+        from analysis.analysis import _safe_int
+        self.assertEqual(_safe_int([[2021]]), 2021)
+        self.assertEqual(_safe_int([[[2021]]]), 2021)
+
+    def test_safe_int_with_none(self):
+        """Test _safe_int with None input."""
+        from analysis.analysis import _safe_int
+        self.assertIsNone(_safe_int(None))
+        self.assertEqual(_safe_int(None, default=0), 0)
+        self.assertEqual(_safe_int(None, default=2020), 2020)
+
+    def test_safe_int_with_empty_string(self):
+        """Test _safe_int with empty string."""
+        from analysis.analysis import _safe_int
+        self.assertIsNone(_safe_int(''))
+        self.assertEqual(_safe_int('', default=0), 0)
+
+    def test_safe_int_with_empty_list(self):
+        """Test _safe_int with empty list."""
+        from analysis.analysis import _safe_int
+        self.assertIsNone(_safe_int([]))
+        self.assertEqual(_safe_int([], default=2020), 2020)
+
+
+class TestBACIArrayValueHandling(TestCase):
+    """Test BACI analysis handles both array and single values."""
+
+    fixtures = ['3.gee_asset.json']
+
+    def setUp(self):
+        """Set up test data."""
+        self.locations = [
+            {
+                'lat': -23.035376296859013,
+                'lon': 32.192377992891466,
+                'community': '00000000000000000161',
+                'communityName': 'LNP-BNP corridor',
+                'communityFeatureId': 430
+            }
+        ]
+        self.reference_layer_geom = {
+            'type': 'Polygon',
+            'coordinates': [
+                [
+                    [32.192377992891466, -23.035376296859013],
+                    [32.192377992891466, -23.035376296859013],
+                    [32.192377992891466, -23.035376296859013],
+                    [32.192377992891466, -23.035376296859013]
+                ]
+            ]
+        }
+
+    @patch('analysis.analysis.ee')
+    @patch('analysis.analysis.AnalysisResultsCache')
+    def test_baci_with_array_reference_period(
+        self, mock_cache_class, mock_ee
+    ):
+        """Test BACI analysis with array format for reference period."""
+        from analysis.analysis import run_analysis
+        mock_cache = MagicMock()
+        analysis_dict = {
+            'landscape': 'test',
+            'analysisType': 'BACI',
+            'variable': 'NDVI',
+            't_resolution': 'Annual',
+            'Temporal': {
+                'Annual': {
+                    'ref': [2021],  # Array format
+                    'test': [2022]
+                },
+                'Quarterly': {'ref': '', 'test': ''},
+                'Monthly': {'ref': '', 'test': ''}
+            }
+        }
+
+        # Should not raise TypeError
+        result = run_analysis(
+            self.locations,
+            analysis_dict,
+            mock_cache,
+            reference_layer=self.reference_layer_geom
+        )
+        self.assertIsNotNone(result)
+
+    @patch('analysis.analysis.ee')
+    @patch('analysis.analysis.AnalysisResultsCache')
+    def test_baci_with_single_reference_period(
+        self, mock_cache_class, mock_ee
+    ):
+        """Test BACI with single value format for reference period."""
+        from analysis.analysis import run_analysis
+        mock_cache = MagicMock()
+        analysis_dict = {
+            'landscape': 'test',
+            'analysisType': 'BACI',
+            'variable': 'NDVI',
+            't_resolution': 'Annual',
+            'Temporal': {
+                'Annual': {
+                    'ref': 2021,  # Single value
+                    'test': 2022
+                },
+                'Quarterly': {'ref': '', 'test': ''},
+                'Monthly': {'ref': '', 'test': ''}
+            }
+        }
+
+        # Should not raise TypeError
+        result = run_analysis(
+            self.locations,
+            analysis_dict,
+            mock_cache,
+            reference_layer=self.reference_layer_geom
+        )
+        self.assertIsNotNone(result)
+
+    @patch('analysis.analysis.ee')
+    @patch('analysis.analysis.AnalysisResultsCache')
+    def test_baci_quarterly_with_array_values(
+        self, mock_cache_class, mock_ee
+    ):
+        """Test BACI quarterly analysis with array format."""
+        from analysis.analysis import run_analysis
+        mock_cache = MagicMock()
+        analysis_dict = {
+            'landscape': 'test',
+            'analysisType': 'BACI',
+            'variable': 'NDVI',
+            't_resolution': 'Quarterly',
+            'Temporal': {
+                'Annual': {
+                    'ref': [2021],
+                    'test': [2022]
+                },
+                'Quarterly': {
+                    'ref': [1],  # Q1 as array
+                    'test': [2]  # Q2 as array
+                },
+                'Monthly': {'ref': '', 'test': ''}
+            }
+        }
+
+        # Should not raise TypeError
+        result = run_analysis(
+            self.locations,
+            analysis_dict,
+            mock_cache,
+            reference_layer=self.reference_layer_geom
+        )
+        self.assertIsNotNone(result)
+
+    @patch('analysis.analysis.ee')
+    @patch('analysis.analysis.AnalysisResultsCache')
+    def test_baci_monthly_with_array_values(
+        self, mock_cache_class, mock_ee
+    ):
+        """Test BACI monthly analysis with array format."""
+        from analysis.analysis import run_analysis
+        mock_cache = MagicMock()
+        analysis_dict = {
+            'landscape': 'test',
+            'analysisType': 'BACI',
+            'variable': 'NDVI',
+            't_resolution': 'Monthly',
+            'Temporal': {
+                'Annual': {
+                    'ref': [2021],
+                    'test': [2022]
+                },
+                'Quarterly': {'ref': '', 'test': ''},
+                'Monthly': {
+                    'ref': [1],  # January as array
+                    'test': [6]  # June as array
+                }
+            }
+        }
+
+        # Should not raise TypeError
+        result = run_analysis(
+            self.locations,
+            analysis_dict,
+            mock_cache,
+            reference_layer=self.reference_layer_geom
+        )
+        self.assertIsNotNone(result)
+
+
+class TestTemporalArrayValueHandling(TestCase):
+    """Test Temporal analysis handles both array and single values."""
+
+    fixtures = ['3.gee_asset.json']
+
+    @patch('analysis.analysis.ee')
+    @patch('analysis.analysis.AnalysisResultsCache')
+    @patch('analysis.analysis.InputLayer')
+    @patch('analysis.analysis.Indicator')
+    def test_temporal_annual_with_array_values(
+        self, mock_indicator_class, mock_input_layer, mock_cache_class,
+        mock_ee
+    ):
+        """Test Temporal annual analysis with array format."""
+        from analysis.analysis import run_analysis
+        mock_cache = MagicMock()
+        # Mock indicator with source
+        mock_indicator = MagicMock()
+        mock_indicator.source = 'MODIS'
+        mock_indicator_class.objects.get.return_value = mock_indicator
+
+        analysis_dict = {
+            'landscape': 'test',
+            'analysisType': 'Temporal',
+            't_resolution': 'Annual',
+            'variable': 'NDVI',
+            'Temporal': {
+                'Annual': {
+                    'ref': [2020],  # Array format
+                    'test': [[2021], [2022]]  # Nested arrays
+                },
+                'Quarterly': {'ref': '', 'test': ''},
+                'Monthly': {'ref': '', 'test': ''}
+            }
+        }
+
+        # Should not raise TypeError
+        try:
+            result = run_analysis([], analysis_dict, mock_cache)
+            self.assertIsNotNone(result)
+        except TypeError as e:
+            self.fail(f"run_analysis raised TypeError: {e}")
+
+    @patch('analysis.analysis.ee')
+    @patch('analysis.analysis.AnalysisResultsCache')
+    @patch('analysis.analysis.InputLayer')
+    @patch('analysis.analysis.Indicator')
+    def test_temporal_quarterly_with_array_values(
+        self, mock_indicator_class, mock_input_layer, mock_cache_class,
+        mock_ee
+    ):
+        """Test Temporal quarterly analysis with array format."""
+        from analysis.analysis import run_analysis
+        mock_cache = MagicMock()
+        mock_indicator = MagicMock()
+        mock_indicator.source = 'MODIS'
+        mock_indicator_class.objects.get.return_value = mock_indicator
+
+        analysis_dict = {
+            'landscape': 'test',
+            'analysisType': 'Temporal',
+            't_resolution': 'Quarterly',
+            'variable': 'NDVI',
+            'Temporal': {
+                'Annual': {
+                    'ref': [2020],
+                    'test': [[2021]]
+                },
+                'Quarterly': {
+                    'ref': [1],  # Q1 as array
+                    'test': [[2], [3]]  # Q2, Q3 as nested arrays
+                },
+                'Monthly': {'ref': '', 'test': ''}
+            }
+        }
+
+        # Should not raise TypeError
+        try:
+            result = run_analysis([], analysis_dict, mock_cache)
+            self.assertIsNotNone(result)
+        except TypeError as e:
+            self.fail(f"run_analysis raised TypeError: {e}")
+
+    @patch('analysis.analysis.ee')
+    @patch('analysis.analysis.AnalysisResultsCache')
+    @patch('analysis.analysis.InputLayer')
+    @patch('analysis.analysis.Indicator')
+    def test_temporal_monthly_with_array_values(
+        self, mock_indicator_class, mock_input_layer, mock_cache_class,
+        mock_ee
+    ):
+        """Test Temporal monthly analysis with array format."""
+        from analysis.analysis import run_analysis
+        mock_cache = MagicMock()
+        mock_indicator = MagicMock()
+        mock_indicator.source = 'MODIS'
+        mock_indicator_class.objects.get.return_value = mock_indicator
+
+        analysis_dict = {
+            'landscape': 'test',
+            'analysisType': 'Temporal',
+            't_resolution': 'Monthly',
+            'variable': 'NDVI',
+            'Temporal': {
+                'Annual': {
+                    'ref': [2020],
+                    'test': [[2021]]
+                },
+                'Quarterly': {'ref': '', 'test': ''},
+                'Monthly': {
+                    'ref': [1],  # January as array
+                    'test': [[6], [12]]  # June, December as nested arrays
+                }
+            }
+        }
+
+        # Should not raise TypeError
+        try:
+            result = run_analysis([], analysis_dict, mock_cache)
+            self.assertIsNotNone(result)
+        except TypeError as e:
+            self.fail(f"run_analysis raised TypeError: {e}")
+
+
+class TestSpatialArrayValueHandling(TestCase):
+    """Test Spatial analysis handles both array and single values."""
+
+    fixtures = ['3.gee_asset.json']
+
+    def test_spatial_annual_with_array_values(self):
+        """Test Spatial annual analysis with array format."""
+        from analysis.analysis import spatial_get_date_filter
+
+        analysis_dict = {
+            'analysisType': 'Spatial',
+            't_resolution': 'Annual',
+            'Spatial': {
+                'Annual': {
+                    'ref': [2020],  # Array format
+                    'test': [2021]
+                },
+                'Quarterly': {'ref': '', 'test': ''},
+                'Monthly': {'ref': '', 'test': ''}
+            }
+        }
+
+        # Should not raise TypeError
+        try:
+            start, end = spatial_get_date_filter(analysis_dict)
+            self.assertIsNotNone(start)
+            self.assertIsNotNone(end)
+        except TypeError as e:
+            self.fail(f"spatial_get_date_filter raised TypeError: {e}")
+
+    def test_spatial_quarterly_with_array_values(self):
+        """Test Spatial quarterly analysis with array format."""
+        from analysis.analysis import spatial_get_date_filter
+
+        analysis_dict = {
+            'analysisType': 'Spatial',
+            't_resolution': 'Quarterly',
+            'Spatial': {
+                'Annual': {
+                    'ref': [2020],
+                    'test': [2021]
+                },
+                'Quarterly': {
+                    'ref': [1],  # Q1 as array
+                    'test': [2]  # Q2 as array
+                },
+                'Monthly': {'ref': '', 'test': ''}
+            }
+        }
+
+        # Should not raise TypeError
+        try:
+            start, end = spatial_get_date_filter(analysis_dict)
+            self.assertIsNotNone(start)
+            self.assertIsNotNone(end)
+        except TypeError as e:
+            self.fail(f"spatial_get_date_filter raised TypeError: {e}")
+
+    def test_spatial_monthly_with_array_values(self):
+        """Test Spatial monthly analysis with array format."""
+        from analysis.analysis import spatial_get_date_filter
+
+        analysis_dict = {
+            'analysisType': 'Spatial',
+            't_resolution': 'Monthly',
+            'Spatial': {
+                'Annual': {
+                    'ref': [2020],
+                    'test': [2021]
+                },
+                'Quarterly': {'ref': '', 'test': ''},
+                'Monthly': {
+                    'ref': [1],  # January as array
+                    'test': [6]  # June as array
+                }
+            }
+        }
+
+        # Should not raise TypeError
+        try:
+            start, end = spatial_get_date_filter(analysis_dict)
+            self.assertIsNotNone(start)
+            self.assertIsNotNone(end)
+        except TypeError as e:
+            self.fail(f"spatial_get_date_filter raised TypeError: {e}")
