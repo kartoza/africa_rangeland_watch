@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import UserAnalysisResults
+from .models import UserAnalysisResults, TrendsEarthSetting
 
 
 class UserAnalysisResultsSerializer(serializers.ModelSerializer):
@@ -39,3 +39,30 @@ class UserAnalysisResultsSerializer(serializers.ModelSerializer):
 
     def get_raster_output_list(self, obj):
         return obj.rasters
+
+
+class TrendsEarthSettingSerializer(serializers.ModelSerializer):
+    """Serializer for per-user Trends.Earth credentials.
+
+    The refresh_token field is write-only so it is never returned in
+    GET responses (the frontend only needs to know whether a token exists,
+    not its value).
+    """
+
+    has_credentials = serializers.SerializerMethodField(
+        help_text='True if a refresh token is stored for this user.'
+    )
+
+    class Meta:
+        model = TrendsEarthSetting
+        fields = ['id', 'email', 'refresh_token', 'has_credentials',
+                  'created_at', 'updated_at']
+        read_only_fields = ['id', 'has_credentials', 'created_at',
+                            'updated_at']
+        extra_kwargs = {
+            'refresh_token': {'write_only': True, 'required': False},
+        }
+
+    def get_has_credentials(self, obj: TrendsEarthSetting) -> bool:
+        """Return True when a refresh token is stored."""
+        return bool(obj.refresh_token)

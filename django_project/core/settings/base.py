@@ -155,3 +155,20 @@ RESEND_API_KEY = os.environ.get(
 EARTH_RANGER_API_URL = os.environ.get("EARTH_RANGER_API_URL", "https://csah4h.pamdas.org/api/v1.0/")
 EARTH_RANGER_AUTH_TOKEN = os.environ.get("EARTH_RANGER_AUTH_TOKEN", "")
 EARTH_RANGER_CSRF_TOKEN = os.environ.get("EARTH_RANGER_CSRF_TOKEN", "")
+
+# Trends.Earth script slugs
+TRENDS_EARTH_BASE_URL = os.environ.get(
+    'TRENDS_EARTH_BASE_URL', 'https://api.trends.earth'
+)
+TRENDS_EARTH_LDN_SCRIPT_SLUG = os.environ.get(
+    'TRENDS_EARTH_LDN_SCRIPT_SLUG', 'sdg-15-3-1-sub-indicators'
+)
+TRENDS_EARTH_DROUGHT_SCRIPT_SLUG = os.environ.get(
+    'TRENDS_EARTH_DROUGHT_SCRIPT_SLUG', 'drought-vulnerability'
+)
+TRENDS_EARTH_URBAN_SCRIPT_SLUG = os.environ.get(
+    'TRENDS_EARTH_URBAN_SCRIPT_SLUG', 'urban-area'
+)
+TRENDS_EARTH_POPULATION_SCRIPT_SLUG = os.environ.get(
+    'TRENDS_EARTH_POPULATION_SCRIPT_SLUG', 'download-data'
+)

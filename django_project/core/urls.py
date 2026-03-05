@@ -89,6 +89,7 @@ urlpatterns = [
     ),
     path('', include('dashboard.urls')),
     path('', include('analysis.urls')),
+    path('api/analysis/', include('analysis.api_urls')),
     path('', include('earthranger.urls')),
     path('api/', include('alerts.urls')),
 ]
