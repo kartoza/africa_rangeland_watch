@@ -16,6 +16,7 @@ from django.shortcuts import get_object_or_404
 from django.http import FileResponse, Http404
 from django.urls import reverse
 
+from django.db.models import Q
 from cloud_native_gis.models import Layer
 from analysis.utils import _initialize_gdrive_instance
 from .models import InputLayer, ExportedCog
@@ -31,8 +32,12 @@ def user_input_layers(request):
     View to retrieve layers grouped by 'group' field for the current user,
     filtering for layers that belong to the 'user-defined' group.
     """
+    # User-defined layers are visible to all users (but only the owner
+    # can delete them — enforced via is_owned flag in the response).
+    # Trends.Earth layers are scoped to the submitting user (owner-only).
     user_layers = InputLayer.objects.filter(
-        group__name="user-defined"
+        Q(group__name="user-defined") |
+        Q(group__name="trends-earth", created_by=request.user)
     ).select_related('data_provider', 'group').order_by('-created_at')
 
     # Group layers by 'group' field

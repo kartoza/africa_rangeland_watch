@@ -151,6 +151,16 @@ export default function Sidebar(props: Props) {
           </MenuItem>
           <MenuItem
             style={{
+              backgroundColor: isActive("/additional-layers")
+                ? "#a8d159"
+                : "transparent",
+            }}
+            onClick={() => navigate("/additional-layers")}
+          >
+            Additional Layers
+          </MenuItem>
+          <MenuItem
+            style={{
               backgroundColor: isActive("/earthranger/settings")
                 ? "#a8d159"
                 : "transparent",
@@ -298,6 +308,19 @@ export default function Sidebar(props: Props) {
                   }}
                 >
                   Analysis Results
+                </MenuItem>
+                <MenuItem
+                  style={{
+                    backgroundColor: isActive("/additional-layers")
+                      ? "#a8d159"
+                      : "transparent",
+                  }}
+                  onClick={() => {
+                    navigate("/additional-layers");
+                    onClose();
+                  }}
+                >
+                  Additional Layers
                 </MenuItem>
                 <MenuItem
                   style={{

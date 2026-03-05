@@ -25,7 +25,9 @@ from analysis.models import (
     AnalysisResultsCache,
     AnalysisRasterOutput,
     AnalysisTask,
+    AnalysisTaskType,
     Indicator,
+    TrendsEarthSetting,
     UserIndicator,
     UserGEEAsset,
     UserAnalysisResults,
@@ -523,3 +525,546 @@ def check_ingestor_asset_status(user_gee_asset_id: int):
         UserIndicator.set_status_by_asset_key(gee_asset.key, False)
     else:
         UserIndicator.set_status_by_asset_key(gee_asset.key, True)
+
+
+# ---------------------------------------------------------------------------
+# Trends.Earth LDN tasks
+# ---------------------------------------------------------------------------
+
+def _build_te_layer_name(
+    analysis_task: AnalysisTask,
+    cog_index: int,
+) -> str:
+    """
+    Build a human-readable display name for a Trends.Earth raster layer.
+
+    Examples:
+      "LDN 2015–2019 (band 1)"
+      "Drought 2020–2022 (band 2)"
+      "Population 2020"
+    """
+    type_label = {
+        AnalysisTaskType.LDN: 'LDN',
+        AnalysisTaskType.DROUGHT: 'Drought',
+        AnalysisTaskType.URBANIZATION: 'Urbanization',
+        AnalysisTaskType.POPULATION: 'Population',
+    }.get(analysis_task.task_type, analysis_task.task_type.upper())
+
+    inputs = analysis_task.analysis_inputs or {}
+    year_start = inputs.get('year_start')
+    year_end = inputs.get('year_end')
+    year = inputs.get('year')
+
+    if year_start and year_end:
+        period = f'{year_start}\u2013{year_end}'
+    elif year:
+        period = str(year)
+    else:
+        period = ''
+
+    suffix = f' (band {cog_index + 1})' if cog_index > 0 else ''
+    parts = [p for p in [type_label, period] if p]
+    return ' '.join(parts) + suffix
+
+
+def _download_and_store_te_cog(
+    cog_url: str,
+    analysis_task: AnalysisTask,
+    cog_index: int,
+) -> None:
+    """
+    Download a COG from Trends.Earth, register it as a
+    cloud_native_gis Layer, and create a layers.InputLayer record
+    (group='trends-earth') so it appears in the map layer panel
+    for the submitting user.
+    """
+    from django.conf import settings as django_settings
+    from cloud_native_gis.models.layer import Layer, LayerType
+    from cloud_native_gis.models.layer_upload import LayerUpload
+    from layers.models import (
+        DataProvider,
+        InputLayer,
+        InputLayerType,
+        LayerGroupType,
+    )
+
+    import requests as _requests
+    import uuid as _uuid_mod
+
+    display_name = _build_te_layer_name(analysis_task, cog_index)
+    raster_uuid = _uuid_mod.uuid4()
+    internal_name = (
+        f'te_{analysis_task.task_type}_{analysis_task.pk}'
+        f'_{cog_index}.tif'
+    )
+
+    try:
+        with tempfile.TemporaryDirectory() as work_dir:
+            file_path = os.path.join(work_dir, f'{raster_uuid}.tif')
+            with _requests.get(cog_url, stream=True, timeout=120) as r:
+                r.raise_for_status()
+                with open(file_path, 'wb') as fh:
+                    shutil.copyfileobj(r.raw, fh)
+
+            fix_no_data_value(work_dir, f'{raster_uuid}.tif')
+            bounds = get_cog_bounds(file_path)
+
+            layer, _ = Layer.objects.get_or_create(
+                unique_id=raster_uuid,
+                layer_type=LayerType.RASTER_TILE,
+                defaults={
+                    'name': internal_name,
+                    'created_by': analysis_task.submitted_by,
+                }
+            )
+
+            if django_settings.DEBUG:
+                layer_upload, _ = LayerUpload.objects.get_or_create(
+                    layer=layer,
+                    defaults={
+                        'created_by': layer.created_by
+                    }
+                )
+                layer_upload.emptying_folder()
+                shutil.copy(
+                    file_path,
+                    layer_upload.filepath(f'{raster_uuid}.tif')
+                )
+                is_success = True
+            else:
+                from core.models import Preferences
+                preferences = Preferences.load()
+                base_url = django_settings.DJANGO_BACKEND_URL
+                if base_url.endswith('/'):
+                    base_url = base_url[:-1]
+                auth = f'Token {preferences.worker_layer_api_key}'
+                upload_path = (
+                    base_url +
+                    f'/api/layer/{layer.id}/layer-upload/'
+                )
+                from layers.utils import upload_file as _upload
+                is_success = _upload(
+                    upload_path,
+                    file_path,
+                    auth_header=auth
+                )
+
+            if not is_success:
+                layer.delete()
+                raise RuntimeError(
+                    f'COG upload failed for task {analysis_task.pk} '
+                    f'index {cog_index}.'
+                )
+
+            layer.refresh_from_db()
+            layer.is_ready = True
+            layer.metadata = {'bounds': bounds}
+            layer.save()
+
+            # Register as an InputLayer in the "trends-earth" group
+            # so it appears in the map's layer panel for this user.
+            te_provider, _ = DataProvider.objects.get_or_create(
+                name='Trends.Earth'
+            )
+            te_group, _ = LayerGroupType.objects.get_or_create(
+                name='trends-earth'
+            )
+            InputLayer.objects.get_or_create(
+                uuid=raster_uuid,
+                defaults={
+                    'name': display_name,
+                    'layer_type': InputLayerType.RASTER,
+                    'data_provider': te_provider,
+                    'group': te_group,
+                    'url': cog_url,
+                    'created_by': analysis_task.submitted_by,
+                    'updated_by': analysis_task.submitted_by,
+                    'metadata': {'bounds': bounds},
+                }
+            )
+
+    except Exception as exc:
+        logger.error(
+            'TE COG download failed for task %s index %s: %s',
+            analysis_task.pk, cog_index, exc,
+            exc_info=True,
+        )
+        raise
+
+
+@app.task(
+    name='submit_te_job',
+    bind=True,
+    max_retries=3,
+    default_retry_delay=60,
+)
+def submit_te_job(self, analysis_task_id: int):
+    """
+    Submit a Trends.Earth SDG 15.3.1 LDN job for an AnalysisTask.
+
+    Expects analysis_task.analysis_inputs to contain:
+        geojson   – GeoJSON geometry dict for the AOI
+        year_start – int
+        year_end   – int
+    """
+    from analysis.external.trendsearth import (
+        TrendsEarthAuthError,
+        TrendsEarthAPIError,
+        refresh_access_token,
+        submit_ldn_job,
+    )
+
+    analysis_task = AnalysisTask.objects.get(id=analysis_task_id)
+    analysis_task.status = TaskStatus.RUNNING
+    analysis_task.error = None
+    analysis_task.save(update_fields=['status', 'error', 'updated_at'])
+
+    try:
+        te_setting = TrendsEarthSetting.objects.get(
+            user=analysis_task.submitted_by
+        )
+    except TrendsEarthSetting.DoesNotExist:
+        analysis_task.status = TaskStatus.FAILED
+        analysis_task.error = {
+            'message': (
+                'No Trends.Earth credentials found for this user. '
+                'Please configure them in Settings.'
+            )
+        }
+        analysis_task.completed_at = timezone.now()
+        analysis_task.save()
+        return
+
+    try:
+        if te_setting.refresh_token:
+            try:
+                access_token, new_refresh = refresh_access_token(
+                    te_setting.refresh_token
+                )
+                te_setting.refresh_token = new_refresh
+                te_setting.save(update_fields=['refresh_token', 'updated_at'])
+            except TrendsEarthAuthError:
+                logger.warning(
+                    'Refresh token expired for user %s; '
+                    'cannot re-authenticate without password.',
+                    analysis_task.submitted_by_id
+                )
+                raise
+        else:
+            raise TrendsEarthAuthError(
+                'No refresh token stored; user must re-authenticate.'
+            )
+
+        inputs = analysis_task.analysis_inputs or {}
+        execution_id = submit_ldn_job(
+            access_token=access_token,
+            geojson_geom=inputs['geojson'],
+            start_year=int(inputs['year_start']),
+            end_year=int(inputs['year_end']),
+        )
+        analysis_task.te_execution_id = execution_id
+        analysis_task.save(
+            update_fields=['te_execution_id', 'updated_at']
+        )
+
+        # schedule the polling task (runs every 2 min, up to 60 polls)
+        poll_te_job_status.apply_async(
+            args=[analysis_task_id],
+            countdown=120
+        )
+
+    except (TrendsEarthAuthError, TrendsEarthAPIError) as exc:
+        logger.error(
+            'Trends.Earth job submission failed for task %d: %s',
+            analysis_task_id, exc
+        )
+        try:
+            raise self.retry(exc=exc)
+        except self.MaxRetriesExceededError:
+            analysis_task.status = TaskStatus.FAILED
+            analysis_task.error = {'message': str(exc)}
+            analysis_task.completed_at = timezone.now()
+            analysis_task.save()
+
+
+@app.task(
+    name='poll_te_job_status',
+    bind=True,
+    max_retries=60,
+    default_retry_delay=120,
+)
+def poll_te_job_status(self, analysis_task_id: int):
+    """
+    Poll the Trends.Earth API for job completion and, on success,
+    download and store each COG output.
+    """
+    from analysis.external.trendsearth import (
+        TrendsEarthAuthError,
+        TrendsEarthAPIError,
+        refresh_access_token,
+        get_execution_status,
+        extract_cog_urls,
+    )
+
+    analysis_task = AnalysisTask.objects.get(id=analysis_task_id)
+
+    if not analysis_task.te_execution_id:
+        logger.error(
+            'poll_te_job_status called for task %d '
+            'but te_execution_id is not set.',
+            analysis_task_id
+        )
+        return
+
+    try:
+        te_setting = TrendsEarthSetting.objects.get(
+            user=analysis_task.submitted_by
+        )
+        access_token, new_refresh = refresh_access_token(
+            te_setting.refresh_token
+        )
+        if new_refresh != te_setting.refresh_token:
+            te_setting.refresh_token = new_refresh
+            te_setting.save(update_fields=['refresh_token', 'updated_at'])
+
+        exec_data = get_execution_status(
+            access_token,
+            analysis_task.te_execution_id
+        )
+        # Normalise status to our TaskStatus vocabulary
+        raw_status = (
+            exec_data.get('data', exec_data).get('status', '')
+            .upper()
+        )
+
+        if raw_status in ('COMPLETED', 'SUCCESS'):
+            cog_urls = extract_cog_urls(exec_data)
+            if not cog_urls:
+                logger.warning(
+                    'TE job %s completed but returned no COG URLs.',
+                    analysis_task.te_execution_id
+                )
+
+            for idx, url in enumerate(cog_urls):
+                _download_and_store_te_cog(url, analysis_task, idx)
+
+            analysis_task.status = TaskStatus.COMPLETED
+            analysis_task.result = {
+                'cog_urls': cog_urls,
+                'execution_id': analysis_task.te_execution_id,
+            }
+            analysis_task.completed_at = timezone.now()
+            analysis_task.save()
+
+        elif raw_status in ('FAILED', 'ERROR'):
+            error_msg = (
+                exec_data.get('data', exec_data).get('error', raw_status)
+            )
+            analysis_task.status = TaskStatus.FAILED
+            analysis_task.error = {
+                'message': f'Trends.Earth job failed: {error_msg}'
+            }
+            analysis_task.completed_at = timezone.now()
+            analysis_task.save()
+
+        else:
+            # PENDING or RUNNING — retry after countdown
+            logger.info(
+                'TE job %s status=%s; will poll again.',
+                analysis_task.te_execution_id, raw_status
+            )
+            raise self.retry(countdown=120)
+
+    except (TrendsEarthAuthError, TrendsEarthAPIError) as exc:
+        logger.error(
+            'Error polling TE job for task %d: %s',
+            analysis_task_id, exc
+        )
+        try:
+            raise self.retry(exc=exc, countdown=120)
+        except self.MaxRetriesExceededError:
+            analysis_task.status = TaskStatus.FAILED
+            analysis_task.error = {'message': str(exc)}
+            analysis_task.completed_at = timezone.now()
+            analysis_task.save()
+
+
+def _submit_te_job_for_task(
+    self,
+    analysis_task_id: int,
+    submit_fn,
+    job_label: str,
+    **submit_kwargs,
+):
+    """
+    Shared implementation for submitting any Trends.Earth job type.
+
+    Fetches the AnalysisTask, authenticates (using stored refresh token),
+    calls ``submit_fn`` with the task's analysis_inputs plus any extra
+    keyword arguments, stores the execution ID, and schedules polling.
+    """
+    from analysis.external.trendsearth import (
+        TrendsEarthAuthError,
+        TrendsEarthAPIError,
+        refresh_access_token,
+    )
+
+    analysis_task = AnalysisTask.objects.get(id=analysis_task_id)
+    analysis_task.status = TaskStatus.RUNNING
+    analysis_task.error = None
+    analysis_task.save(update_fields=['status', 'error', 'updated_at'])
+
+    try:
+        te_setting = TrendsEarthSetting.objects.get(
+            user=analysis_task.submitted_by
+        )
+    except TrendsEarthSetting.DoesNotExist:
+        analysis_task.status = TaskStatus.FAILED
+        analysis_task.error = {
+            'message': (
+                'No Trends.Earth credentials found for this user. '
+                'Please configure them in Settings.'
+            )
+        }
+        analysis_task.completed_at = timezone.now()
+        analysis_task.save()
+        return
+
+    try:
+        if te_setting.refresh_token:
+            try:
+                access_token, new_refresh = refresh_access_token(
+                    te_setting.refresh_token
+                )
+                te_setting.refresh_token = new_refresh
+                te_setting.save(
+                    update_fields=['refresh_token', 'updated_at']
+                )
+            except TrendsEarthAuthError:
+                logger.warning(
+                    'Refresh token expired for user %s; '
+                    'cannot re-authenticate without password.',
+                    analysis_task.submitted_by_id
+                )
+                raise
+        else:
+            raise TrendsEarthAuthError(
+                'No refresh token stored; user must re-authenticate.'
+            )
+
+        inputs = analysis_task.analysis_inputs or {}
+        execution_id = submit_fn(
+            access_token=access_token,
+            geojson_geom=inputs['geojson'],
+            **submit_kwargs,
+        )
+        analysis_task.te_execution_id = execution_id
+        analysis_task.save(
+            update_fields=['te_execution_id', 'updated_at']
+        )
+
+        # schedule the polling task (runs every 2 min, up to 60 polls)
+        poll_te_job_status.apply_async(
+            args=[analysis_task_id],
+            countdown=120
+        )
+
+    except (TrendsEarthAuthError, TrendsEarthAPIError) as exc:
+        logger.error(
+            'Trends.Earth %s job submission failed for task %d: %s',
+            job_label, analysis_task_id, exc
+        )
+        try:
+            raise self.retry(exc=exc)
+        except self.MaxRetriesExceededError:
+            analysis_task.status = TaskStatus.FAILED
+            analysis_task.error = {'message': str(exc)}
+            analysis_task.completed_at = timezone.now()
+            analysis_task.save()
+
+
+@app.task(
+    name='submit_drought_te_job',
+    bind=True,
+    max_retries=3,
+    default_retry_delay=60,
+)
+def submit_drought_te_job(self, analysis_task_id: int):
+    """
+    Submit a Trends.Earth drought vulnerability job for an AnalysisTask.
+
+    Expects analysis_task.analysis_inputs to contain:
+        geojson    – GeoJSON geometry dict for the AOI
+        year_start – int
+        year_end   – int
+    """
+    from analysis.external.trendsearth import submit_drought_job
+
+    analysis_task = AnalysisTask.objects.get(id=analysis_task_id)
+    inputs = analysis_task.analysis_inputs or {}
+    _submit_te_job_for_task(
+        self,
+        analysis_task_id,
+        submit_fn=submit_drought_job,
+        job_label='Drought',
+        start_year=int(inputs['year_start']),
+        end_year=int(inputs['year_end']),
+    )
+
+
+@app.task(
+    name='submit_urbanization_te_job',
+    bind=True,
+    max_retries=3,
+    default_retry_delay=60,
+)
+def submit_urbanization_te_job(self, analysis_task_id: int):
+    """
+    Submit a Trends.Earth SDG 11.3.1 urbanization job for an
+    AnalysisTask.
+
+    Expects analysis_task.analysis_inputs to contain:
+        geojson    – GeoJSON geometry dict for the AOI
+        year_start – int
+        year_end   – int
+    """
+    from analysis.external.trendsearth import submit_urbanization_job
+
+    analysis_task = AnalysisTask.objects.get(id=analysis_task_id)
+    inputs = analysis_task.analysis_inputs or {}
+    _submit_te_job_for_task(
+        self,
+        analysis_task_id,
+        submit_fn=submit_urbanization_job,
+        job_label='Urbanization',
+        start_year=int(inputs['year_start']),
+        end_year=int(inputs['year_end']),
+    )
+
+
+@app.task(
+    name='submit_population_te_job',
+    bind=True,
+    max_retries=3,
+    default_retry_delay=60,
+)
+def submit_population_te_job(self, analysis_task_id: int):
+    """
+    Submit a Trends.Earth population (GPW) download job for an
+    AnalysisTask.
+
+    Expects analysis_task.analysis_inputs to contain:
+        geojson – GeoJSON geometry dict for the AOI
+        year    – int (single year)
+    """
+    from analysis.external.trendsearth import submit_population_job
+
+    analysis_task = AnalysisTask.objects.get(id=analysis_task_id)
+    inputs = analysis_task.analysis_inputs or {}
+    _submit_te_job_for_task(
+        self,
+        analysis_task_id,
+        submit_fn=submit_population_job,
+        job_label='Population',
+        year=int(inputs['year']),
+    )

@@ -1,5 +1,7 @@
 import math
-from rest_framework import viewsets
+import logging
+from rest_framework import viewsets, status as drf_status
+from rest_framework.views import APIView
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
 from django.http import Http404, FileResponse
@@ -13,13 +15,28 @@ from cloud_native_gis.models import (
 )
 
 from dashboard.models import Dashboard
-from .models import UserAnalysisResults
-from .serializer import UserAnalysisResultsSerializer
+from .models import (
+    UserAnalysisResults,
+    TrendsEarthSetting,
+    AnalysisTask,
+    AnalysisTaskSource,
+    AnalysisTaskType,
+)
+from .serializer import (
+    UserAnalysisResultsSerializer,
+    TrendsEarthSettingSerializer,
+)
 from analysis.models import AnalysisRasterOutput
 from analysis.tasks import (
     generate_temporal_analysis_raster_output,
-    store_spatial_analysis_raster_output
+    store_spatial_analysis_raster_output,
+    submit_te_job,
+    submit_drought_te_job,
+    submit_urbanization_te_job,
+    submit_population_te_job,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class UserAnalysisResultsViewSet(viewsets.ModelViewSet):
@@ -216,3 +233,438 @@ class UserAnalysisResultsViewSet(viewsets.ModelViewSet):
             {
                 "message": "Analysis deleted successfully"
             }, status=204)
+
+
+class TrendsEarthSettingViewSet(viewsets.ViewSet):
+    """
+    Manage Trends.Earth credentials for the authenticated user.
+
+    GET  /api/analysis/trendsearth/settings/
+        Returns the stored setting (or 404 if not configured).
+    POST /api/analysis/trendsearth/settings/
+        Create or update the setting.  Supply ``email`` and
+        ``password`` to obtain a new refresh token; supply only
+        ``email`` to update the email without re-authenticating.
+    DELETE /api/analysis/trendsearth/settings/
+        Remove the stored credentials.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def list(self, request):
+        """GET – return current credentials status."""
+        try:
+            setting = TrendsEarthSetting.objects.get(user=request.user)
+        except TrendsEarthSetting.DoesNotExist:
+            return Response(
+                {'detail': 'Trends.Earth credentials not configured.'},
+                status=drf_status.HTTP_404_NOT_FOUND
+            )
+        serializer = TrendsEarthSettingSerializer(setting)
+        return Response(serializer.data)
+
+    def create(self, request):
+        """
+        POST – create or update credentials.
+
+        If a ``password`` key is present in the request body,
+        authenticate against the Trends.Earth API to obtain a
+        refresh token.  Otherwise just save/update the email.
+        """
+        from analysis.external.trendsearth import (
+            TrendsEarthAuthError,
+            TrendsEarthAPIError,
+            authenticate,
+        )
+
+        email = request.data.get('email', '').strip()
+        password = request.data.get('password', '').strip()
+
+        if not email:
+            return Response(
+                {'email': 'This field is required.'},
+                status=drf_status.HTTP_400_BAD_REQUEST
+            )
+
+        setting, _ = TrendsEarthSetting.objects.get_or_create(
+            user=request.user,
+            defaults={'email': email}
+        )
+        setting.email = email
+
+        if password:
+            try:
+                _, refresh_token = authenticate(email, password)
+                setting.refresh_token = refresh_token
+            except TrendsEarthAuthError as exc:
+                return Response(
+                    {'detail': str(exc)},
+                    status=drf_status.HTTP_401_UNAUTHORIZED
+                )
+            except TrendsEarthAPIError as exc:
+                logger.error(
+                    'Trends.Earth auth error for user %s: %s',
+                    request.user.pk, exc
+                )
+                return Response(
+                    {'detail': str(exc)},
+                    status=drf_status.HTTP_502_BAD_GATEWAY
+                )
+
+        setting.save()
+        serializer = TrendsEarthSettingSerializer(setting)
+        return Response(serializer.data, status=drf_status.HTTP_200_OK)
+
+    @action(detail=False, methods=['delete'], url_path='delete')
+    def remove(self, request):
+        """DELETE – remove stored credentials."""
+        deleted, _ = TrendsEarthSetting.objects.filter(
+            user=request.user
+        ).delete()
+        if deleted:
+            return Response(status=drf_status.HTTP_204_NO_CONTENT)
+        return Response(
+            {'detail': 'No credentials to delete.'},
+            status=drf_status.HTTP_404_NOT_FOUND
+        )
+
+
+class SubmitLdnJobView(APIView):
+    """
+    POST /api/analysis/trendsearth/submit/
+
+    Submit an LDN (SDG 15.3.1) analysis job via Trends.Earth.
+
+    Request body (JSON):
+        geojson    – GeoJSON geometry of the area of interest
+        year_start – first year of the analysis period (int)
+        year_end   – last year of the analysis period (int)
+
+    Returns:
+        { "task_id": <int> }
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        geojson = request.data.get('geojson')
+        year_start = request.data.get('year_start')
+        year_end = request.data.get('year_end')
+
+        if not geojson:
+            return Response(
+                {'detail': '`geojson` is required.'},
+                status=drf_status.HTTP_400_BAD_REQUEST
+            )
+        if year_start is None or year_end is None:
+            return Response(
+                {'detail': '`year_start` and `year_end` are required.'},
+                status=drf_status.HTTP_400_BAD_REQUEST
+            )
+        try:
+            year_start = int(year_start)
+            year_end = int(year_end)
+        except (TypeError, ValueError):
+            return Response(
+                {'detail': '`year_start` and `year_end` must be integers.'},
+                status=drf_status.HTTP_400_BAD_REQUEST
+            )
+        if year_start >= year_end:
+            return Response(
+                {'detail': '`year_start` must be before `year_end`.'},
+                status=drf_status.HTTP_400_BAD_REQUEST
+            )
+
+        if not TrendsEarthSetting.objects.filter(
+            user=request.user
+        ).exists():
+            return Response(
+                {
+                    'detail': (
+                        'Trends.Earth credentials not configured. '
+                        'Please save your credentials first.'
+                    )
+                },
+                status=drf_status.HTTP_403_FORBIDDEN
+            )
+
+        task = AnalysisTask.objects.create(
+            submitted_by=request.user,
+            source=AnalysisTaskSource.TRENDS_EARTH,
+            analysis_inputs={
+                'geojson': geojson,
+                'year_start': year_start,
+                'year_end': year_end,
+            },
+        )
+        submit_te_job.delay(task.pk)
+
+        return Response(
+            {'task_id': task.pk},
+            status=drf_status.HTTP_202_ACCEPTED
+        )
+
+
+class LdnTaskStatusView(APIView):
+    """
+    GET /api/analysis/task/<task_id>/
+
+    Return the current status of an AnalysisTask.
+
+    Response body (JSON):
+        status           – PENDING | RUNNING | COMPLETED | FAILED
+        te_execution_id  – Trends.Earth execution ID (or null)
+        error            – error dict (or null)
+        result           – result dict including cog_urls (or null)
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, task_id):
+        task = get_object_or_404(
+            AnalysisTask,
+            pk=task_id,
+            submitted_by=request.user,
+        )
+        return Response({
+            'task_id': task.pk,
+            'status': task.status,
+            'source': task.source,
+            'task_type': task.task_type,
+            'te_execution_id': task.te_execution_id,
+            'error': task.error,
+            'result': task.result,
+            'created_at': task.created_at,
+            'updated_at': task.updated_at,
+            'completed_at': task.completed_at,
+        })
+
+
+class SubmitDroughtJobView(APIView):
+    """
+    POST /api/analysis/trendsearth/submit/drought/
+
+    Submit a drought vulnerability analysis job via Trends.Earth.
+
+    Request body (JSON):
+        geojson    – GeoJSON geometry of the area of interest
+        year_start – first year of the analysis period (int)
+        year_end   – last year of the analysis period (int)
+
+    Returns:
+        { "task_id": <int> }
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        geojson = request.data.get('geojson')
+        year_start = request.data.get('year_start')
+        year_end = request.data.get('year_end')
+
+        if not geojson:
+            return Response(
+                {'detail': '`geojson` is required.'},
+                status=drf_status.HTTP_400_BAD_REQUEST
+            )
+        if year_start is None or year_end is None:
+            return Response(
+                {'detail': '`year_start` and `year_end` are required.'},
+                status=drf_status.HTTP_400_BAD_REQUEST
+            )
+        try:
+            year_start = int(year_start)
+            year_end = int(year_end)
+        except (TypeError, ValueError):
+            return Response(
+                {
+                    'detail': (
+                        '`year_start` and `year_end` must be integers.'
+                    )
+                },
+                status=drf_status.HTTP_400_BAD_REQUEST
+            )
+        if year_start >= year_end:
+            return Response(
+                {'detail': '`year_start` must be before `year_end`.'},
+                status=drf_status.HTTP_400_BAD_REQUEST
+            )
+
+        if not TrendsEarthSetting.objects.filter(
+            user=request.user
+        ).exists():
+            return Response(
+                {
+                    'detail': (
+                        'Trends.Earth credentials not configured. '
+                        'Please save your credentials first.'
+                    )
+                },
+                status=drf_status.HTTP_403_FORBIDDEN
+            )
+
+        task = AnalysisTask.objects.create(
+            submitted_by=request.user,
+            source=AnalysisTaskSource.TRENDS_EARTH,
+            task_type=AnalysisTaskType.DROUGHT,
+            analysis_inputs={
+                'geojson': geojson,
+                'year_start': year_start,
+                'year_end': year_end,
+            },
+        )
+        submit_drought_te_job.delay(task.pk)
+
+        return Response(
+            {'task_id': task.pk},
+            status=drf_status.HTTP_202_ACCEPTED
+        )
+
+
+class SubmitUrbanizationJobView(APIView):
+    """
+    POST /api/analysis/trendsearth/submit/urbanization/
+
+    Submit an SDG 11.3.1 urbanization analysis job via Trends.Earth.
+
+    Request body (JSON):
+        geojson    – GeoJSON geometry of the area of interest
+        year_start – first year of the analysis period (int)
+        year_end   – last year of the analysis period (int)
+
+    Returns:
+        { "task_id": <int> }
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        geojson = request.data.get('geojson')
+        year_start = request.data.get('year_start')
+        year_end = request.data.get('year_end')
+
+        if not geojson:
+            return Response(
+                {'detail': '`geojson` is required.'},
+                status=drf_status.HTTP_400_BAD_REQUEST
+            )
+        if year_start is None or year_end is None:
+            return Response(
+                {'detail': '`year_start` and `year_end` are required.'},
+                status=drf_status.HTTP_400_BAD_REQUEST
+            )
+        try:
+            year_start = int(year_start)
+            year_end = int(year_end)
+        except (TypeError, ValueError):
+            return Response(
+                {
+                    'detail': (
+                        '`year_start` and `year_end` must be integers.'
+                    )
+                },
+                status=drf_status.HTTP_400_BAD_REQUEST
+            )
+        if year_start >= year_end:
+            return Response(
+                {'detail': '`year_start` must be before `year_end`.'},
+                status=drf_status.HTTP_400_BAD_REQUEST
+            )
+
+        if not TrendsEarthSetting.objects.filter(
+            user=request.user
+        ).exists():
+            return Response(
+                {
+                    'detail': (
+                        'Trends.Earth credentials not configured. '
+                        'Please save your credentials first.'
+                    )
+                },
+                status=drf_status.HTTP_403_FORBIDDEN
+            )
+
+        task = AnalysisTask.objects.create(
+            submitted_by=request.user,
+            source=AnalysisTaskSource.TRENDS_EARTH,
+            task_type=AnalysisTaskType.URBANIZATION,
+            analysis_inputs={
+                'geojson': geojson,
+                'year_start': year_start,
+                'year_end': year_end,
+            },
+        )
+        submit_urbanization_te_job.delay(task.pk)
+
+        return Response(
+            {'task_id': task.pk},
+            status=drf_status.HTTP_202_ACCEPTED
+        )
+
+
+class SubmitPopulationJobView(APIView):
+    """
+    POST /api/analysis/trendsearth/submit/population/
+
+    Submit a population (GPW) download job via Trends.Earth.
+
+    Request body (JSON):
+        geojson – GeoJSON geometry of the area of interest
+        year    – single target year (int)
+
+    Returns:
+        { "task_id": <int> }
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        geojson = request.data.get('geojson')
+        year = request.data.get('year')
+
+        if not geojson:
+            return Response(
+                {'detail': '`geojson` is required.'},
+                status=drf_status.HTTP_400_BAD_REQUEST
+            )
+        if year is None:
+            return Response(
+                {'detail': '`year` is required.'},
+                status=drf_status.HTTP_400_BAD_REQUEST
+            )
+        try:
+            year = int(year)
+        except (TypeError, ValueError):
+            return Response(
+                {'detail': '`year` must be an integer.'},
+                status=drf_status.HTTP_400_BAD_REQUEST
+            )
+
+        if not TrendsEarthSetting.objects.filter(
+            user=request.user
+        ).exists():
+            return Response(
+                {
+                    'detail': (
+                        'Trends.Earth credentials not configured. '
+                        'Please save your credentials first.'
+                    )
+                },
+                status=drf_status.HTTP_403_FORBIDDEN
+            )
+
+        task = AnalysisTask.objects.create(
+            submitted_by=request.user,
+            source=AnalysisTaskSource.TRENDS_EARTH,
+            task_type=AnalysisTaskType.POPULATION,
+            analysis_inputs={
+                'geojson': geojson,
+                'year': year,
+            },
+        )
+        submit_population_te_job.delay(task.pk)
+
+        return Response(
+            {'task_id': task.pk},
+            status=drf_status.HTTP_202_ACCEPTED
+        )
