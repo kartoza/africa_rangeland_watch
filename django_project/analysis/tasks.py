@@ -6,6 +6,8 @@ Africa Rangeland Watch (ARW).
 """
 import typing
 import os
+import requests
+import uuid
 from core.celery import app
 import ee
 import logging
@@ -17,6 +19,7 @@ from dateutil.relativedelta import relativedelta
 from django.utils import timezone
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.urls import reverse
 
 from cloud_native_gis.models.layer import Layer, LayerType
 from cloud_native_gis.models.layer_upload import LayerUpload
@@ -39,6 +42,17 @@ from analysis.analysis import (
     get_rel_diff, calculate_temporal_modis_veg,
     spatial_get_date_filter
 )
+from analysis.external.trendsearth import (
+    TrendsEarthAuthError,
+    TrendsEarthAPIError,
+    refresh_access_token,
+    get_execution_status,
+    extract_result_bands,
+    submit_ldn_job,
+    submit_drought_job,
+    submit_urbanization_job,
+    submit_population_job,
+)
 from analysis.external.user_raster import _build_aggregated_images
 from analysis.external.gpw import _build_gpw_annual_images
 from analysis.runner import AnalysisRunner
@@ -48,7 +62,12 @@ from analysis.utils import (
     get_cog_bounds,
     get_date_range_for_analysis
 )
-from layers.models import InputLayer as InputLayerFixture
+from layers.models import (
+    InputLayer as InputLayerFixture,
+    DataProvider,
+    InputLayerType,
+    LayerGroupType,
+)
 from layers.utils import upload_file
 
 logger = logging.getLogger(__name__)
@@ -551,8 +570,8 @@ def _build_te_layer_name(
     }.get(analysis_task.task_type, analysis_task.task_type.upper())
 
     inputs = analysis_task.analysis_inputs or {}
-    year_start = inputs.get('year_start')
-    year_end = inputs.get('year_end')
+    year_start = inputs.get('year_initial')
+    year_end = inputs.get('year_final')
     year = inputs.get('year')
 
     if year_start and year_end:
@@ -567,121 +586,247 @@ def _build_te_layer_name(
     return ' '.join(parts) + suffix
 
 
+def _extract_single_band_cog(
+    src_path: str,
+    dest_path: str,
+    band_number: int,
+    no_data_value: typing.Optional[float] = None,
+) -> None:
+    """Extract band N from src as a single-band EPSG:3857 COG."""
+    nodata = str(no_data_value) if no_data_value is not None else '-9999'
+    # gdal_translate into a VRT first because gdalwarp -b is only
+    # available from GDAL 3.7 onward.
+    vrt_path = dest_path + '.vrt'
+    subprocess.run(
+        [
+            'gdal_translate',
+            '-b', str(band_number),
+            '-of', 'VRT',
+            '-a_nodata', nodata,
+            src_path,
+            vrt_path,
+        ],
+        check=True,
+    )
+    subprocess.run(
+        [
+            'gdalwarp',
+            '-t_srs', 'EPSG:3857',
+            '-of', 'COG',
+            '-co', 'BLOCKSIZE=256',
+            '-co', 'TILING_SCHEME=GoogleMapsCompatible',
+            '-co', 'COMPRESS=DEFLATE',
+            '-co', 'OVERVIEWS=IGNORE_EXISTING',
+            '-co', 'OVERVIEW_RESAMPLING=NEAREST',
+            '-dstnodata', nodata,
+            vrt_path,
+            dest_path,
+        ],
+        check=True,
+    )
+
+
+def _register_cog_layer(
+    file_path: str,
+    layer_uuid,
+    internal_name: str,
+    display_name: str,
+    analysis_task: AnalysisTask,
+    add_to_map: bool = True,
+) -> None:
+    """
+    Persist a single-band COG and register it in the DB.
+
+    Creates a ``cloud_native_gis.Layer`` + ``LayerUpload`` so the file is
+    served by the ``serve-cog`` endpoint.  When ``add_to_map=True`` also
+    creates a ``layers.InputLayer`` in the 'trends-earth' group.
+
+    Idempotent: safe to call on Celery retry.
+    """
+    bounds = get_cog_bounds(file_path)
+    tif_filename = f'{layer_uuid}.tif'
+
+    layer, _ = Layer.objects.get_or_create(
+        unique_id=layer_uuid,
+        layer_type=LayerType.RASTER_TILE,
+        defaults={
+            'name': internal_name,
+            'created_by': analysis_task.submitted_by,
+        }
+    )
+
+    if settings.DEBUG:
+        layer_upload, _ = LayerUpload.objects.get_or_create(
+            layer=layer,
+            defaults={'created_by': layer.created_by}
+        )
+        layer_upload.emptying_folder()
+        shutil.copy(file_path, layer_upload.filepath(tif_filename))
+        is_success = True
+    else:
+        preferences = Preferences.load()
+        base_url = settings.DJANGO_BACKEND_URL.rstrip('/')
+        auth = f'Token {preferences.worker_layer_api_key}'
+        upload_path = (
+            base_url + f'/api/layer/{layer.id}/layer-upload/'
+        )
+        is_success = upload_file(upload_path, file_path, auth_header=auth)
+
+    if not is_success:
+        layer.delete()
+        raise RuntimeError(
+            f'COG upload failed for layer {layer_uuid}.'
+        )
+
+    layer.refresh_from_db()
+    layer.is_ready = True
+    layer.metadata = {'bounds': bounds}
+    layer.save()
+
+    if not add_to_map:
+        logger.debug(
+            'COG layer %s stored (add_to_map=False); '
+            'skipping InputLayer registration.',
+            layer_uuid,
+        )
+        return
+
+    base_url = settings.DJANGO_BACKEND_URL.rstrip('/')
+    tile_url = (
+        f'cog://{base_url}' +
+        reverse('serve-cog', kwargs={'layer_uuid': str(layer_uuid)})
+    )
+
+    te_provider, _ = DataProvider.objects.get_or_create(
+        name='Trends.Earth'
+    )
+    te_group, _ = LayerGroupType.objects.get_or_create(
+        name='trends-earth'
+    )
+    InputLayerFixture.objects.get_or_create(
+        uuid=layer_uuid,
+        defaults={
+            'name': display_name,
+            'layer_type': InputLayerType.RASTER,
+            'data_provider': te_provider,
+            'group': te_group,
+            'url': tile_url,
+            'created_by': analysis_task.submitted_by,
+            'updated_by': analysis_task.submitted_by,
+            'metadata': {'bounds': bounds},
+        }
+    )
+
+
 def _download_and_store_te_cog(
     cog_url: str,
     analysis_task: AnalysisTask,
     cog_index: int,
+    bands: typing.Optional[typing.List[dict]] = None,
 ) -> None:
     """
-    Download a COG from Trends.Earth, register it as a
-    cloud_native_gis Layer, and create a layers.InputLayer record
-    (group='trends-earth') so it appears in the map layer panel
-    for the submitting user.
+    Download a COG from Trends.Earth and register it for map rendering.
+
+    When ``bands`` metadata is provided (from a ``RasterResults`` payload)
+    each band with ``add_to_map=True`` is extracted as an individual
+    single-band COG and registered as a separate InputLayer in the
+    'trends-earth' group.  Bands with ``add_to_map=False`` are stored as
+    cloud_native_gis Layers (so they can be referenced later) but are NOT
+    added to the map layer panel.
+
+    When ``bands`` is not provided (e.g. CloudResults / legacy shapes) the
+    whole downloaded file is registered as a single InputLayer, preserving
+    the original behaviour.
     """
-    from django.conf import settings as django_settings
-    from cloud_native_gis.models.layer import Layer, LayerType
-    from cloud_native_gis.models.layer_upload import LayerUpload
-    from layers.models import (
-        DataProvider,
-        InputLayer,
-        InputLayerType,
-        LayerGroupType,
-    )
-
-    import requests as _requests
-    import uuid as _uuid_mod
-
-    display_name = _build_te_layer_name(analysis_task, cog_index)
-    raster_uuid = _uuid_mod.uuid4()
-    internal_name = (
-        f'te_{analysis_task.task_type}_{analysis_task.pk}'
-        f'_{cog_index}.tif'
-    )
+    # Deterministic base UUID for this (task, raster index) pair so that
+    # retries are idempotent.
+    base_uuid_seed = f'te-cog-{analysis_task.pk}-{cog_index}'
 
     try:
         with tempfile.TemporaryDirectory() as work_dir:
-            file_path = os.path.join(work_dir, f'{raster_uuid}.tif')
-            with _requests.get(cog_url, stream=True, timeout=120) as r:
+            raw_filename = f'{base_uuid_seed}.tif'
+            raw_path = os.path.join(work_dir, raw_filename)
+
+            logger.info(
+                'Downloading TE COG for task %s index %s from %s',
+                analysis_task.pk, cog_index, cog_url,
+            )
+            with requests.get(cog_url, stream=True, timeout=120) as r:
                 r.raise_for_status()
-                with open(file_path, 'wb') as fh:
+                with open(raw_path, 'wb') as fh:
                     shutil.copyfileobj(r.raw, fh)
 
-            fix_no_data_value(work_dir, f'{raster_uuid}.tif')
-            bounds = get_cog_bounds(file_path)
+            if bands:
+                for band_idx, band in enumerate(bands):
+                    band_number = band_idx + 1
+                    band_name = band.get('name') or f'Band {band_number}'
+                    band_meta = band.get('metadata') or {}
+                    year = band_meta.get('year')
+                    add_to_map = band.get('add_to_map', False)
+                    no_data = band.get('no_data_value')
 
-            layer, _ = Layer.objects.get_or_create(
-                unique_id=raster_uuid,
-                layer_type=LayerType.RASTER_TILE,
-                defaults={
-                    'name': internal_name,
-                    'created_by': analysis_task.submitted_by,
-                }
-            )
+                    band_uuid = uuid.uuid5(
+                        uuid.NAMESPACE_OID,
+                        f'{base_uuid_seed}-band-{band_idx}',
+                    )
+                    display_name = band_name
+                    if year:
+                        display_name = f'{band_name} {year}'
+                    internal_name = (
+                        f'te_{analysis_task.task_type}_'
+                        f'{analysis_task.pk}_{cog_index}_{band_idx}.tif'
+                    )
+                    band_path = os.path.join(
+                        work_dir, f'{band_uuid}.tif'
+                    )
 
-            if django_settings.DEBUG:
-                layer_upload, _ = LayerUpload.objects.get_or_create(
-                    layer=layer,
-                    defaults={
-                        'created_by': layer.created_by
-                    }
-                )
-                layer_upload.emptying_folder()
-                shutil.copy(
-                    file_path,
-                    layer_upload.filepath(f'{raster_uuid}.tif')
-                )
-                is_success = True
+                    _extract_single_band_cog(
+                        raw_path, band_path, band_number, no_data
+                    )
+
+                    if add_to_map:
+                        _register_cog_layer(
+                            band_path,
+                            band_uuid,
+                            internal_name,
+                            display_name,
+                            analysis_task,
+                            add_to_map=True,
+                        )
+                    else:
+                        _register_cog_layer(
+                            band_path,
+                            band_uuid,
+                            internal_name,
+                            display_name,
+                            analysis_task,
+                            add_to_map=False,
+                        )
             else:
-                from core.models import Preferences
-                preferences = Preferences.load()
-                base_url = django_settings.DJANGO_BACKEND_URL
-                if base_url.endswith('/'):
-                    base_url = base_url[:-1]
-                auth = f'Token {preferences.worker_layer_api_key}'
-                upload_path = (
-                    base_url +
-                    f'/api/layer/{layer.id}/layer-upload/'
+                raster_uuid = uuid.uuid5(
+                    uuid.NAMESPACE_OID, base_uuid_seed
                 )
-                from layers.utils import upload_file as _upload
-                is_success = _upload(
-                    upload_path,
-                    file_path,
-                    auth_header=auth
+                internal_name = (
+                    f'te_{analysis_task.task_type}_{analysis_task.pk}'
+                    f'_{cog_index}.tif'
                 )
-
-            if not is_success:
-                layer.delete()
-                raise RuntimeError(
-                    f'COG upload failed for task {analysis_task.pk} '
-                    f'index {cog_index}.'
+                display_name = _build_te_layer_name(
+                    analysis_task, cog_index
                 )
-
-            layer.refresh_from_db()
-            layer.is_ready = True
-            layer.metadata = {'bounds': bounds}
-            layer.save()
-
-            # Register as an InputLayer in the "trends-earth" group
-            # so it appears in the map's layer panel for this user.
-            te_provider, _ = DataProvider.objects.get_or_create(
-                name='Trends.Earth'
-            )
-            te_group, _ = LayerGroupType.objects.get_or_create(
-                name='trends-earth'
-            )
-            InputLayer.objects.get_or_create(
-                uuid=raster_uuid,
-                defaults={
-                    'name': display_name,
-                    'layer_type': InputLayerType.RASTER,
-                    'data_provider': te_provider,
-                    'group': te_group,
-                    'url': cog_url,
-                    'created_by': analysis_task.submitted_by,
-                    'updated_by': analysis_task.submitted_by,
-                    'metadata': {'bounds': bounds},
-                }
-            )
+                fix_no_data_value(work_dir, raw_filename)
+                reprojected_path = os.path.join(
+                    work_dir, f'{raster_uuid}_3857.tif'
+                )
+                _extract_single_band_cog(
+                    raw_path, reprojected_path, band_number=1
+                )
+                _register_cog_layer(
+                    reprojected_path,
+                    raster_uuid,
+                    internal_name,
+                    display_name,
+                    analysis_task,
+                )
 
     except Exception as exc:
         logger.error(
@@ -703,88 +848,20 @@ def submit_te_job(self, analysis_task_id: int):
     Submit a Trends.Earth SDG 15.3.1 LDN job for an AnalysisTask.
 
     Expects analysis_task.analysis_inputs to contain:
-        geojson   – GeoJSON geometry dict for the AOI
-        year_start – int
-        year_end   – int
+        geojson      – GeoJSON geometry dict for the AOI
+        year_initial – int
+        year_final   – int
     """
-    from analysis.external.trendsearth import (
-        TrendsEarthAuthError,
-        TrendsEarthAPIError,
-        refresh_access_token,
-        submit_ldn_job,
-    )
-
     analysis_task = AnalysisTask.objects.get(id=analysis_task_id)
-    analysis_task.status = TaskStatus.RUNNING
-    analysis_task.error = None
-    analysis_task.save(update_fields=['status', 'error', 'updated_at'])
-
-    try:
-        te_setting = TrendsEarthSetting.objects.get(
-            user=analysis_task.submitted_by
-        )
-    except TrendsEarthSetting.DoesNotExist:
-        analysis_task.status = TaskStatus.FAILED
-        analysis_task.error = {
-            'message': (
-                'No Trends.Earth credentials found for this user. '
-                'Please configure them in Settings.'
-            )
-        }
-        analysis_task.completed_at = timezone.now()
-        analysis_task.save()
-        return
-
-    try:
-        if te_setting.refresh_token:
-            try:
-                access_token, new_refresh = refresh_access_token(
-                    te_setting.refresh_token
-                )
-                te_setting.refresh_token = new_refresh
-                te_setting.save(update_fields=['refresh_token', 'updated_at'])
-            except TrendsEarthAuthError:
-                logger.warning(
-                    'Refresh token expired for user %s; '
-                    'cannot re-authenticate without password.',
-                    analysis_task.submitted_by_id
-                )
-                raise
-        else:
-            raise TrendsEarthAuthError(
-                'No refresh token stored; user must re-authenticate.'
-            )
-
-        inputs = analysis_task.analysis_inputs or {}
-        execution_id = submit_ldn_job(
-            access_token=access_token,
-            geojson_geom=inputs['geojson'],
-            start_year=int(inputs['year_start']),
-            end_year=int(inputs['year_end']),
-        )
-        analysis_task.te_execution_id = execution_id
-        analysis_task.save(
-            update_fields=['te_execution_id', 'updated_at']
-        )
-
-        # schedule the polling task (runs every 2 min, up to 60 polls)
-        poll_te_job_status.apply_async(
-            args=[analysis_task_id],
-            countdown=120
-        )
-
-    except (TrendsEarthAuthError, TrendsEarthAPIError) as exc:
-        logger.error(
-            'Trends.Earth job submission failed for task %d: %s',
-            analysis_task_id, exc
-        )
-        try:
-            raise self.retry(exc=exc)
-        except self.MaxRetriesExceededError:
-            analysis_task.status = TaskStatus.FAILED
-            analysis_task.error = {'message': str(exc)}
-            analysis_task.completed_at = timezone.now()
-            analysis_task.save()
+    inputs = analysis_task.analysis_inputs or {}
+    _submit_te_job_for_task(
+        self,
+        analysis_task_id,
+        submit_fn=submit_ldn_job,
+        job_label='LDN',
+        year_initial=int(inputs['year_initial']),
+        year_final=int(inputs['year_final']),
+    )
 
 
 @app.task(
@@ -798,14 +875,6 @@ def poll_te_job_status(self, analysis_task_id: int):
     Poll the Trends.Earth API for job completion and, on success,
     download and store each COG output.
     """
-    from analysis.external.trendsearth import (
-        TrendsEarthAuthError,
-        TrendsEarthAPIError,
-        refresh_access_token,
-        get_execution_status,
-        extract_cog_urls,
-    )
-
     analysis_task = AnalysisTask.objects.get(id=analysis_task_id)
 
     if not analysis_task.te_execution_id:
@@ -831,32 +900,38 @@ def poll_te_job_status(self, analysis_task_id: int):
             access_token,
             analysis_task.te_execution_id
         )
-        # Normalise status to our TaskStatus vocabulary
         raw_status = (
             exec_data.get('data', exec_data).get('status', '')
             .upper()
         )
 
-        if raw_status in ('COMPLETED', 'SUCCESS'):
-            cog_urls = extract_cog_urls(exec_data)
-            if not cog_urls:
+        # TE v2 API uses 'FINISHED' for successful completion.
+        # 'COMPLETED' and 'SUCCESS' are kept for forward-compatibility.
+        if raw_status in ('FINISHED', 'COMPLETED', 'SUCCESS'):
+            cog_entries = extract_result_bands(exec_data)
+            if not cog_entries:
                 logger.warning(
                     'TE job %s completed but returned no COG URLs.',
                     analysis_task.te_execution_id
                 )
 
-            for idx, url in enumerate(cog_urls):
-                _download_and_store_te_cog(url, analysis_task, idx)
+            for idx, entry in enumerate(cog_entries):
+                _download_and_store_te_cog(
+                    entry['url'],
+                    analysis_task,
+                    idx,
+                    bands=entry.get('bands') or None,
+                )
 
             analysis_task.status = TaskStatus.COMPLETED
             analysis_task.result = {
-                'cog_urls': cog_urls,
+                'cog_urls': [e['url'] for e in cog_entries],
                 'execution_id': analysis_task.te_execution_id,
             }
             analysis_task.completed_at = timezone.now()
             analysis_task.save()
 
-        elif raw_status in ('FAILED', 'ERROR'):
+        elif raw_status in ('FAILED', 'ERROR', 'CANCELLED'):
             error_msg = (
                 exec_data.get('data', exec_data).get('error', raw_status)
             )
@@ -868,7 +943,6 @@ def poll_te_job_status(self, analysis_task_id: int):
             analysis_task.save()
 
         else:
-            # PENDING or RUNNING — retry after countdown
             logger.info(
                 'TE job %s status=%s; will poll again.',
                 analysis_task.te_execution_id, raw_status
@@ -903,12 +977,6 @@ def _submit_te_job_for_task(
     calls ``submit_fn`` with the task's analysis_inputs plus any extra
     keyword arguments, stores the execution ID, and schedules polling.
     """
-    from analysis.external.trendsearth import (
-        TrendsEarthAuthError,
-        TrendsEarthAPIError,
-        refresh_access_token,
-    )
-
     analysis_task = AnalysisTask.objects.get(id=analysis_task_id)
     analysis_task.status = TaskStatus.RUNNING
     analysis_task.error = None
@@ -963,10 +1031,11 @@ def _submit_te_job_for_task(
             update_fields=['te_execution_id', 'updated_at']
         )
 
-        # schedule the polling task (runs every 2 min, up to 60 polls)
+        # First poll after 30 s (job may finish quickly); subsequent
+        # retries use the default_retry_delay of 120 s.
         poll_te_job_status.apply_async(
             args=[analysis_task_id],
-            countdown=120
+            countdown=30
         )
 
     except (TrendsEarthAuthError, TrendsEarthAPIError) as exc:
@@ -994,12 +1063,10 @@ def submit_drought_te_job(self, analysis_task_id: int):
     Submit a Trends.Earth drought vulnerability job for an AnalysisTask.
 
     Expects analysis_task.analysis_inputs to contain:
-        geojson    – GeoJSON geometry dict for the AOI
-        year_start – int
-        year_end   – int
+        geojson      – GeoJSON geometry dict for the AOI
+        year_initial – int
+        year_final   – int
     """
-    from analysis.external.trendsearth import submit_drought_job
-
     analysis_task = AnalysisTask.objects.get(id=analysis_task_id)
     inputs = analysis_task.analysis_inputs or {}
     _submit_te_job_for_task(
@@ -1007,8 +1074,8 @@ def submit_drought_te_job(self, analysis_task_id: int):
         analysis_task_id,
         submit_fn=submit_drought_job,
         job_label='Drought',
-        start_year=int(inputs['year_start']),
-        end_year=int(inputs['year_end']),
+        year_initial=int(inputs['year_initial']),
+        year_final=int(inputs['year_final']),
     )
 
 
@@ -1024,12 +1091,15 @@ def submit_urbanization_te_job(self, analysis_task_id: int):
     AnalysisTask.
 
     Expects analysis_task.analysis_inputs to contain:
-        geojson    – GeoJSON geometry dict for the AOI
-        year_start – int
-        year_end   – int
+        geojson      – GeoJSON geometry dict for the AOI
+        un_adju      – bool (default False)
+        isi_thr      – int (default 30)
+        ntl_thr      – int (default 10)
+        wat_thr      – int (default 25)
+        cap_ope      – int (default 200)
+        pct_suburban – float (default 0.25)
+        pct_urban    – float (default 0.50)
     """
-    from analysis.external.trendsearth import submit_urbanization_job
-
     analysis_task = AnalysisTask.objects.get(id=analysis_task_id)
     inputs = analysis_task.analysis_inputs or {}
     _submit_te_job_for_task(
@@ -1037,8 +1107,13 @@ def submit_urbanization_te_job(self, analysis_task_id: int):
         analysis_task_id,
         submit_fn=submit_urbanization_job,
         job_label='Urbanization',
-        start_year=int(inputs['year_start']),
-        end_year=int(inputs['year_end']),
+        un_adju=bool(inputs.get('un_adju', False)),
+        isi_thr=int(inputs.get('isi_thr', 30)),
+        ntl_thr=int(inputs.get('ntl_thr', 10)),
+        wat_thr=int(inputs.get('wat_thr', 25)),
+        cap_ope=int(inputs.get('cap_ope', 200)),
+        pct_suburban=float(inputs.get('pct_suburban', 0.25)),
+        pct_urban=float(inputs.get('pct_urban', 0.50)),
     )
 
 
@@ -1054,11 +1129,10 @@ def submit_population_te_job(self, analysis_task_id: int):
     AnalysisTask.
 
     Expects analysis_task.analysis_inputs to contain:
-        geojson – GeoJSON geometry dict for the AOI
-        year    – int (single year)
+        geojson      – GeoJSON geometry dict for the AOI
+        year_initial – int
+        year_final   – int
     """
-    from analysis.external.trendsearth import submit_population_job
-
     analysis_task = AnalysisTask.objects.get(id=analysis_task_id)
     inputs = analysis_task.analysis_inputs or {}
     _submit_te_job_for_task(
@@ -1066,5 +1140,6 @@ def submit_population_te_job(self, analysis_task_id: int):
         analysis_task_id,
         submit_fn=submit_population_job,
         job_label='Population',
-        year=int(inputs['year']),
+        year_initial=int(inputs['year_initial']),
+        year_final=int(inputs['year_final']),
     )

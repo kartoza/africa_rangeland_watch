@@ -72,6 +72,10 @@ interface AnalysisState extends DataState {
   trendsEarthEmail: string | null;
   trendsEarthLoading: boolean;
   trendsEarthError: string | null;
+  ldnTaskId: number | null;
+  droughtTaskId: number | null;
+  urbanizationTaskId: number | null;
+  populationTaskId: number | null;
 }
 
 const initialAnalysisState: AnalysisState = {
@@ -89,6 +93,10 @@ const initialAnalysisState: AnalysisState = {
   trendsEarthEmail: null,
   trendsEarthLoading: false,
   trendsEarthError: null,
+  ldnTaskId: null,
+  droughtTaskId: null,
+  urbanizationTaskId: null,
+  populationTaskId: null,
 };
 
 
@@ -214,10 +222,32 @@ export const deleteTrendsEarthSettings = createAsyncThunk(
 );
 
 export interface SubmitTeJobPayload {
-  geojson: object;
-  year_start?: number;
-  year_end?: number;
-  year?: number;
+  location_ids: number[];
+}
+
+export interface SubmitTeLdnPayload extends SubmitTeJobPayload {
+  year_initial?: number;
+  year_final?: number;
+}
+
+export interface SubmitTeDroughtPayload extends SubmitTeJobPayload {
+  year_initial?: number;
+  year_final?: number;
+}
+
+export interface SubmitTeUrbanizationPayload extends SubmitTeJobPayload {
+  un_adju?: boolean;
+  isi_thr?: number;
+  ntl_thr?: number;
+  wat_thr?: number;
+  cap_ope?: number;
+  pct_suburban?: number;
+  pct_urban?: number;
+}
+
+export interface SubmitTePopulationPayload extends SubmitTeJobPayload {
+  year_initial: number;
+  year_final: number;
 }
 
 export interface SubmitTeJobResponse {
@@ -227,7 +257,7 @@ export interface SubmitTeJobResponse {
 /** Submit a Trends.Earth LDN (SDG 15.3.1) job. */
 export const submitLdnJob = createAsyncThunk(
   'analysis/submitLdnJob',
-  async (payload: SubmitTeJobPayload, { rejectWithValue }) => {
+  async (payload: SubmitTeLdnPayload, { rejectWithValue }) => {
     try {
       setCSRFToken();
       const response = await axios.post<SubmitTeJobResponse>(
@@ -246,7 +276,7 @@ export const submitLdnJob = createAsyncThunk(
 /** Submit a Trends.Earth drought vulnerability job. */
 export const submitDroughtJob = createAsyncThunk(
   'analysis/submitDroughtJob',
-  async (payload: SubmitTeJobPayload, { rejectWithValue }) => {
+  async (payload: SubmitTeDroughtPayload, { rejectWithValue }) => {
     try {
       setCSRFToken();
       const response = await axios.post<SubmitTeJobResponse>(
@@ -265,7 +295,7 @@ export const submitDroughtJob = createAsyncThunk(
 /** Submit a Trends.Earth SDG 11.3.1 urbanization job. */
 export const submitUrbanizationJob = createAsyncThunk(
   'analysis/submitUrbanizationJob',
-  async (payload: SubmitTeJobPayload, { rejectWithValue }) => {
+  async (payload: SubmitTeUrbanizationPayload, { rejectWithValue }) => {
     try {
       setCSRFToken();
       const response = await axios.post<SubmitTeJobResponse>(
@@ -287,7 +317,7 @@ export const submitUrbanizationJob = createAsyncThunk(
 /** Submit a Trends.Earth population (GPW) job. */
 export const submitPopulationJob = createAsyncThunk(
   'analysis/submitPopulationJob',
-  async (payload: SubmitTeJobPayload, { rejectWithValue }) => {
+  async (payload: SubmitTePopulationPayload, { rejectWithValue }) => {
     try {
       setCSRFToken();
       const response = await axios.post<SubmitTeJobResponse>(
@@ -387,6 +417,18 @@ export const analysisSlice = createSlice({
     },
     clearTrendsEarthError(state) {
       state.trendsEarthError = null;
+    },
+    clearLdnTaskId(state) {
+      state.ldnTaskId = null;
+    },
+    clearDroughtTaskId(state) {
+      state.droughtTaskId = null;
+    },
+    clearUrbanizationTaskId(state) {
+      state.urbanizationTaskId = null;
+    },
+    clearPopulationTaskId(state) {
+      state.populationTaskId = null;
     },
   },
   extraReducers: (builder) => {
@@ -527,6 +569,19 @@ export const analysisSlice = createSlice({
       .addCase(deleteTrendsEarthSettings.rejected, (state, action) => {
         state.trendsEarthLoading = false;
         state.trendsEarthError = parseError(action);
+      })
+      // Persist submitted TE task IDs in Redux so polling survives navigation
+      .addCase(submitLdnJob.fulfilled, (state, action) => {
+        state.ldnTaskId = action.payload.task_id;
+      })
+      .addCase(submitDroughtJob.fulfilled, (state, action) => {
+        state.droughtTaskId = action.payload.task_id;
+      })
+      .addCase(submitUrbanizationJob.fulfilled, (state, action) => {
+        state.urbanizationTaskId = action.payload.task_id;
+      })
+      .addCase(submitPopulationJob.fulfilled, (state, action) => {
+        state.populationTaskId = action.payload.task_id;
       });
   }
 });
@@ -536,6 +591,10 @@ export const {
   setAnalysisCustomGeom,
   setMaxWaitAnalysisReached, toggleAnalysisLandscapeCommunity,
   clearTrendsEarthError,
+  clearLdnTaskId,
+  clearDroughtTaskId,
+  clearUrbanizationTaskId,
+  clearPopulationTaskId,
 } = analysisSlice.actions;
 
 export default analysisSlice.reducer;

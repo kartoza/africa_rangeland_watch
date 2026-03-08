@@ -50,13 +50,22 @@ class LayerAPI(APIView):
 
     def get(self, request, *args, **kwargs):
         """Fetch list of Layer."""
+        # Exclude user-specific groups from the public queryset.
+        # 'trends-earth' layers are owner-scoped and added back below.
         layers = InputLayer.objects.exclude(
-            group__name='user-defined'
+            group__name__in=['user-defined', 'trends-earth']
         )
         if self.request.user.is_authenticated:
             layers = layers.union(
                 InputLayer.objects.filter(
                     group__name='user-defined',
+                    created_by=request.user
+                ).exclude(
+                    url__isnull=True
+                )
+            ).union(
+                InputLayer.objects.filter(
+                    group__name='trends-earth',
                     created_by=request.user
                 ).exclude(
                     url__isnull=True

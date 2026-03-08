@@ -4,7 +4,7 @@
  * Main panel with 5 tabs: LDN, Drought, Urbanization, Population,
  * and Trends.Earth Account.
  */
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Box,
   Tabs,
@@ -13,6 +13,9 @@ import {
   TabPanels,
   TabPanel,
 } from '@chakra-ui/react';
+import { useDispatch, useSelector } from 'react-redux';
+import { AppDispatch, RootState } from '../../store';
+import { fetchLandscapes } from '../../store/landscapeSlice';
 import LdnTab from './tabs/LdnTab';
 import DroughtTab from './tabs/DroughtTab';
 import UrbanizationTab from './tabs/UrbanizationTab';
@@ -22,7 +25,17 @@ import TrendsEarthAccountForm from './TrendsEarthAccountForm';
 const ACCOUNT_TAB_INDEX = 4;
 
 const TrendsEarthPanel: React.FC = () => {
+  const dispatch = useDispatch<AppDispatch>();
+  const landscapes = useSelector(
+    (state: RootState) => state.landscape.landscapes
+  );
   const [tabIndex, setTabIndex] = useState(0);
+
+  useEffect(() => {
+    if (landscapes.length === 0) {
+      dispatch(fetchLandscapes());
+    }
+  }, [dispatch]);
 
   const navigateToAccount = () => setTabIndex(ACCOUNT_TAB_INDEX);
 

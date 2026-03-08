@@ -1,6 +1,6 @@
 // coding=utf-8
 /**
- * AdditionalLayers page
+ * TrendsEarth page
  * Hosts the TrendsEarthPanel (LDN, Drought, Urbanization, Population tabs).
  */
 import React from 'react';
@@ -11,12 +11,12 @@ import Footer from '../../components/Footer';
 import Sidebar from '../../components/SideBar';
 import TrendsEarthPanel from '../../components/TrendsEarth/TrendsEarthPanel';
 
-const AdditionalLayersPage: React.FC = () => {
+const TrendsEarthPage: React.FC = () => {
   return (
     <>
       <Box width="100%" minHeight={{ base: 'auto', md: '80vh' }}>
         <Helmet>
-          <title>Additional Layers | Africa Rangeland Watch</title>
+          <title>Trends.Earth | Africa Rangeland Watch</title>
           <meta
             name="description"
             content="Run Trends.Earth analyses: Land Degradation Neutrality, Drought, Urbanization, and Population."
@@ -47,4 +47,4 @@ const AdditionalLayersPage: React.FC = () => {
   );
 };
 
-export default AdditionalLayersPage;
+export default TrendsEarthPage;

@@ -151,13 +151,13 @@ export default function Sidebar(props: Props) {
           </MenuItem>
           <MenuItem
             style={{
-              backgroundColor: isActive("/additional-layers")
+              backgroundColor: isActive("/trends-earth")
                 ? "#a8d159"
                 : "transparent",
             }}
-            onClick={() => navigate("/additional-layers")}
+            onClick={() => navigate("/trends-earth")}
           >
-            Additional Layers
+            Trends.Earth
           </MenuItem>
           <MenuItem
             style={{
@@ -311,16 +311,16 @@ export default function Sidebar(props: Props) {
                 </MenuItem>
                 <MenuItem
                   style={{
-                    backgroundColor: isActive("/additional-layers")
+                    backgroundColor: isActive("/trends-earth")
                       ? "#a8d159"
                       : "transparent",
                   }}
                   onClick={() => {
-                    navigate("/additional-layers");
+                    navigate("/trends-earth");
                     onClose();
                   }}
                 >
-                  Additional Layers
+                  Trends.Earth
                 </MenuItem>
                 <MenuItem
                   style={{

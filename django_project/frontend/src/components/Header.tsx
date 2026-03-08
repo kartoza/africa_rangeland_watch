@@ -33,7 +33,7 @@ export default function Header(props: any) {
     const currentPage = location.pathname;
 
     const handleMenuClick = () => {
-        if (["/support", "/uploaded-resources", "/profile", "/organisation", "/analysis-results", "/notifications", "/additional-layers"].includes(currentPage)) {
+        if (["/support", "/uploaded-resources", "/profile", "/organisation", "/analysis-results", "/notifications", "/trends-earth"].includes(currentPage)) {
             setIsSidebarOpen(!isSidebarOpen);
         } else {
             setIsMobileMenuOpen(!isMobileMenuOpen);

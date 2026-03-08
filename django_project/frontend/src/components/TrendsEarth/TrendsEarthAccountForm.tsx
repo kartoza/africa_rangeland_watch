@@ -77,7 +77,7 @@ const TrendsEarthAccountForm: React.FC = () => {
         Trends.Earth Account
       </Text>
       <Text fontSize="sm" color="gray.600" mb={4}>
-        Enter your Trends.Earth credentials to enable additional
+        Enter your Trends.Earth credentials to enable Trends.Earth
         analysis layers. Your password is only used to obtain an
         authentication token and is never stored.
       </Text>

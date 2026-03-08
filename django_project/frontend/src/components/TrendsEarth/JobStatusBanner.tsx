@@ -2,7 +2,7 @@
 /**
  * JobStatusBanner.tsx
  * Displays the current status of a submitted Trends.Earth job and,
- * on completion, links to Analysis Results.
+ * on completion, links to the map where the layer has been added.
  */
 import React, { useEffect, useRef } from 'react';
 import axios from 'axios';
@@ -17,6 +17,9 @@ import {
   Flex,
 } from '@chakra-ui/react';
 import { useNavigate } from 'react-router-dom';
+import { useDispatch } from 'react-redux';
+import { AppDispatch } from '../../store';
+import { fetchLayers } from '../../store/layerSlice';
 
 export type TaskStatus =
   | 'PENDING'
@@ -34,6 +37,7 @@ const POLL_INTERVAL_MS = 10_000;
 
 const JobStatusBanner: React.FC<Props> = ({ taskId, onStatusChange }) => {
   const navigate = useNavigate();
+  const dispatch = useDispatch<AppDispatch>();
   const [status, setStatus] = React.useState<TaskStatus>(null);
   const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -64,6 +68,11 @@ const JobStatusBanner: React.FC<Props> = ({ taskId, onStatusChange }) => {
             setErrorMsg(
               data.error?.message || 'Job failed on the server.'
             );
+          }
+          if (newStatus === 'COMPLETED') {
+            // Refresh the map layer list so the new TE layer appears
+            // immediately, even if the user is already on /map.
+            dispatch(fetchLayers());
           }
         }
       } catch {
@@ -102,17 +111,17 @@ const JobStatusBanner: React.FC<Props> = ({ taskId, onStatusChange }) => {
         <AlertIcon />
         <Box flex="1">
           <AlertDescription>
-            Job #{taskId} completed. Results are available in
-            Analysis Results.
+            Job #{taskId} completed. Results have been added to
+            the map as a Trends.Earth layer.
           </AlertDescription>
         </Box>
         <Button
           size="sm"
           ml={4}
           colorScheme="green"
-          onClick={() => navigate('/analysis-results')}
+          onClick={() => navigate('/map')}
         >
-          View Results
+          View on Map
         </Button>
       </Alert>
     );

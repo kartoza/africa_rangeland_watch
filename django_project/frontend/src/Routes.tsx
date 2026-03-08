@@ -22,7 +22,7 @@ const MapPage  = React.lazy(() => import("./pages/Map"));
 const LearnMorePage  = React.lazy(() => import("./pages/About/LearnMore"));
 const EarthRangersPage = React.lazy(() => import("./pages/EarthRangers"));
 const EarthRangersEventsPage = React.lazy(() => import("./pages/EarthRangers/EarthRangerEvents"));
-const AdditionalLayersPage = React.lazy(() => import("./pages/AdditionalLayers"));
+const TrendsEarthPage = React.lazy(() => import("./pages/TrendsEarth"));
 const UserIndicatorPage = React.lazy(() => import("./pages/UserIndicator"));
 const UserIndicatorWizardPage = React.lazy(() => import("./pages/UserIndicator/CreateIndicatorWizard"));
 
@@ -86,8 +86,8 @@ const ProjectRoutes = () => {
       element: <PrivateRoute Component={AnalysisResults} />,
     },
     {
-      path: "/additional-layers",
-      element: <PrivateRoute Component={AdditionalLayersPage} />,
+      path: "/trends-earth",
+      element: <PrivateRoute Component={TrendsEarthPage} />,
     },
     {
       path: "/earthranger/settings",

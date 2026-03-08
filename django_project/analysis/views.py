@@ -14,7 +14,10 @@ from cloud_native_gis.models import (
     LayerUpload
 )
 
+from django.contrib.gis.db.models import Union as GeoUnion
+
 from dashboard.models import Dashboard
+from analysis.models import LandscapeCommunity
 from .models import (
     UserAnalysisResults,
     TrendsEarthSetting,
@@ -329,6 +332,51 @@ class TrendsEarthSettingViewSet(viewsets.ViewSet):
         )
 
 
+def _resolve_geojson_from_location_ids(
+    location_ids: list,
+) -> tuple:
+    """
+    Convert a list of LandscapeCommunity PKs into a merged GeoJSON
+    geometry (MultiPolygon or Polygon) via a PostGIS Union aggregate.
+
+    Returns ``(geojson_dict, error_response_or_none)``.
+    If the IDs are invalid or no geometries are found, the second
+    element is a DRF ``Response`` with an appropriate error status.
+    """
+    if not location_ids or not isinstance(location_ids, list):
+        return None, Response(
+            {'detail': '`location_ids` must be a non-empty list.'},
+            status=drf_status.HTTP_400_BAD_REQUEST,
+        )
+
+    try:
+        ids = [int(i) for i in location_ids]
+    except (TypeError, ValueError):
+        return None, Response(
+            {'detail': '`location_ids` must be a list of integers.'},
+            status=drf_status.HTTP_400_BAD_REQUEST,
+        )
+
+    result = LandscapeCommunity.objects.filter(
+        id__in=ids
+    ).aggregate(union=GeoUnion('geometry'))
+
+    geom = result.get('union')
+    if geom is None:
+        return None, Response(
+            {
+                'detail': (
+                    'No communities found for the provided '
+                    '`location_ids`.'
+                )
+            },
+            status=drf_status.HTTP_400_BAD_REQUEST,
+        )
+
+    import json
+    return json.loads(geom.json), None
+
+
 class SubmitLdnJobView(APIView):
     """
     POST /api/analysis/trendsearth/submit/
@@ -336,9 +384,9 @@ class SubmitLdnJobView(APIView):
     Submit an LDN (SDG 15.3.1) analysis job via Trends.Earth.
 
     Request body (JSON):
-        geojson    – GeoJSON geometry of the area of interest
-        year_start – first year of the analysis period (int)
-        year_end   – last year of the analysis period (int)
+        location_ids – list of LandscapeCommunity PKs defining the AOI
+        year_initial – first year of the analysis period (int)
+        year_final   – last year of the analysis period (int)
 
     Returns:
         { "task_id": <int> }
@@ -347,31 +395,42 @@ class SubmitLdnJobView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        geojson = request.data.get('geojson')
-        year_start = request.data.get('year_start')
-        year_end = request.data.get('year_end')
+        location_ids = request.data.get('location_ids')
+        year_initial = request.data.get('year_initial')
+        year_final = request.data.get('year_final')
 
-        if not geojson:
+        geojson, err = _resolve_geojson_from_location_ids(location_ids)
+        if err is not None:
+            return err
+
+        if year_initial is None or year_final is None:
             return Response(
-                {'detail': '`geojson` is required.'},
-                status=drf_status.HTTP_400_BAD_REQUEST
-            )
-        if year_start is None or year_end is None:
-            return Response(
-                {'detail': '`year_start` and `year_end` are required.'},
+                {
+                    'detail': (
+                        '`year_initial` and `year_final` are required.'
+                    )
+                },
                 status=drf_status.HTTP_400_BAD_REQUEST
             )
         try:
-            year_start = int(year_start)
-            year_end = int(year_end)
+            year_initial = int(year_initial)
+            year_final = int(year_final)
         except (TypeError, ValueError):
             return Response(
-                {'detail': '`year_start` and `year_end` must be integers.'},
+                {
+                    'detail': (
+                        '`year_initial` and `year_final` must be integers.'
+                    )
+                },
                 status=drf_status.HTTP_400_BAD_REQUEST
             )
-        if year_start >= year_end:
+        if year_initial >= year_final:
             return Response(
-                {'detail': '`year_start` must be before `year_end`.'},
+                {
+                    'detail': (
+                        '`year_initial` must be before `year_final`.'
+                    )
+                },
                 status=drf_status.HTTP_400_BAD_REQUEST
             )
 
@@ -393,8 +452,9 @@ class SubmitLdnJobView(APIView):
             source=AnalysisTaskSource.TRENDS_EARTH,
             analysis_inputs={
                 'geojson': geojson,
-                'year_start': year_start,
-                'year_end': year_end,
+                'location_ids': location_ids,
+                'year_initial': year_initial,
+                'year_final': year_final,
             },
         )
         submit_te_job.delay(task.pk)
@@ -447,9 +507,10 @@ class SubmitDroughtJobView(APIView):
     Submit a drought vulnerability analysis job via Trends.Earth.
 
     Request body (JSON):
-        geojson    – GeoJSON geometry of the area of interest
-        year_start – first year of the analysis period (int)
-        year_end   – last year of the analysis period (int)
+        location_ids – list of LandscapeCommunity PKs defining the AOI
+        year_initial – first year of the analysis period (int)
+        year_final   – last year of the analysis period
+                       (int, >= year_initial+5)
 
     Returns:
         { "task_id": <int> }
@@ -458,35 +519,42 @@ class SubmitDroughtJobView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        geojson = request.data.get('geojson')
-        year_start = request.data.get('year_start')
-        year_end = request.data.get('year_end')
+        location_ids = request.data.get('location_ids')
+        year_initial = request.data.get('year_initial')
+        year_final = request.data.get('year_final')
 
-        if not geojson:
-            return Response(
-                {'detail': '`geojson` is required.'},
-                status=drf_status.HTTP_400_BAD_REQUEST
-            )
-        if year_start is None or year_end is None:
-            return Response(
-                {'detail': '`year_start` and `year_end` are required.'},
-                status=drf_status.HTTP_400_BAD_REQUEST
-            )
-        try:
-            year_start = int(year_start)
-            year_end = int(year_end)
-        except (TypeError, ValueError):
+        geojson, err = _resolve_geojson_from_location_ids(location_ids)
+        if err is not None:
+            return err
+
+        if year_initial is None or year_final is None:
             return Response(
                 {
                     'detail': (
-                        '`year_start` and `year_end` must be integers.'
+                        '`year_initial` and `year_final` are required.'
                     )
                 },
                 status=drf_status.HTTP_400_BAD_REQUEST
             )
-        if year_start >= year_end:
+        try:
+            year_initial = int(year_initial)
+            year_final = int(year_final)
+        except (TypeError, ValueError):
             return Response(
-                {'detail': '`year_start` must be before `year_end`.'},
+                {
+                    'detail': (
+                        '`year_initial` and `year_final` must be integers.'
+                    )
+                },
+                status=drf_status.HTTP_400_BAD_REQUEST
+            )
+        if year_initial >= year_final:
+            return Response(
+                {
+                    'detail': (
+                        '`year_initial` must be before `year_final`.'
+                    )
+                },
                 status=drf_status.HTTP_400_BAD_REQUEST
             )
 
@@ -509,8 +577,9 @@ class SubmitDroughtJobView(APIView):
             task_type=AnalysisTaskType.DROUGHT,
             analysis_inputs={
                 'geojson': geojson,
-                'year_start': year_start,
-                'year_end': year_end,
+                'location_ids': location_ids,
+                'year_initial': year_initial,
+                'year_final': year_final,
             },
         )
         submit_drought_te_job.delay(task.pk)
@@ -528,9 +597,14 @@ class SubmitUrbanizationJobView(APIView):
     Submit an SDG 11.3.1 urbanization analysis job via Trends.Earth.
 
     Request body (JSON):
-        geojson    – GeoJSON geometry of the area of interest
-        year_start – first year of the analysis period (int)
-        year_end   – last year of the analysis period (int)
+        location_ids  – list of LandscapeCommunity PKs defining the AOI
+        un_adju       – bool, apply UN adjustment (default false)
+        isi_thr       – int 0-100, ISI threshold (default 30)
+        ntl_thr       – int 0-100, NTL threshold (default 10)
+        wat_thr       – int 0-100, water threshold (default 25)
+        cap_ope       – int, cap openness in metres (default 200)
+        pct_suburban  – float 0-1, suburban fraction (default 0.25)
+        pct_urban     – float 0-1, urban fraction (default 0.50)
 
     Returns:
         { "task_id": <int> }
@@ -539,35 +613,32 @@ class SubmitUrbanizationJobView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        geojson = request.data.get('geojson')
-        year_start = request.data.get('year_start')
-        year_end = request.data.get('year_end')
+        location_ids = request.data.get('location_ids')
 
-        if not geojson:
-            return Response(
-                {'detail': '`geojson` is required.'},
-                status=drf_status.HTTP_400_BAD_REQUEST
-            )
-        if year_start is None or year_end is None:
-            return Response(
-                {'detail': '`year_start` and `year_end` are required.'},
-                status=drf_status.HTTP_400_BAD_REQUEST
-            )
+        geojson, err = _resolve_geojson_from_location_ids(location_ids)
+        if err is not None:
+            return err
+
+        # Threshold parameters with defaults
+        un_adju = bool(request.data.get('un_adju', False))
         try:
-            year_start = int(year_start)
-            year_end = int(year_end)
+            isi_thr = int(request.data.get('isi_thr', 30))
+            ntl_thr = int(request.data.get('ntl_thr', 10))
+            wat_thr = int(request.data.get('wat_thr', 25))
+            cap_ope = int(request.data.get('cap_ope', 200))
+            pct_suburban = float(
+                request.data.get('pct_suburban', 0.25)
+            )
+            pct_urban = float(
+                request.data.get('pct_urban', 0.50)
+            )
         except (TypeError, ValueError):
             return Response(
                 {
                     'detail': (
-                        '`year_start` and `year_end` must be integers.'
+                        'Threshold parameters must be numeric.'
                     )
                 },
-                status=drf_status.HTTP_400_BAD_REQUEST
-            )
-        if year_start >= year_end:
-            return Response(
-                {'detail': '`year_start` must be before `year_end`.'},
                 status=drf_status.HTTP_400_BAD_REQUEST
             )
 
@@ -590,8 +661,14 @@ class SubmitUrbanizationJobView(APIView):
             task_type=AnalysisTaskType.URBANIZATION,
             analysis_inputs={
                 'geojson': geojson,
-                'year_start': year_start,
-                'year_end': year_end,
+                'location_ids': location_ids,
+                'un_adju': un_adju,
+                'isi_thr': isi_thr,
+                'ntl_thr': ntl_thr,
+                'wat_thr': wat_thr,
+                'cap_ope': cap_ope,
+                'pct_suburban': pct_suburban,
+                'pct_urban': pct_urban,
             },
         )
         submit_urbanization_te_job.delay(task.pk)
@@ -609,8 +686,9 @@ class SubmitPopulationJobView(APIView):
     Submit a population (GPW) download job via Trends.Earth.
 
     Request body (JSON):
-        geojson – GeoJSON geometry of the area of interest
-        year    – single target year (int)
+        location_ids – list of LandscapeCommunity PKs defining the AOI
+        year_initial – start year (int)
+        year_final   – end year (int)
 
     Returns:
         { "task_id": <int> }
@@ -619,24 +697,43 @@ class SubmitPopulationJobView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request):
-        geojson = request.data.get('geojson')
-        year = request.data.get('year')
+        location_ids = request.data.get('location_ids')
+        year_initial = request.data.get('year_initial')
+        year_final = request.data.get('year_final')
 
-        if not geojson:
+        geojson, err = _resolve_geojson_from_location_ids(location_ids)
+        if err is not None:
+            return err
+
+        if year_initial is None or year_final is None:
             return Response(
-                {'detail': '`geojson` is required.'},
-                status=drf_status.HTTP_400_BAD_REQUEST
-            )
-        if year is None:
-            return Response(
-                {'detail': '`year` is required.'},
+                {
+                    'detail': (
+                        '`year_initial` and `year_final` are required.'
+                    )
+                },
                 status=drf_status.HTTP_400_BAD_REQUEST
             )
         try:
-            year = int(year)
+            year_initial = int(year_initial)
+            year_final = int(year_final)
         except (TypeError, ValueError):
             return Response(
-                {'detail': '`year` must be an integer.'},
+                {
+                    'detail': (
+                        '`year_initial` and `year_final` must be integers.'
+                    )
+                },
+                status=drf_status.HTTP_400_BAD_REQUEST
+            )
+
+        if year_final < year_initial:
+            return Response(
+                {
+                    'detail': (
+                        '`year_final` must be >= `year_initial`.'
+                    )
+                },
                 status=drf_status.HTTP_400_BAD_REQUEST
             )
 
@@ -659,7 +756,9 @@ class SubmitPopulationJobView(APIView):
             task_type=AnalysisTaskType.POPULATION,
             analysis_inputs={
                 'geojson': geojson,
-                'year': year,
+                'location_ids': location_ids,
+                'year_initial': year_initial,
+                'year_final': year_final,
             },
         )
         submit_population_te_job.delay(task.pk)

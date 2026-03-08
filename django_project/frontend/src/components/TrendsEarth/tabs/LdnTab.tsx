@@ -3,15 +3,14 @@
  * LdnTab.tsx
  * Tab for submitting SDG 15.3.1 Land Degradation Neutrality jobs.
  */
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   Box,
   Button,
   FormControl,
   FormLabel,
-  NumberInput,
-  NumberInputField,
+  Select,
   Text,
   Alert,
   AlertIcon,
@@ -19,49 +18,64 @@ import {
   Divider,
 } from '@chakra-ui/react';
 import { AppDispatch, RootState } from '../../../store';
-import { submitLdnJob } from '../../../store/analysisSlice';
+import {
+  submitLdnJob,
+  clearLdnTaskId,
+} from '../../../store/analysisSlice';
 import JobStatusBanner from '../JobStatusBanner';
+import AoiSelector from '../AoiSelector';
 
 interface Props {
   onNavigateToAccount: () => void;
 }
 
+// LDN uses MODIS NDVI (2001–2024). Start range: 2001–2023; end range: 2004–2024.
+// The TE backend's Mann-Kendall trajectory test requires at least 4 observations,
+// so the end year must be at least start + 3.
+const LDN_START_MIN = 2001;
+const LDN_START_MAX = 2023;
+const LDN_END_MAX = 2024;
+const LDN_MIN_GAP = 3;
+
+const range = (from: number, to: number): number[] =>
+  Array.from({ length: to - from + 1 }, (_, i) => from + i);
+
 const LdnTab: React.FC<Props> = ({ onNavigateToAccount }) => {
   const dispatch = useDispatch<AppDispatch>();
-  const { trendsEarthConfigured } = useSelector(
+  const { trendsEarthConfigured, ldnTaskId } = useSelector(
     (state: RootState) => state.analysis
   );
 
-  const [geojsonText, setGeojsonText] = useState('');
-  const [yearStart, setYearStart] = useState<number>(2000);
-  const [yearEnd, setYearEnd] = useState<number>(2015);
-  const [taskId, setTaskId] = useState<number | null>(null);
+  const [locationIds, setLocationIds] = useState<number[]>([]);
+  const [yearInitial, setYearInitial] = useState<number>(2001);
+  const [yearFinal, setYearFinal] = useState<number>(2015);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
+  // Clamp end year when start year changes so end is always at least
+  // start + LDN_MIN_GAP (required by the TE Mann-Kendall trajectory test).
+  useEffect(() => {
+    if (yearFinal < yearInitial + LDN_MIN_GAP) {
+      setYearFinal(yearInitial + LDN_MIN_GAP);
+    }
+  }, [yearInitial]);
+
   const handleSubmit = async () => {
     setSubmitError(null);
-    let geojson: object;
-    try {
-      geojson = JSON.parse(geojsonText);
-    } catch {
-      setSubmitError('GeoJSON is not valid JSON.');
-      return;
-    }
-
+    dispatch(clearLdnTaskId());
     setSubmitting(true);
+    const safeInitial = yearInitial;
+    const safeFinal = yearFinal;
     const result = await dispatch(
       submitLdnJob({
-        geojson,
-        year_start: yearStart,
-        year_end: yearEnd,
+        location_ids: locationIds,
+        year_initial: safeInitial,
+        year_final: safeFinal,
       })
     );
     setSubmitting(false);
 
-    if (submitLdnJob.fulfilled.match(result)) {
-      setTaskId(result.payload.task_id);
-    } else {
+    if (!submitLdnJob.fulfilled.match(result)) {
       setSubmitError(
         (result.payload as { message: string })?.message ||
           'Failed to submit job.'
@@ -94,7 +108,7 @@ const LdnTab: React.FC<Props> = ({ onNavigateToAccount }) => {
         </Alert>
       )}
 
-      <JobStatusBanner taskId={taskId} />
+      <JobStatusBanner taskId={ldnTaskId} />
 
       {submitError && (
         <Alert status="error" mb={4} borderRadius="md">
@@ -103,49 +117,32 @@ const LdnTab: React.FC<Props> = ({ onNavigateToAccount }) => {
         </Alert>
       )}
 
-      <FormControl mb={4}>
-        <FormLabel color="black">
-          Area of Interest (GeoJSON geometry)
-        </FormLabel>
-        <textarea
-          value={geojsonText}
-          onChange={(e) => setGeojsonText(e.target.value)}
-          placeholder='{"type": "Polygon", "coordinates": [...]}'
-          rows={5}
-          style={{
-            width: '100%',
-            padding: '8px',
-            border: '1px solid #CBD5E0',
-            borderRadius: '4px',
-            fontFamily: 'monospace',
-            fontSize: '12px',
-            color: 'black',
-          }}
-        />
-      </FormControl>
+      <AoiSelector onChange={setLocationIds} />
 
       <FormControl mb={4}>
         <FormLabel color="black">Start Year</FormLabel>
-        <NumberInput
-          value={yearStart}
-          onChange={(_, val) => setYearStart(val)}
-          min={2000}
-          max={2023}
+        <Select
+          value={yearInitial}
+          onChange={(e) => setYearInitial(Number(e.target.value))}
+          color="black"
         >
-          <NumberInputField color="black" />
-        </NumberInput>
+          {range(LDN_START_MIN, LDN_START_MAX).map((y) => (
+            <option key={y} value={y}>{y}</option>
+          ))}
+        </Select>
       </FormControl>
 
       <FormControl mb={6}>
         <FormLabel color="black">End Year</FormLabel>
-        <NumberInput
-          value={yearEnd}
-          onChange={(_, val) => setYearEnd(val)}
-          min={2001}
-          max={2024}
+        <Select
+          value={yearFinal}
+          onChange={(e) => setYearFinal(Number(e.target.value))}
+          color="black"
         >
-          <NumberInputField color="black" />
-        </NumberInput>
+          {range(yearInitial + LDN_MIN_GAP, LDN_END_MAX).map((y) => (
+            <option key={y} value={y}>{y}</option>
+          ))}
+        </Select>
       </FormControl>
 
       <Divider mb={4} />
@@ -157,7 +154,9 @@ const LdnTab: React.FC<Props> = ({ onNavigateToAccount }) => {
         color="white"
         onClick={handleSubmit}
         isLoading={submitting}
-        isDisabled={!trendsEarthConfigured || !geojsonText}
+        isDisabled={
+          !trendsEarthConfigured || locationIds.length === 0
+        }
       >
         Submit LDN Job
       </Button>

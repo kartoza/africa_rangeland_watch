@@ -8,6 +8,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import {
   Box,
   Button,
+  Checkbox,
   FormControl,
   FormLabel,
   NumberInput,
@@ -17,10 +18,15 @@ import {
   AlertIcon,
   Link,
   Divider,
+  SimpleGrid,
 } from '@chakra-ui/react';
 import { AppDispatch, RootState } from '../../../store';
-import { submitUrbanizationJob } from '../../../store/analysisSlice';
+import {
+  submitUrbanizationJob,
+  clearUrbanizationTaskId,
+} from '../../../store/analysisSlice';
 import JobStatusBanner from '../JobStatusBanner';
+import AoiSelector from '../AoiSelector';
 
 interface Props {
   onNavigateToAccount: () => void;
@@ -28,40 +34,40 @@ interface Props {
 
 const UrbanizationTab: React.FC<Props> = ({ onNavigateToAccount }) => {
   const dispatch = useDispatch<AppDispatch>();
-  const { trendsEarthConfigured } = useSelector(
+  const { trendsEarthConfigured, urbanizationTaskId } = useSelector(
     (state: RootState) => state.analysis
   );
 
-  const [geojsonText, setGeojsonText] = useState('');
-  const [yearStart, setYearStart] = useState<number>(2000);
-  const [yearEnd, setYearEnd] = useState<number>(2015);
-  const [taskId, setTaskId] = useState<number | null>(null);
+  const [locationIds, setLocationIds] = useState<number[]>([]);
+  const [unAdju, setUnAdju] = useState<boolean>(false);
+  const [isiThr, setIsiThr] = useState<number>(30);
+  const [ntlThr, setNtlThr] = useState<number>(10);
+  const [watThr, setWatThr] = useState<number>(25);
+  const [capOpe, setCapOpe] = useState<number>(200);
+  const [pctSuburban, setPctSuburban] = useState<number>(25);
+  const [pctUrban, setPctUrban] = useState<number>(50);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
   const handleSubmit = async () => {
     setSubmitError(null);
-    let geojson: object;
-    try {
-      geojson = JSON.parse(geojsonText);
-    } catch {
-      setSubmitError('GeoJSON is not valid JSON.');
-      return;
-    }
-
+    dispatch(clearUrbanizationTaskId());
     setSubmitting(true);
     const result = await dispatch(
       submitUrbanizationJob({
-        geojson,
-        year_start: yearStart,
-        year_end: yearEnd,
+        location_ids: locationIds,
+        un_adju: unAdju,
+        isi_thr: Number.isFinite(isiThr) ? isiThr : 30,
+        ntl_thr: Number.isFinite(ntlThr) ? ntlThr : 10,
+        wat_thr: Number.isFinite(watThr) ? watThr : 25,
+        cap_ope: Number.isFinite(capOpe) ? capOpe : 200,
+        pct_suburban: (Number.isFinite(pctSuburban) ? pctSuburban : 25) / 100,
+        pct_urban: (Number.isFinite(pctUrban) ? pctUrban : 50) / 100,
       })
     );
     setSubmitting(false);
 
-    if (submitUrbanizationJob.fulfilled.match(result)) {
-      setTaskId(result.payload.task_id);
-    } else {
+    if (!submitUrbanizationJob.fulfilled.match(result)) {
       setSubmitError(
         (result.payload as { message: string })?.message ||
           'Failed to submit job.'
@@ -93,7 +99,7 @@ const UrbanizationTab: React.FC<Props> = ({ onNavigateToAccount }) => {
         </Alert>
       )}
 
-      <JobStatusBanner taskId={taskId} />
+      <JobStatusBanner taskId={urbanizationTaskId} />
 
       {submitError && (
         <Alert status="error" mb={4} borderRadius="md">
@@ -102,49 +108,107 @@ const UrbanizationTab: React.FC<Props> = ({ onNavigateToAccount }) => {
         </Alert>
       )}
 
-      <FormControl mb={4}>
-        <FormLabel color="black">
-          Area of Interest (GeoJSON geometry)
-        </FormLabel>
-        <textarea
-          value={geojsonText}
-          onChange={(e) => setGeojsonText(e.target.value)}
-          placeholder='{"type": "Polygon", "coordinates": [...]}'
-          rows={5}
-          style={{
-            width: '100%',
-            padding: '8px',
-            border: '1px solid #CBD5E0',
-            borderRadius: '4px',
-            fontFamily: 'monospace',
-            fontSize: '12px',
-            color: 'black',
-          }}
-        />
-      </FormControl>
+      <AoiSelector onChange={setLocationIds} />
 
-      <FormControl mb={4}>
-        <FormLabel color="black">Start Year</FormLabel>
-        <NumberInput
-          value={yearStart}
-          onChange={(_, val) => setYearStart(val)}
-          min={2000}
-          max={2023}
-        >
-          <NumberInputField color="black" />
-        </NumberInput>
-      </FormControl>
+      <Text fontWeight="semibold" fontSize="sm" mb={2} color="black">
+        Threshold Parameters
+      </Text>
+
+      <SimpleGrid columns={2} spacing={4} mb={4}>
+        <FormControl>
+          <FormLabel fontSize="sm" color="black">
+            ISI Threshold (0–100)
+          </FormLabel>
+          <NumberInput
+            value={isiThr}
+            onChange={(_, val) => setIsiThr(val)}
+            min={0}
+            max={100}
+          >
+            <NumberInputField color="black" />
+          </NumberInput>
+        </FormControl>
+
+        <FormControl>
+          <FormLabel fontSize="sm" color="black">
+            NTL Threshold (0–100)
+          </FormLabel>
+          <NumberInput
+            value={ntlThr}
+            onChange={(_, val) => setNtlThr(val)}
+            min={0}
+            max={100}
+          >
+            <NumberInputField color="black" />
+          </NumberInput>
+        </FormControl>
+
+        <FormControl>
+          <FormLabel fontSize="sm" color="black">
+            Water Threshold (0–100)
+          </FormLabel>
+          <NumberInput
+            value={watThr}
+            onChange={(_, val) => setWatThr(val)}
+            min={0}
+            max={100}
+          >
+            <NumberInputField color="black" />
+          </NumberInput>
+        </FormControl>
+
+        <FormControl>
+          <FormLabel fontSize="sm" color="black">
+            Cap Openness (metres)
+          </FormLabel>
+          <NumberInput
+            value={capOpe}
+            onChange={(_, val) => setCapOpe(val)}
+            min={0}
+          >
+            <NumberInputField color="black" />
+          </NumberInput>
+        </FormControl>
+
+        <FormControl>
+          <FormLabel fontSize="sm" color="black">
+            Suburban % (0–100)
+          </FormLabel>
+          <NumberInput
+            value={pctSuburban}
+            onChange={(_, val) => setPctSuburban(val)}
+            min={0}
+            max={100}
+          >
+            <NumberInputField color="black" />
+          </NumberInput>
+        </FormControl>
+
+        <FormControl>
+          <FormLabel fontSize="sm" color="black">
+            Urban % (0–100)
+          </FormLabel>
+          <NumberInput
+            value={pctUrban}
+            onChange={(_, val) => setPctUrban(val)}
+            min={0}
+            max={100}
+          >
+            <NumberInputField color="black" />
+          </NumberInput>
+        </FormControl>
+      </SimpleGrid>
 
       <FormControl mb={6}>
-        <FormLabel color="black">End Year</FormLabel>
-        <NumberInput
-          value={yearEnd}
-          onChange={(_, val) => setYearEnd(val)}
-          min={2001}
-          max={2024}
+        <Checkbox
+          isChecked={unAdju}
+          onChange={(e) => setUnAdju(e.target.checked)}
+          colorScheme="green"
         >
-          <NumberInputField color="black" />
-        </NumberInput>
+          <Text fontSize="sm" color="black">
+            Apply UN population adjustment
+          </Text>
+        </Checkbox>
       </FormControl>
 
       <Divider mb={4} />
@@ -156,7 +220,9 @@ const UrbanizationTab: React.FC<Props> = ({ onNavigateToAccount }) => {
         color="white"
         onClick={handleSubmit}
         isLoading={submitting}
-        isDisabled={!trendsEarthConfigured || !geojsonText}
+        isDisabled={
+          !trendsEarthConfigured || locationIds.length === 0
+        }
       >
         Submit Urbanization Job
       </Button>
