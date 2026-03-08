@@ -315,7 +315,10 @@ class TrendsEarthSettingViewSet(viewsets.ViewSet):
                     request.user.pk, exc
                 )
                 return Response(
-                    {'detail': 'Error communicating with Trends.Earth service.'},
+                    {
+                        'detail':
+                        'Error communicating with Trends.Earth service.'
+                    },
                     status=drf_status.HTTP_502_BAD_GATEWAY
                 )
 
