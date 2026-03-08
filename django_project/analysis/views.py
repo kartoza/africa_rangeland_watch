@@ -300,8 +300,13 @@ class TrendsEarthSettingViewSet(viewsets.ViewSet):
                 _, refresh_token = authenticate(email, password)
                 setting.refresh_token = refresh_token
             except TrendsEarthAuthError as exc:
+                # Do not expose raw exception details to the client.
+                logger.warning(
+                    'Trends.Earth authentication failed for user %s: %s',
+                    request.user.pk, exc
+                )
                 return Response(
-                    {'detail': str(exc)},
+                    {'detail': 'Invalid email or password.'},
                     status=drf_status.HTTP_401_UNAUTHORIZED
                 )
             except TrendsEarthAPIError as exc:
@@ -310,7 +315,7 @@ class TrendsEarthSettingViewSet(viewsets.ViewSet):
                     request.user.pk, exc
                 )
                 return Response(
-                    {'detail': str(exc)},
+                    {'detail': 'Error communicating with Trends.Earth service.'},
                     status=drf_status.HTTP_502_BAD_GATEWAY
                 )
 
