@@ -803,22 +803,6 @@ class AnalysisResultsCache(models.Model):
         return obj
 
 
-class AnalysisTaskSource(models.TextChoices):
-    """Source / backend that processes an AnalysisTask."""
-
-    GEE = 'gee', 'Google Earth Engine'
-    TRENDS_EARTH = 'trends_earth', 'Trends.Earth'
-
-
-class AnalysisTaskType(models.TextChoices):
-    """Type of Trends.Earth analysis submitted via an AnalysisTask."""
-
-    LDN = 'ldn', 'Land Degradation Neutrality (SDG 15.3.1)'
-    DROUGHT = 'drought', 'Drought'
-    URBANIZATION = 'urbanization', 'Sustainable Urbanization (SDG 11.3.1)'
-    POPULATION = 'population', 'Population'
-
-
 class AnalysisTask(models.Model):
     analysis_inputs = models.JSONField(
         null=True,
@@ -858,30 +842,6 @@ class AnalysisTask(models.Model):
         null=True,
         blank=True,
         help_text='Error message if the task failed.'
-    )
-    source = models.CharField(
-        max_length=20,
-        choices=AnalysisTaskSource.choices,
-        default=AnalysisTaskSource.GEE,
-        help_text='Backend that processes this task.'
-    )
-    te_execution_id = models.CharField(
-        max_length=255,
-        null=True,
-        blank=True,
-        help_text=(
-            'Trends.Earth execution ID (populated when '
-            'source=trends_earth).'
-        )
-    )
-    task_type = models.CharField(
-        max_length=20,
-        choices=AnalysisTaskType.choices,
-        default=AnalysisTaskType.LDN,
-        help_text=(
-            'Type of Trends.Earth analysis '
-            '(only relevant when source=trends_earth).'
-        )
     )
 
     def get_indicator(self):
@@ -1289,43 +1249,4 @@ class UserIndicator(BaseIndicator):
         ]
 
 
-class TrendsEarthSetting(models.Model):
-    """Per-user Trends.Earth credentials.
-
-    Stores the user's email and a long-lived refresh token
-    (obtained after the first successful authentication).
-    The plaintext password is never persisted.
-    """
-
-    user = models.OneToOneField(
-        User,
-        on_delete=models.CASCADE,
-        related_name='trends_earth_setting',
-        help_text='The ARW user who owns these credentials.'
-    )
-    email = models.EmailField(
-        max_length=254,
-        help_text='Trends.Earth account email address.'
-    )
-    refresh_token = models.TextField(
-        blank=True,
-        help_text=(
-            'Long-lived Trends.Earth refresh token. '
-            'Populated after first successful authentication.'
-        )
-    )
-    created_at = models.DateTimeField(
-        auto_now_add=True,
-        help_text='Date and time when this setting was created.'
-    )
-    updated_at = models.DateTimeField(
-        auto_now=True,
-        help_text='Date and time when this setting was last updated.'
-    )
-
-    class Meta:
-        verbose_name = 'Trends.Earth Setting'
-        verbose_name_plural = 'Trends.Earth Settings'
-
-    def __str__(self):
-        return f'TrendsEarthSetting({self.user.username})'
+# TrendsEarthSetting moved to trendsearth app

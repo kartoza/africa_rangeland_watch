@@ -106,7 +106,7 @@ const DroughtTab: React.FC<Props> = ({ onNavigateToAccount }) => {
         </Alert>
       )}
 
-      <JobStatusBanner taskId={droughtTaskId} />
+      <JobStatusBanner jobId={droughtTaskId} />
 
       {submitError && (
         <Alert status="error" mb={4} borderRadius="md">

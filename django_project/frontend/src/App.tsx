@@ -5,11 +5,12 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { HashRouter as Router } from "react-router-dom";
 import { ChakraProvider } from "@chakra-ui/react";
 import { Provider } from 'react-redux';
+import { PersistGate } from 'redux-persist/integration/react';
 import maplibregl from "maplibre-gl";
 import { Protocol } from "pmtiles";
 import {cogProtocol} from '@geomatico/maplibre-cog-protocol';
 import theme from "./theme";
-import store from "./store";
+import store, { persistor } from "./store";
 import ProjectRoutes from "./Routes";
 import { SessionProvider } from "./sessionProvider";
 import { MapProvider } from './MapContext';
@@ -46,15 +47,17 @@ function App() {
     <ErrorBoundary>
       <ChakraProvider theme={theme}>
         <Provider store={store}>
-          <SessionProvider>
-            <NotificationProvider>
-              <MapProvider>
-                <Router>
-                  <ProjectRoutes />
-                </Router>
-              </MapProvider>
-            </NotificationProvider>
-          </SessionProvider>
+          <PersistGate loading={null} persistor={persistor}>
+            <SessionProvider>
+              <NotificationProvider>
+                <MapProvider>
+                  <Router>
+                    <ProjectRoutes />
+                  </Router>
+                </MapProvider>
+              </NotificationProvider>
+            </SessionProvider>
+          </PersistGate>
         </Provider>
       </ChakraProvider>
     </ErrorBoundary>

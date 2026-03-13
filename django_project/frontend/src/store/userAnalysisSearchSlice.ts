@@ -40,7 +40,7 @@ interface ItemsState {
 
 // fetch user analysis results from API
 const fetchUserAnalysisResults = async ({ page, limit, search = '' }: FetchItemsParams): Promise<FetchItemsResponse> => {
-  const response = await axios.get(`/user_analysis_results/fetch?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}`);
+  const response = await axios.get(`/api/analysis/user_analysis_results/fetch?page=${page}&limit=${limit}&search=${encodeURIComponent(search)}`);
   if (response.status !== 200) {
     throw new Error(`Failed to fetch items: ${response.statusText}`);
   }

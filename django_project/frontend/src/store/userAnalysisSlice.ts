@@ -25,7 +25,7 @@ export const fetchAnalysis = createAsyncThunk(
   'analysis/fetchAnalysis',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await axios.get('/user_analysis_results/fetch_analysis_results/');
+      const response = await axios.get('/api/analysis/user_analysis_results/fetch_analysis_results/');
       return response.data;
     } catch (error) {
       return rejectWithValue('Error fetching analysis results');
@@ -37,7 +37,7 @@ export const deleteAnalysis = createAsyncThunk(
   'analysis/deleteAnalysis',
   async (id: string, { rejectWithValue }) => {
     try {
-      await axios.delete(`/user_analysis_results/${id}/`);
+      await axios.delete(`/api/analysis/user_analysis_results/${id}/`);
       return id; // Return the deleted ID to remove it from the state
     } catch (error) {
       return rejectWithValue('Error deleting analysis');
@@ -53,7 +53,7 @@ export const saveAnalysis = createAsyncThunk(
       const payload = {
         analysis_results: data,
       };
-      const response = await axios.post('/user_analysis_results/save_analysis_results/', payload);
+      const response = await axios.post('/api/analysis/user_analysis_results/save_analysis_results/', payload);
       return response.data;
     } catch (error) {
       return rejectWithValue('Error saving analysis results');

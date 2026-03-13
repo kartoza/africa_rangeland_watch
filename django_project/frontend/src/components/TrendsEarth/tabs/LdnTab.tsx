@@ -108,7 +108,7 @@ const LdnTab: React.FC<Props> = ({ onNavigateToAccount }) => {
         </Alert>
       )}
 
-      <JobStatusBanner taskId={ldnTaskId} />
+      <JobStatusBanner jobId={ldnTaskId} />
 
       {submitError && (
         <Alert status="error" mb={4} borderRadius="md">

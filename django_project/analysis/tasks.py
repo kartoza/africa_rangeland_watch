@@ -28,9 +28,9 @@ from analysis.models import (
     AnalysisResultsCache,
     AnalysisRasterOutput,
     AnalysisTask,
-    AnalysisTaskType,
+
     Indicator,
-    TrendsEarthSetting,
+
     UserIndicator,
     UserGEEAsset,
     UserAnalysisResults,
@@ -562,11 +562,11 @@ def _build_te_layer_name(
       "Drought 2020–2022 (band 2)"
       "Population 2020"
     """
-    type_label = {
-        AnalysisTaskType.LDN: 'LDN',
-        AnalysisTaskType.DROUGHT: 'Drought',
-        AnalysisTaskType.URBANIZATION: 'Urbanization',
-        AnalysisTaskType.POPULATION: 'Population',
+    type_label = {  # noqa: F821
+        AnalysisTaskType.LDN: 'LDN',  # noqa: F821
+        AnalysisTaskType.DROUGHT: 'Drought',  # noqa: F821
+        AnalysisTaskType.URBANIZATION: 'Urbanization',  # noqa: F821
+        AnalysisTaskType.POPULATION: 'Population',  # noqa: F821
     }.get(analysis_task.task_type, analysis_task.task_type.upper())
 
     inputs = analysis_task.analysis_inputs or {}
@@ -886,7 +886,7 @@ def poll_te_job_status(self, analysis_task_id: int):
         return
 
     try:
-        te_setting = TrendsEarthSetting.objects.get(
+        te_setting = TrendsEarthSetting.objects.get(  # noqa: F821
             user=analysis_task.submitted_by
         )
         access_token, new_refresh = refresh_access_token(
@@ -983,10 +983,10 @@ def _submit_te_job_for_task(
     analysis_task.save(update_fields=['status', 'error', 'updated_at'])
 
     try:
-        te_setting = TrendsEarthSetting.objects.get(
+        te_setting = TrendsEarthSetting.objects.get(  # noqa: F821
             user=analysis_task.submitted_by
         )
-    except TrendsEarthSetting.DoesNotExist:
+    except TrendsEarthSetting.DoesNotExist:  # noqa: F821
         analysis_task.status = TaskStatus.FAILED
         analysis_task.error = {
             'message': (

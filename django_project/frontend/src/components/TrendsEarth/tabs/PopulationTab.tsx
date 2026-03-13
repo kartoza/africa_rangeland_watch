@@ -104,7 +104,7 @@ const PopulationTab: React.FC<Props> = ({ onNavigateToAccount }) => {
         </Alert>
       )}
 
-      <JobStatusBanner taskId={populationTaskId} />
+      <JobStatusBanner jobId={populationTaskId} />
 
       {submitError && (
         <Alert status="error" mb={4} borderRadius="md">

@@ -162,7 +162,7 @@ export const fetchTrendsEarthSettings = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await axios.get<TrendsEarthSettingResponse>(
-        '/api/analysis/trendsearth/settings/'
+        '/api/trends-earth/settings/'
       );
       return response.data;
     } catch (error: any) {
@@ -187,7 +187,7 @@ export const saveTrendsEarthSettings = createAsyncThunk(
     try {
       setCSRFToken();
       const response = await axios.post<TrendsEarthSettingResponse>(
-        '/api/analysis/trendsearth/settings/',
+        '/api/trends-earth/settings/',
         credentials
       );
       return response.data;
@@ -208,7 +208,7 @@ export const deleteTrendsEarthSettings = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       setCSRFToken();
-      await axios.delete('/api/analysis/trendsearth/settings/delete/');
+      await axios.delete('/api/trends-earth/settings/delete/');
       return true;
     } catch (error: any) {
       return rejectWithValue({
@@ -251,7 +251,7 @@ export interface SubmitTePopulationPayload extends SubmitTeJobPayload {
 }
 
 export interface SubmitTeJobResponse {
-  task_id: number;
+  job_id: number;
 }
 
 /** Submit a Trends.Earth LDN (SDG 15.3.1) job. */
@@ -261,7 +261,7 @@ export const submitLdnJob = createAsyncThunk(
     try {
       setCSRFToken();
       const response = await axios.post<SubmitTeJobResponse>(
-        '/api/analysis/trendsearth/submit/',
+        '/api/trends-earth/submit/ldn/',
         payload
       );
       return response.data;
@@ -280,7 +280,7 @@ export const submitDroughtJob = createAsyncThunk(
     try {
       setCSRFToken();
       const response = await axios.post<SubmitTeJobResponse>(
-        '/api/analysis/trendsearth/submit/drought/',
+        '/api/trends-earth/submit/drought/',
         payload
       );
       return response.data;
@@ -299,7 +299,7 @@ export const submitUrbanizationJob = createAsyncThunk(
     try {
       setCSRFToken();
       const response = await axios.post<SubmitTeJobResponse>(
-        '/api/analysis/trendsearth/submit/urbanization/',
+        '/api/trends-earth/submit/urbanization/',
         payload
       );
       return response.data;
@@ -321,7 +321,7 @@ export const submitPopulationJob = createAsyncThunk(
     try {
       setCSRFToken();
       const response = await axios.post<SubmitTeJobResponse>(
-        '/api/analysis/trendsearth/submit/population/',
+        '/api/trends-earth/submit/population/',
         payload
       );
       return response.data;
@@ -570,18 +570,18 @@ export const analysisSlice = createSlice({
         state.trendsEarthLoading = false;
         state.trendsEarthError = parseError(action);
       })
-      // Persist submitted TE task IDs in Redux so polling survives navigation
+      // Persist submitted TE job IDs in Redux so polling survives navigation
       .addCase(submitLdnJob.fulfilled, (state, action) => {
-        state.ldnTaskId = action.payload.task_id;
+        state.ldnTaskId = action.payload.job_id;
       })
       .addCase(submitDroughtJob.fulfilled, (state, action) => {
-        state.droughtTaskId = action.payload.task_id;
+        state.droughtTaskId = action.payload.job_id;
       })
       .addCase(submitUrbanizationJob.fulfilled, (state, action) => {
-        state.urbanizationTaskId = action.payload.task_id;
+        state.urbanizationTaskId = action.payload.job_id;
       })
       .addCase(submitPopulationJob.fulfilled, (state, action) => {
-        state.populationTaskId = action.payload.task_id;
+        state.populationTaskId = action.payload.job_id;
       });
   }
 });

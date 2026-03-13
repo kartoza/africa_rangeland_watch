@@ -3,6 +3,16 @@
 Africa Rangeland Watch (ARW).
 
 .. note:: Trends.Earth API client for SDG 15.3.1 LDN analysis.
+
+How to obtain script IDs:
+1. Authenticate: POST https://api2.trends.earth/auth with email/password
+2. List scripts: GET https://api2.trends.earth/api/v1/script
+   (requires Bearer token from step 1)
+3. Each script returns: {"id": "<uuid>", "name": "<slug>"}
+
+Alternatively, inspect network requests in the official QGIS plugin
+when using each indicator tool - the script UUID appears in the
+POST /api/v1/script/{uuid}/run request URL.
 """
 
 import json
@@ -41,21 +51,30 @@ TRENDS_EARTH_POPULATION_SCRIPT_SLUG = getattr(
     'download-data'
 )
 # Script UUIDs — used in POST /api/v1/script/{id}/run
+# How to get: GET /api/v1/script (authenticated)
+# or inspect QGIS plugin network requests
+# LDN: SDG 15.3.1 Land Degradation Neutrality -
+#   computes productivity, land cover, and SOC indicators
 TRENDS_EARTH_LDN_SCRIPT_ID = getattr(
     settings,
     'TRENDS_EARTH_LDN_SCRIPT_ID',
     '965a2ff1-3b05-40a9-96cb-0aa4199b53d0'
 )
+# Drought: Drought vulnerability analysis
+# using SPI, population, and land cover
 TRENDS_EARTH_DROUGHT_SCRIPT_ID = getattr(
     settings,
     'TRENDS_EARTH_DROUGHT_SCRIPT_ID',
     '138773e4-501c-45f2-8eb8-2c90b9234011'
 )
+# Urbanization: SDG 11.3.1 Sustainable Urbanization -
+#   built-up area change analysis
 TRENDS_EARTH_URBAN_SCRIPT_ID = getattr(
     settings,
     'TRENDS_EARTH_URBAN_SCRIPT_ID',
     'f190312a-e637-4359-b8de-4300d2f363f7'
 )
+# Population: WorldPop data download (GPW)
 TRENDS_EARTH_POPULATION_SCRIPT_ID = getattr(
     settings,
     'TRENDS_EARTH_POPULATION_SCRIPT_ID',

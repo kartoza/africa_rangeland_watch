@@ -99,7 +99,7 @@ const UrbanizationTab: React.FC<Props> = ({ onNavigateToAccount }) => {
         </Alert>
       )}
 
-      <JobStatusBanner taskId={urbanizationTaskId} />
+      <JobStatusBanner jobId={urbanizationTaskId} />
 
       {submitError && (
         <Alert status="error" mb={4} borderRadius="md">

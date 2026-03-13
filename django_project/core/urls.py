@@ -88,9 +88,9 @@ urlpatterns = [
         )
     ),
     path('', include('dashboard.urls')),
-    path('', include('analysis.urls')),
-    path('api/analysis/', include('analysis.api_urls')),
+    path('api/analysis/', include('analysis.urls')),
     path('', include('earthranger.urls')),
+    path('api/trends-earth/', include('trendsearth.urls')),
     path('api/', include('alerts.urls')),
 ]
 

@@ -21,29 +21,30 @@ import { useDispatch } from 'react-redux';
 import { AppDispatch } from '../../store';
 import { fetchLayers } from '../../store/layerSlice';
 
-export type TaskStatus =
+export type JobStatus =
   | 'PENDING'
   | 'RUNNING'
   | 'COMPLETED'
   | 'FAILED'
+  | 'CANCELLED'
   | null;
 
 interface Props {
-  taskId: number | null;
-  onStatusChange?: (status: TaskStatus) => void;
+  jobId: number | null;
+  onStatusChange?: (status: JobStatus) => void;
 }
 
 const POLL_INTERVAL_MS = 10_000;
 
-const JobStatusBanner: React.FC<Props> = ({ taskId, onStatusChange }) => {
+const JobStatusBanner: React.FC<Props> = ({ jobId, onStatusChange }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
-  const [status, setStatus] = React.useState<TaskStatus>(null);
+  const [status, setStatus] = React.useState<JobStatus>(null);
   const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
-    if (!taskId) {
+    if (!jobId) {
       setStatus(null);
       setErrorMsg(null);
       return;
@@ -52,10 +53,10 @@ const JobStatusBanner: React.FC<Props> = ({ taskId, onStatusChange }) => {
     const poll = async () => {
       try {
         const response = await axios.get(
-          `/api/analysis/task/${taskId}/`
+          `/api/trends-earth/job/${jobId}/`
         );
         const data = response.data;
-        const newStatus: TaskStatus = data.status;
+        const newStatus: JobStatus = data.status;
         setStatus(newStatus);
         if (onStatusChange) onStatusChange(newStatus);
 
@@ -86,9 +87,9 @@ const JobStatusBanner: React.FC<Props> = ({ taskId, onStatusChange }) => {
     return () => {
       if (timerRef.current) clearInterval(timerRef.current);
     };
-  }, [taskId, onStatusChange]);
+  }, [jobId, onStatusChange]);
 
-  if (!taskId || !status) return null;
+  if (!jobId || !status) return null;
 
   if (status === 'PENDING' || status === 'RUNNING') {
     return (
@@ -97,8 +98,8 @@ const JobStatusBanner: React.FC<Props> = ({ taskId, onStatusChange }) => {
         <Flex align="center" gap={2}>
           <Spinner size="sm" />
           <AlertDescription>
-            Job submitted — processing on Trends.Earth (Task&nbsp;
-            #{taskId})…
+            Job submitted — processing on Trends.Earth (Job&nbsp;
+            #{jobId})…
           </AlertDescription>
         </Flex>
       </Alert>
@@ -111,7 +112,7 @@ const JobStatusBanner: React.FC<Props> = ({ taskId, onStatusChange }) => {
         <AlertIcon />
         <Box flex="1">
           <AlertDescription>
-            Job #{taskId} completed. Results have been added to
+            Job #{jobId} completed. Results have been added to
             the map as a Trends.Earth layer.
           </AlertDescription>
         </Box>
@@ -132,7 +133,7 @@ const JobStatusBanner: React.FC<Props> = ({ taskId, onStatusChange }) => {
       <Alert status="error" borderRadius="md" mb={4}>
         <AlertIcon />
         <AlertDescription>
-          Job #{taskId} failed:{' '}
+          Job #{jobId} failed:{' '}
           {errorMsg || 'An error occurred on the server.'}
         </AlertDescription>
       </Alert>
