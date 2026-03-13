@@ -76,3 +76,17 @@ class LandscapeCommunityViewSet(mixins.ListModelMixin, GenericViewSet):
     permission_classes = [IsAuthenticated]
     filter_backends = [filters.SearchFilter]
     search_fields = ["landscape__name", "community_name"]
+
+    def get_queryset(self):
+        """
+        Filter by landscape ID when ?landscape=<id> is provided,
+        in addition to the standard search filter.
+        """
+        qs = super().get_queryset()
+        landscape_id = self.request.query_params.get('landscape')
+        if landscape_id is not None:
+            try:
+                qs = qs.filter(landscape_id=int(landscape_id))
+            except (TypeError, ValueError):
+                pass
+        return qs

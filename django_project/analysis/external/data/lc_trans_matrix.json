@@ -1,0 +1,902 @@
+{
+  "name": "UNCCD default land cover degradation transition matrix",
+  "legend": {
+    "name": "UNCCD Land Cover",
+    "key": [
+      {
+        "code": 1,
+        "color": "#787F1B",
+        "description": null,
+        "name_long": "Tree-covered",
+        "name_short": "Tree-covered"
+      },
+      {
+        "code": 2,
+        "color": "#FFAC42",
+        "description": null,
+        "name_long": "Grassland",
+        "name_short": "Grassland"
+      },
+      {
+        "code": 3,
+        "color": "#FFFB6E",
+        "description": null,
+        "name_long": "Cropland",
+        "name_short": "Cropland"
+      },
+      {
+        "code": 4,
+        "color": "#00DB84",
+        "description": null,
+        "name_long": "Wetland",
+        "name_short": "Wetland"
+      },
+      {
+        "code": 5,
+        "color": "#E60017",
+        "description": null,
+        "name_long": "Artificial",
+        "name_short": "Artificial"
+      },
+      {
+        "code": 6,
+        "color": "#FFF3D7",
+        "description": null,
+        "name_long": "Other land",
+        "name_short": "Other land"
+      },
+      {
+        "code": 7,
+        "color": "#0053C4",
+        "description": null,
+        "name_long": "Water body",
+        "name_short": "Water body"
+      }
+    ],
+    "nodata": {
+      "code": -32768,
+      "name_long": "No data",
+      "name_short": "No data",
+      "description": null,
+      "color": "#000000"
+    }
+  },
+  "definitions": {
+    "name": "Land cover degradation transition meanings",
+    "transitions": [
+      {
+        "initial": {
+          "code": 3,
+          "color": "#FFFB6E",
+          "description": null,
+          "name_long": "Cropland",
+          "name_short": "Cropland"
+        },
+        "final": {
+          "code": 3,
+          "color": "#FFFB6E",
+          "description": null,
+          "name_long": "Cropland",
+          "name_short": "Cropland"
+        },
+        "meaning": "stable"
+      },
+      {
+        "initial": {
+          "code": 3,
+          "color": "#FFFB6E",
+          "description": null,
+          "name_long": "Cropland",
+          "name_short": "Cropland"
+        },
+        "final": {
+          "code": 1,
+          "color": "#787F1B",
+          "description": null,
+          "name_long": "Tree-covered",
+          "name_short": "Tree-covered"
+        },
+        "meaning": "improvement"
+      },
+      {
+        "initial": {
+          "code": 3,
+          "color": "#FFFB6E",
+          "description": null,
+          "name_long": "Cropland",
+          "name_short": "Cropland"
+        },
+        "final": {
+          "code": 2,
+          "color": "#FFAC42",
+          "description": null,
+          "name_long": "Grassland",
+          "name_short": "Grassland"
+        },
+        "meaning": "degradation"
+      },
+      {
+        "initial": {
+          "code": 3,
+          "color": "#FFFB6E",
+          "description": null,
+          "name_long": "Cropland",
+          "name_short": "Cropland"
+        },
+        "final": {
+          "code": 4,
+          "color": "#00DB84",
+          "description": null,
+          "name_long": "Wetland",
+          "name_short": "Wetland"
+        },
+        "meaning": "degradation"
+      },
+      {
+        "initial": {
+          "code": 3,
+          "color": "#FFFB6E",
+          "description": null,
+          "name_long": "Cropland",
+          "name_short": "Cropland"
+        },
+        "final": {
+          "code": 5,
+          "color": "#E60017",
+          "description": null,
+          "name_long": "Artificial",
+          "name_short": "Artificial"
+        },
+        "meaning": "degradation"
+      },
+      {
+        "initial": {
+          "code": 3,
+          "color": "#FFFB6E",
+          "description": null,
+          "name_long": "Cropland",
+          "name_short": "Cropland"
+        },
+        "final": {
+          "code": 6,
+          "color": "#FFF3D7",
+          "description": null,
+          "name_long": "Other land",
+          "name_short": "Other land"
+        },
+        "meaning": "degradation"
+      },
+      {
+        "initial": {
+          "code": 3,
+          "color": "#FFFB6E",
+          "description": null,
+          "name_long": "Cropland",
+          "name_short": "Cropland"
+        },
+        "final": {
+          "code": 7,
+          "color": "#0053C4",
+          "description": null,
+          "name_long": "Water body",
+          "name_short": "Water body"
+        },
+        "meaning": "stable"
+      },
+      {
+        "initial": {
+          "code": 1,
+          "color": "#787F1B",
+          "description": null,
+          "name_long": "Tree-covered",
+          "name_short": "Tree-covered"
+        },
+        "final": {
+          "code": 3,
+          "color": "#FFFB6E",
+          "description": null,
+          "name_long": "Cropland",
+          "name_short": "Cropland"
+        },
+        "meaning": "degradation"
+      },
+      {
+        "initial": {
+          "code": 1,
+          "color": "#787F1B",
+          "description": null,
+          "name_long": "Tree-covered",
+          "name_short": "Tree-covered"
+        },
+        "final": {
+          "code": 1,
+          "color": "#787F1B",
+          "description": null,
+          "name_long": "Tree-covered",
+          "name_short": "Tree-covered"
+        },
+        "meaning": "stable"
+      },
+      {
+        "initial": {
+          "code": 1,
+          "color": "#787F1B",
+          "description": null,
+          "name_long": "Tree-covered",
+          "name_short": "Tree-covered"
+        },
+        "final": {
+          "code": 2,
+          "color": "#FFAC42",
+          "description": null,
+          "name_long": "Grassland",
+          "name_short": "Grassland"
+        },
+        "meaning": "degradation"
+      },
+      {
+        "initial": {
+          "code": 1,
+          "color": "#787F1B",
+          "description": null,
+          "name_long": "Tree-covered",
+          "name_short": "Tree-covered"
+        },
+        "final": {
+          "code": 4,
+          "color": "#00DB84",
+          "description": null,
+          "name_long": "Wetland",
+          "name_short": "Wetland"
+        },
+        "meaning": "degradation"
+      },
+      {
+        "initial": {
+          "code": 1,
+          "color": "#787F1B",
+          "description": null,
+          "name_long": "Tree-covered",
+          "name_short": "Tree-covered"
+        },
+        "final": {
+          "code": 5,
+          "color": "#E60017",
+          "description": null,
+          "name_long": "Artificial",
+          "name_short": "Artificial"
+        },
+        "meaning": "degradation"
+      },
+      {
+        "initial": {
+          "code": 1,
+          "color": "#787F1B",
+          "description": null,
+          "name_long": "Tree-covered",
+          "name_short": "Tree-covered"
+        },
+        "final": {
+          "code": 6,
+          "color": "#FFF3D7",
+          "description": null,
+          "name_long": "Other land",
+          "name_short": "Other land"
+        },
+        "meaning": "degradation"
+      },
+      {
+        "initial": {
+          "code": 1,
+          "color": "#787F1B",
+          "description": null,
+          "name_long": "Tree-covered",
+          "name_short": "Tree-covered"
+        },
+        "final": {
+          "code": 7,
+          "color": "#0053C4",
+          "description": null,
+          "name_long": "Water body",
+          "name_short": "Water body"
+        },
+        "meaning": "stable"
+      },
+      {
+        "initial": {
+          "code": 2,
+          "color": "#FFAC42",
+          "description": null,
+          "name_long": "Grassland",
+          "name_short": "Grassland"
+        },
+        "final": {
+          "code": 3,
+          "color": "#FFFB6E",
+          "description": null,
+          "name_long": "Cropland",
+          "name_short": "Cropland"
+        },
+        "meaning": "improvement"
+      },
+      {
+        "initial": {
+          "code": 2,
+          "color": "#FFAC42",
+          "description": null,
+          "name_long": "Grassland",
+          "name_short": "Grassland"
+        },
+        "final": {
+          "code": 1,
+          "color": "#787F1B",
+          "description": null,
+          "name_long": "Tree-covered",
+          "name_short": "Tree-covered"
+        },
+        "meaning": "improvement"
+      },
+      {
+        "initial": {
+          "code": 2,
+          "color": "#FFAC42",
+          "description": null,
+          "name_long": "Grassland",
+          "name_short": "Grassland"
+        },
+        "final": {
+          "code": 2,
+          "color": "#FFAC42",
+          "description": null,
+          "name_long": "Grassland",
+          "name_short": "Grassland"
+        },
+        "meaning": "stable"
+      },
+      {
+        "initial": {
+          "code": 2,
+          "color": "#FFAC42",
+          "description": null,
+          "name_long": "Grassland",
+          "name_short": "Grassland"
+        },
+        "final": {
+          "code": 4,
+          "color": "#00DB84",
+          "description": null,
+          "name_long": "Wetland",
+          "name_short": "Wetland"
+        },
+        "meaning": "degradation"
+      },
+      {
+        "initial": {
+          "code": 2,
+          "color": "#FFAC42",
+          "description": null,
+          "name_long": "Grassland",
+          "name_short": "Grassland"
+        },
+        "final": {
+          "code": 5,
+          "color": "#E60017",
+          "description": null,
+          "name_long": "Artificial",
+          "name_short": "Artificial"
+        },
+        "meaning": "degradation"
+      },
+      {
+        "initial": {
+          "code": 2,
+          "color": "#FFAC42",
+          "description": null,
+          "name_long": "Grassland",
+          "name_short": "Grassland"
+        },
+        "final": {
+          "code": 6,
+          "color": "#FFF3D7",
+          "description": null,
+          "name_long": "Other land",
+          "name_short": "Other land"
+        },
+        "meaning": "degradation"
+      },
+      {
+        "initial": {
+          "code": 2,
+          "color": "#FFAC42",
+          "description": null,
+          "name_long": "Grassland",
+          "name_short": "Grassland"
+        },
+        "final": {
+          "code": 7,
+          "color": "#0053C4",
+          "description": null,
+          "name_long": "Water body",
+          "name_short": "Water body"
+        },
+        "meaning": "stable"
+      },
+      {
+        "initial": {
+          "code": 4,
+          "color": "#00DB84",
+          "description": null,
+          "name_long": "Wetland",
+          "name_short": "Wetland"
+        },
+        "final": {
+          "code": 3,
+          "color": "#FFFB6E",
+          "description": null,
+          "name_long": "Cropland",
+          "name_short": "Cropland"
+        },
+        "meaning": "degradation"
+      },
+      {
+        "initial": {
+          "code": 4,
+          "color": "#00DB84",
+          "description": null,
+          "name_long": "Wetland",
+          "name_short": "Wetland"
+        },
+        "final": {
+          "code": 1,
+          "color": "#787F1B",
+          "description": null,
+          "name_long": "Tree-covered",
+          "name_short": "Tree-covered"
+        },
+        "meaning": "degradation"
+      },
+      {
+        "initial": {
+          "code": 4,
+          "color": "#00DB84",
+          "description": null,
+          "name_long": "Wetland",
+          "name_short": "Wetland"
+        },
+        "final": {
+          "code": 2,
+          "color": "#FFAC42",
+          "description": null,
+          "name_long": "Grassland",
+          "name_short": "Grassland"
+        },
+        "meaning": "degradation"
+      },
+      {
+        "initial": {
+          "code": 4,
+          "color": "#00DB84",
+          "description": null,
+          "name_long": "Wetland",
+          "name_short": "Wetland"
+        },
+        "final": {
+          "code": 4,
+          "color": "#00DB84",
+          "description": null,
+          "name_long": "Wetland",
+          "name_short": "Wetland"
+        },
+        "meaning": "stable"
+      },
+      {
+        "initial": {
+          "code": 4,
+          "color": "#00DB84",
+          "description": null,
+          "name_long": "Wetland",
+          "name_short": "Wetland"
+        },
+        "final": {
+          "code": 5,
+          "color": "#E60017",
+          "description": null,
+          "name_long": "Artificial",
+          "name_short": "Artificial"
+        },
+        "meaning": "degradation"
+      },
+      {
+        "initial": {
+          "code": 4,
+          "color": "#00DB84",
+          "description": null,
+          "name_long": "Wetland",
+          "name_short": "Wetland"
+        },
+        "final": {
+          "code": 6,
+          "color": "#FFF3D7",
+          "description": null,
+          "name_long": "Other land",
+          "name_short": "Other land"
+        },
+        "meaning": "degradation"
+      },
+      {
+        "initial": {
+          "code": 4,
+          "color": "#00DB84",
+          "description": null,
+          "name_long": "Wetland",
+          "name_short": "Wetland"
+        },
+        "final": {
+          "code": 7,
+          "color": "#0053C4",
+          "description": null,
+          "name_long": "Water body",
+          "name_short": "Water body"
+        },
+        "meaning": "stable"
+      },
+      {
+        "initial": {
+          "code": 5,
+          "color": "#E60017",
+          "description": null,
+          "name_long": "Artificial",
+          "name_short": "Artificial"
+        },
+        "final": {
+          "code": 3,
+          "color": "#FFFB6E",
+          "description": null,
+          "name_long": "Cropland",
+          "name_short": "Cropland"
+        },
+        "meaning": "improvement"
+      },
+      {
+        "initial": {
+          "code": 5,
+          "color": "#E60017",
+          "description": null,
+          "name_long": "Artificial",
+          "name_short": "Artificial"
+        },
+        "final": {
+          "code": 1,
+          "color": "#787F1B",
+          "description": null,
+          "name_long": "Tree-covered",
+          "name_short": "Tree-covered"
+        },
+        "meaning": "improvement"
+      },
+      {
+        "initial": {
+          "code": 5,
+          "color": "#E60017",
+          "description": null,
+          "name_long": "Artificial",
+          "name_short": "Artificial"
+        },
+        "final": {
+          "code": 2,
+          "color": "#FFAC42",
+          "description": null,
+          "name_long": "Grassland",
+          "name_short": "Grassland"
+        },
+        "meaning": "improvement"
+      },
+      {
+        "initial": {
+          "code": 5,
+          "color": "#E60017",
+          "description": null,
+          "name_long": "Artificial",
+          "name_short": "Artificial"
+        },
+        "final": {
+          "code": 4,
+          "color": "#00DB84",
+          "description": null,
+          "name_long": "Wetland",
+          "name_short": "Wetland"
+        },
+        "meaning": "improvement"
+      },
+      {
+        "initial": {
+          "code": 5,
+          "color": "#E60017",
+          "description": null,
+          "name_long": "Artificial",
+          "name_short": "Artificial"
+        },
+        "final": {
+          "code": 5,
+          "color": "#E60017",
+          "description": null,
+          "name_long": "Artificial",
+          "name_short": "Artificial"
+        },
+        "meaning": "stable"
+      },
+      {
+        "initial": {
+          "code": 5,
+          "color": "#E60017",
+          "description": null,
+          "name_long": "Artificial",
+          "name_short": "Artificial"
+        },
+        "final": {
+          "code": 6,
+          "color": "#FFF3D7",
+          "description": null,
+          "name_long": "Other land",
+          "name_short": "Other land"
+        },
+        "meaning": "improvement"
+      },
+      {
+        "initial": {
+          "code": 5,
+          "color": "#E60017",
+          "description": null,
+          "name_long": "Artificial",
+          "name_short": "Artificial"
+        },
+        "final": {
+          "code": 7,
+          "color": "#0053C4",
+          "description": null,
+          "name_long": "Water body",
+          "name_short": "Water body"
+        },
+        "meaning": "stable"
+      },
+      {
+        "initial": {
+          "code": 6,
+          "color": "#FFF3D7",
+          "description": null,
+          "name_long": "Other land",
+          "name_short": "Other land"
+        },
+        "final": {
+          "code": 3,
+          "color": "#FFFB6E",
+          "description": null,
+          "name_long": "Cropland",
+          "name_short": "Cropland"
+        },
+        "meaning": "improvement"
+      },
+      {
+        "initial": {
+          "code": 6,
+          "color": "#FFF3D7",
+          "description": null,
+          "name_long": "Other land",
+          "name_short": "Other land"
+        },
+        "final": {
+          "code": 1,
+          "color": "#787F1B",
+          "description": null,
+          "name_long": "Tree-covered",
+          "name_short": "Tree-covered"
+        },
+        "meaning": "improvement"
+      },
+      {
+        "initial": {
+          "code": 6,
+          "color": "#FFF3D7",
+          "description": null,
+          "name_long": "Other land",
+          "name_short": "Other land"
+        },
+        "final": {
+          "code": 2,
+          "color": "#FFAC42",
+          "description": null,
+          "name_long": "Grassland",
+          "name_short": "Grassland"
+        },
+        "meaning": "improvement"
+      },
+      {
+        "initial": {
+          "code": 6,
+          "color": "#FFF3D7",
+          "description": null,
+          "name_long": "Other land",
+          "name_short": "Other land"
+        },
+        "final": {
+          "code": 4,
+          "color": "#00DB84",
+          "description": null,
+          "name_long": "Wetland",
+          "name_short": "Wetland"
+        },
+        "meaning": "improvement"
+      },
+      {
+        "initial": {
+          "code": 6,
+          "color": "#FFF3D7",
+          "description": null,
+          "name_long": "Other land",
+          "name_short": "Other land"
+        },
+        "final": {
+          "code": 5,
+          "color": "#E60017",
+          "description": null,
+          "name_long": "Artificial",
+          "name_short": "Artificial"
+        },
+        "meaning": "degradation"
+      },
+      {
+        "initial": {
+          "code": 6,
+          "color": "#FFF3D7",
+          "description": null,
+          "name_long": "Other land",
+          "name_short": "Other land"
+        },
+        "final": {
+          "code": 6,
+          "color": "#FFF3D7",
+          "description": null,
+          "name_long": "Other land",
+          "name_short": "Other land"
+        },
+        "meaning": "stable"
+      },
+      {
+        "initial": {
+          "code": 6,
+          "color": "#FFF3D7",
+          "description": null,
+          "name_long": "Other land",
+          "name_short": "Other land"
+        },
+        "final": {
+          "code": 7,
+          "color": "#0053C4",
+          "description": null,
+          "name_long": "Water body",
+          "name_short": "Water body"
+        },
+        "meaning": "stable"
+      },
+      {
+        "initial": {
+          "code": 7,
+          "color": "#0053C4",
+          "description": null,
+          "name_long": "Water body",
+          "name_short": "Water body"
+        },
+        "final": {
+          "code": 3,
+          "color": "#FFFB6E",
+          "description": null,
+          "name_long": "Cropland",
+          "name_short": "Cropland"
+        },
+        "meaning": "stable"
+      },
+      {
+        "initial": {
+          "code": 7,
+          "color": "#0053C4",
+          "description": null,
+          "name_long": "Water body",
+          "name_short": "Water body"
+        },
+        "final": {
+          "code": 1,
+          "color": "#787F1B",
+          "description": null,
+          "name_long": "Tree-covered",
+          "name_short": "Tree-covered"
+        },
+        "meaning": "stable"
+      },
+      {
+        "initial": {
+          "code": 7,
+          "color": "#0053C4",
+          "description": null,
+          "name_long": "Water body",
+          "name_short": "Water body"
+        },
+        "final": {
+          "code": 2,
+          "color": "#FFAC42",
+          "description": null,
+          "name_long": "Grassland",
+          "name_short": "Grassland"
+        },
+        "meaning": "stable"
+      },
+      {
+        "initial": {
+          "code": 7,
+          "color": "#0053C4",
+          "description": null,
+          "name_long": "Water body",
+          "name_short": "Water body"
+        },
+        "final": {
+          "code": 4,
+          "color": "#00DB84",
+          "description": null,
+          "name_long": "Wetland",
+          "name_short": "Wetland"
+        },
+        "meaning": "stable"
+      },
+      {
+        "initial": {
+          "code": 7,
+          "color": "#0053C4",
+          "description": null,
+          "name_long": "Water body",
+          "name_short": "Water body"
+        },
+        "final": {
+          "code": 5,
+          "color": "#E60017",
+          "description": null,
+          "name_long": "Artificial",
+          "name_short": "Artificial"
+        },
+        "meaning": "stable"
+      },
+      {
+        "initial": {
+          "code": 7,
+          "color": "#0053C4",
+          "description": null,
+          "name_long": "Water body",
+          "name_short": "Water body"
+        },
+        "final": {
+          "code": 6,
+          "color": "#FFF3D7",
+          "description": null,
+          "name_long": "Other land",
+          "name_short": "Other land"
+        },
+        "meaning": "stable"
+      },
+      {
+        "initial": {
+          "code": 7,
+          "color": "#0053C4",
+          "description": null,
+          "name_long": "Water body",
+          "name_short": "Water body"
+        },
+        "final": {
+          "code": 7,
+          "color": "#0053C4",
+          "description": null,
+          "name_long": "Water body",
+          "name_short": "Water body"
+        },
+        "meaning": "stable"
+      }
+    ]
+  }
+}

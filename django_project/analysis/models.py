@@ -862,6 +862,16 @@ class AnalysisTask(models.Model):
                 )
             return indicator
 
+    class Meta:
+        verbose_name = 'Analysis Task'
+        verbose_name_plural = 'Analysis Tasks'
+
+    def __str__(self):
+        return (
+            f'AnalysisTask {self.pk} '
+            f'({self.source}) [{self.status}]'
+        )
+
 
 class IndicatorSource(models.TextChoices):
     """Choices for the source of an indicator."""
@@ -1237,3 +1247,6 @@ class UserIndicator(BaseIndicator):
                 name='unique_user_indicator'
             )
         ]
+
+
+# TrendsEarthSetting moved to trendsearth app

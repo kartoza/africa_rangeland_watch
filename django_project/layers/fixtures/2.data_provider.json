@@ -42,5 +42,16 @@
         "created_at": "2025-06-30T16:33:42.946Z",
         "updated_at": "2025-06-30T16:33:42.946Z"
     }
+},
+{
+    "model": "layers.dataprovider",
+    "pk": 5,
+    "fields": {
+        "name": "Trends.Earth",
+        "file": "",
+        "url": "https://api2.trends.earth",
+        "created_at": "2025-03-13T10:00:00.000Z",
+        "updated_at": "2025-03-13T10:00:00.000Z"
+    }
 }
 ]
