@@ -22,7 +22,8 @@ from layers.models import (
     InputLayerType,
     LayerGroupType,
 )
-from layers.utils import upload_file
+from cloud_native_gis.models.layer import Layer, LayerType
+from cloud_native_gis.models.layer_upload import LayerUpload
 
 from .models import (
     TrendsEarthJob,
@@ -203,21 +204,33 @@ def poll_te_job_status(self, job_id: int):
                     job.execution_id
                 )
 
-            for idx, entry in enumerate(cog_entries):
-                _download_and_store_te_cog(
-                    entry['url'],
-                    job,
-                    idx,
-                    bands=entry.get('bands') or None,
-                )
+            try:
+                for idx, entry in enumerate(cog_entries):
+                    _download_and_store_te_cog(
+                        entry['url'],
+                        job,
+                        idx,
+                        bands=entry.get('bands') or None,
+                    )
 
-            job.status = TrendsEarthJobStatus.COMPLETED
-            job.result = {
-                'cog_urls': [e['url'] for e in cog_entries],
-                'execution_id': job.execution_id,
-            }
-            job.completed_at = timezone.now()
-            job.save()
+                job.status = TrendsEarthJobStatus.COMPLETED
+                job.result = {
+                    'cog_urls': [e['url'] for e in cog_entries],
+                    'execution_id': job.execution_id,
+                }
+                job.completed_at = timezone.now()
+                job.save()
+            except Exception as exc:
+                logger.error(
+                    'Failed to process COGs for job %d: %s',
+                    job_id, exc,
+                    exc_info=True,
+                )
+                job.status = TrendsEarthJobStatus.FAILED
+                job.error = {'message': str(exc)}
+                job.completed_at = timezone.now()
+                job.save()
+                return
 
         elif raw_status in ('FAILED', 'ERROR', 'CANCELLED'):
             error_msg = (
@@ -264,12 +277,21 @@ def _extract_single_band_cog(
         'gdal_translate',
         '-b', str(band_number),
         '-of', 'COG',
-        '-nodata', str(no_data) if no_data is not None else '',
-        src_path,
-        dst_path,
     ]
-    cmd = [c for c in cmd if c]
-    subprocess.run(cmd, check=True, capture_output=True)
+    if no_data is not None:
+        cmd.extend(['-a_nodata', str(no_data)])
+    cmd.extend([src_path, dst_path])
+
+    result = subprocess.run(cmd, capture_output=True)
+    if result.returncode != 0:
+        logger.error(
+            'gdal_translate failed on %s: %s',
+            src_path,
+            result.stderr.decode(),
+        )
+        raise subprocess.CalledProcessError(
+            result.returncode, cmd, result.stdout, result.stderr
+        )
 
 
 def _reproject_to_3857(src_path: str, dst_path: str) -> None:
@@ -283,11 +305,27 @@ def _reproject_to_3857(src_path: str, dst_path: str) -> None:
         src_path,
         dst_path,
     ]
-    subprocess.run(cmd, check=True, capture_output=True)
+
+    result = subprocess.run(cmd, capture_output=True)
+    if result.returncode != 0:
+        logger.error(
+            'gdalwarp failed on %s: %s',
+            src_path,
+            result.stderr.decode(),
+        )
+        raise subprocess.CalledProcessError(
+            result.returncode, cmd, result.stdout, result.stderr
+        )
 
 
 def _get_cog_bounds(cog_path: str) -> dict:
-    """Get bounds of a COG file."""
+    """Get bounds of a COG file using gdalinfo.
+
+    Handles multiple gdalinfo output formats for bounds:
+    - cornerCoordinates (most common)
+    - geoLocation
+    - wgs84BoundingBox
+    """
     import subprocess
 
     cmd = [
@@ -298,16 +336,48 @@ def _get_cog_bounds(cog_path: str) -> dict:
     result = subprocess.run(cmd, check=True, capture_output=True)
     info = json.loads(result.stdout)
 
-    transform = (
-        info['geoLocation']['upperLeft'] +
-        info['geoLocation']['lowerRight']
+    # Try cornerCoordinates first (most common format)
+    if 'cornerCoordinates' in info:
+        coords = info['cornerCoordinates']
+        if 'upperLeft' in coords and 'lowerRight' in coords:
+            return {
+                'west': coords['upperLeft'][0],
+                'south': coords['lowerRight'][1],
+                'east': coords['lowerRight'][0],
+                'north': coords['upperLeft'][1],
+            }
+
+    # Try geoLocation format
+    if 'geoLocation' in info:
+        geo = info['geoLocation']
+        if 'upperLeft' in geo and 'lowerRight' in geo:
+            return {
+                'west': geo['upperLeft'][0],
+                'south': geo['lowerRight'][1],
+                'east': geo['lowerRight'][0],
+                'north': geo['upperLeft'][1],
+            }
+
+    # Try wgs84BoundingBox format
+    if 'wgs84BoundingBox' in info:
+        bbox = info['wgs84BoundingBox']
+        if len(bbox) >= 2:
+            return {
+                'west': bbox[0][0],
+                'south': bbox[0][1],
+                'east': bbox[1][0],
+                'north': bbox[1][1],
+            }
+
+    # Log the actual output for debugging
+    logger.warning(
+        'Could not extract bounds from gdalinfo output for %s: %s',
+        cog_path,
+        result.stdout.decode()[:500],
     )
-    return {
-        'west': transform[0],
-        'south': transform[3],
-        'east': transform[2],
-        'north': transform[1],
-    }
+    raise ValueError(
+        f'Could not extract bounds from gdalinfo output for {cog_path}'
+    )
 
 
 def _register_cog_layer(
@@ -318,23 +388,50 @@ def _register_cog_layer(
     job: TrendsEarthJob,
     add_to_map: bool = True,
 ) -> None:
-    """Register a COG as an InputLayer."""
-    bucket_name = getattr(settings, 'GCS_BUCKET_NAME', None)
+    """
+    Register a COG as a cloud_native_gis Layer + InputLayer.
 
-    tile_url = upload_file(
-        file_path=cog_path,
-        file_name=f'{internal_name}.tif',
-        bucket_name=bucket_name,
-    )
+    Creates a cloud_native_gis.Layer + LayerUpload to handle file storage,
+    then creates an InputLayer with a cog:// URL for map rendering.
+    """
+    from django.urls import reverse
 
     bounds = _get_cog_bounds(cog_path)
+    tif_filename = f'{layer_uuid}.tif'
 
-    te_provider, _ = DataProvider.objects.get_or_create(
-        name='Trends.Earth'
+    layer, _ = Layer.objects.get_or_create(
+        unique_id=str(layer_uuid),
+        layer_type=LayerType.RASTER_TILE,
+        defaults={
+            'name': internal_name,
+            'created_by': job.user,
+        }
     )
-    te_group, _ = LayerGroupType.objects.get_or_create(
-        name='trends-earth'
+
+    layer_upload, _ = LayerUpload.objects.get_or_create(
+        layer=layer,
+        defaults={'created_by': job.user}
     )
+    layer_upload.emptying_folder()
+    shutil.copy(cog_path, layer_upload.filepath(tif_filename))
+    layer_upload.save()
+
+    layer.refresh_from_db()
+    layer.is_ready = True
+    layer.metadata = {'bounds': bounds}
+    layer.save()
+
+    if not add_to_map:
+        return
+
+    base_url = settings.DJANGO_BACKEND_URL.rstrip('/')
+    tile_url = (
+        f'cog://{base_url}' +
+        reverse('serve-cog', kwargs={'layer_uuid': str(layer_uuid)})
+    )
+
+    te_provider, _ = DataProvider.objects.get_or_create(name='Trends.Earth')
+    te_group, _ = LayerGroupType.objects.get_or_create(name='trends-earth')
     InputLayerFixture.objects.get_or_create(
         uuid=layer_uuid,
         defaults={
@@ -374,6 +471,17 @@ def _download_and_store_te_cog(
                 r.raise_for_status()
                 with open(raw_path, 'wb') as fh:
                     shutil.copyfileobj(r.raw, fh)
+
+            file_size = os.path.getsize(raw_path)
+            logger.info(
+                'Downloaded TE COG for job %s index %s: %d bytes',
+                job.pk, cog_index, file_size,
+            )
+            if file_size == 0:
+                raise ValueError(
+                    f'Downloaded file for job {job.pk} cog index {cog_index} '
+                    f'is empty (0 bytes)'
+                )
 
             if bands:
                 for band_idx, band in enumerate(bands):

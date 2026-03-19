@@ -32,11 +32,12 @@ export type JobStatus =
 interface Props {
   jobId: number | null;
   onStatusChange?: (status: JobStatus) => void;
+  onComplete?: (jobId: number) => void;
 }
 
 const POLL_INTERVAL_MS = 10_000;
 
-const JobStatusBanner: React.FC<Props> = ({ jobId, onStatusChange }) => {
+const JobStatusBanner: React.FC<Props> = ({ jobId, onStatusChange, onComplete }) => {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
   const [status, setStatus] = React.useState<JobStatus>(null);
@@ -71,9 +72,8 @@ const JobStatusBanner: React.FC<Props> = ({ jobId, onStatusChange }) => {
             );
           }
           if (newStatus === 'COMPLETED') {
-            // Refresh the map layer list so the new TE layer appears
-            // immediately, even if the user is already on /map.
             dispatch(fetchLayers());
+            if (onComplete) onComplete(jobId);
           }
         }
       } catch {
@@ -132,10 +132,21 @@ const JobStatusBanner: React.FC<Props> = ({ jobId, onStatusChange }) => {
     return (
       <Alert status="error" borderRadius="md" mb={4}>
         <AlertIcon />
-        <AlertDescription>
-          Job #{jobId} failed:{' '}
-          {errorMsg || 'An error occurred on the server.'}
-        </AlertDescription>
+        <Box flex="1">
+          <AlertDescription>
+            Job #{jobId} failed:{' '}
+            {errorMsg || 'An error occurred on the server.'}
+          </AlertDescription>
+        </Box>
+        <Button
+          size="sm"
+          ml={4}
+          colorScheme="red"
+          variant="outline"
+          onClick={() => onComplete && onComplete(jobId)}
+        >
+          Dismiss
+        </Button>
       </Alert>
     );
   }

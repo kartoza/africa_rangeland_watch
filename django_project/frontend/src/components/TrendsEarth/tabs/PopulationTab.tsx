@@ -20,7 +20,8 @@ import {
 import { AppDispatch, RootState } from '../../../store';
 import {
   submitPopulationJob,
-  clearPopulationTaskId,
+  fetchPendingTeJobs,
+  removePendingJob,
 } from '../../../store/analysisSlice';
 import JobStatusBanner from '../JobStatusBanner';
 import AoiSelector from '../AoiSelector';
@@ -40,15 +41,30 @@ const range = (from: number, to: number): number[] =>
 
 const PopulationTab: React.FC<Props> = ({ onNavigateToAccount }) => {
   const dispatch = useDispatch<AppDispatch>();
-  const { trendsEarthConfigured, populationTaskId } = useSelector(
+  const { trendsEarthConfigured, pendingJobs } = useSelector(
     (state: RootState) => state.analysis
   );
 
+  const [dismissedJobs, setDismissedJobs] = useState<number[]>(() => {
+    try {
+      return JSON.parse(sessionStorage.getItem('dismissedPopulationJobs') || '[]');
+    } catch {
+      return [];
+    }
+  });
+
+  const populationJob = pendingJobs.find(
+    (job) => job.job_type === 'population' && !dismissedJobs.includes(job.id)
+  );
   const [locationIds, setLocationIds] = useState<number[]>([]);
   const [yearInitial, setYearInitial] = useState<number>(2000);
   const [yearFinal, setYearFinal] = useState<number>(2020);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  useEffect(() => {
+    dispatch(fetchPendingTeJobs());
+  }, [dispatch]);
 
   // Clamp end year when start year changes so end always > start.
   useEffect(() => {
@@ -59,7 +75,6 @@ const PopulationTab: React.FC<Props> = ({ onNavigateToAccount }) => {
 
   const handleSubmit = async () => {
     setSubmitError(null);
-    dispatch(clearPopulationTaskId());
     setSubmitting(true);
     const safeInitial = yearInitial;
     const safeFinal = yearFinal;
@@ -72,12 +87,21 @@ const PopulationTab: React.FC<Props> = ({ onNavigateToAccount }) => {
     );
     setSubmitting(false);
 
-    if (!submitPopulationJob.fulfilled.match(result)) {
+    if (submitPopulationJob.fulfilled.match(result)) {
+      dispatch(fetchPendingTeJobs());
+    } else {
       setSubmitError(
         (result.payload as { message: string })?.message ||
           'Failed to submit job.'
       );
     }
+  };
+
+  const handleJobComplete = (jobId: number) => {
+    dispatch(removePendingJob(jobId));
+    const updated = [...dismissedJobs, jobId];
+    setDismissedJobs(updated);
+    sessionStorage.setItem('dismissedPopulationJobs', JSON.stringify(updated));
   };
 
   return (
@@ -104,7 +128,10 @@ const PopulationTab: React.FC<Props> = ({ onNavigateToAccount }) => {
         </Alert>
       )}
 
-      <JobStatusBanner jobId={populationTaskId} />
+      <JobStatusBanner
+        jobId={populationJob?.id ?? null}
+        onComplete={handleJobComplete}
+      />
 
       {submitError && (
         <Alert status="error" mb={4} borderRadius="md">

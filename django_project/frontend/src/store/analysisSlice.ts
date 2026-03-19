@@ -60,22 +60,19 @@ interface AnalysisAPIResult {
 
 
 interface AnalysisState extends DataState {
-  analysis: Analysis | null; // this is from API response
+  analysis: Analysis | null;
   saveAnalysisFlag: boolean;
   referenceLayerDiff?: Layer;
-  analysisData: AnalysisData; // migrate from state
+  analysisData: AnalysisData;
   analysisTaskId?: number | null;
   analysisTaskStatus?: string;
   analysisTaskStartTime?: number | null;
-  indicators: Indicator[]; // this is from API response
+  indicators: Indicator[];
   trendsEarthConfigured: boolean;
   trendsEarthEmail: string | null;
   trendsEarthLoading: boolean;
   trendsEarthError: string | null;
-  ldnTaskId: number | null;
-  droughtTaskId: number | null;
-  urbanizationTaskId: number | null;
-  populationTaskId: number | null;
+  pendingJobs: PendingTeJob[];
 }
 
 const initialAnalysisState: AnalysisState = {
@@ -93,10 +90,7 @@ const initialAnalysisState: AnalysisState = {
   trendsEarthEmail: null,
   trendsEarthLoading: false,
   trendsEarthError: null,
-  ldnTaskId: null,
-  droughtTaskId: null,
-  urbanizationTaskId: null,
-  populationTaskId: null,
+  pendingJobs: [],
 };
 
 
@@ -253,6 +247,25 @@ export interface SubmitTePopulationPayload extends SubmitTeJobPayload {
 export interface SubmitTeJobResponse {
   job_id: number;
 }
+
+export interface PendingTeJob {
+  id: number;
+  job_type: 'ldn' | 'drought' | 'urbanization' | 'population';
+  status: 'PENDING' | 'RUNNING';
+  task_name: string;
+  created_at: string;
+}
+
+/** Fetch all PENDING or RUNNING Trends.Earth jobs for the current user. */
+export const fetchPendingTeJobs = createAsyncThunk(
+  'analysis/fetchPendingTeJobs',
+  async () => {
+    const response = await axios.get<PendingTeJob[]>(
+      '/api/trends-earth/jobs/pending/'
+    );
+    return response.data;
+  }
+);
 
 /** Submit a Trends.Earth LDN (SDG 15.3.1) job. */
 export const submitLdnJob = createAsyncThunk(
@@ -418,17 +431,10 @@ export const analysisSlice = createSlice({
     clearTrendsEarthError(state) {
       state.trendsEarthError = null;
     },
-    clearLdnTaskId(state) {
-      state.ldnTaskId = null;
-    },
-    clearDroughtTaskId(state) {
-      state.droughtTaskId = null;
-    },
-    clearUrbanizationTaskId(state) {
-      state.urbanizationTaskId = null;
-    },
-    clearPopulationTaskId(state) {
-      state.populationTaskId = null;
+    removePendingJob(state, action: PayloadAction<number>) {
+      state.pendingJobs = state.pendingJobs.filter(
+        (job) => job.id !== action.payload
+      );
     },
   },
   extraReducers: (builder) => {
@@ -570,18 +576,8 @@ export const analysisSlice = createSlice({
         state.trendsEarthLoading = false;
         state.trendsEarthError = parseError(action);
       })
-      // Persist submitted TE job IDs in Redux so polling survives navigation
-      .addCase(submitLdnJob.fulfilled, (state, action) => {
-        state.ldnTaskId = action.payload.job_id;
-      })
-      .addCase(submitDroughtJob.fulfilled, (state, action) => {
-        state.droughtTaskId = action.payload.job_id;
-      })
-      .addCase(submitUrbanizationJob.fulfilled, (state, action) => {
-        state.urbanizationTaskId = action.payload.job_id;
-      })
-      .addCase(submitPopulationJob.fulfilled, (state, action) => {
-        state.populationTaskId = action.payload.job_id;
+      .addCase(fetchPendingTeJobs.fulfilled, (state, action) => {
+        state.pendingJobs = action.payload;
       });
   }
 });
@@ -591,10 +587,7 @@ export const {
   setAnalysisCustomGeom,
   setMaxWaitAnalysisReached, toggleAnalysisLandscapeCommunity,
   clearTrendsEarthError,
-  clearLdnTaskId,
-  clearDroughtTaskId,
-  clearUrbanizationTaskId,
-  clearPopulationTaskId,
+  removePendingJob,
 } = analysisSlice.actions;
 
 export default analysisSlice.reducer;

@@ -20,7 +20,8 @@ import {
 import { AppDispatch, RootState } from '../../../store';
 import {
   submitLdnJob,
-  clearLdnTaskId,
+  fetchPendingTeJobs,
+  removePendingJob,
 } from '../../../store/analysisSlice';
 import JobStatusBanner from '../JobStatusBanner';
 import AoiSelector from '../AoiSelector';
@@ -42,15 +43,30 @@ const range = (from: number, to: number): number[] =>
 
 const LdnTab: React.FC<Props> = ({ onNavigateToAccount }) => {
   const dispatch = useDispatch<AppDispatch>();
-  const { trendsEarthConfigured, ldnTaskId } = useSelector(
+  const { trendsEarthConfigured, pendingJobs } = useSelector(
     (state: RootState) => state.analysis
   );
 
+  const [dismissedJobs, setDismissedJobs] = useState<number[]>(() => {
+    try {
+      return JSON.parse(sessionStorage.getItem('dismissedLdnJobs') || '[]');
+    } catch {
+      return [];
+    }
+  });
+
+  const ldnJob = pendingJobs.find(
+    (job) => job.job_type === 'ldn' && !dismissedJobs.includes(job.id)
+  );
   const [locationIds, setLocationIds] = useState<number[]>([]);
   const [yearInitial, setYearInitial] = useState<number>(2001);
   const [yearFinal, setYearFinal] = useState<number>(2015);
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+
+  useEffect(() => {
+    dispatch(fetchPendingTeJobs());
+  }, [dispatch]);
 
   // Clamp end year when start year changes so end is always at least
   // start + LDN_MIN_GAP (required by the TE Mann-Kendall trajectory test).
@@ -62,7 +78,6 @@ const LdnTab: React.FC<Props> = ({ onNavigateToAccount }) => {
 
   const handleSubmit = async () => {
     setSubmitError(null);
-    dispatch(clearLdnTaskId());
     setSubmitting(true);
     const safeInitial = yearInitial;
     const safeFinal = yearFinal;
@@ -75,12 +90,21 @@ const LdnTab: React.FC<Props> = ({ onNavigateToAccount }) => {
     );
     setSubmitting(false);
 
-    if (!submitLdnJob.fulfilled.match(result)) {
+    if (submitLdnJob.fulfilled.match(result)) {
+      dispatch(fetchPendingTeJobs());
+    } else {
       setSubmitError(
         (result.payload as { message: string })?.message ||
           'Failed to submit job.'
       );
     }
+  };
+
+  const handleJobComplete = (jobId: number) => {
+    dispatch(removePendingJob(jobId));
+    const updated = [...dismissedJobs, jobId];
+    setDismissedJobs(updated);
+    sessionStorage.setItem('dismissedLdnJobs', JSON.stringify(updated));
   };
 
   return (
@@ -108,7 +132,10 @@ const LdnTab: React.FC<Props> = ({ onNavigateToAccount }) => {
         </Alert>
       )}
 
-      <JobStatusBanner jobId={ldnTaskId} />
+      <JobStatusBanner
+        jobId={ldnJob?.id ?? null}
+        onComplete={handleJobComplete}
+      />
 
       {submitError && (
         <Alert status="error" mb={4} borderRadius="md">

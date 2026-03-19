@@ -6,6 +6,7 @@ import json
 import logging
 
 from django.contrib.gis.db.models import Union as GeoUnion
+from django.db.models import Max
 from rest_framework import status as drf_status
 from rest_framework import viewsets
 from rest_framework.decorators import action
@@ -266,6 +267,49 @@ class SubmitLdnJobView(APIView):
             {'job_id': job.pk},
             status=drf_status.HTTP_202_ACCEPTED
         )
+
+
+class PendingJobsView(APIView):
+    """
+    GET /api/trends-earth/jobs/pending/
+
+    Return the latest non-terminal job for each job type.
+    Terminal statuses (COMPLETED, CANCELLED) are excluded.
+    Used by the frontend to resume polling after page refresh.
+
+    Response body (JSON):
+        [{
+            "id": int,
+            "job_type": "ldn" | "drought" | "urbanization" | "population",
+            "status": "PENDING" | "RUNNING" | "FAILED",
+            "task_name": str,
+            "created_at": ISO datetime string
+        }, ...]
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        latest_per_type = (
+            TrendsEarthJob.objects
+            .filter(user=request.user)
+            .exclude(
+                status__in=[
+                    TrendsEarthJobStatus.COMPLETED,
+                    TrendsEarthJobStatus.CANCELLED,
+                ]
+            )
+            .values('job_type')
+            .annotate(latest_id=Max('id'))
+        )
+        job_ids = [item['latest_id'] for item in latest_per_type]
+        jobs = (
+            TrendsEarthJob.objects
+            .filter(id__in=job_ids)
+            .order_by('-created_at')
+        )
+        serializer = TrendsEarthJobSerializer(jobs, many=True)
+        return Response(serializer.data)
 
 
 class TaskStatusView(APIView):

@@ -3,7 +3,7 @@
  * UrbanizationTab.tsx
  * Tab for submitting SDG 11.3.1 sustainable urbanization jobs.
  */
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   Box,
@@ -23,7 +23,8 @@ import {
 import { AppDispatch, RootState } from '../../../store';
 import {
   submitUrbanizationJob,
-  clearUrbanizationTaskId,
+  fetchPendingTeJobs,
+  removePendingJob,
 } from '../../../store/analysisSlice';
 import JobStatusBanner from '../JobStatusBanner';
 import AoiSelector from '../AoiSelector';
@@ -34,10 +35,21 @@ interface Props {
 
 const UrbanizationTab: React.FC<Props> = ({ onNavigateToAccount }) => {
   const dispatch = useDispatch<AppDispatch>();
-  const { trendsEarthConfigured, urbanizationTaskId } = useSelector(
+  const { trendsEarthConfigured, pendingJobs } = useSelector(
     (state: RootState) => state.analysis
   );
 
+  const [dismissedJobs, setDismissedJobs] = useState<number[]>(() => {
+    try {
+      return JSON.parse(sessionStorage.getItem('dismissedUrbanizationJobs') || '[]');
+    } catch {
+      return [];
+    }
+  });
+
+  const urbanizationJob = pendingJobs.find(
+    (job) => job.job_type === 'urbanization' && !dismissedJobs.includes(job.id)
+  );
   const [locationIds, setLocationIds] = useState<number[]>([]);
   const [unAdju, setUnAdju] = useState<boolean>(false);
   const [isiThr, setIsiThr] = useState<number>(30);
@@ -49,9 +61,12 @@ const UrbanizationTab: React.FC<Props> = ({ onNavigateToAccount }) => {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
+  useEffect(() => {
+    dispatch(fetchPendingTeJobs());
+  }, [dispatch]);
+
   const handleSubmit = async () => {
     setSubmitError(null);
-    dispatch(clearUrbanizationTaskId());
     setSubmitting(true);
     const result = await dispatch(
       submitUrbanizationJob({
@@ -67,12 +82,21 @@ const UrbanizationTab: React.FC<Props> = ({ onNavigateToAccount }) => {
     );
     setSubmitting(false);
 
-    if (!submitUrbanizationJob.fulfilled.match(result)) {
+    if (submitUrbanizationJob.fulfilled.match(result)) {
+      dispatch(fetchPendingTeJobs());
+    } else {
       setSubmitError(
         (result.payload as { message: string })?.message ||
           'Failed to submit job.'
       );
     }
+  };
+
+  const handleJobComplete = (jobId: number) => {
+    dispatch(removePendingJob(jobId));
+    const updated = [...dismissedJobs, jobId];
+    setDismissedJobs(updated);
+    sessionStorage.setItem('dismissedUrbanizationJobs', JSON.stringify(updated));
   };
 
   return (
@@ -99,7 +123,10 @@ const UrbanizationTab: React.FC<Props> = ({ onNavigateToAccount }) => {
         </Alert>
       )}
 
-      <JobStatusBanner jobId={urbanizationTaskId} />
+      <JobStatusBanner
+        jobId={urbanizationJob?.id ?? null}
+        onComplete={handleJobComplete}
+      />
 
       {submitError && (
         <Alert status="error" mb={4} borderRadius="md">

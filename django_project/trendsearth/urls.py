@@ -12,6 +12,7 @@ from .views import (
     SubmitDroughtJobView,
     SubmitUrbanizationJobView,
     SubmitPopulationJobView,
+    PendingJobsView,
 )
 
 router = DefaultRouter()
@@ -22,6 +23,7 @@ router.register(
 )
 
 urlpatterns = [
+    path('jobs/pending/', PendingJobsView.as_view(), name='pending-jobs'),
     path('submit/ldn/', SubmitLdnJobView.as_view(), name='submit-ldn'),
     path(
         'submit/drought/',
