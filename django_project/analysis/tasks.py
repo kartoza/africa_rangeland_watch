@@ -25,9 +25,7 @@ from analysis.models import (
     AnalysisResultsCache,
     AnalysisRasterOutput,
     AnalysisTask,
-
     Indicator,
-
     UserIndicator,
     UserGEEAsset,
     UserAnalysisResults,
@@ -48,9 +46,7 @@ from analysis.utils import (
     get_cog_bounds,
     get_date_range_for_analysis
 )
-from layers.models import (
-    InputLayer as InputLayerFixture,
-)
+from layers.models import InputLayer as InputLayerFixture
 from layers.utils import upload_file
 
 logger = logging.getLogger(__name__)

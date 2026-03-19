@@ -1,5 +1,4 @@
 import math
-import logging
 from rest_framework import viewsets
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
@@ -19,10 +18,8 @@ from .serializer import UserAnalysisResultsSerializer
 from analysis.models import AnalysisRasterOutput
 from analysis.tasks import (
     generate_temporal_analysis_raster_output,
-    store_spatial_analysis_raster_output,
+    store_spatial_analysis_raster_output
 )
-
-logger = logging.getLogger(__name__)
 
 
 class UserAnalysisResultsViewSet(viewsets.ModelViewSet):
