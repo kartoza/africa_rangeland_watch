@@ -97,9 +97,9 @@ _WGS84_WKT = (
 
 # ---------------------------------------------------------------------------
 # Default land-cover legend nesting (ESA CCI -> UNCCD classes).
-# Loaded from: analysis/external/data/lc_nesting_esa_to_custom.json
+# Loaded from: trendsearth/external/data/lc_nesting_esa_to_custom.json
 # ---------------------------------------------------------------------------
-_DATA_DIR = os.path.join(os.path.dirname(__file__), 'data')
+_DATA_DIR = os.path.join(os.path.dirname(__file__), 'external', 'data')
 with open(
     os.path.join(_DATA_DIR, 'lc_nesting_esa_to_custom.json')
 ) as _f:
@@ -118,7 +118,7 @@ _LC_NESTING_CUSTOM_TO_IPCC["nesting"]["-32768"] = [-32768]
 
 # ---------------------------------------------------------------------------
 # Default UNCCD land-cover transition matrix.
-# Loaded from: analysis/external/data/lc_trans_matrix.json
+# Loaded from: trendsearth/external/data/lc_trans_matrix.json
 # ---------------------------------------------------------------------------
 with open(
     os.path.join(_DATA_DIR, 'lc_trans_matrix.json')

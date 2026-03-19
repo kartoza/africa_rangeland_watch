@@ -31,7 +31,7 @@ from .models import (
     TrendsEarthJobType,
     TrendsEarthSetting,
 )
-from analysis.external.trendsearth import (
+from .api import (
     TrendsEarthAuthError,
     TrendsEarthAPIError,
     refresh_access_token,
@@ -169,6 +169,35 @@ def poll_te_job_status(self, job_id: int):
     download and store each COG output.
     """
     job = TrendsEarthJob.objects.get(id=job_id)
+
+    latest_non_terminal = (
+        TrendsEarthJob.objects
+        .filter(
+            user=job.user,
+            job_type=job.job_type,
+            status__in=[
+                TrendsEarthJobStatus.PENDING,
+                TrendsEarthJobStatus.RUNNING,
+            ]
+        )
+        .order_by('-id')
+        .values_list('id', flat=True)
+        .first()
+    )
+
+    if latest_non_terminal != job.id:
+        TrendsEarthJob.objects.filter(
+            id=job.id,
+            status__in=[
+                TrendsEarthJobStatus.PENDING,
+                TrendsEarthJobStatus.RUNNING,
+            ]
+        ).update(status=TrendsEarthJobStatus.CANCELLED)
+        logger.info(
+            'Job %d superseded by job %d; marked CANCELLED.',
+            job.id, latest_non_terminal
+        )
+        return
 
     if not job.execution_id:
         logger.error(

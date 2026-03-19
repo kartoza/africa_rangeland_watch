@@ -67,7 +67,7 @@ class TrendsEarthSettingViewSet(viewsets.ViewSet):
         authenticate against the Trends.Earth API to obtain a
         refresh token.  Otherwise just save/update the email.
         """
-        from analysis.external.trendsearth import (
+        from .api import (
             TrendsEarthAuthError,
             TrendsEarthAPIError,
             authenticate,
@@ -333,6 +333,31 @@ class TaskStatusView(APIView):
             pk=job_id,
             user=request.user,
         )
+
+        terminal_statuses = [
+            TrendsEarthJobStatus.COMPLETED,
+            TrendsEarthJobStatus.FAILED,
+            TrendsEarthJobStatus.CANCELLED,
+        ]
+
+        if job.status in terminal_statuses:
+            latest_active = (
+                TrendsEarthJob.objects
+                .filter(
+                    user=request.user,
+                    job_type=job.job_type,
+                    status__in=[
+                        TrendsEarthJobStatus.PENDING,
+                        TrendsEarthJobStatus.RUNNING,
+                    ]
+                )
+                .order_by('-id')
+                .first()
+            )
+            if latest_active:
+                serializer = TrendsEarthJobSerializer(latest_active)
+                return Response(serializer.data)
+
         serializer = TrendsEarthJobSerializer(job)
         return Response(serializer.data)
 
