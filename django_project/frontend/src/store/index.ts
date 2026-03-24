@@ -1,4 +1,5 @@
-import { configureStore } from '@reduxjs/toolkit';
+import { configureStore, combineReducers } from '@reduxjs/toolkit';
+
 import authReducer from './authSlice';
 import ticketReducer from './ticketSlice';
 import feedbackReducer from './feedbackSlice';
@@ -19,29 +20,30 @@ import downloadReducer from './downloadSlice';
 import userAnalysisSearchReducer from './userAnalysisSearchSlice';
 import userIndicatorReducer from './userIndicatorSlice';
 
+const rootReducer = combineReducers({
+  auth: authReducer,
+  ticket: ticketReducer,
+  feedback: feedbackReducer,
+  organization: organizationReducer,
+  baseMap: baseMapReducer,
+  landscape: landscapeReducer,
+  layer: layerReducer,
+  mapConfig: mapConfigReducer,
+  analysis: analysisReducer,
+  upload: uploadReducer,
+  userProfile: userProfileReducer,
+  userAnalysis: userAnalysisReducer,
+  dashboard: dashboardReducer,
+  indicators: indicatorReducer,
+  alertSettings: alertSettingReducer,
+  dataPreview: dataPreviewReducer,
+  download: downloadReducer,
+  userAnalysisSearch: userAnalysisSearchReducer,
+  userIndicator: userIndicatorReducer,
+});
 
 const store = configureStore({
-  reducer: {
-    auth: authReducer,
-    ticket: ticketReducer,
-    feedback: feedbackReducer,
-    organization: organizationReducer,
-    baseMap: baseMapReducer,
-    landscape: landscapeReducer,
-    layer: layerReducer,
-    mapConfig: mapConfigReducer,
-    analysis: analysisReducer,
-    upload: uploadReducer,
-    userProfile: userProfileReducer, 
-    userAnalysis: userAnalysisReducer,
-    dashboard: dashboardReducer,
-    indicators: indicatorReducer,
-    alertSettings: alertSettingReducer,
-    dataPreview: dataPreviewReducer,
-    download: downloadReducer,
-    userAnalysisSearch: userAnalysisSearchReducer,
-    userIndicator: userIndicatorReducer,
-  },
+  reducer: rootReducer,
 });
 
 export type RootState = ReturnType<typeof store.getState>;

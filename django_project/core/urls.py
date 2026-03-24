@@ -90,6 +90,7 @@ urlpatterns = [
     path('', include('dashboard.urls')),
     path('', include('analysis.urls')),
     path('', include('earthranger.urls')),
+    path('api/trends-earth/', include('trendsearth.urls')),
     path('api/', include('alerts.urls')),
 ]
 

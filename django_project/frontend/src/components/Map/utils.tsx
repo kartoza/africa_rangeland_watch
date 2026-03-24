@@ -1,7 +1,7 @@
 import maplibregl, { FillLayerSpecification } from 'maplibre-gl';
 import { Layer } from '../../store/layerSlice';
 
-/** Return if layer exist or not */
+/** Return whether the layer exists on the map. */
 export const hasLayer = (map: maplibregl.Map, id: string) => {
   if (!map) {
     return false
@@ -9,19 +9,19 @@ export const hasLayer = (map: maplibregl.Map, id: string) => {
   return typeof map.getLayer(id) !== 'undefined'
 }
 
-/** Return if layer exist or not */
+/** Remove a layer from the map if it exists. */
 export const removeLayer = (map: maplibregl.Map, id: string) => {
   if (hasLayer(map, id)) {
     map.removeLayer(id)
   }
 }
 
-/** Return if source exist or not */
+/** Return whether the source exists on the map. */
 export const hasSource = (map: maplibregl.Map, id: string) => {
   return typeof map.getSource(id) !== 'undefined'
 }
 
-/** Return if source exist or not */
+/** Remove a source and all its dependent layers. */
 export const removeSource = (map: maplibregl.Map, id: string) => {
   map.getStyle().layers.filter(
     (layer: maplibregl.LayerSpecification) => {
@@ -88,9 +88,13 @@ export const doRenderLayer = (mapRef: React.MutableRefObject<maplibregl.Map | nu
     } else if (layer.type === "raster") {
       if (!hasSource(map, ID)) {
         if (layer.url.startsWith('cog://')) {
+          const cogUrl = layer.url.replace(
+            /^cog:\/\/https?:\/\/[^/]+/,
+            `cog://${window.location.origin}`
+          );
           map.addSource(ID, {
               type: "raster",
-              url: `${layer.url}`,
+              url: cogUrl,
               tileSize: 256
             }
           )

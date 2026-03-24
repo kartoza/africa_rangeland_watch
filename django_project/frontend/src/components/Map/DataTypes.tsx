@@ -40,6 +40,7 @@ export const GroupName = {
   NearRealtimeGroup: 'near-real-time',
   UserDefinedGroup: 'user-defined',
   EarthRangerGroup: 'earth-ranger',
+  TrendsEarthGroup: 'trends-earth',
 }
 export const COMMUNITY_ID = 'Communities'
 export const CUSTOM_GEOM_ID = 'CustomGeom'

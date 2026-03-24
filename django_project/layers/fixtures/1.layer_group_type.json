@@ -26,5 +26,12 @@
     "fields": {
         "name": "earth-ranger"
     }
+},
+{
+    "model": "layers.layergrouptype",
+    "pk": 5,
+    "fields": {
+        "name": "trends-earth"
+    }
 }
 ]

@@ -42,6 +42,7 @@ PROJECT_APPS = (
     'support',
     'feedback',
     'earthranger',
+    'trendsearth',
 )
 INSTALLED_APPS = INSTALLED_APPS + PROJECT_APPS
 

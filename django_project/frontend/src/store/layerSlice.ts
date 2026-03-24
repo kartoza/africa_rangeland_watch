@@ -9,7 +9,7 @@ export interface Layer {
   name: string;
   url: string;
   type: 'raster' | 'vector';
-  group: 'baseline' | 'near-real-time' | 'user-defined' | 'spatial_analysis' | 'analysis_output';
+  group: 'baseline' | 'near-real-time' | 'user-defined' | 'spatial_analysis' | 'analysis_output' | 'trends-earth';
   metadata?: {
     minValue: number;
     maxValue: number;
