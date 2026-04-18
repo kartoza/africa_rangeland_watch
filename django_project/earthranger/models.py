@@ -120,6 +120,16 @@ class EarthRangerEvents(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     data = models.JSONField(default=dict)
     geometry = models.GeometryField(null=True, blank=True)
+    event_type = models.CharField(
+        max_length=100,
+        null=False,
+        blank=True
+    )
+    event_category = models.CharField(
+        max_length=100,
+        null=False,
+        blank=True
+    )
 
 
 class EarthRangerObservation(models.Model):

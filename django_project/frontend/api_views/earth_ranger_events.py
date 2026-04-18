@@ -11,7 +11,9 @@ from django.db import connection
 from django.db.models import Q
 from django.http import Http404, HttpResponse
 from rest_framework.decorators import action
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework.viewsets import mixins, GenericViewSet
 
 from earthranger.models import EarthRangerEvents, EarthRangerSetting
@@ -142,3 +144,45 @@ class EarthRangerEventsViewSet(
         if not len(tiles):
             raise Http404()
         return HttpResponse(tiles, content_type="application/x-protobuf")
+
+
+class EarthRangerEventTypesAPI(APIView):
+    """
+    GET /api/earth-ranger/event-types/
+
+    Return the distinct (event_type, event_category) pairs available to
+    the requesting user, based on the privacy of the underlying
+    EarthRangerSetting records.
+
+    Authenticated users see events from public settings plus their own
+    private settings.  Unauthenticated users see public settings only.
+
+    Response body (JSON):
+        [
+            {"event_type": "...", "event_category": "..."},
+            ...
+        ]
+    """
+
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        if request.user.is_authenticated:
+            settings_filter = (
+                Q(privacy='public') | Q(user=request.user, privacy='private')
+            )
+        else:
+            settings_filter = Q(privacy='public')
+
+        earth_ranger_settings = EarthRangerSetting.objects.filter(
+            settings_filter
+        )
+
+        event_types = (
+            EarthRangerEvents.objects
+            .filter(earth_ranger_settings__in=earth_ranger_settings)
+            .exclude(event_type='')
+            .values_list('event_type', flat=True).distinct()
+        )
+
+        return Response(list(event_types))
