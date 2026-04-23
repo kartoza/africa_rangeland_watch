@@ -21,6 +21,7 @@ import LandscapeSelector from "./LandscapeSelector";
 import LeftSideLoading from "../Loading";
 import CogDownloadButton from "./LayerDownloadButton";
 import { selectIsLoggedIn } from "../../../../store/authSlice";
+import EarthRangerFilter from "./EarthRangerFilter";
 
 /* ---------- type aliases (unchanged) ------------------------------------ */
 export interface LayerCheckboxProps {
@@ -161,7 +162,8 @@ export default function Layers({
           }
         </AccordionPanel>
       </AccordionItem>
-
+      
+      {/* EarthRanger --------------------------------------------------- */}
       <AccordionItem>
         <h2>
           <AccordionButton>
@@ -188,6 +190,7 @@ export default function Layers({
               ) :
               <LeftSideLoading/>
           }
+          <EarthRangerFilter />
         </AccordionPanel>
       </AccordionItem>
 

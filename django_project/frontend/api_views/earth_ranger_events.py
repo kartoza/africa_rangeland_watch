@@ -8,7 +8,7 @@ import logging
 import math
 
 from django.db import connection
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.http import Http404, HttpResponse
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
@@ -122,6 +122,10 @@ class EarthRangerEventsViewSet(
             earth_ranger_settings__in=earth_ranger_settings
         ).distinct()
 
+        event_types = request.query_params.getlist('event_type')
+        if event_types:
+            events = events.filter(event_type__in=event_types)
+
         # If no events found, return 404
         if not events.exists():
             raise Http404()
@@ -182,7 +186,12 @@ class EarthRangerEventTypesAPI(APIView):
             EarthRangerEvents.objects
             .filter(earth_ranger_settings__in=earth_ranger_settings)
             .exclude(event_type='')
-            .values_list('event_type', flat=True).distinct()
+            .values('event_type')
+            .annotate(count=Count('id'))
+            .order_by('event_type')
         )
 
-        return Response(list(event_types))
+        return Response([
+            {'event_type': row['event_type'], 'count': row['count']}
+            for row in event_types
+        ])

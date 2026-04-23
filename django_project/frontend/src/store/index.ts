@@ -19,6 +19,7 @@ import dataPreviewReducer from './dataPreviewSlice';
 import downloadReducer from './downloadSlice';
 import userAnalysisSearchReducer from './userAnalysisSearchSlice';
 import userIndicatorReducer from './userIndicatorSlice';
+import earthRangerReducer from './earthRangerSlice';
 
 const rootReducer = combineReducers({
   auth: authReducer,
@@ -40,6 +41,7 @@ const rootReducer = combineReducers({
   download: downloadReducer,
   userAnalysisSearch: userAnalysisSearchReducer,
   userIndicator: userIndicatorReducer,
+  earthRanger: earthRangerReducer,
 });
 
 const store = configureStore({
