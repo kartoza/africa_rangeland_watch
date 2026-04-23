@@ -15,7 +15,8 @@ let clickFunction: (ev: maplibregl.MapMouseEvent & {
 } & Object) => void = null
 
 interface EarthRangerProps {
-  isVisible: boolean;
+  /** When omitted, visibility is read from Redux (main map page). */
+  isVisible?: boolean;
   mapRef?: React.MutableRefObject<maplibregl.Map | null>;
   isMapLoaded?: boolean;
   initialBound?: [number, number, number, number];
@@ -35,14 +36,14 @@ function buildTileUrl(eventTypes: string[]): string {
 }
 
 /** EarthRanger events layer. */
-export default function EarthRanger({ isVisible, mapRef: externalMapRef, isMapLoaded: externalIsMapLoaded, initialBound, eventTypes: propEventTypes }: EarthRangerProps) {
+export default function EarthRanger({ isVisible: propIsVisible, mapRef: externalMapRef, isMapLoaded: externalIsMapLoaded, initialBound, eventTypes: propEventTypes }: EarthRangerProps) {
   const contextMap = useMap();
   const mapRef = externalMapRef || contextMap.mapRef;
   const isMapLoaded = externalIsMapLoaded !== undefined ? externalIsMapLoaded : contextMap.isMapLoaded;
 
-  const reduxEventTypes = useSelector(
-    (s: RootState) => s.earthRanger.selectedEventTypes
-  );
+  const reduxEventTypes = useSelector((s: RootState) => s.earthRanger.selectedEventTypes);
+  const reduxIsVisible = useSelector((s: RootState) => s.earthRanger.isLayerVisible);
+  const isVisible = propIsVisible !== undefined ? propIsVisible : reduxIsVisible;
   // Prop takes precedence — dashboard widgets pass their own config; the main
   // Map page leaves this undefined so the global Redux filter applies.
   const selectedEventTypes = propEventTypes !== undefined ? propEventTypes : reduxEventTypes;

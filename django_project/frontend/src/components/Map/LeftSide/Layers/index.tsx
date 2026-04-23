@@ -22,6 +22,7 @@ import LeftSideLoading from "../Loading";
 import CogDownloadButton from "./LayerDownloadButton";
 import { selectIsLoggedIn } from "../../../../store/authSlice";
 import EarthRangerFilter from "./EarthRangerFilter";
+import { setEarthRangerVisible } from "../../../../store/earthRangerSlice";
 
 /* ---------- type aliases (unchanged) ------------------------------------ */
 export interface LayerCheckboxProps {
@@ -188,7 +189,7 @@ export default function Layers({
                   layer={layer}
                   onToggle={(checked) => {
                     setEarthRangerChecked(checked);
-                    checked ? onLayerChecked(layer) : onLayerUnchecked(layer);
+                    dispatch(setEarthRangerVisible(checked));
                   }}
                 />
               ) :
