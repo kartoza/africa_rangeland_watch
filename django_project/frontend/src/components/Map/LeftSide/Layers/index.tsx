@@ -51,6 +51,7 @@ export default function Layers({
   );
   const { exportTasks } = useSelector((s: RootState) => s.layer);
   const isAuthenticated = useSelector(selectIsLoggedIn);
+  const [earthRangerChecked, setEarthRangerChecked] = useState(false);
   const toast = useToast();
 
   /* ---------------- helpers -------------------------------------------- */
@@ -185,12 +186,15 @@ export default function Layers({
                 layer => <LayerCheckbox
                   key={layer.id}
                   layer={layer}
-                  onToggle={(checked) => checked ? onLayerChecked(layer) : onLayerUnchecked(layer)}
+                  onToggle={(checked) => {
+                    setEarthRangerChecked(checked);
+                    checked ? onLayerChecked(layer) : onLayerUnchecked(layer);
+                  }}
                 />
               ) :
               <LeftSideLoading/>
           }
-          <EarthRangerFilter />
+          {earthRangerChecked && <EarthRangerFilter />}
         </AccordionPanel>
       </AccordionItem>
 
