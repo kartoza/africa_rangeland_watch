@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { Box, Flex, Text, Button } from '@chakra-ui/react';
 import Select, { MultiValue } from 'react-select';
-import { useDispatch } from 'react-redux';
-import { AppDispatch } from '../../../../store';
+import { useDispatch, useSelector } from 'react-redux';
+import { AppDispatch, RootState } from '../../../../store';
 import { setSelectedEventTypes } from '../../../../store/earthRangerSlice';
 
 interface EventTypeRow {
@@ -86,6 +86,7 @@ interface Props {
 export default function EarthRangerFilter({ value, onChange, usePortal = true }: Props) {
   const dispatch = useDispatch<AppDispatch>();
   const isControlled = value !== undefined && onChange !== undefined;
+  const reduxSelected = useSelector((s: RootState) => s.earthRanger.selectedEventTypes);
 
   const [rows, setRows] = useState<EventTypeRow[]>([]);
   const [sortMode, setSortMode] = useState<SortMode>('name');
@@ -94,7 +95,13 @@ export default function EarthRangerFilter({ value, onChange, usePortal = true }:
   useEffect(() => {
     fetch('/frontend-api/earth-ranger/event-types/')
       .then((r) => r.json())
-      .then((data: EventTypeRow[]) => setRows(data))
+      .then((data: EventTypeRow[]) => {
+        setRows(data);
+        if (!isControlled && reduxSelected.length > 0) {
+          const opts = buildOptions(data, sortMode);
+          setInternalSelected(opts.filter((o) => reduxSelected.includes(o.value)));
+        }
+      })
       .catch(() => {});
   }, []);
 

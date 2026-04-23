@@ -1,10 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import maplibregl from "maplibre-gl";
-import { EARTH_EANGER_EVENT } from "../DataTypes";
 import { useMap } from '../../../MapContext';
 import EarthRangerEventPopup from './EarthRangerEventPopup';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../../store';
+import { EARTH_EANGER_EVENT } from "../DataTypes";
+
+const EARTH_RANGER_FILL_LAYER = `${EARTH_EANGER_EVENT}_fill`;
+const EARTH_RANGER_LINE_LAYER = `${EARTH_EANGER_EVENT}_line`;
+const CLICKABLE_LAYERS = [EARTH_EANGER_EVENT, EARTH_RANGER_FILL_LAYER];
 
 let clickFunction: (ev: maplibregl.MapMouseEvent & {
   features?: maplibregl.MapGeoJSONFeature[];
@@ -79,6 +83,8 @@ export default function EarthRanger({ isVisible, mapRef: externalMapRef, isMapLo
 
     // Always clean up first
     try {
+      if (map.getLayer(EARTH_RANGER_LINE_LAYER)) map.removeLayer(EARTH_RANGER_LINE_LAYER);
+      if (map.getLayer(EARTH_RANGER_FILL_LAYER)) map.removeLayer(EARTH_RANGER_FILL_LAYER);
       if (map.getLayer(EARTH_EANGER_EVENT)) map.removeLayer(EARTH_EANGER_EVENT);
       if (map.getSource(EARTH_EANGER_EVENT)) map.removeSource(EARTH_EANGER_EVENT);
     } catch (_) {}
@@ -95,11 +101,43 @@ export default function EarthRanger({ isVisible, mapRef: externalMapRef, isMapLo
         tiles: [buildTileUrl(selectedEventTypes)],
       });
 
-      const layerConfig: maplibregl.CircleLayerSpecification = {
+      const pointFilter: any = layerFilter
+        ? ['all', ['==', ['geometry-type'], 'Point'], layerFilter]
+        : ['==', ['geometry-type'], 'Point'];
+      const polygonFilter: any = layerFilter
+        ? ['all', ['in', ['geometry-type'], ['literal', ['Polygon', 'MultiPolygon']]], layerFilter]
+        : ['in', ['geometry-type'], ['literal', ['Polygon', 'MultiPolygon']]];
+
+      map.addLayer({
+        id: EARTH_RANGER_FILL_LAYER,
+        type: 'fill',
+        source: EARTH_EANGER_EVENT,
+        'source-layer': 'default',
+        filter: polygonFilter,
+        paint: {
+          'fill-color': '#FF0000',
+          'fill-opacity': 0.5,
+        },
+      });
+
+      map.addLayer({
+        id: EARTH_RANGER_LINE_LAYER,
+        type: 'line',
+        source: EARTH_EANGER_EVENT,
+        'source-layer': 'default',
+        filter: polygonFilter,
+        paint: {
+          'line-color': '#FF0000',
+          'line-width': 2,
+        },
+      });
+
+      map.addLayer({
         id: EARTH_EANGER_EVENT,
         type: 'circle',
         source: EARTH_EANGER_EVENT,
         'source-layer': 'default',
+        filter: pointFilter,
         paint: {
           'circle-radius': 15,
           'circle-color': '#FF0000',
@@ -108,11 +146,7 @@ export default function EarthRanger({ isVisible, mapRef: externalMapRef, isMapLo
           'circle-stroke-color': '#FFFFFF',
           'circle-stroke-opacity': 1,
         },
-      };
-
-      if (layerFilter) layerConfig.filter = layerFilter;
-
-      map.addLayer(layerConfig);
+      });
     } catch (err) {
       console.log('Error adding EarthRanger layer:', err);
     }
@@ -122,7 +156,7 @@ export default function EarthRanger({ isVisible, mapRef: externalMapRef, isMapLo
     const map = mapRef.current;
     if (!isMapLoaded || !map || !isVisible) return;
 
-    map.off('click', EARTH_EANGER_EVENT, clickFunction);
+    CLICKABLE_LAYERS.forEach((layerId) => map.off('click', layerId, clickFunction));
     clickFunction = (e: any) => {
       if (e.features && e.features.length > 0) {
         const feature = e.features[0];
@@ -142,18 +176,22 @@ export default function EarthRanger({ isVisible, mapRef: externalMapRef, isMapLo
         setPopupOpen(true);
       }
     };
-    map.on('click', EARTH_EANGER_EVENT, clickFunction);
+    CLICKABLE_LAYERS.forEach((layerId) => map.on('click', layerId, clickFunction));
 
     const handleMouseEnter = () => { map.getCanvas().style.cursor = 'pointer'; };
     const handleMouseLeave = () => { map.getCanvas().style.cursor = ''; };
 
-    (map as any).on('mouseenter', EARTH_EANGER_EVENT, handleMouseEnter);
-    (map as any).on('mouseleave', EARTH_EANGER_EVENT, handleMouseLeave);
+    CLICKABLE_LAYERS.forEach((layerId) => {
+      (map as any).on('mouseenter', layerId, handleMouseEnter);
+      (map as any).on('mouseleave', layerId, handleMouseLeave);
+    });
 
     return () => {
-      map.off('click', EARTH_EANGER_EVENT, clickFunction);
-      (map as any).off('mouseenter', EARTH_EANGER_EVENT, handleMouseEnter);
-      (map as any).off('mouseleave', EARTH_EANGER_EVENT, handleMouseLeave);
+      CLICKABLE_LAYERS.forEach((layerId) => {
+        map.off('click', layerId, clickFunction);
+        (map as any).off('mouseenter', layerId, handleMouseEnter);
+        (map as any).off('mouseleave', layerId, handleMouseLeave);
+      });
     };
   }, [isMapLoaded, isVisible]);
 
