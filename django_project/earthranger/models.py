@@ -131,6 +131,12 @@ class EarthRangerEvents(models.Model):
         blank=True
     )
 
+    def save(self, *args, **kwargs):
+        if self.data:
+            self.event_type = self.data.get('event_type', '') or ''
+            self.event_category = self.data.get('event_category', '') or ''
+        super().save(*args, **kwargs)
+
 
 class EarthRangerObservation(models.Model):
     name = models.CharField(
