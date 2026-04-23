@@ -15,6 +15,8 @@ interface EarthRangerProps {
   mapRef?: React.MutableRefObject<maplibregl.Map | null>;
   isMapLoaded?: boolean;
   initialBound?: [number, number, number, number];
+  /** When provided, overrides the global Redux filter (used by dashboard widgets). */
+  eventTypes?: string[];
 }
 
 function buildTileUrl(eventTypes: string[]): string {
@@ -29,14 +31,17 @@ function buildTileUrl(eventTypes: string[]): string {
 }
 
 /** EarthRanger events layer. */
-export default function EarthRanger({ isVisible, mapRef: externalMapRef, isMapLoaded: externalIsMapLoaded, initialBound }: EarthRangerProps) {
+export default function EarthRanger({ isVisible, mapRef: externalMapRef, isMapLoaded: externalIsMapLoaded, initialBound, eventTypes: propEventTypes }: EarthRangerProps) {
   const contextMap = useMap();
   const mapRef = externalMapRef || contextMap.mapRef;
   const isMapLoaded = externalIsMapLoaded !== undefined ? externalIsMapLoaded : contextMap.isMapLoaded;
 
-  const selectedEventTypes = useSelector(
+  const reduxEventTypes = useSelector(
     (s: RootState) => s.earthRanger.selectedEventTypes
   );
+  // Prop takes precedence — dashboard widgets pass their own config; the main
+  // Map page leaves this undefined so the global Redux filter applies.
+  const selectedEventTypes = propEventTypes !== undefined ? propEventTypes : reduxEventTypes;
 
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [popupOpen, setPopupOpen] = useState(false);

@@ -200,10 +200,11 @@ export const ReusableMapLibre = forwardRef(
     return (
       <Box id={props.mapContainerId} flexGrow={1}>
         <EarthRanger
-          isVisible={props.config?.earth_ranger} 
-          isMapLoaded={isMapLoaded} 
+          isVisible={props.config?.earth_ranger}
+          isMapLoaded={isMapLoaded}
           mapRef={mapRef}
-          initialBound={props.initialBound}/>
+          initialBound={props.initialBound}
+          eventTypes={props.config?.earth_ranger_event_types ?? []}/>
       </Box>
     )
   }

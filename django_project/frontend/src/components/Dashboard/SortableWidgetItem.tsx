@@ -26,6 +26,7 @@ import {
 import axios from 'axios';
 import { CSS } from '@dnd-kit/utilities';
 import { FiSettings, FiX, FiInfo, FiEdit2, FiSlash, FiCheck, FiDownload, FiAlertCircle } from 'react-icons/fi';
+import EarthRangerFilter from '../Map/LeftSide/Layers/EarthRangerFilter';
 import {DragHandleIcon} from '@chakra-ui/icons';
 import ChartWidget from './ChartWidget';
 import TableWidget from './TableWidget';
@@ -82,7 +83,6 @@ const SortableWidgetItem: React.FC<{
   const constraints = widgetConstraints[widget.type];
   const [downloadLoading, setDownloadLoading] = useState(false);
   const cardRef = React.useRef<HTMLDivElement>(null);
-
 
   // Periodic fetch function
   const fetchWidgetStatus = async () => {
@@ -380,7 +380,7 @@ const SortableWidgetItem: React.FC<{
                 />
               )}              
               <EditableWrapper isEditable={isEditable}>
-                <Menu>
+                <Menu closeOnBlur={false}>
                   <MenuButton
                     as={IconButton}
                     icon={<FiSettings size={16} />}
@@ -419,19 +419,38 @@ const SortableWidgetItem: React.FC<{
                       <Text px={3} py={2} pt={4} fontSize="xs" fontWeight="bold" color="gray.500" textTransform="uppercase">
                         Layers
                       </Text>
-                      <MenuItem 
-                        key={'earth-ranger'} 
-                        closeOnSelect={false}
-                      >
+                      <MenuItem key={'earth-ranger'} closeOnSelect={false}>
                         <Checkbox
                           isChecked={widget.config?.earth_ranger === true}
                           onChange={(e) => {
-                            onConfigChange(widget.id, { ...widget.config, earth_ranger: e.target.checked });
+                            onConfigChange(widget.id, {
+                              ...widget.config,
+                              earth_ranger: e.target.checked,
+                              earth_ranger_event_types: e.target.checked
+                                ? (widget.config?.earth_ranger_event_types ?? [])
+                                : [],
+                            });
                           }}
                         >
                           Earth Ranger
                         </Checkbox>
                       </MenuItem>
+                      {widget.config?.earth_ranger === true && (
+                        <MenuItem closeOnSelect={false} px={3} py={1}>
+                          <Box w="100%">
+                            <EarthRangerFilter
+                              usePortal={false}
+                              value={widget.config?.earth_ranger_event_types ?? []}
+                              onChange={(types) =>
+                                onConfigChange(widget.id, {
+                                  ...widget.config,
+                                  earth_ranger_event_types: types,
+                                })
+                              }
+                            />
+                          </Box>
+                        </MenuItem>
+                      )}
                     </>}
                   </MenuList>
                 </Menu>

@@ -35,7 +35,7 @@ function buildOptions(rows: EventTypeRow[], sort: SortMode): OptionType[] {
     : opts.sort((a, b) => a.label.localeCompare(b.label));
 }
 
-const selectStyles = {
+export const earthRangerSelectStyles = {
   control: (base: any) => ({
     ...base,
     minHeight: '2rem',
@@ -68,11 +68,28 @@ const selectStyles = {
   placeholder: (base: any) => ({ ...base, fontSize: '13px', color: '#1A202C' }),
 };
 
-export default function EarthRangerFilter() {
+interface Props {
+  /** Controlled mode: current selected event type values */
+  value?: string[];
+  /** Controlled mode: called when selection changes */
+  onChange?: (types: string[]) => void;
+  /** Set false when rendering inside a Chakra Menu to avoid portal/blur conflicts */
+  usePortal?: boolean;
+}
+
+/**
+ * Searchable multiselect for EarthRanger event types.
+ *
+ * Without props: reads/writes the global Redux filter (Map page).
+ * With value+onChange props: fully controlled, no Redux side-effects (dashboard widgets).
+ */
+export default function EarthRangerFilter({ value, onChange, usePortal = true }: Props) {
   const dispatch = useDispatch<AppDispatch>();
+  const isControlled = value !== undefined && onChange !== undefined;
+
   const [rows, setRows] = useState<EventTypeRow[]>([]);
   const [sortMode, setSortMode] = useState<SortMode>('name');
-  const [selected, setSelected] = useState<MultiValue<OptionType>>([]);
+  const [internalSelected, setInternalSelected] = useState<MultiValue<OptionType>>([]);
 
   useEffect(() => {
     fetch('/frontend-api/earth-ranger/event-types/')
@@ -83,9 +100,18 @@ export default function EarthRangerFilter() {
 
   const options = buildOptions(rows, sortMode);
 
+  // Derive the currently-selected options from either controlled value or internal state
+  const selected = isControlled
+    ? options.filter((o) => value.includes(o.value))
+    : internalSelected;
+
   const handleChange = (newValue: MultiValue<OptionType>) => {
-    setSelected(newValue);
-    dispatch(setSelectedEventTypes(newValue.map((o) => o.value)));
+    if (isControlled) {
+      onChange(newValue.map((o) => o.value));
+    } else {
+      setInternalSelected(newValue);
+      dispatch(setSelectedEventTypes(newValue.map((o) => o.value)));
+    }
   };
 
   const sortBtn = (mode: SortMode, label: string) => (
@@ -107,7 +133,7 @@ export default function EarthRangerFilter() {
   return (
     <Box mt={2} mb={1}>
       <Flex align="center" justify="space-between" mb={1}>
-          <b>Event Type</b>
+        <b>Event Type</b>
         <Flex gap={1} align="center">
           <Text fontSize="10px" color="gray.400">Sort:</Text>
           {sortBtn('name', 'Name')}
@@ -120,9 +146,9 @@ export default function EarthRangerFilter() {
         value={selected}
         onChange={handleChange}
         placeholder="All event types…"
-        styles={selectStyles}
-        menuPortalTarget={document.body}
-        menuPosition="fixed"
+        styles={earthRangerSelectStyles}
+        menuPortalTarget={usePortal ? document.body : null}
+        menuPosition={usePortal ? 'fixed' : 'absolute'}
         isClearable
         isSearchable
       />
