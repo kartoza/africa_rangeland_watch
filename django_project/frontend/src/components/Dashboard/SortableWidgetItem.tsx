@@ -19,6 +19,12 @@ import {
   Input,
   Checkbox,
   Spinner,
+  Modal,
+  ModalOverlay,
+  ModalContent,
+  ModalHeader,
+  ModalBody,
+  ModalCloseButton,
 } from '@chakra-ui/react';
 import {
   useSortable,
@@ -26,6 +32,7 @@ import {
 import axios from 'axios';
 import { CSS } from '@dnd-kit/utilities';
 import { FiSettings, FiX, FiInfo, FiEdit2, FiSlash, FiCheck, FiDownload, FiAlertCircle } from 'react-icons/fi';
+import { FaFilter } from 'react-icons/fa6';
 import EarthRangerFilter from '../Map/LeftSide/Layers/EarthRangerFilter';
 import {DragHandleIcon} from '@chakra-ui/icons';
 import ChartWidget from './ChartWidget';
@@ -82,6 +89,7 @@ const SortableWidgetItem: React.FC<{
   const config = heightConfig[widget.height];
   const constraints = widgetConstraints[widget.type];
   const [downloadLoading, setDownloadLoading] = useState(false);
+  const [isEarthRangerFilterOpen, setIsEarthRangerFilterOpen] = useState(false);
   const cardRef = React.useRef<HTMLDivElement>(null);
 
   // Periodic fetch function
@@ -420,37 +428,35 @@ const SortableWidgetItem: React.FC<{
                         Layers
                       </Text>
                       <MenuItem key={'earth-ranger'} closeOnSelect={false}>
-                        <Checkbox
-                          isChecked={widget.config?.earth_ranger === true}
-                          onChange={(e) => {
-                            onConfigChange(widget.id, {
-                              ...widget.config,
-                              earth_ranger: e.target.checked,
-                              earth_ranger_event_types: e.target.checked
-                                ? (widget.config?.earth_ranger_event_types ?? [])
-                                : [],
-                            });
-                          }}
-                        >
-                          Earth Ranger
-                        </Checkbox>
-                      </MenuItem>
-                      {widget.config?.earth_ranger === true && (
-                        <MenuItem closeOnSelect={false} px={3} py={1}>
-                          <Box w="100%">
-                            <EarthRangerFilter
-                              usePortal={false}
-                              value={widget.config?.earth_ranger_event_types ?? []}
-                              onChange={(types) =>
-                                onConfigChange(widget.id, {
-                                  ...widget.config,
-                                  earth_ranger_event_types: types,
-                                })
-                              }
+                        <HStack spacing={2} justify="space-between" w="100%">
+                          <Checkbox
+                            isChecked={widget.config?.earth_ranger === true}
+                            onChange={(e) => {
+                              onConfigChange(widget.id, {
+                                ...widget.config,
+                                earth_ranger: e.target.checked,
+                                earth_ranger_event_types: e.target.checked
+                                  ? (widget.config?.earth_ranger_event_types ?? [])
+                                  : [],
+                              });
+                            }}
+                          >
+                            Earth Ranger Events
+                          </Checkbox>
+                          {widget.config?.earth_ranger === true && (
+                            <IconButton
+                              icon={<FaFilter size={12} />}
+                              size="xs"
+                              variant="ghost"
+                              aria-label="Filter Earth Ranger events"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setIsEarthRangerFilterOpen(true);
+                              }}
                             />
-                          </Box>
-                        </MenuItem>
-                      )}
+                          )}
+                        </HStack>
+                      </MenuItem>
                     </>}
                   </MenuList>
                 </Menu>
@@ -470,6 +476,25 @@ const SortableWidgetItem: React.FC<{
           {renderWidgetContent()}
         </CardBody>
       </Card>
+      <Modal isOpen={isEarthRangerFilterOpen} onClose={() => setIsEarthRangerFilterOpen(false)}>
+        <ModalOverlay />
+        <ModalContent bg="white">
+          <ModalHeader>Earth Ranger Event Filter</ModalHeader>
+          <ModalCloseButton />
+          <ModalBody pb={6}>
+            <EarthRangerFilter
+              usePortal={false}
+              value={widget.config?.earth_ranger_event_types ?? []}
+              onChange={(types) =>
+                onConfigChange(widget.id, {
+                  ...widget.config,
+                  earth_ranger_event_types: types,
+                })
+              }
+            />
+          </ModalBody>
+        </ModalContent>
+      </Modal>
     </GridItem>
   );
 };

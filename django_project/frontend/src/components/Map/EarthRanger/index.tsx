@@ -109,30 +109,7 @@ export default function EarthRanger({ isVisible: propIsVisible, mapRef: external
         ? ['all', ['in', ['geometry-type'], ['literal', ['Polygon', 'MultiPolygon']]], layerFilter]
         : ['in', ['geometry-type'], ['literal', ['Polygon', 'MultiPolygon']]];
 
-      map.addLayer({
-        id: EARTH_RANGER_FILL_LAYER,
-        type: 'fill',
-        source: EARTH_EANGER_EVENT,
-        'source-layer': 'default',
-        filter: polygonFilter,
-        paint: {
-          'fill-color': '#FF0000',
-          'fill-opacity': 0.5,
-        },
-      });
-
-      map.addLayer({
-        id: EARTH_RANGER_LINE_LAYER,
-        type: 'line',
-        source: EARTH_EANGER_EVENT,
-        'source-layer': 'default',
-        filter: polygonFilter,
-        paint: {
-          'line-color': '#FF0000',
-          'line-width': 2,
-        },
-      });
-
+      // Add point layer first so polygon layers can be inserted below it.
       map.addLayer({
         id: EARTH_EANGER_EVENT,
         type: 'circle',
@@ -148,6 +125,31 @@ export default function EarthRanger({ isVisible: propIsVisible, mapRef: external
           'circle-stroke-opacity': 1,
         },
       });
+
+      // Insert polygon layers below the point layer.
+      map.addLayer({
+        id: EARTH_RANGER_FILL_LAYER,
+        type: 'fill',
+        source: EARTH_EANGER_EVENT,
+        'source-layer': 'default',
+        filter: polygonFilter,
+        paint: {
+          'fill-color': '#FF0000',
+          'fill-opacity': 0.5,
+        },
+      }, EARTH_EANGER_EVENT);
+
+      map.addLayer({
+        id: EARTH_RANGER_LINE_LAYER,
+        type: 'line',
+        source: EARTH_EANGER_EVENT,
+        'source-layer': 'default',
+        filter: polygonFilter,
+        paint: {
+          'line-color': '#FF0000',
+          'line-width': 2,
+        },
+      }, EARTH_EANGER_EVENT);
     } catch (err) {
       console.log('Error adding EarthRanger layer:', err);
     }
