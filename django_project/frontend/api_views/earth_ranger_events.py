@@ -136,7 +136,9 @@ class EarthRangerEventsViewSet(
             events = events.filter(event_time__date__lte=end_date)
 
         community_ids = [
-            int(c) for c in request.query_params.getlist('community_id') if c.isdigit()
+            int(c) for c in request.query_params.getlist(
+                'community_id'
+            ) if c.isdigit()
         ]
         landscape_id = request.query_params.get('landscape_id')
         if community_ids:
