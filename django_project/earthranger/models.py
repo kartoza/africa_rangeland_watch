@@ -2,6 +2,7 @@ from django.contrib.gis.db import models
 from django.contrib.auth.models import User
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
+from django.utils.dateparse import parse_datetime
 
 
 class APISchedule(models.Model):
@@ -130,11 +131,18 @@ class EarthRangerEvents(models.Model):
         null=False,
         blank=True
     )
+    event_time = models.DateTimeField(
+        null=True,
+        blank=True,
+        db_index=True,
+        help_text="When the event occurred, sourced from the 'time' field in the EarthRanger API response."
+    )
 
     def save(self, *args, **kwargs):
         if self.data:
             self.event_type = self.data.get('event_type', '') or ''
             self.event_category = self.data.get('event_category', '') or ''
+            self.event_time = parse_datetime(self.data.get('time', '') or '') or None
         super().save(*args, **kwargs)
 
 
