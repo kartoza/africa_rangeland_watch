@@ -126,6 +126,13 @@ class EarthRangerEventsViewSet(
         if event_types:
             events = events.filter(event_type__in=event_types)
 
+        start_date = request.query_params.get('start_date')
+        end_date = request.query_params.get('end_date')
+        if start_date:
+            events = events.filter(event_time__date__gte=start_date)
+        if end_date:
+            events = events.filter(event_time__date__lte=end_date)
+
         # If no events found, return 404
         if not events.exists():
             raise Http404()

@@ -22,31 +22,38 @@ interface EarthRangerProps {
   initialBound?: [number, number, number, number];
   /** When provided, overrides the global Redux filter (used by dashboard widgets). */
   eventTypes?: string[];
+  /** When provided, overrides the global Redux date range. */
+  startDate?: string | null;
+  endDate?: string | null;
 }
 
-function buildTileUrl(eventTypes: string[]): string {
+function buildTileUrl(eventTypes: string[], startDate?: string | null, endDate?: string | null): string {
   const base =
     document.location.origin +
     '/frontend-api/earth-ranger/events/vector_tile/{z}/{x}/{y}/';
-  if (!eventTypes.length) return base;
-  const qs = eventTypes
-    .map((t) => `event_type=${encodeURIComponent(t)}`)
-    .join('&');
-  return `${base}?${qs}`;
+  const params: string[] = [];
+  eventTypes.forEach((t) => params.push(`event_type=${encodeURIComponent(t)}`));
+  if (startDate) params.push(`start_date=${encodeURIComponent(startDate)}`);
+  if (endDate) params.push(`end_date=${encodeURIComponent(endDate)}`);
+  return params.length ? `${base}?${params.join('&')}` : base;
 }
 
 /** EarthRanger events layer. */
-export default function EarthRanger({ isVisible: propIsVisible, mapRef: externalMapRef, isMapLoaded: externalIsMapLoaded, initialBound, eventTypes: propEventTypes }: EarthRangerProps) {
+export default function EarthRanger({ isVisible: propIsVisible, mapRef: externalMapRef, isMapLoaded: externalIsMapLoaded, initialBound, eventTypes: propEventTypes, startDate: propStartDate, endDate: propEndDate }: EarthRangerProps) {
   const contextMap = useMap();
   const mapRef = externalMapRef || contextMap.mapRef;
   const isMapLoaded = externalIsMapLoaded !== undefined ? externalIsMapLoaded : contextMap.isMapLoaded;
 
   const reduxEventTypes = useSelector((s: RootState) => s.earthRanger.selectedEventTypes);
   const reduxIsVisible = useSelector((s: RootState) => s.earthRanger.isLayerVisible);
+  const reduxStartDate = useSelector((s: RootState) => s.earthRanger.startDate);
+  const reduxEndDate = useSelector((s: RootState) => s.earthRanger.endDate);
   const isVisible = propIsVisible !== undefined ? propIsVisible : reduxIsVisible;
   // Prop takes precedence — dashboard widgets pass their own config; the main
   // Map page leaves this undefined so the global Redux filter applies.
   const selectedEventTypes = propEventTypes !== undefined ? propEventTypes : reduxEventTypes;
+  const startDate = propStartDate !== undefined ? propStartDate : reduxStartDate;
+  const endDate = propEndDate !== undefined ? propEndDate : reduxEndDate;
 
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [popupOpen, setPopupOpen] = useState(false);
@@ -99,7 +106,7 @@ export default function EarthRanger({ isVisible: propIsVisible, mapRef: external
     try {
       map.addSource(EARTH_EANGER_EVENT, {
         type: 'vector',
-        tiles: [buildTileUrl(selectedEventTypes)],
+        tiles: [buildTileUrl(selectedEventTypes, startDate, endDate)],
       });
 
       const pointFilter: any = layerFilter
@@ -153,7 +160,7 @@ export default function EarthRanger({ isVisible: propIsVisible, mapRef: external
     } catch (err) {
       console.log('Error adding EarthRanger layer:', err);
     }
-  }, [isMapLoaded, isVisible, selectedEventTypes]);
+  }, [isMapLoaded, isVisible, selectedEventTypes, startDate, endDate]);
 
   useEffect(() => {
     const map = mapRef.current;
