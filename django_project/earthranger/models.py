@@ -135,14 +135,19 @@ class EarthRangerEvents(models.Model):
         null=True,
         blank=True,
         db_index=True,
-        help_text="When the event occurred, sourced from the 'time' field in the EarthRanger API response."
+        help_text=(
+            "When the event occurred, sourced from the 'time' field "
+            "in the EarthRanger API response."
+        )
     )
 
     def save(self, *args, **kwargs):
         if self.data:
             self.event_type = self.data.get('event_type', '') or ''
             self.event_category = self.data.get('event_category', '') or ''
-            self.event_time = parse_datetime(self.data.get('time', '') or '') or None
+            self.event_time = parse_datetime(
+                self.data.get('time', '') or ''
+            ) or None
         super().save(*args, **kwargs)
 
 
