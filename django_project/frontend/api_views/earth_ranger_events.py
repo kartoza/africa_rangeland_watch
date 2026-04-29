@@ -16,7 +16,9 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.viewsets import mixins, GenericViewSet
 
+from django.contrib.gis.db.models import Union
 from earthranger.models import EarthRangerEvents, EarthRangerSetting
+from analysis.models import LandscapeCommunity, Landscape
 from core.pagination import Pagination
 from frontend.serializers.earth_ranger import EarthRangerEventSerializer
 
@@ -132,6 +134,21 @@ class EarthRangerEventsViewSet(
             events = events.filter(event_time__date__gte=start_date)
         if end_date:
             events = events.filter(event_time__date__lte=end_date)
+
+        community_ids = [
+            int(c) for c in request.query_params.getlist('community_id') if c.isdigit()
+        ]
+        landscape_id = request.query_params.get('landscape_id')
+        if community_ids:
+            community_geom = LandscapeCommunity.objects.filter(
+                id__in=community_ids
+            ).aggregate(geom=Union('geometry'))['geom']
+            if community_geom:
+                events = events.filter(geometry__intersects=community_geom)
+        elif landscape_id and landscape_id.isdigit():
+            landscape = Landscape.objects.filter(id=int(landscape_id)).first()
+            if landscape and landscape.bbox:
+                events = events.filter(geometry__intersects=landscape.bbox)
 
         # If no events found, return 404
         if not events.exists():
