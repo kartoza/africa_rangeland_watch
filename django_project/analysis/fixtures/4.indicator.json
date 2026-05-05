@@ -424,5 +424,93 @@
         },
         "is_active": true
     }
+},
+{
+    "model": "analysis.indicator",
+    "pk": 13,
+    "fields": {
+        "name": "Land Degradation Neutrality (SDG 15.3.1)",
+        "description": "Annual SDG 15.3.1 land degradation neutrality indicator derived from Trends.Earth.",
+        "variable_name": "Land Degradation Neutrality (SDG 15.3.1)",
+        "source": "trends-earth",
+        "analysis_types": ["Temporal", "Spatial"],
+        "temporal_resolutions": ["Annual"],
+        "metadata": {
+            "colors": ["#d7191c", "#fdae61", "#ffffbf", "#a6d96a", "#1a9641"],
+            "opacity": 0.8,
+            "minValue": -1,
+            "maxValue": 1
+        },
+        "config": {
+            "asset_keys": ["trendsearth_ldn"]
+        },
+        "is_active": true
+    }
+},
+{
+    "model": "analysis.indicator",
+    "pk": 14,
+    "fields": {
+        "name": "Drought",
+        "description": "Annual drought indicator derived from Trends.Earth.",
+        "variable_name": "Drought",
+        "source": "trends-earth",
+        "analysis_types": ["Temporal", "Spatial"],
+        "temporal_resolutions": ["Annual"],
+        "metadata": {
+            "colors": ["#ffffb2", "#fecc5c", "#fd8d3c", "#f03b20", "#bd0026"],
+            "opacity": 0.8,
+            "minValue": 0,
+            "maxValue": 1
+        },
+        "config": {
+            "asset_keys": ["trendsearth_drought"]
+        },
+        "is_active": true
+    }
+},
+{
+    "model": "analysis.indicator",
+    "pk": 15,
+    "fields": {
+        "name": "Sustainable Urbanization (SDG 11.3.1)",
+        "description": "Sustainable urbanization indicator (SDG 11.3.1) derived from Trends.Earth.",
+        "variable_name": "Sustainable Urbanization (SDG 11.3.1)",
+        "source": "trends-earth",
+        "analysis_types": ["Temporal", "Spatial"],
+        "temporal_resolutions": ["Annual"],
+        "metadata": {
+            "colors": ["#f7f7f7", "#cccccc", "#969696", "#636363", "#252525"],
+            "opacity": 0.8,
+            "minValue": 0,
+            "maxValue": 1
+        },
+        "config": {
+            "asset_keys": ["trendsearth_urbanization"]
+        },
+        "is_active": true
+    }
+},
+{
+    "model": "analysis.indicator",
+    "pk": 16,
+    "fields": {
+        "name": "Population",
+        "description": "Annual population indicator derived from Trends.Earth.",
+        "variable_name": "Population",
+        "source": "trends-earth",
+        "analysis_types": ["Temporal", "Spatial"],
+        "temporal_resolutions": ["Annual"],
+        "metadata": {
+            "colors": ["#ffffcc", "#a1dab4", "#41b6c4", "#2c7fb8", "#253494"],
+            "opacity": 0.8,
+            "minValue": 0,
+            "maxValue": 10000
+        },
+        "config": {
+            "asset_keys": ["trendsearth_population"]
+        },
+        "is_active": true
+    }
 }
 ]

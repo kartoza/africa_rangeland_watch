@@ -73,3 +73,7 @@ matplotlib==3.10.3
 geopandas==1.1.0
 contextily==1.6.2
 shapely==2.1.1
+
+# djngo-import-export
+django-import-export==4.3.4
+django-import-export-celery==1.7.1

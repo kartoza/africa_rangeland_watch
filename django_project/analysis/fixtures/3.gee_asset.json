@@ -490,5 +490,53 @@
             "end_date": "now"
         }
     }
+},
+{
+    "model": "analysis.geeasset",
+    "pk": 46,
+    "fields": {
+        "key": "trendsearth_ldn",
+        "source": "projects/ee-dng/assets/trendsearth/ldn",
+        "type": "image_collection",
+        "metadata": {
+            "band_names": ["ldn"]
+        }
+    }
+},
+{
+    "model": "analysis.geeasset",
+    "pk": 47,
+    "fields": {
+        "key": "trendsearth_drought",
+        "source": "projects/ee-dng/assets/trendsearth/drought",
+        "type": "image_collection",
+        "metadata": {
+            "band_names": ["drought"]
+        }
+    }
+},
+{
+    "model": "analysis.geeasset",
+    "pk": 48,
+    "fields": {
+        "key": "trendsearth_urbanization",
+        "source": "projects/ee-dng/assets/trendsearth/urbanization",
+        "type": "image_collection",
+        "metadata": {
+            "band_names": ["urbanization"]
+        }
+    }
+},
+{
+    "model": "analysis.geeasset",
+    "pk": 49,
+    "fields": {
+        "key": "trendsearth_population",
+        "source": "projects/ee-dng/assets/trendsearth/population",
+        "type": "image_collection",
+        "metadata": {
+            "band_names": ["population"]
+        }
+    }
 }
 ]

@@ -730,5 +730,97 @@
             "created_at": "2024-11-20T16:40:12.599Z",
             "updated_at": "2024-11-20T16:40:12.599Z"
         }
+    },
+    {
+        "model": "layers.inputlayer",
+        "pk": "c1000001-0000-4000-8000-000000000001",
+        "fields": {
+            "name": "Land Degradation Neutrality (SDG 15.3.1)",
+            "layer_type": "raster",
+            "data_provider": 5,
+            "url": "",
+            "group": 5,
+            "metadata": {
+                "gee_collection_id": "projects/ee-dng/assets/trendsearth/ldn",
+                "gee_key": "trendsearth_ldn",
+                "colors": ["#d7191c", "#fdae61", "#ffffbf", "#a6d96a", "#1a9641"],
+                "opacity": 0.8,
+                "minValue": -1,
+                "maxValue": 1
+            },
+            "created_by": null,
+            "updated_by": null,
+            "created_at": "2025-01-01T00:00:00Z",
+            "updated_at": "2025-01-01T00:00:00Z"
+        }
+    },
+    {
+        "model": "layers.inputlayer",
+        "pk": "c1000002-0000-4000-8000-000000000002",
+        "fields": {
+            "name": "Drought",
+            "layer_type": "raster",
+            "data_provider": 5,
+            "url": "",
+            "group": 5,
+            "metadata": {
+                "gee_collection_id": "projects/ee-dng/assets/trendsearth/drought",
+                "gee_key": "trendsearth_drought",
+                "colors": ["#ffffb2", "#fecc5c", "#fd8d3c", "#f03b20", "#bd0026"],
+                "opacity": 0.8,
+                "minValue": 0,
+                "maxValue": 1
+            },
+            "created_by": null,
+            "updated_by": null,
+            "created_at": "2025-01-01T00:00:00Z",
+            "updated_at": "2025-01-01T00:00:00Z"
+        }
+    },
+    {
+        "model": "layers.inputlayer",
+        "pk": "c1000003-0000-4000-8000-000000000003",
+        "fields": {
+            "name": "Sustainable Urbanization (SDG 11.3.1)",
+            "layer_type": "raster",
+            "data_provider": 5,
+            "url": "",
+            "group": 5,
+            "metadata": {
+                "gee_collection_id": "projects/ee-dng/assets/trendsearth/urbanization",
+                "gee_key": "trendsearth_urbanization",
+                "colors": ["#f7f7f7", "#cccccc", "#969696", "#636363", "#252525"],
+                "opacity": 0.8,
+                "minValue": 0,
+                "maxValue": 1
+            },
+            "created_by": null,
+            "updated_by": null,
+            "created_at": "2025-01-01T00:00:00Z",
+            "updated_at": "2025-01-01T00:00:00Z"
+        }
+    },
+    {
+        "model": "layers.inputlayer",
+        "pk": "c1000004-0000-4000-8000-000000000004",
+        "fields": {
+            "name": "Population",
+            "layer_type": "raster",
+            "data_provider": 5,
+            "url": "",
+            "group": 5,
+            "metadata": {
+                "gee_collection_id": "projects/ee-dng/assets/trendsearth/population",
+                "gee_key": "trendsearth_population",
+                "colors": ["#ffffcc", "#a1dab4", "#41b6c4", "#2c7fb8", "#253494"],
+                "opacity": 0.8,
+                "minValue": 0,
+                "maxValue": 10000
+            },
+            "created_by": null,
+            "updated_by": null,
+            "created_at": "2025-01-01T00:00:00Z",
+            "updated_at": "2025-01-01T00:00:00Z"
+        }
     }
 ]

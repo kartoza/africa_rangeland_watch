@@ -11,6 +11,8 @@ import time
 import typing
 import uuid
 
+import hashlib
+
 import requests
 from core.celery import app
 from django.utils import timezone
@@ -44,6 +46,135 @@ from .api import (
 )
 
 logger = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# GEE upload helpers
+# ---------------------------------------------------------------------------
+
+def _job_hash(location_ids, params=None) -> str:
+    """Return an 8-char hex hash that uniquely identifies a job's output.
+
+    Combines sorted location IDs with any analysis parameters that affect
+    the result (e.g. urbanization thresholds).  Different combinations of
+    community + parameters produce distinct GEE image asset paths so that
+    uploads never overwrite each other.
+    """
+    ids = sorted(int(i) for i in location_ids) if location_ids else []
+    # Canonicalise params: sort keys so dict ordering doesn't matter.
+    canonical_params = (
+        sorted(params.items()) if params else []
+    )
+    payload = str((ids, canonical_params))
+    return hashlib.sha1(payload.encode()).hexdigest()[:8]
+
+
+def _gee_collection_id(job: 'TrendsEarthJob') -> str:
+    """Return the shared GEE ImageCollection asset ID for a job type.
+
+    One collection per job_type — all year ranges of the same indicator
+    accumulate as yearly Images inside the same ImageCollection.
+    Matches the canonical key used in the GEEAsset fixture.
+    """
+    prefix = getattr(settings, 'GEE_ASSET_ID_PREFIX', 'projects/ee-dng/assets/')
+    return f'{prefix.rstrip("/")}/trendsearth/{job.job_type}'
+
+
+def _ensure_gee_folder(folder_id: str) -> None:
+    """Create a GEE Folder asset; silently ignores if it already exists."""
+    import ee
+    try:
+        ee.data.createAsset({'type': 'Folder'}, folder_id)
+        logger.info('Created GEE Folder: %s', folder_id)
+    except ee.EEException as exc:
+        msg = str(exc).lower()
+        if 'already exists' in msg or 'cannot overwrite' in msg:
+            logger.debug('GEE Folder already exists: %s', folder_id)
+        else:
+            logger.error('Failed to create GEE Folder %s: %s', folder_id, exc)
+            raise
+
+
+def _create_gee_collection(collection_id: str) -> None:
+    """
+    Create a GEE ImageCollection asset; silently ignores if it already exists.
+
+    Ensures that every parent folder in the path exists before creating the
+    ImageCollection, since GEE returns 404 when an intermediate folder is
+    missing.
+    """
+    import ee
+
+    # Ensure all intermediate folders exist.
+    # e.g. 'projects/ee-dng/assets/trendsearth/ldn'
+    #   → create 'projects/ee-dng/assets/trendsearth' first.
+    parts = collection_id.split('/')
+    # GEE asset paths start with 'projects/<project>/assets/...'
+    # The root prefix is 'projects/<project>/assets' (index 0-2),
+    # so we start creating folders from index 3 onward.
+    root_depth = 3  # projects / <project> / assets
+    for depth in range(root_depth + 1, len(parts)):
+        folder_id = '/'.join(parts[:depth])
+        _ensure_gee_folder(folder_id)
+
+    try:
+        ee.data.createAsset({'type': 'ImageCollection'}, collection_id)
+        logger.info('Created GEE ImageCollection: %s', collection_id)
+    except ee.EEException as exc:
+        msg = str(exc).lower()
+        if 'already exists' in msg or 'cannot overwrite' in msg:
+            logger.info('GEE ImageCollection already exists: %s', collection_id)
+        else:
+            logger.error(
+                'Failed to create GEE ImageCollection %s: %s',
+                collection_id, exc
+            )
+            raise
+
+
+def _upload_to_gcs(local_path: str, gcs_blob_path: str) -> str:
+    """Upload a local file to GCS and return its gs:// URI."""
+    from django.conf import settings
+    from core.gcs import get_gcs_client
+    bucket = get_gcs_client()
+    blob = bucket.blob(gcs_blob_path)
+    blob.upload_from_filename(local_path)
+    uri = f'gs://{settings.GCS_BUCKET_NAME}/{gcs_blob_path}'
+    logger.info('Uploaded %s → %s', local_path, uri)
+    return uri
+
+
+def _ingest_image_to_gee_collection(
+    gcs_uri: str,
+    image_asset_id: str,
+    year: int,
+    location_hash: str = '',
+) -> str:
+    """Start a GEE ingestion task to import a GCS COG as an Image.
+
+    ``location_hash`` is stored as an Image property so that images from
+    different communities for the same year can coexist in the collection.
+    Returns the GEE task ID.
+    """
+    import ee
+    manifest = {
+        'name': image_asset_id,
+        'tilesets': [{'sources': [{'uris': [gcs_uri]}]}],
+        'startTime': f'{year}-01-01T00:00:00Z',
+        'endTime': f'{year + 1}-01-01T00:00:00Z',
+        'properties': {
+            'year': year,
+            'location_hash': location_hash,
+        },
+    }
+    task_id = ee.data.newTaskId()[0]
+    res = ee.data.startIngestion(task_id, manifest)
+    ingestion_id = res.get('id', task_id)
+    logger.info(
+        'Started GEE ingestion for %s (year=%d, loc=%s): task=%s',
+        image_asset_id, year, location_hash, ingestion_id,
+    )
+    return ingestion_id
 
 
 @app.task(
@@ -185,6 +316,11 @@ def poll_te_job_status(self, job_id: int):
         .first()
     )
 
+    if latest_non_terminal is None:
+        # No non-terminal jobs exist — this job already reached a terminal
+        # state (COMPLETED / FAILED / CANCELLED). Nothing left to poll.
+        return
+
     if latest_non_terminal != job.id:
         TrendsEarthJob.objects.filter(
             id=job.id,
@@ -233,12 +369,21 @@ def poll_te_job_status(self, job_id: int):
                     job.execution_id
                 )
 
+            # Initialise GEE, create the ImageCollection, then register
+            # the GEEAsset + ONE InputLayer for the entire collection.
+            from analysis.analysis import initialize_engine_analysis
+            initialize_engine_analysis()
+            gee_collection_id = _gee_collection_id(job)
+            _create_gee_collection(gee_collection_id)
+            _register_gee_collection_as_input_layer(job, gee_collection_id)
+
             try:
                 for idx, entry in enumerate(cog_entries):
                     _download_and_store_te_cog(
                         entry['url'],
                         job,
                         idx,
+                        gee_collection_id,
                         bands=entry.get('bands') or None,
                     )
 
@@ -246,6 +391,7 @@ def poll_te_job_status(self, job_id: int):
                 job.result = {
                     'cog_urls': [e['url'] for e in cog_entries],
                     'execution_id': job.execution_id,
+                    'gee_collection_id': gee_collection_id,
                 }
                 job.completed_at = timezone.now()
                 job.save()
@@ -409,23 +555,75 @@ def _get_cog_bounds(cog_path: str) -> dict:
     )
 
 
+def _register_gee_collection_as_input_layer(
+    job: TrendsEarthJob,
+    collection_id: str,
+) -> None:
+    """Create a ``GEEAsset`` record and a single ``InputLayer`` for a
+    Trends.Earth GEE ImageCollection.
+
+    Called once per job after the ImageCollection is created in GEE.
+    The ``InputLayer.url`` stores the GEE asset path so layer generators
+    can call ``GEEAsset.fetch_asset_source(key)`` and build tile URLs
+    on demand (same pattern as MODIS / CGLS generators).
+    """
+    from analysis.models import GEEAsset, GEEAssetType
+
+    # --- GEEAsset ---------------------------------------------------------
+    # One key per job_type — matches the fixture key (no year range).
+    gee_key = f'trendsearth_{job.job_type}'
+
+    GEEAsset.objects.get_or_create(
+        key=gee_key,
+        defaults={
+            'source': collection_id,
+            'type': GEEAssetType.IMAGE_COLLECTION,
+            'metadata': {},
+        },
+    )
+
+    # --- InputLayer -------------------------------------------------------
+    # Look up the canonical InputLayer by name + group so it matches the
+    # fixture record (avoids duplicate records across different year-range jobs).
+    te_provider, _ = DataProvider.objects.get_or_create(name='Trends.Earth')
+    te_group, _ = LayerGroupType.objects.get_or_create(name='trends-earth')
+    display_name = job.get_job_type_display()
+
+    InputLayerFixture.objects.get_or_create(
+        name=display_name,
+        group=te_group,
+        data_provider=te_provider,
+        defaults={
+            'layer_type': InputLayerType.RASTER,
+            'url': collection_id,
+            'created_by': job.user,
+            'updated_by': job.user,
+            'metadata': {
+                'gee_collection_id': collection_id,
+                'gee_key': gee_key,
+            },
+        }
+    )
+
+    logger.info(
+        'Registered GEEAsset "%s" and InputLayer "%s".',
+        gee_key, display_name,
+    )
+
+
 def _register_cog_layer(
     cog_path: str,
     layer_uuid: uuid.UUID,
     internal_name: str,
-    display_name: str,
     job: TrendsEarthJob,
-    add_to_map: bool = True,
 ) -> None:
-    """
-    Register a COG as a cloud_native_gis Layer + InputLayer.
+    """Store a single-band COG in cloud_native_gis for internal use.
 
-    Creates a cloud_native_gis.Layer + LayerUpload to handle file storage,
-    then creates an InputLayer with a cog:// URL for map rendering.
+    Creates a ``cloud_native_gis.Layer`` + ``LayerUpload`` so the file is
+    persisted on the server.  Does *not* create an ``InputLayer`` — the
+    single ``InputLayer`` for the entire ImageCollection is created once
+    by ``_register_gee_collection_as_input_layer``.
     """
-    from django.urls import reverse
-
-    bounds = _get_cog_bounds(cog_path)
     tif_filename = f'{layer_uuid}.tif'
 
     layer, _ = Layer.objects.get_or_create(
@@ -447,53 +645,36 @@ def _register_cog_layer(
 
     layer.refresh_from_db()
     layer.is_ready = True
-    layer.metadata = {'bounds': bounds}
     layer.save()
-
-    if not add_to_map:
-        return
-
-    base_url = settings.DJANGO_BACKEND_URL.rstrip('/')
-    tile_url = (
-        f'cog://{base_url}' +
-        reverse('serve-cog', kwargs={'layer_uuid': str(layer_uuid)})
-    )
-
-    te_provider, _ = DataProvider.objects.get_or_create(name='Trends.Earth')
-    te_group, _ = LayerGroupType.objects.get_or_create(name='trends-earth')
-    InputLayerFixture.objects.get_or_create(
-        uuid=layer_uuid,
-        defaults={
-            'name': display_name,
-            'layer_type': InputLayerType.RASTER,
-            'data_provider': te_provider,
-            'group': te_group,
-            'url': tile_url,
-            'created_by': job.user,
-            'updated_by': job.user,
-            'metadata': {'bounds': bounds},
-        }
-    )
 
 
 def _download_and_store_te_cog(
     cog_url: str,
     job: TrendsEarthJob,
     cog_index: int,
+    gee_collection_id: str,
     bands: typing.Optional[typing.List[dict]] = None,
 ) -> None:
-    """
-    Download a COG from Trends.Earth and register it for map rendering.
+    """Download a COG from Trends.Earth and upload each year-band to GEE.
+
+    For each band that carries a ``year`` in its metadata:
+    - Extract it as a single-band COG
+    - Store the COG in cloud_native_gis (internal backup)
+    - Upload to GCS and ingest into *gee_collection_id* as a GEE Image
+
+    The single ``InputLayer`` / ``GEEAsset`` representing the whole
+    ImageCollection is created separately by
+    ``_register_gee_collection_as_input_layer``; this function does NOT
+    create per-band InputLayers.
     """
     base_uuid_seed = f'te-cog-{job.pk}-{cog_index}'
 
     try:
         with tempfile.TemporaryDirectory() as work_dir:
-            raw_filename = f'{base_uuid_seed}.tif'
-            raw_path = os.path.join(work_dir, raw_filename)
+            raw_path = os.path.join(work_dir, f'{base_uuid_seed}.tif')
 
             logger.info(
-                'Downloading TE COG for job %s index %s from %s',
+                'Downloading TE COG for job %d index %d from %s',
                 job.pk, cog_index, cog_url,
             )
             with requests.get(cog_url, stream=True, timeout=120) as r:
@@ -502,76 +683,80 @@ def _download_and_store_te_cog(
                     shutil.copyfileobj(r.raw, fh)
 
             file_size = os.path.getsize(raw_path)
-            logger.info(
-                'Downloaded TE COG for job %s index %s: %d bytes',
-                job.pk, cog_index, file_size,
-            )
             if file_size == 0:
                 raise ValueError(
-                    f'Downloaded file for job {job.pk} cog index {cog_index} '
-                    f'is empty (0 bytes)'
+                    f'Downloaded file for job {job.pk} cog index '
+                    f'{cog_index} is empty (0 bytes)'
                 )
+            logger.info(
+                'Downloaded TE COG for job %d index %d: %d bytes',
+                job.pk, cog_index, file_size,
+            )
 
             if bands:
+                loc_hash = _job_hash(job.location_ids, job.params)
                 for band_idx, band in enumerate(bands):
                     band_number = band_idx + 1
-                    band_name = band.get('name') or f'Band {band_number}'
                     band_meta = band.get('metadata') or {}
                     year = band_meta.get('year')
-                    add_to_map = band.get('add_to_map', False)
                     no_data = band.get('no_data_value')
 
                     band_uuid = uuid.uuid5(
                         uuid.NAMESPACE_OID,
                         f'{base_uuid_seed}-band-{band_idx}',
                     )
-                    display_name = band_name
-                    if year:
-                        display_name = f'{band_name} {year}'
                     internal_name = (
                         f'te_{job.job_type}_'
                         f'{job.pk}_{cog_index}_{band_idx}.tif'
                     )
-                    band_path = os.path.join(
-                        work_dir, f'{band_uuid}.tif'
-                    )
+                    band_path = os.path.join(work_dir, f'{band_uuid}.tif')
 
                     _extract_single_band_cog(
                         raw_path, band_path, band_number, no_data
                     )
+                    _register_cog_layer(band_path, band_uuid, internal_name, job)
 
-                    _register_cog_layer(
-                        band_path,
-                        band_uuid,
-                        internal_name,
-                        display_name,
-                        job,
-                        add_to_map=add_to_map,
-                    )
+                    if year:
+                        try:
+                            gcs_uri = _upload_to_gcs(
+                                band_path,
+                                f'trendsearth/{job.pk}/{band_uuid}.tif',
+                            )
+                            # Image asset ID includes the location hash so
+                            # different communities for the same year coexist
+                            # in the collection instead of overwriting each
+                            # other.  The analysis mosaics them at query time.
+                            image_asset_id = (
+                                f'{gee_collection_id}/y{year}_{loc_hash}'
+                            )
+                            _ingest_image_to_gee_collection(
+                                gcs_uri,
+                                image_asset_id,
+                                int(year),
+                                location_hash=loc_hash,
+                            )
+                        except Exception as exc:
+                            logger.warning(
+                                'GEE upload failed for job %d band %d '
+                                '(year=%s): %s',
+                                job.pk, band_idx, year, exc,
+                            )
             else:
-                raster_uuid = uuid.uuid5(
-                    uuid.NAMESPACE_OID, base_uuid_seed
-                )
+                raster_uuid = uuid.uuid5(uuid.NAMESPACE_OID, base_uuid_seed)
                 internal_name = (
-                    f'te_{job.job_type}_{job.pk}'
-                    f'_{cog_index}.tif'
+                    f'te_{job.job_type}_{job.pk}_{cog_index}.tif'
                 )
-                display_name = f'{job.task_name} {cog_index + 1}'
                 reprojected_path = os.path.join(
                     work_dir, f'{raster_uuid}_3857.tif'
                 )
                 _reproject_to_3857(raw_path, reprojected_path)
                 _register_cog_layer(
-                    reprojected_path,
-                    raster_uuid,
-                    internal_name,
-                    display_name,
-                    job,
+                    reprojected_path, raster_uuid, internal_name, job
                 )
 
     except Exception as exc:
         logger.error(
-            'TE COG download failed for job %s index %s: %s',
+            'TE COG download failed for job %d index %d: %s',
             job.pk, cog_index, exc,
             exc_info=True,
         )

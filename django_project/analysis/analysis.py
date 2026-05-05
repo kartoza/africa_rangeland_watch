@@ -26,6 +26,10 @@ from analysis.external.gpw import (
     gpw_annual_temporal_analysis,
     gpw_spatial_analysis_dict
 )
+from analysis.external.trendsearth import (
+    trendsearth_annual_temporal_analysis,
+    trendsearth_spatial_analysis_dict
+)
 from analysis.external.user_raster import (
     user_temporal_analysis,
     user_spatial_analysis_dict
@@ -587,6 +591,11 @@ class InputLayer:
         )
         spatial_layer_dict.update(gpw_dict)
 
+        te_dict = trendsearth_spatial_analysis_dict(
+            self.countries, start_date, end_date
+        )
+        spatial_layer_dict.update(te_dict)
+
         user_layer_dict = user_spatial_analysis_dict(
             self.countries, user,
             start_date, end_date
@@ -1058,6 +1067,21 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
 
             # Run analysis for GPW datasets
             return gpw_annual_temporal_analysis(
+                variable,
+                baseline_dt,
+                test_years,
+                select_geo,
+                analysis_cache
+            )
+
+        elif indicator.source == IndicatorSource.TRENDS_EARTH:
+            baseline_dt = datetime.date(baseline_yr, 1, 1)
+            select_geo = input_layers.get_selected_area(
+                custom_geom_fc if custom_geom else selected_geos,
+                True if custom_geom else False
+            )
+
+            return trendsearth_annual_temporal_analysis(
                 variable,
                 baseline_dt,
                 test_years,

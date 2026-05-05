@@ -6,6 +6,7 @@ import json
 import logging
 
 from django.contrib.gis.db.models import Union as GeoUnion
+from django.contrib.gis.geos import MultiPolygon
 from django.db.models import Max
 from rest_framework import status as drf_status
 from rest_framework import viewsets
@@ -132,6 +133,59 @@ class TrendsEarthSettingViewSet(viewsets.ViewSet):
         )
 
 
+def _to_polygon_geom(geom):
+    """
+    Return a single Polygon from a GEOSGeometry suitable for Trends.Earth.
+
+    Two problems are solved here:
+
+    1. PostGIS Union of adjacent polygons can produce a GeometryCollection
+       mixing Polygon and LineString geometries (shared boundary segments).
+       Trends.Earth's GEE scripts reject mixed-type collections with
+       "Geometry coordinate projection requires non-zero maxError".
+
+    2. Trends.Earth passes ``geojsons[0]['coordinates']`` directly as the
+       ``region`` argument to ``ee.batch.Export.image.toCloudStorage()``.
+       GEE's ``_canonicalize_region`` only accepts Polygon coordinate arrays
+       (3-D), not MultiPolygon (4-D), raising "Invalid format for region".
+
+    This helper therefore always returns a single Polygon — using the
+    convex hull when the union spans multiple disconnected parts.
+    """
+    if geom.geom_type == 'Polygon':
+        return geom
+
+    if geom.geom_type == 'MultiPolygon':
+        # convex_hull always yields a Polygon and is a safe outer boundary
+        return geom.convex_hull
+
+    if geom.geom_type == 'GeometryCollection':
+        polys = [
+            g for g in geom
+            if g.geom_type in ('Polygon', 'MultiPolygon')
+        ]
+        if not polys:
+            raise ValueError(
+                'PostGIS Union produced no Polygon geometry.'
+            )
+        if len(polys) == 1:
+            p = polys[0]
+        else:
+            # Flatten and merge into one geometry then take convex hull
+            flat = []
+            for p in polys:
+                if p.geom_type == 'Polygon':
+                    flat.append(p)
+                else:
+                    flat.extend(p)
+            p = MultiPolygon(flat)
+        return p.convex_hull
+
+    raise ValueError(
+        f'Unexpected geometry type from Union: {geom.geom_type}'
+    )
+
+
 def _resolve_geojson_from_location_ids(location_ids: list) -> tuple:
     """
     Convert a list of LandscapeCommunity PKs into a merged GeoJSON
@@ -168,6 +222,15 @@ def _resolve_geojson_from_location_ids(location_ids: list) -> tuple:
                     '`location_ids`.'
                 )
             },
+            status=drf_status.HTTP_400_BAD_REQUEST,
+        )
+
+    try:
+        geom = _to_polygon_geom(geom)
+    except ValueError as exc:
+        logger.error('Failed to clean union geometry: %s', exc)
+        return None, Response(
+            {'detail': str(exc)},
             status=drf_status.HTTP_400_BAD_REQUEST,
         )
 
@@ -215,6 +278,49 @@ def _check_credentials(user) -> Response | None:
     return None
 
 
+def _check_existing_completed_job(
+    job_type: str,
+    location_ids: list | None = None,
+    year_initial: int | None = None,
+    year_final: int | None = None,
+    params: dict | None = None,
+) -> Response | None:
+    """Return a 200 Response if a completed job already exists for these params.
+
+    Searches across ALL users — the GEE ImageCollection is shared, so there
+    is no need to re-poll Trends.Earth when another user has already uploaded
+    the same indicator + year range + location + analysis-parameter combination.
+
+    For urbanization jobs ``params`` must also match because different threshold
+    values produce different output rasters.
+
+    Returns None when no completed job is found.
+    """
+    filters = dict(
+        job_type=job_type,
+        status=TrendsEarthJobStatus.COMPLETED,
+    )
+    if location_ids is not None:
+        filters['location_ids'] = sorted(int(i) for i in location_ids)
+    if year_initial is not None:
+        filters['year_initial'] = year_initial
+    if year_final is not None:
+        filters['year_final'] = year_final
+    if params is not None:
+        filters['params'] = params
+
+    existing = TrendsEarthJob.objects.filter(**filters).first()
+    if existing:
+        return Response(
+            {
+                'job_id': existing.pk,
+                'detail': 'Indicator already exists in ARW.',
+            },
+            status=drf_status.HTTP_200_OK,
+        )
+    return None
+
+
 class SubmitLdnJobView(APIView):
     """
     POST /api/trends-earth/submit/ldn/
@@ -251,12 +357,23 @@ class SubmitLdnJobView(APIView):
 
         year_initial = int(year_initial)
         year_final = int(year_final)
+        sorted_location_ids = sorted(int(i) for i in location_ids)
+
+        existing = _check_existing_completed_job(
+            TrendsEarthJobType.LDN,
+            location_ids=sorted_location_ids,
+            year_initial=year_initial,
+            year_final=year_final,
+        )
+        if existing:
+            return existing
 
         job = TrendsEarthJob.objects.create(
             user=request.user,
             job_type=TrendsEarthJobType.LDN,
             status=TrendsEarthJobStatus.PENDING,
             geojson=geojson,
+            location_ids=sorted_location_ids,
             year_initial=year_initial,
             year_final=year_final,
             task_name=f'LDN {year_initial}-{year_final}',
@@ -399,12 +516,23 @@ class SubmitDroughtJobView(APIView):
 
         year_initial = int(year_initial)
         year_final = int(year_final)
+        sorted_location_ids = sorted(int(i) for i in location_ids)
+
+        existing = _check_existing_completed_job(
+            TrendsEarthJobType.DROUGHT,
+            location_ids=sorted_location_ids,
+            year_initial=year_initial,
+            year_final=year_final,
+        )
+        if existing:
+            return existing
 
         job = TrendsEarthJob.objects.create(
             user=request.user,
             job_type=TrendsEarthJobType.DROUGHT,
             status=TrendsEarthJobStatus.PENDING,
             geojson=geojson,
+            location_ids=sorted_location_ids,
             year_initial=year_initial,
             year_final=year_final,
             task_name=f'Drought {year_initial}-{year_final}',
@@ -464,11 +592,34 @@ class SubmitUrbanizationJobView(APIView):
                 status=drf_status.HTTP_400_BAD_REQUEST
             )
 
+        # Canonical params dict — used for deduplication and GEE asset naming.
+        # Keys are sorted so dict ordering never affects equality checks.
+        urbanization_params = {
+            'cap_ope': cap_ope,
+            'isi_thr': isi_thr,
+            'ntl_thr': ntl_thr,
+            'pct_suburban': pct_suburban,
+            'pct_urban': pct_urban,
+            'un_adju': un_adju,
+            'wat_thr': wat_thr,
+        }
+
+        sorted_location_ids = sorted(int(i) for i in location_ids)
+        existing = _check_existing_completed_job(
+            TrendsEarthJobType.URBANIZATION,
+            location_ids=sorted_location_ids,
+            params=urbanization_params,
+        )
+        if existing:
+            return existing
+
         job = TrendsEarthJob.objects.create(
             user=request.user,
             job_type=TrendsEarthJobType.URBANIZATION,
             status=TrendsEarthJobStatus.PENDING,
             geojson=geojson,
+            location_ids=sorted_location_ids,
+            params=urbanization_params,
             task_name='Urbanization',
         )
         submit_te_job.delay(
@@ -524,12 +675,23 @@ class SubmitPopulationJobView(APIView):
 
         year_initial = int(year_initial)
         year_final = int(year_final)
+        sorted_location_ids = sorted(int(i) for i in location_ids)
+
+        existing = _check_existing_completed_job(
+            TrendsEarthJobType.POPULATION,
+            location_ids=sorted_location_ids,
+            year_initial=year_initial,
+            year_final=year_final,
+        )
+        if existing:
+            return existing
 
         job = TrendsEarthJob.objects.create(
             user=request.user,
             job_type=TrendsEarthJobType.POPULATION,
             status=TrendsEarthJobStatus.PENDING,
             geojson=geojson,
+            location_ids=sorted_location_ids,
             year_initial=year_initial,
             year_final=year_final,
             task_name=(

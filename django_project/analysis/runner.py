@@ -585,7 +585,9 @@ class AnalysisRunner:
                 reducer
             )
 
-            if indicator.source == IndicatorSource.GPW:
+            if indicator.source in (
+                IndicatorSource.GPW, IndicatorSource.TRENDS_EARTH
+            ):
                 metadata = indicator.metadata
             else:
                 metadata = {

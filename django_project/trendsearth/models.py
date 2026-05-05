@@ -103,6 +103,27 @@ class TrendsEarthJob(models.Model):
         blank=True,
         help_text='GeoJSON geometry for the area of interest.'
     )
+    location_ids = models.JSONField(
+        null=True,
+        blank=True,
+        help_text=(
+            'Sorted list of LandscapeCommunity PKs submitted for this job. '
+            'Used for cross-user deduplication: a new job is skipped when '
+            'a completed job with the same job_type, year range, and '
+            'location_ids already exists.'
+        )
+    )
+    params = models.JSONField(
+        null=True,
+        blank=True,
+        help_text=(
+            'Extra analysis parameters that affect the output, stored as a '
+            'canonical dict. Used for deduplication and GEE asset naming. '
+            'Currently only populated for Urbanization jobs '
+            '(un_adju, isi_thr, ntl_thr, wat_thr, cap_ope, '
+            'pct_suburban, pct_urban).'
+        )
+    )
     year_initial = models.IntegerField(
         null=True,
         blank=True,
