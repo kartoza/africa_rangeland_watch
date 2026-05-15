@@ -974,6 +974,7 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
             analysis_dict['Baseline']['endDate']
         )
         if has_dates:
+            print("baseline date")
             baseline_warnings = []
             if custom_geom:
                 baseline_result = calculate_baseline(
@@ -999,6 +1000,7 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
             else:
                 select = baseline_result
         else:
+            print("baseline no date")
             if custom_geom:
                 select = baseline_table.filterBounds(custom_geom_fc)
             else:
@@ -1020,6 +1022,17 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
                 join_filter
             )
             # flatten the joined features
+            select = joined_fc.map(
+                lambda f: ee.Feature(f.get('primary'))
+                            .copyProperties(ee.Feature(f.get('secondary')))
+            )
+
+            # add land degradation baseline
+            ldn_baseline = calculate_land_degradation_baseline(
+                custom_geom_fc if custom_geom else
+                communities.filterBounds(selected_geos)
+            )
+            joined_fc = inner_join.apply(select, ldn_baseline, join_filter)
             select = joined_fc.map(
                 lambda f: ee.Feature(f.get('primary'))
                             .copyProperties(ee.Feature(f.get('secondary')))
@@ -3024,6 +3037,42 @@ def calculate_livestock_baseline(selected_area):
         lambda feature: ee.Feature(None, {
             'Name': feature.get('Name'),
             'Livestock Density 2020 head/km2': feature.get('mean')
+        })
+    )
+
+    return reduced
+
+
+def calculate_land_degradation_baseline(selected_area):
+    """
+    Calculate land degradation baseline for the selected area.
+
+    Parameters
+    ----------
+    selected_area : ee.Geometry or ee.FeatureCollection
+        The area of interest for calculating land degradation baseline.
+
+    Returns
+    -------
+    ee.FeatureCollection
+        A FeatureCollection with mean SDG 15.3.1 values per area.
+    """
+    ldn_image = ee.Image(
+        GEEAsset.fetch_asset_source('trendsearth_ldn')
+    ).select('sdg_indicator_15_3_1_for_baseline_2000_2015')
+    ldn_image = ldn_image.updateMask(ldn_image.neq(-32768)).clip(selected_area)
+
+    reduced = ldn_image.reduceRegions(
+        selected_area,
+        ee.Reducer.mean(),
+        100
+    )
+    reduced = reduced.distinct(['Name', 'Area ha'])
+
+    reduced = reduced.map(
+        lambda feature: ee.Feature(None, {
+            'Name': feature.get('Name'),
+            'Land Degradation Neutrality SDG 15-3-1 2000-2015': feature.get('mean')
         })
     )
 
