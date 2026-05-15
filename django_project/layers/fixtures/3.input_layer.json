@@ -730,5 +730,28 @@
             "created_at": "2024-11-20T16:40:12.599Z",
             "updated_at": "2024-11-20T16:40:12.599Z"
         }
+    },
+    {
+        "model": "layers.inputlayer",
+        "pk": "c1000001-0000-4000-8000-000000000001",
+        "fields": {
+            "name": "Land Degradation Neutrality (SDG Indicator 15.3.1 for baseline) 2000-2015",
+            "layer_type": "raster",
+            "data_provider": 1,
+            "url": "",
+            "group": 1,
+            "metadata": {
+                "gee_collection_id": "projects/gef-land-degradation/assets/TrendsEarth_SDG15-3-1_2000-2023_Trends-Earth",
+                "gee_key": "trendsearth_ldn",
+                "colors": ["#d7191c", "#fdae61", "#ffffbf", "#a6d96a", "#1a9641"],
+                "opacity": 0.8,
+                "minValue": -1,
+                "maxValue": 1
+            },
+            "created_by": null,
+            "updated_by": null,
+            "created_at": "2025-01-01T00:00:00Z",
+            "updated_at": "2025-01-01T00:00:00Z"
+        }
     }
 ]

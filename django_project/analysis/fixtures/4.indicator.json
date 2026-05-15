@@ -424,5 +424,27 @@
         },
         "is_active": true
     }
+},
+{
+    "model": "analysis.indicator",
+    "pk": 13,
+    "fields": {
+        "name": "Land Degradation Neutrality (SDG 15.3.1)",
+        "description": "SDG 15.3.1 land degradation neutrality indicator (2000-2015)",
+        "variable_name": "Land Degradation Neutrality (SDG 15.3.1)",
+        "source": "trends-earth",
+        "analysis_types": ["Baseline", "Spatial"],
+        "temporal_resolutions": [],
+        "metadata": {
+            "colors": ["#d7191c", "#fdae61", "#ffffbf", "#a6d96a", "#1a9641"],
+            "opacity": 0.8,
+            "minValue": -1,
+            "maxValue": 1
+        },
+        "config": {
+            "asset_keys": ["trendsearth_ldn"]
+        },
+        "is_active": true
+    }
 }
 ]

@@ -6,6 +6,7 @@ from layers.generator.soil_organic_carbon import SoilOrganicCarbonGenerator
 from layers.generator.nrt import NearRealTimeGenerator
 from layers.generator.livestock import LiveStockGenerator
 from layers.generator.landsat_ndwi import LandsatNDWIGenerator
+from layers.generator.trends_earth import TrendsEarthGenerator
 
 
 GENERATOR_CLASSES = [
@@ -16,7 +17,8 @@ GENERATOR_CLASSES = [
     SoilOrganicCarbonGenerator,
     LiveStockGenerator,
     NearRealTimeGenerator,
-    LandsatNDWIGenerator
+    LandsatNDWIGenerator,
+    TrendsEarthGenerator
 ]
 
 
