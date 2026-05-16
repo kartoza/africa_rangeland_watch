@@ -26,6 +26,7 @@ from analysis.external.gpw import (
     gpw_annual_temporal_analysis,
     gpw_spatial_analysis_dict
 )
+from analysis.external.trends_earth import te_spatial_analysis_dict
 from analysis.external.user_raster import (
     user_temporal_analysis,
     user_spatial_analysis_dict
@@ -587,6 +588,11 @@ class InputLayer:
         )
         spatial_layer_dict.update(gpw_dict)
 
+        te_dict = te_spatial_analysis_dict(
+            self.countries, start_date, end_date
+        )
+        spatial_layer_dict.update(te_dict)
+
         user_layer_dict = user_spatial_analysis_dict(
             self.countries, user,
             start_date, end_date
@@ -747,6 +753,7 @@ def get_rel_diff(
     """
     # Select the image layer from the spatial layer dictionary
     # based on the variable in analysisDict
+    print(spatial_layer_dict)
     img_select = spatial_layer_dict[analysis_dict['variable']]
     img_select = img_select.rename('val')
 
