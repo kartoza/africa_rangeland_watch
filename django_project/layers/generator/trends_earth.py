@@ -25,7 +25,7 @@ class TrendsEarthGenerator(BaseLayerGenerator):
         ).clipToCollection(countries)
 
         ldn_layer = InputLayer.objects.get(
-            name='Land Degradation Neutrality (SDG Indicator 15.3.1 for baseline) 2000-2015',
+            name='Land Degradation Neutrality (SDG Indicator 15.3.1 for baseline) 2000-2015',  # noqa
             data_provider=self.get_provider()
         )
 

@@ -753,7 +753,6 @@ def get_rel_diff(
     """
     # Select the image layer from the spatial layer dictionary
     # based on the variable in analysisDict
-    print(spatial_layer_dict)
     img_select = spatial_layer_dict[analysis_dict['variable']]
     img_select = img_select.rename('val')
 
@@ -981,7 +980,6 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
             analysis_dict['Baseline']['endDate']
         )
         if has_dates:
-            print("baseline date")
             baseline_warnings = []
             if custom_geom:
                 baseline_result = calculate_baseline(
@@ -1007,7 +1005,6 @@ def run_analysis(locations: list, analysis_dict: dict, *args, **kwargs):
             else:
                 select = baseline_result
         else:
-            print("baseline no date")
             if custom_geom:
                 select = baseline_table.filterBounds(custom_geom_fc)
             else:
@@ -3079,7 +3076,7 @@ def calculate_land_degradation_baseline(selected_area):
     reduced = reduced.map(
         lambda feature: ee.Feature(None, {
             'Name': feature.get('Name'),
-            'Land Degradation Neutrality SDG 15-3-1 2000-2015': feature.get('mean')
+            'Land Degradation Neutrality SDG 15-3-1 2000-2015': feature.get('mean')  # noqa
         })
     )
 
