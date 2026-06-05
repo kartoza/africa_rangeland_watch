@@ -8,10 +8,12 @@ import logging
 import math
 
 from django.db import connection
-from django.db.models import Q
+from django.db.models import Count, Q
 from django.http import Http404, HttpResponse
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny
+from rest_framework.response import Response
+from rest_framework.views import APIView
 from rest_framework.viewsets import mixins, GenericViewSet
 
 from earthranger.models import EarthRangerEvents, EarthRangerSetting
@@ -120,6 +122,10 @@ class EarthRangerEventsViewSet(
             earth_ranger_settings__in=earth_ranger_settings
         ).distinct()
 
+        event_types = request.query_params.getlist('event_type')
+        if event_types:
+            events = events.filter(event_type__in=event_types)
+
         # If no events found, return 404
         if not events.exists():
             raise Http404()
@@ -142,3 +148,50 @@ class EarthRangerEventsViewSet(
         if not len(tiles):
             raise Http404()
         return HttpResponse(tiles, content_type="application/x-protobuf")
+
+
+class EarthRangerEventTypesAPI(APIView):
+    """
+    GET /api/earth-ranger/event-types/
+
+    Return the distinct (event_type, event_category) pairs available to
+    the requesting user, based on the privacy of the underlying
+    EarthRangerSetting records.
+
+    Authenticated users see events from public settings plus their own
+    private settings.  Unauthenticated users see public settings only.
+
+    Response body (JSON):
+        [
+            {"event_type": "...", "event_category": "..."},
+            ...
+        ]
+    """
+
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        if request.user.is_authenticated:
+            settings_filter = (
+                Q(privacy='public') | Q(user=request.user, privacy='private')
+            )
+        else:
+            settings_filter = Q(privacy='public')
+
+        earth_ranger_settings = EarthRangerSetting.objects.filter(
+            settings_filter
+        )
+
+        event_types = (
+            EarthRangerEvents.objects
+            .filter(earth_ranger_settings__in=earth_ranger_settings)
+            .exclude(event_type='')
+            .values('event_type')
+            .annotate(count=Count('id'))
+            .order_by('event_type')
+        )
+
+        return Response([
+            {'event_type': row['event_type'], 'count': row['count']}
+            for row in event_types
+        ])

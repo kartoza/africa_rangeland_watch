@@ -12,7 +12,8 @@ from frontend.api_views.analysis import AnalysisAPI, FetchAnalysisTaskAPI
 from frontend.api_views.base_map import BaseMapAPI, MapConfigAPI
 from frontend.api_views.landscape import LandscapeViewSet
 from frontend.api_views.earth_ranger_events import (
-    EarthRangerEventsViewSet
+    EarthRangerEventsViewSet,
+    EarthRangerEventTypesAPI,
 )
 from frontend.api_views.layers import (
     LayerAPI,
@@ -123,6 +124,11 @@ urlpatterns = base_map_urls + layers_urls + indicator_urls + router.urls + [
         'earth-ranger/events/vector_tile/<int:z>/<int:x>/<int:y>/',
         EarthRangerEventsViewSet.as_view({'get': 'vector_tile'}),
         name='earth-ranger-events-vector-tile'
+    ),
+    path(
+        'earth-ranger/event-types/',
+        EarthRangerEventTypesAPI.as_view(),
+        name='earth-ranger-event-types'
     ),
     path(
         'analysis/task/<int:task_id>/',

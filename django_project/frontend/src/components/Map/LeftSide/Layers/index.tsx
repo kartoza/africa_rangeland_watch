@@ -21,6 +21,8 @@ import LandscapeSelector from "./LandscapeSelector";
 import LeftSideLoading from "../Loading";
 import CogDownloadButton from "./LayerDownloadButton";
 import { selectIsLoggedIn } from "../../../../store/authSlice";
+import EarthRangerFilter from "./EarthRangerFilter";
+import { setEarthRangerVisible } from "../../../../store/earthRangerSlice";
 
 /* ---------- type aliases (unchanged) ------------------------------------ */
 export interface LayerCheckboxProps {
@@ -50,6 +52,7 @@ export default function Layers({
   );
   const { exportTasks } = useSelector((s: RootState) => s.layer);
   const isAuthenticated = useSelector(selectIsLoggedIn);
+  const [earthRangerChecked, setEarthRangerChecked] = useState(false);
   const toast = useToast();
 
   /* ---------------- helpers -------------------------------------------- */
@@ -161,7 +164,8 @@ export default function Layers({
           }
         </AccordionPanel>
       </AccordionItem>
-
+      
+      {/* EarthRanger --------------------------------------------------- */}
       <AccordionItem>
         <h2>
           <AccordionButton>
@@ -183,11 +187,15 @@ export default function Layers({
                 layer => <LayerCheckbox
                   key={layer.id}
                   layer={layer}
-                  onToggle={(checked) => checked ? onLayerChecked(layer) : onLayerUnchecked(layer)}
+                  onToggle={(checked) => {
+                    setEarthRangerChecked(checked);
+                    dispatch(setEarthRangerVisible(checked));
+                  }}
                 />
               ) :
               <LeftSideLoading/>
           }
+          {earthRangerChecked && <EarthRangerFilter />}
         </AccordionPanel>
       </AccordionItem>
 

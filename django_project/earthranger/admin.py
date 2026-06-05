@@ -51,7 +51,11 @@ class APIScheduleAdmin(admin.ModelAdmin):
 
 @admin.register(EarthRangerEvents)
 class EarthRangerEventsAdmin(admin.ModelAdmin):
-    list_display = ("id", "earth_ranger_uuid", "created_at")
+    list_display = (
+        "id", "earth_ranger_uuid", "event_type",
+        "event_category", "created_at"
+    )
+    list_filter = ("event_category", "event_type")
     search_fields = ("earth_ranger_uuid", "id")
 
 
