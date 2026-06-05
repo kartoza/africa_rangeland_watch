@@ -34,6 +34,10 @@ import { CSS } from '@dnd-kit/utilities';
 import { FiSettings, FiX, FiInfo, FiEdit2, FiSlash, FiCheck, FiDownload, FiAlertCircle } from 'react-icons/fi';
 import { FaFilter } from 'react-icons/fa6';
 import EarthRangerFilter from '../Map/LeftSide/Layers/EarthRangerFilter';
+import { DateRange, LocationValue } from '../Map/LeftSide/Layers/EarthRangerFilter/types';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../store';
+import { Landscape } from '../../store/landscapeSlice';
 import {DragHandleIcon} from '@chakra-ui/icons';
 import ChartWidget from './ChartWidget';
 import TableWidget from './TableWidget';
@@ -52,6 +56,62 @@ import { downloadAnalysisPDF } from '../../utils/downloadPDF';
 import { downloadCog } from '../../utils/api';
 import { ids } from 'webpack';
 
+function extractAnalysisDate(data: any): DateRange | null {
+  const analysisData = data?.data || data?.analysis;
+  if (!analysisData) return null;
+
+  if (analysisData.analysisType === 'Baseline') {
+    const start = analysisData.baselineStartDate ?? null;
+    const end = analysisData.baselineEndDate ?? null;
+    return start || end ? { start, end } : null;
+  }
+
+  const year = analysisData.period?.year ?? analysisData.year;
+  if (!year) return null;
+
+  const quarter = analysisData.period?.quarter ?? analysisData.quarter;
+  const month = analysisData.period?.month ?? analysisData.month;
+
+  if (quarter) {
+    const qStart = (quarter - 1) * 3;
+    const start = new Date(year, qStart, 1);
+    const end = new Date(year, qStart + 3, 0);
+    return {
+      start: start.toISOString().slice(0, 10),
+      end: end.toISOString().slice(0, 10),
+    };
+  }
+  if (month) {
+    const start = new Date(year, month - 1, 1);
+    const end = new Date(year, month, 0);
+    return {
+      start: start.toISOString().slice(0, 10),
+      end: end.toISOString().slice(0, 10),
+    };
+  }
+  return {
+    start: `${year}-01-01`,
+    end: `${year}-12-31`,
+  };
+}
+
+function extractAnalysisLocation(data: any, landscapes: Landscape[]): LocationValue | null {
+  const analysisData = data?.data || data?.analysis;
+  if (!analysisData) return null;
+
+  const locations: any[] = analysisData.locations || [];
+  const communityIds: number[] = locations
+    .map((l: any) => (l.community ? parseInt(l.community, 10) : null))
+    .filter((id): id is number => id !== null && !isNaN(id));
+
+  const landscapeName: string | undefined = analysisData.landscape;
+  const landscape = landscapes.find((l) => l.name === landscapeName);
+  const landscapeId = landscape?.id ?? null;
+
+  if (communityIds.length > 0) return { landscapeId, communityIds };
+  if (landscapeId !== null) return { landscapeId, communityIds: [] };
+  return null;
+}
 
 // Sortable Widget Item Component
 const SortableWidgetItem: React.FC<{
@@ -73,6 +133,7 @@ const SortableWidgetItem: React.FC<{
     transition,
     isDragging,
   } = useSortable({ id: widget.id });
+  const landscapes = useSelector((s: RootState) => s.landscape.landscapes);
   const [updatedWidget, setUpdatedWidget] = useState(widget);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editTitle, setEditTitle] = useState(widget.title);
@@ -491,6 +552,30 @@ const SortableWidgetItem: React.FC<{
                   earth_ranger_event_types: types,
                 })
               }
+              dateValue={{
+                start: widget.config?.earth_ranger_start_date ?? null,
+                end: widget.config?.earth_ranger_end_date ?? null,
+              }}
+              onDateChange={(range) =>
+                onConfigChange(widget.id, {
+                  ...widget.config,
+                  earth_ranger_start_date: range.start,
+                  earth_ranger_end_date: range.end,
+                })
+              }
+              analysisDate={extractAnalysisDate(updatedWidget.data)}
+              locationValue={{
+                landscapeId: widget.config?.earth_ranger_landscape_id ?? null,
+                communityIds: widget.config?.earth_ranger_community_ids ?? [],
+              }}
+              onLocationChange={(v) =>
+                onConfigChange(widget.id, {
+                  ...widget.config,
+                  earth_ranger_landscape_id: v.landscapeId,
+                  earth_ranger_community_ids: v.communityIds,
+                })
+              }
+              analysisLocation={extractAnalysisLocation(updatedWidget.data, landscapes)}
             />
           </ModalBody>
         </ModalContent>
