@@ -490,5 +490,20 @@
             "end_date": "now"
         }
     }
+},
+{
+    "model": "analysis.geeasset",
+    "pk": 46,
+    "fields": {
+        "key": "trendsearth_ldn",
+        "source": "projects/gef-land-degradation/assets/TrendsEarth_SDG15-3-1_2000-2023_Trends-Earth",
+        "type": "image",
+        "metadata": {
+            "band_names": [
+                "sdg_indicator_15_3_1_for_baseline_2000_2015",
+                "sdg_indicator_15_3_1_status_in_2023_compared_to_2000_2015_baseline"
+            ]
+        }
+    }
 }
 ]

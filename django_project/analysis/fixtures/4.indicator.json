@@ -424,5 +424,27 @@
         },
         "is_active": true
     }
+},
+{
+    "model": "analysis.indicator",
+    "pk": 13,
+    "fields": {
+        "name": "SDG Indicator 15.3.1 status in 2023 (compared to 2000-2015 baseline)",
+        "description": "SDG Indicator 15.3.1 status in 2023 (compared to 2000-2015 baseline)",
+        "variable_name": "SDG Indicator 15.3.1 status in 2023 (compared to 2000-2015 baseline)",
+        "source": "trends-earth",
+        "analysis_types": ["Spatial"],
+        "temporal_resolutions": [],
+        "metadata": {
+            "colors": ["#d7191c", "#fdae61", "#ffffbf", "#a6d96a", "#1a9641"],
+            "opacity": 0.8,
+            "minValue": -1,
+            "maxValue": 1
+        },
+        "config": {
+            "asset_keys": ["trendsearth_ldn"]
+        },
+        "is_active": true
+    }
 }
 ]

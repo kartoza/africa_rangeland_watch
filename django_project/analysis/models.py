@@ -869,6 +869,7 @@ class IndicatorSource(models.TextChoices):
     BASE = 'base', 'Base'
     # Global Pasteur Watch
     GPW = 'GPW', 'Global Pasteur Watch'
+    TRENDS_EARTH = 'trends-earth', 'Trends.Earth'
     OTHER = 'other', 'Other'
 
 
