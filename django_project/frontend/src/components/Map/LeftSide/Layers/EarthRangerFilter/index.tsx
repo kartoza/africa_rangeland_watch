@@ -2,10 +2,11 @@ import React from 'react';
 import { Box } from '@chakra-ui/react';
 import { useDispatch, useSelector } from 'react-redux';
 import { AppDispatch, RootState } from '../../../../../store';
-import { setSelectedEventTypes, setEarthRangerDateRange } from '../../../../../store/earthRangerSlice';
+import { setSelectedEventTypes, setEarthRangerDateRange, setEarthRangerLocation } from '../../../../../store/earthRangerSlice';
 import EventTypeFilter from './EventTypeFilter';
 import DateRangeFilter from './DateRangeFilter';
-import { DateRange } from './types';
+import LocationFilter from './LocationFilter';
+import { DateRange, LocationValue } from './types';
 
 export const earthRangerSelectStyles = {
   control: (base: any) => ({
@@ -51,6 +52,12 @@ interface Props {
   onDateChange?: (range: DateRange) => void;
   /** Pre-fills "From analysis" option; null/undefined disables it */
   analysisDate?: DateRange | null;
+  /** Controlled: current location filter */
+  locationValue?: LocationValue;
+  /** Controlled: called when location filter changes */
+  onLocationChange?: (v: LocationValue) => void;
+  /** Pre-fills location "From analysis" option */
+  analysisLocation?: LocationValue | null;
   /** Set false when rendering inside a Chakra Menu to avoid portal/blur conflicts */
   usePortal?: boolean;
 }
@@ -67,20 +74,29 @@ export default function EarthRangerFilter({
   dateValue,
   onDateChange,
   analysisDate,
+  locationValue,
+  onLocationChange,
+  analysisLocation,
   usePortal = true,
 }: Props) {
   const dispatch = useDispatch<AppDispatch>();
   const isControlled = value !== undefined && onChange !== undefined;
   const isDateControlled = dateValue !== undefined && onDateChange !== undefined;
+  const isLocationControlled = locationValue !== undefined && onLocationChange !== undefined;
 
   const reduxEventTypes = useSelector((s: RootState) => s.earthRanger.selectedEventTypes);
   const reduxStartDate = useSelector((s: RootState) => s.earthRanger.startDate);
   const reduxEndDate = useSelector((s: RootState) => s.earthRanger.endDate);
+  const reduxLandscapeId = useSelector((s: RootState) => s.earthRanger.landscapeId);
+  const reduxCommunityIds = useSelector((s: RootState) => s.earthRanger.communityIds);
 
   const resolvedEventTypes = isControlled ? value : reduxEventTypes;
   const resolvedDateRange: DateRange = isDateControlled
     ? dateValue
     : { start: reduxStartDate, end: reduxEndDate };
+  const resolvedLocation: LocationValue = isLocationControlled
+    ? locationValue
+    : { landscapeId: reduxLandscapeId, communityIds: reduxCommunityIds };
 
   const handleEventTypeChange = (types: string[]) => {
     if (isControlled) {
@@ -98,6 +114,14 @@ export default function EarthRangerFilter({
     }
   };
 
+  const handleLocationChange = (v: LocationValue) => {
+    if (isLocationControlled) {
+      onLocationChange(v);
+    } else {
+      dispatch(setEarthRangerLocation({ landscapeId: v.landscapeId, communityIds: v.communityIds }));
+    }
+  };
+
   return (
     <Box>
       <EventTypeFilter
@@ -109,6 +133,12 @@ export default function EarthRangerFilter({
         value={resolvedDateRange}
         onChange={handleDateChange}
         analysisDate={analysisDate}
+      />
+      <LocationFilter
+        value={resolvedLocation}
+        onChange={handleLocationChange}
+        analysisLocation={analysisLocation}
+        usePortal={usePortal}
       />
     </Box>
   );

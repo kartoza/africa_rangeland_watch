@@ -5,6 +5,8 @@ interface EarthRangerState {
   isLayerVisible: boolean;
   startDate: string | null;
   endDate: string | null;
+  landscapeId: number | null;
+  communityIds: number[];
 }
 
 const initialState: EarthRangerState = {
@@ -12,6 +14,8 @@ const initialState: EarthRangerState = {
   isLayerVisible: false,
   startDate: null,
   endDate: null,
+  landscapeId: null,
+  communityIds: [],
 };
 
 const earthRangerSlice = createSlice({
@@ -28,8 +32,12 @@ const earthRangerSlice = createSlice({
       state.startDate = action.payload.startDate;
       state.endDate = action.payload.endDate;
     },
+    setEarthRangerLocation(state, action: PayloadAction<{ landscapeId: number | null; communityIds: number[] }>) {
+      state.landscapeId = action.payload.landscapeId;
+      state.communityIds = action.payload.communityIds;
+    },
   },
 });
 
-export const { setSelectedEventTypes, setEarthRangerVisible, setEarthRangerDateRange } = earthRangerSlice.actions;
+export const { setSelectedEventTypes, setEarthRangerVisible, setEarthRangerDateRange, setEarthRangerLocation } = earthRangerSlice.actions;
 export default earthRangerSlice.reducer;

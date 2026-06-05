@@ -34,7 +34,10 @@ import { CSS } from '@dnd-kit/utilities';
 import { FiSettings, FiX, FiInfo, FiEdit2, FiSlash, FiCheck, FiDownload, FiAlertCircle } from 'react-icons/fi';
 import { FaFilter } from 'react-icons/fa6';
 import EarthRangerFilter from '../Map/LeftSide/Layers/EarthRangerFilter';
-import { DateRange } from '../Map/LeftSide/Layers/EarthRangerFilter/types';
+import { DateRange, LocationValue } from '../Map/LeftSide/Layers/EarthRangerFilter/types';
+import { useSelector } from 'react-redux';
+import { RootState } from '../../store';
+import { Landscape } from '../../store/landscapeSlice';
 import {DragHandleIcon} from '@chakra-ui/icons';
 import ChartWidget from './ChartWidget';
 import TableWidget from './TableWidget';
@@ -92,6 +95,24 @@ function extractAnalysisDate(data: any): DateRange | null {
   };
 }
 
+function extractAnalysisLocation(data: any, landscapes: Landscape[]): LocationValue | null {
+  const analysisData = data?.data || data?.analysis;
+  if (!analysisData) return null;
+
+  const locations: any[] = analysisData.locations || [];
+  const communityIds: number[] = locations
+    .map((l: any) => (l.community ? parseInt(l.community, 10) : null))
+    .filter((id): id is number => id !== null && !isNaN(id));
+
+  const landscapeName: string | undefined = analysisData.landscape;
+  const landscape = landscapes.find((l) => l.name === landscapeName);
+  const landscapeId = landscape?.id ?? null;
+
+  if (communityIds.length > 0) return { landscapeId, communityIds };
+  if (landscapeId !== null) return { landscapeId, communityIds: [] };
+  return null;
+}
+
 // Sortable Widget Item Component
 const SortableWidgetItem: React.FC<{
   widget: Widget;
@@ -112,6 +133,7 @@ const SortableWidgetItem: React.FC<{
     transition,
     isDragging,
   } = useSortable({ id: widget.id });
+  const landscapes = useSelector((s: RootState) => s.landscape.landscapes);
   const [updatedWidget, setUpdatedWidget] = useState(widget);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [editTitle, setEditTitle] = useState(widget.title);
@@ -542,6 +564,18 @@ const SortableWidgetItem: React.FC<{
                 })
               }
               analysisDate={extractAnalysisDate(updatedWidget.data)}
+              locationValue={{
+                landscapeId: widget.config?.earth_ranger_landscape_id ?? null,
+                communityIds: widget.config?.earth_ranger_community_ids ?? [],
+              }}
+              onLocationChange={(v) =>
+                onConfigChange(widget.id, {
+                  ...widget.config,
+                  earth_ranger_landscape_id: v.landscapeId,
+                  earth_ranger_community_ids: v.communityIds,
+                })
+              }
+              analysisLocation={extractAnalysisLocation(updatedWidget.data, landscapes)}
             />
           </ModalBody>
         </ModalContent>
