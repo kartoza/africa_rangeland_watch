@@ -15,3 +15,8 @@ export interface DateRange {
   start: string | null;
   end: string | null;
 }
+
+export interface LocationValue {
+  landscapeId: number | null;
+  communityIds: number[];
+}

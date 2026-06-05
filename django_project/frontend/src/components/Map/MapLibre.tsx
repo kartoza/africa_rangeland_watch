@@ -206,7 +206,9 @@ export const ReusableMapLibre = forwardRef(
           initialBound={props.initialBound}
           eventTypes={props.config?.earth_ranger_event_types ?? []}
           startDate={props.config?.earth_ranger_start_date ?? null}
-          endDate={props.config?.earth_ranger_end_date ?? null}/>
+          endDate={props.config?.earth_ranger_end_date ?? null}
+          landscapeId={props.config?.earth_ranger_landscape_id ?? null}
+          communityIds={props.config?.earth_ranger_community_ids ?? []}/>
       </Box>
     )
   }

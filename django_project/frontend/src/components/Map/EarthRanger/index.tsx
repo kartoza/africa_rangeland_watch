@@ -25,9 +25,18 @@ interface EarthRangerProps {
   /** When provided, overrides the global Redux date range. */
   startDate?: string | null;
   endDate?: string | null;
+  /** When provided, overrides the global Redux location filter. */
+  landscapeId?: number | null;
+  communityIds?: number[];
 }
 
-function buildTileUrl(eventTypes: string[], startDate?: string | null, endDate?: string | null): string {
+function buildTileUrl(
+  eventTypes: string[],
+  startDate?: string | null,
+  endDate?: string | null,
+  landscapeId?: number | null,
+  communityIds?: number[],
+): string {
   const base =
     document.location.origin +
     '/frontend-api/earth-ranger/events/vector_tile/{z}/{x}/{y}/';
@@ -35,11 +44,16 @@ function buildTileUrl(eventTypes: string[], startDate?: string | null, endDate?:
   eventTypes.forEach((t) => params.push(`event_type=${encodeURIComponent(t)}`));
   if (startDate) params.push(`start_date=${encodeURIComponent(startDate)}`);
   if (endDate) params.push(`end_date=${encodeURIComponent(endDate)}`);
+  if (communityIds && communityIds.length > 0) {
+    communityIds.forEach((id) => params.push(`community_id=${id}`));
+  } else if (landscapeId) {
+    params.push(`landscape_id=${landscapeId}`);
+  }
   return params.length ? `${base}?${params.join('&')}` : base;
 }
 
 /** EarthRanger events layer. */
-export default function EarthRanger({ isVisible: propIsVisible, mapRef: externalMapRef, isMapLoaded: externalIsMapLoaded, initialBound, eventTypes: propEventTypes, startDate: propStartDate, endDate: propEndDate }: EarthRangerProps) {
+export default function EarthRanger({ isVisible: propIsVisible, mapRef: externalMapRef, isMapLoaded: externalIsMapLoaded, initialBound, eventTypes: propEventTypes, startDate: propStartDate, endDate: propEndDate, landscapeId: propLandscapeId, communityIds: propCommunityIds }: EarthRangerProps) {
   const contextMap = useMap();
   const mapRef = externalMapRef || contextMap.mapRef;
   const isMapLoaded = externalIsMapLoaded !== undefined ? externalIsMapLoaded : contextMap.isMapLoaded;
@@ -48,12 +62,16 @@ export default function EarthRanger({ isVisible: propIsVisible, mapRef: external
   const reduxIsVisible = useSelector((s: RootState) => s.earthRanger.isLayerVisible);
   const reduxStartDate = useSelector((s: RootState) => s.earthRanger.startDate);
   const reduxEndDate = useSelector((s: RootState) => s.earthRanger.endDate);
+  const reduxLandscapeId = useSelector((s: RootState) => s.earthRanger.landscapeId);
+  const reduxCommunityIds = useSelector((s: RootState) => s.earthRanger.communityIds);
   const isVisible = propIsVisible !== undefined ? propIsVisible : reduxIsVisible;
   // Prop takes precedence — dashboard widgets pass their own config; the main
   // Map page leaves this undefined so the global Redux filter applies.
   const selectedEventTypes = propEventTypes !== undefined ? propEventTypes : reduxEventTypes;
   const startDate = propStartDate !== undefined ? propStartDate : reduxStartDate;
   const endDate = propEndDate !== undefined ? propEndDate : reduxEndDate;
+  const landscapeId = propLandscapeId !== undefined ? propLandscapeId : reduxLandscapeId;
+  const communityIds = propCommunityIds !== undefined ? propCommunityIds : reduxCommunityIds;
 
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
   const [popupOpen, setPopupOpen] = useState(false);
@@ -106,7 +124,7 @@ export default function EarthRanger({ isVisible: propIsVisible, mapRef: external
     try {
       map.addSource(EARTH_EANGER_EVENT, {
         type: 'vector',
-        tiles: [buildTileUrl(selectedEventTypes, startDate, endDate)],
+        tiles: [buildTileUrl(selectedEventTypes, startDate, endDate, landscapeId, communityIds)],
       });
 
       const pointFilter: any = layerFilter
@@ -160,7 +178,7 @@ export default function EarthRanger({ isVisible: propIsVisible, mapRef: external
     } catch (err) {
       console.log('Error adding EarthRanger layer:', err);
     }
-  }, [isMapLoaded, isVisible, selectedEventTypes, startDate, endDate]);
+  }, [isMapLoaded, isVisible, selectedEventTypes, startDate, endDate, landscapeId, communityIds]);
 
   useEffect(() => {
     const map = mapRef.current;
