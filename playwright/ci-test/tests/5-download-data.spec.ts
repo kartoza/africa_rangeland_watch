@@ -13,7 +13,8 @@ test.describe('download files', () => {
   });
 
   test('test download geojson', async ({ page }) => {
-
+    await expect(page.locator('[id="chakra-modal-\\:r4\\:"]').getByText('Start New')).toBeVisible();
+    await page.locator('[id="chakra-modal-\\:r4\\:"]').getByText('Start New').click();
     await page.getByRole('link', { name: 'MAP' }).click();
 
     await page.locator('.css-uylvmb > .chakra-icon').click();
@@ -35,7 +36,8 @@ test.describe('download files', () => {
   });
 
   test('test download shapefile', async ({ page }) => {
-
+    await expect(page.locator('[id="chakra-modal-\\:r4\\:"]').getByText('Start New')).toBeVisible();
+    await page.locator('[id="chakra-modal-\\:r4\\:"]').getByText('Start New').click();
     await page.getByRole('link', { name: 'MAP' }).click();
 
     await page.locator('.css-uylvmb > .chakra-icon').click();
@@ -57,7 +59,8 @@ test.describe('download files', () => {
   });
 
   test('test download geopackage', async ({ page }) => {
-
+    await expect(page.locator('[id="chakra-modal-\\:r4\\:"]').getByText('Start New')).toBeVisible();
+    await page.locator('[id="chakra-modal-\\:r4\\:"]').getByText('Start New').click();
     await page.getByRole('link', { name: 'MAP' }).click();
 
     await page.locator('.css-uylvmb > .chakra-icon').click();
@@ -79,7 +82,8 @@ test.describe('download files', () => {
   });
 
   test('test download kml', async ({ page }) => {
-
+    await expect(page.locator('[id="chakra-modal-\\:r4\\:"]').getByText('Start New')).toBeVisible();
+    await page.locator('[id="chakra-modal-\\:r4\\:"]').getByText('Start New').click();
     await page.getByRole('link', { name: 'MAP' }).click();
 
     await page.locator('.css-uylvmb > .chakra-icon').click();
